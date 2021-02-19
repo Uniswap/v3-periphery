@@ -19,6 +19,7 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 12
+          always-auth: true
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
