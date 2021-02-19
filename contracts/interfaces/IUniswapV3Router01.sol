@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.7.6;
 
-import {IUniswapV3SwapCallback} from '../../interfaces/callback/IUniswapV3SwapCallback.sol';
-import {IUniswapV3MintCallback} from '../../interfaces/callback/IUniswapV3MintCallback.sol';
+import {IUniswapV3SwapCallback} from '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
+import {IUniswapV3MintCallback} from '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 
 interface RouterBase {
     /// Gets the spot price for a given amount, by checking the pair's liquidit and current sqrt price
