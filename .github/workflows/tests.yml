@@ -29,6 +29,9 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+
 
       # This is required separately from yarn test because it generates the typechain definitions
       - name: Compile
