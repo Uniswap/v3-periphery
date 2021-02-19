@@ -1,0 +1,6 @@
+artifacts/
+cache/
+crytic-export/
+node_modules/
+typechain/
+test/__snapshots__
