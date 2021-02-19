@@ -22,6 +22,8 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
       - name: Run linters
         uses: wearerequired/lint-action@a8497ddb33fb1205941fd40452ca9fff07e0770d
