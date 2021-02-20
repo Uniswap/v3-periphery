@@ -17,6 +17,7 @@ jobs:
         with:
           node-version: 12.x
           always-auth: true
+          registry-url: https://registry.npmjs.org
 
       - id: yarn-cache
         run: echo "::set-output name=dir::$(yarn cache dir)"
@@ -31,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 
       # This is required separately from yarn test because it generates the typechain definitions

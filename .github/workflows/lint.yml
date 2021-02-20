@@ -18,13 +18,14 @@ jobs:
       - name: Set up node
         uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 12.x
           always-auth: true
+          registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Run linters
         uses: wearerequired/lint-action@a8497ddb33fb1205941fd40452ca9fff07e0770d
