@@ -1,6 +1,6 @@
 {
   "name": "@uniswap/v3-periphery",
-  "description": "🗿 Core smart contracts of Uniswap V3",
+  "description": "🎚 Peripheral smart contracts for interacting with Uniswap V3",
   "publishConfig": {
     "access": "restricted"
   },
