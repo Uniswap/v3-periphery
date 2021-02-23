@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.6.0;
 
-import '../interfaces/IERC20Minimal.sol';
+import '../interfaces/external/IERC20Minimal.sol';
 
 library TransferHelper {
     function safeTransferFrom(
