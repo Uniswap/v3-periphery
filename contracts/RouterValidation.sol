@@ -10,8 +10,12 @@ import './interfaces/IRouterPositions.sol';
 import './libraries/PoolAddress.sol';
 
 abstract contract RouterValidation is IRouterImmutableState {
+    function _blockTimestamp() internal view virtual returns (uint256) {
+        return block.timestamp;
+    }
+
     modifier checkDeadline(uint256 deadline) {
-        require(block.timestamp <= deadline, 'Transaction too old');
+        require(_blockTimestamp() <= deadline, 'Transaction too old');
         _;
     }
 

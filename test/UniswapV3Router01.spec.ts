@@ -5,7 +5,7 @@ import { Fixture } from 'ethereum-waffle'
 import { UniswapV3Router01, WETH9, TestERC20 } from '../typechain'
 import { expect } from './shared/expect'
 import { v3CoreFactoryFixture } from './shared/fixtures'
-import { encodePriceSqrt } from './shared/utilities'
+import { encodePriceSqrt, FeeAmount, getMaxTick, getMinTick, TICK_SPACINGS } from './shared/utilities'
 
 describe('UniswapV3Router01', () => {
   const wallets = waffle.provider.getWallets()
@@ -22,7 +22,7 @@ describe('UniswapV3Router01', () => {
     const wethFactory = await ethers.getContractFactory('WETH9')
     const weth = (await wethFactory.deploy()) as WETH9
 
-    const routerFactory = await ethers.getContractFactory('UniswapV3Router01')
+    const routerFactory = await ethers.getContractFactory('MockTimeUniswapV3Router01')
     const router = (await routerFactory.deploy(v3CoreFactory.address, weth.address)) as UniswapV3Router01
 
     const tokenFactory = await ethers.getContractFactory('TestERC20')
@@ -70,6 +70,20 @@ describe('UniswapV3Router01', () => {
   })
 
   describe('#createPairAndAddLiquidity', () => {
-    it('creates a pair')
+    it('creates a pair', async () => {
+      await tokens[0].approve(router.address, constants.MaxUint256)
+      await tokens[1].approve(router.address, constants.MaxUint256)
+      await router.createPairAndAddLiquidity({
+        tokenA: tokens[0].address,
+        tokenB: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: wallet.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
   })
 })
