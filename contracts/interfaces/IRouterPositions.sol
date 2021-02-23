@@ -10,7 +10,7 @@ interface IRouterPositions is IUniswapV3MintCallback {
     function addLiquidity(
         address tokenA,
         address tokenB,
-        uint256 fee,
+        uint24 fee,
         int24 tickLower,
         int24 tickUpper,
         uint256 amountADesired,
@@ -19,20 +19,14 @@ interface IRouterPositions is IUniswapV3MintCallback {
         uint256 amountBMin,
         address recipient,
         uint256 deadline
-    )
-        external
-        returns (
-            uint256 amountA,
-            uint256 amountB,
-            uint256 liquidity
-        );
+    ) external;
 
     /// @notice Remove liquidity to a given position
     function removeLiquidity(
         // Params
         address tokenA,
         address tokenB,
-        uint256 fee,
+        uint24 fee,
         int24 tickLower,
         int24 tickUpper,
         uint256 liquidity,
@@ -42,7 +36,7 @@ interface IRouterPositions is IUniswapV3MintCallback {
         uint256 amountAMin,
         uint256 amountBMin,
         uint256 deadline
-    ) external returns (uint256 amountA, uint256 amountB);
+    ) external;
 
     // TODO: Add ETH, Permits, Fee on Transfer
 }
