@@ -9,17 +9,13 @@ import './interfaces/IRouterImmutableState.sol';
 import './interfaces/IRouterPositions.sol';
 import './libraries/PoolAddress.sol';
 
-abstract contract RouterHelpers is IRouterImmutableState {
+abstract contract RouterValidation is IRouterImmutableState {
     modifier checkDeadline(uint256 deadline) {
         require(block.timestamp <= deadline, 'Transaction too old');
         _;
     }
 
-    function verifyCallback(
-        address tokenA,
-        address tokenB,
-        uint24 fee
-    ) internal view {
-        require(msg.sender == PoolAddress.computeAddress(this.factory(), tokenA, tokenB, fee));
+    function verifyCallback(PoolAddress.PoolKey memory poolKey) internal view {
+        require(msg.sender == PoolAddress.computeAddress(this.factory(), poolKey));
     }
 }

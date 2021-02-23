@@ -35,7 +35,7 @@ describe('PoolAddress', () => {
     it('zero arguments', async () => {
       expect(
         await poolAddress.computeAddress(constants.AddressZero, constants.AddressZero, constants.AddressZero, 0)
-      ).to.eq('0xF5FF66EC5e900a5c63c478b3d50CD758E47F3661')
+      ).to.eq('0x31FF4C93099D501240615BB40123f82E1Ff21f90')
     })
   })
 })

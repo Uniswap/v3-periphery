@@ -14,6 +14,6 @@ contract PoolAddressTest {
         address tokenB,
         uint24 fee
     ) external pure returns (address) {
-        return PoolAddress.computeAddress(factory, tokenA, tokenB, fee);
+        return PoolAddress.computeAddress(factory, PoolAddress.PoolKey({tokenA: tokenA, tokenB: tokenB, fee: fee}));
     }
 }
