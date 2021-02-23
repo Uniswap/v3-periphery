@@ -5,22 +5,22 @@ import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.so
 
 /// @title Router token swapping functionality
 /// @notice Functions for swapping tokens via Uniswap V3
-interface IRouterTokenSwaps is IUniswapV3SwapCallback {
+interface IRouterSwaps is IUniswapV3SwapCallback {
     /// @notice Swaps the exact amount of one token for the minimum amount of another
     function swapExactTokensForTokens(
         uint256 amountIn,
-        uint160 sqrtPriceLimitX96,
+        uint256 minAmountOut,
         bytes32[] calldata path,
         address recipient,
         uint256 deadline
-    ) external returns (uint256[] memory amounts);
+    ) external;
 
     /// @notice Swaps a maximum amount of one token for an exact amount another
     function swapTokensForExactTokens(
+        uint256 maxAmountIn,
         uint256 amountOut,
-        uint160 sqrtPriceLimitX96,
         bytes32[] calldata path,
         address recipient,
         uint256 deadline
-    ) external returns (uint256[] memory amounts);
+    ) external;
 }
