@@ -73,7 +73,7 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
         uint128 amount,
         uint256 amount0Max,
         uint256 amount1Max
-    ) private {
+    ) internal {
         MintCallbackData memory callbackData =
             MintCallbackData({payer: msg.sender, poolKey: poolKey, amount0Max: amount0Max, amount1Max: amount1Max});
         pool.mint(recipient, tickLower, tickUpper, amount, abi.encode(callbackData));
@@ -97,10 +97,5 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
 
         if (amount0Owed > 0) TransferHelper.safeTransferFrom(token0, decoded.payer, msg.sender, amount0Owed);
         if (amount1Owed > 0) TransferHelper.safeTransferFrom(token1, decoded.payer, msg.sender, amount1Owed);
-    }
-
-    /// @inheritdoc IRouterPositions
-    function removeLiquidity(RemoveLiquidityParams calldata params) external override {
-        revert('TODO');
     }
 }

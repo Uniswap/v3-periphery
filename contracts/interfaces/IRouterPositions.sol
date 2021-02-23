@@ -37,20 +37,4 @@ interface IRouterPositions is IUniswapV3MintCallback {
 
     /// @notice Add liquidity for the pool
     function addLiquidity(AddLiquidityParams calldata params) external;
-
-    struct RemoveLiquidityParams {
-        address tokenA;
-        address tokenB;
-        uint24 fee;
-        int24 tickLower;
-        int24 tickUpper;
-        uint128 amount;
-        uint256 amountAMin;
-        uint256 amountBMin;
-        address recipient;
-        uint256 deadline;
-    }
-
-    /// @notice Remove liquidity to a given position
-    function removeLiquidity(RemoveLiquidityParams calldata params) external;
 }
