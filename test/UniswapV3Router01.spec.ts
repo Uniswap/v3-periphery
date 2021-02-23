@@ -5,6 +5,7 @@ import { Fixture } from 'ethereum-waffle'
 import { UniswapV3Router01, WETH9, TestERC20 } from '../typechain'
 import { expect } from './shared/expect'
 import { v3CoreFactoryFixture } from './shared/fixtures'
+import snapshotGasCost from './shared/snapshotGasCost'
 import { encodePriceSqrt, FeeAmount, getMaxTick, getMinTick, TICK_SPACINGS } from './shared/utilities'
 
 describe('UniswapV3Router01', () => {
@@ -31,6 +32,9 @@ describe('UniswapV3Router01', () => {
       tokenFactory.deploy(constants.MaxUint256),
       tokenFactory.deploy(constants.MaxUint256),
     ])) as [TestERC20, TestERC20, TestERC20]
+
+    // approve all tokens from wallet
+    await Promise.all(tokens.map((token) => token.approve(router.address, constants.MaxUint256)))
 
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
@@ -71,8 +75,6 @@ describe('UniswapV3Router01', () => {
 
   describe('#createPairAndAddLiquidity', () => {
     it('creates a pair', async () => {
-      await tokens[0].approve(router.address, constants.MaxUint256)
-      await tokens[1].approve(router.address, constants.MaxUint256)
       await router.createPairAndAddLiquidity({
         tokenA: tokens[0].address,
         tokenB: tokens[1].address,
@@ -84,6 +86,22 @@ describe('UniswapV3Router01', () => {
         deadline: 1,
         fee: FeeAmount.MEDIUM,
       })
+    })
+
+    it('gas cost', async () => {
+      await snapshotGasCost(
+        router.createPairAndAddLiquidity({
+          tokenA: tokens[0].address,
+          tokenB: tokens[1].address,
+          sqrtPriceX96: encodePriceSqrt(1, 1),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: wallet.address,
+          amount: 10,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+        })
+      )
     })
   })
 })
