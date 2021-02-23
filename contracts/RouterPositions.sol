@@ -7,6 +7,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import './interfaces/IRouterImmutableState.sol';
 import './interfaces/IRouterPositions.sol';
+import './libraries/PoolAddress.sol';
 
 /// @title Logic for positions
 abstract contract RouterPositions is IRouterImmutableState, IRouterPositions {
@@ -17,9 +18,8 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions {
 
     /// @inheritdoc IRouterPositions
     function addLiquidity(AddLiquidityParams calldata params) external override {
-        // todo: compute address via create2
         IUniswapV3Pool pool =
-            IUniswapV3Pool(IUniswapV3Factory(this.factory()).getPool(params.tokenA, params.tokenB, params.fee));
+            IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), params.tokenA, params.tokenB, params.fee));
 
         pool.mint(
             params.recipient,

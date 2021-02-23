@@ -17,7 +17,7 @@ interface IRouterPositions is IUniswapV3MintCallback {
         uint128 amount;
     }
 
-    /// @notice Called for the first add liquidity of a pair
+    /// @notice Called to add liquidity for a pair that does not exist
     function createPairAndAddLiquidity(CreatePairAndAddLiquidityParams calldata params) external;
 
     struct AddLiquidityParams {
