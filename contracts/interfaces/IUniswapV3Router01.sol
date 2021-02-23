@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.5.0;
+pragma solidity >=0.7.5;
+pragma abicoder v2;
 
 import './IRouterPositions.sol';
 import './IRouterSwaps.sol';
