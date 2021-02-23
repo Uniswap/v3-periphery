@@ -8,29 +8,60 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import './interfaces/IRouterImmutableState.sol';
 import './interfaces/IRouterPositions.sol';
 import './libraries/PoolAddress.sol';
+import './RouterHelpers.sol';
 
 /// @title Logic for positions
-abstract contract RouterPositions is IRouterImmutableState, IRouterPositions {
+abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, RouterHelpers {
     /// @inheritdoc IRouterPositions
-    function createPairAndAddLiquidity(CreatePairAndAddLiquidityParams calldata params) external override {
-        revert('TODO');
+    function createPairAndAddLiquidity(CreatePairAndAddLiquidityParams calldata params)
+        external
+        override
+        checkDeadline(params.deadline)
+    {
+        IUniswapV3Pool pool =
+            IUniswapV3Pool(IUniswapV3Factory(this.factory()).createPool(params.tokenA, params.tokenB, params.fee));
+
+        pool.initialize(params.sqrtPriceX96);
+
+        // max is irrelevant because the pool creator set the price
+        _mint(pool, params.recipient, params.tickLower, params.tickUpper, params.amount, 0, 0);
     }
 
     /// @inheritdoc IRouterPositions
-    function addLiquidity(AddLiquidityParams calldata params) external override {
+    function addLiquidity(AddLiquidityParams calldata params) external override checkDeadline(params.deadline) {
         IUniswapV3Pool pool =
             IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), params.tokenA, params.tokenB, params.fee));
 
-        pool.mint(
+        _mint(
+            pool,
             params.recipient,
             params.tickLower,
             params.tickUpper,
             params.amount,
-            abi.encode(msg.sender, params.amountAMax, params.amountBMax)
+            params.amountAMax,
+            params.amountBMax
         );
-
-        revert('TODO');
     }
+
+    struct MintCallbackData {
+        // used to compute the address of the pair
+        address token0;
+        address token1;
+        uint24 fee;
+        // used to protect the minter from price movement
+        uint256 amount0Max;
+        uint256 amount1Max;
+    }
+
+    function _mint(
+        IUniswapV3Pool pool,
+        address recipient,
+        int24 tickLower,
+        int24 tickUpper,
+        uint128 amount,
+        uint256 amount0Max,
+        uint256 amount1Max
+    ) private {}
 
     /// @inheritdoc IUniswapV3MintCallback
     function uniswapV3MintCallback(
@@ -38,7 +69,8 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions {
         uint256 amount1Owed,
         bytes calldata data
     ) external override {
-        revert('TODO');
+        MintCallbackData memory decoded = abi.decode(data, (MintCallbackData));
+        verifyCallback(decoded.token0, decoded.token1, decoded.fee);
     }
 
     /// @inheritdoc IRouterPositions

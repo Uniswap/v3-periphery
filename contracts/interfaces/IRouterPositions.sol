@@ -15,6 +15,8 @@ interface IRouterPositions is IUniswapV3MintCallback {
         int24 tickLower;
         int24 tickUpper;
         uint128 amount;
+        address recipient;
+        uint256 deadline;
     }
 
     /// @notice Called to add liquidity for a pair that does not exist
