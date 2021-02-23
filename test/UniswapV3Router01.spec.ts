@@ -152,6 +152,8 @@ describe('UniswapV3Router01', () => {
       expect(tick).to.eq(0)
     })
 
+    it('fails if deadline is in past')
+
     it('gas cost', async () => {
       await snapshotGasCost(
         router.createPoolAndAddLiquidity({
@@ -166,6 +168,68 @@ describe('UniswapV3Router01', () => {
           fee: FeeAmount.MEDIUM,
         })
       )
+    })
+  })
+
+  describe('#addLiquidity', () => {
+    it('reverts if pool does not exist', async () => {
+      await expect(
+        router.addLiquidity({
+          tokenA: tokens[0].address,
+          tokenB: tokens[1].address,
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: wallet.address,
+          amount: 10,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+          amountAMax: constants.MaxUint256,
+          amountBMax: constants.MaxUint256,
+        })
+      ).to.be.reverted
+    })
+
+    describe('pool exists', () => {
+      const startingPrice = encodePriceSqrt(1, 1)
+      beforeEach('create the pool directly', async () => {
+        await v3CoreFactory.createPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+        const pool = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+        await new Contract(pool, POOL_ABI, wallet).initialize(startingPrice)
+      })
+
+      it('allows adding liquidity', async () => {
+        await router.addLiquidity({
+          tokenA: tokens[0].address,
+          tokenB: tokens[1].address,
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: wallet.address,
+          amount: 10,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+          amountAMax: constants.MaxUint256,
+          amountBMax: constants.MaxUint256,
+        })
+      })
+
+      it('fails if deadline is in past')
+
+      it('gas cost', async () => {
+        await snapshotGasCost(
+          router.addLiquidity({
+            tokenA: tokens[0].address,
+            tokenB: tokens[1].address,
+            tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+            tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+            recipient: wallet.address,
+            amount: 10,
+            deadline: 1,
+            fee: FeeAmount.MEDIUM,
+            amountAMax: constants.MaxUint256,
+            amountBMax: constants.MaxUint256,
+          })
+        )
+      })
     })
   })
 })
