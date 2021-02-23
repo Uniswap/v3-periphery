@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.7.6;
 
-import {IUniswapV3MintCallback} from '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
+import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 
-interface IRouterLP is IUniswapV3MintCallback {
-    // If amountADesired is 0 -> single sided with tokenB
-    // If amountBDesired is 0 -> single sided with tokenA
-    // Check that the liquidity shares received convert to amountAMin and amountBMin
-    // after the state transition is done
+/// @title Router token position management
+/// @notice Functions for managing positions in Uniswap V3
+interface IRouterPositions is IUniswapV3MintCallback {
+    /// @notice Add liquidity to a given position
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -28,6 +27,7 @@ interface IRouterLP is IUniswapV3MintCallback {
             uint256 liquidity
         );
 
+    /// @notice Remove liquidity to a given position
     function removeLiquidity(
         // Params
         address tokenA,
