@@ -1,3 +1,3 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`UniswapV3Router01 #createPairAndAddLiquidity gas cost 1`] = `4813209`;
+exports[`UniswapV3Router01 #createPoolAndAddLiquidity gas cost 1`] = `4813232`;

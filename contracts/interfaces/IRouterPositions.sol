@@ -19,8 +19,8 @@ interface IRouterPositions is IUniswapV3MintCallback {
         uint256 deadline;
     }
 
-    /// @notice Called to add liquidity for a pair that does not exist
-    function createPairAndAddLiquidity(CreatePairAndAddLiquidityParams calldata params) external;
+    /// @notice Called to add liquidity for a pool that does not exist
+    function createPoolAndAddLiquidity(CreatePairAndAddLiquidityParams calldata params) external;
 
     struct AddLiquidityParams {
         address tokenA;
@@ -35,7 +35,7 @@ interface IRouterPositions is IUniswapV3MintCallback {
         uint256 deadline;
     }
 
-    /// @notice Add liquidity for the pair
+    /// @notice Add liquidity for the pool
     function addLiquidity(AddLiquidityParams calldata params) external;
 
     struct RemoveLiquidityParams {

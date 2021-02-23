@@ -4,6 +4,7 @@ import { waffle, ethers } from 'hardhat'
 import { PoolAddressTest } from '../typechain'
 import { expect } from './shared/expect'
 import { bytecode } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
+import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('PoolAddress', () => {
   const wallets = waffle.provider.getWallets()
@@ -58,6 +59,17 @@ describe('PoolAddress', () => {
           3000
         )
       ).to.eq('0x2724C7391008A1d24acD3Aa13562114addF00312')
+    })
+
+    it('gas cost', async () => {
+      await snapshotGasCost(
+        poolAddress.getGasCostOfComputeAddress(
+          '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+          '0x2000000000000000000000000000000000000000',
+          '0x1000000000000000000000000000000000000000',
+          3000
+        )
+      )
     })
   })
 })

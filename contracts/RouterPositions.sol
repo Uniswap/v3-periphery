@@ -14,7 +14,7 @@ import './RouterValidation.sol';
 /// @title Logic for positions
 abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, RouterValidation {
     /// @inheritdoc IRouterPositions
-    function createPairAndAddLiquidity(CreatePairAndAddLiquidityParams calldata params)
+    function createPoolAndAddLiquidity(CreatePairAndAddLiquidityParams calldata params)
         external
         override
         checkDeadline(params.deadline)

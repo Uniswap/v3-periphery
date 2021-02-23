@@ -8,6 +8,8 @@ import { v3CoreFactoryFixture } from './shared/fixtures'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { encodePriceSqrt, FeeAmount, getMaxTick, getMinTick, TICK_SPACINGS } from './shared/utilities'
 
+import { abi as POOL_ABI } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
+
 describe('UniswapV3Router01', () => {
   const wallets = waffle.provider.getWallets()
   const [wallet, other] = wallets
@@ -73,9 +75,9 @@ describe('UniswapV3Router01', () => {
     })
   })
 
-  describe('#createPairAndAddLiquidity', () => {
-    it('creates a pair', async () => {
-      await router.createPairAndAddLiquidity({
+  describe('#createPoolAndAddLiquidity', () => {
+    it('creates a pool', async () => {
+      await router.createPoolAndAddLiquidity({
         tokenA: tokens[0].address,
         tokenB: tokens[1].address,
         sqrtPriceX96: encodePriceSqrt(1, 1),
@@ -88,9 +90,71 @@ describe('UniswapV3Router01', () => {
       })
     })
 
+    it('fails if pool already exists', async () => {
+      await router.createPoolAndAddLiquidity({
+        tokenA: tokens[0].address,
+        tokenB: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: wallet.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+
+      await expect(
+        router.createPoolAndAddLiquidity({
+          tokenA: tokens[0].address,
+          tokenB: tokens[1].address,
+          sqrtPriceX96: encodePriceSqrt(1, 1),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: wallet.address,
+          amount: 10,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+        })
+      ).to.be.reverted
+    })
+
+    it('can take tokens in opposite order', async () => {
+      await router.createPoolAndAddLiquidity({
+        tokenA: tokens[1].address,
+        tokenB: tokens[0].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: wallet.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    it('deploys pool with expected parameters', async () => {
+      await router.createPoolAndAddLiquidity({
+        tokenA: tokens[1].address,
+        tokenB: tokens[0].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: wallet.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+      const poolAddress = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+      expect(poolAddress).to.not.eq(constants.AddressZero)
+      const pool = new Contract(poolAddress, POOL_ABI, wallet)
+      const { sqrtPriceX96, tick } = await pool.slot0()
+      expect(sqrtPriceX96).to.eq(encodePriceSqrt(1, 1))
+      expect(tick).to.eq(0)
+    })
+
     it('gas cost', async () => {
       await snapshotGasCost(
-        router.createPairAndAddLiquidity({
+        router.createPoolAndAddLiquidity({
           tokenA: tokens[0].address,
           tokenB: tokens[1].address,
           sqrtPriceX96: encodePriceSqrt(1, 1),
