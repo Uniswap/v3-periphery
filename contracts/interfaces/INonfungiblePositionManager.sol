@@ -2,10 +2,11 @@
 pragma solidity >=0.5.0;
 
 import './external/IERC721Metadata.sol';
+import './external/IERC721Enumerable.sol';
 
 /// @title Non-fungible position manager
 /// @notice Non-fungible token wrapper for Uniswap V3 Positions
-interface INonfungiblePositionManager is IERC721Metadata {
+interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
     /// @notice Returns the position information associated with a given token ID.
     function positions(uint256)
         external

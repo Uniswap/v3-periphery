@@ -26,6 +26,10 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
         return string(abi.encode('data:application/json,'));
     }
 
+    /// @dev Packed with _nextId so we only use one SSTORE to mint an NFT
+    uint64 private _totalSupply;
+    uint64 private _nextId = 1;
+
     /// @inheritdoc IERC721
     mapping(address => uint256) public override balanceOf;
 
@@ -98,6 +102,9 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
         require(positions[_tokenId].owner == _from, 'Invalid _from');
         require(_to != address(0), 'Invalid _to');
         positions[_tokenId].owner = _to;
+        // assumed to be safe because the owner is _from
+        balanceOf[_from] -= 1;
+        balanceOf[_to] += 1;
         emit Transfer(_from, _to, _tokenId);
     }
 
@@ -142,5 +149,22 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
         uint256 _tokenId
     ) external override isAuthorized(_tokenId) {
         _transferFrom(_from, _to, _tokenId);
+    }
+
+    /// @inheritdoc IERC721Enumerable
+    function totalSupply() external view override returns (uint256) {
+        return uint256(_totalSupply);
+    }
+
+    /// @inheritdoc IERC721Enumerable
+    function tokenByIndex(uint256 _index) external view override returns (uint256) {
+        require(_index < _totalSupply, 'Invalid ID');
+        return _index;
+    }
+
+    /// @inheritdoc IERC721Enumerable
+    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view override returns (uint256) {
+        require(_index < balanceOf[_owner]);
+        revert('TODO');
     }
 }

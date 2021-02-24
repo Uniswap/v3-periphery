@@ -2,6 +2,6 @@
 
 exports[`UniswapV3Router01 #addLiquidity pool exists gas cost 1`] = `304770`;
 
-exports[`UniswapV3Router01 #createPoolAndAddLiquidity gas cost 1`] = `4813381`;
+exports[`UniswapV3Router01 #createPoolAndAddLiquidity gas cost 1`] = `4813358`;
 
-exports[`UniswapV3Router01 router bytecode size 1`] = `6301`;
+exports[`UniswapV3Router01 router bytecode size 1`] = `6572`;
