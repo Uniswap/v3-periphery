@@ -37,13 +37,13 @@ describe.only('Path', () => {
   })
 
   describe('#paths', () => {
-    it.only("solidity decode one", async () => {
+    it("solidity decode one", async () => {
       const encodedPath = encodeOne(tokenAddrs[0], tokenAddrs[1], fees[0])
-      const decodedPath = decodeOne(Buffer.from(encodedPath, 'hex'), 0)
-      // const decodedPath = await path.decode('0x' + encodedPath)
-      console.log(decodedPath)
+      const { token0, token1, fee } = await path.decode('0x' + encodedPath)
+      const decodedPath = { token0, token1, fee }
       expect(decodedPath).to.be.deep.eq({ token0: tokenAddrs[0], token1: tokenAddrs[1], fee: fees[0] })
     })
+
 
     it("encodes and decodes a path", async () => {
       const encodedPath = encodePath(tokenAddrs, fees)
