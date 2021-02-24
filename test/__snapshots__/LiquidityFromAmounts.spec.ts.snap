@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LiquidityFromAmounts #getLiquidityForAmount0 gas 1`] = `755`;
+
+exports[`LiquidityFromAmounts #getLiquidityForAmount1 gas 1`] = `419`;
+
+exports[`LiquidityFromAmounts #getLiquidityForAmounts gas 1`] = `1303`;
