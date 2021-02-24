@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.5.0;
 
-import './external/IERC721Metadata.sol';
-import './external/IERC721Enumerable.sol';
+import '@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol';
+import '@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol';
 
 /// @title Non-fungible position manager
 /// @notice Non-fungible token wrapper for Uniswap V3 Positions
 interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
     /// @notice Returns the position information associated with a given token ID.
-    function positions(uint256)
+    /// @param _tokenId The ID of the token that represents the position
+    function positions(uint256 _tokenId)
         external
         view
         returns (

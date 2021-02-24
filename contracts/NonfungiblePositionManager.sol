@@ -2,8 +2,9 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
+
 import './interfaces/INonfungiblePositionManager.sol';
-import './interfaces/external/IERC721TokenReceiver.sol';
 import './RouterPositions.sol';
 
 abstract contract NonfungiblePositionManager is INonfungiblePositionManager, RouterPositions {
@@ -117,8 +118,8 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
         _transferFrom(_from, _to, _tokenId);
 
         require(
-            IERC721TokenReceiver(_to).onERC721Received(msg.sender, _from, _tokenId, data) ==
-                IERC721TokenReceiver.onERC721Received.selector,
+            IERC721Receiver(_to).onERC721Received(msg.sender, _from, _tokenId, data) ==
+                IERC721Receiver.onERC721Received.selector,
             'Unsafe transfer'
         );
     }
