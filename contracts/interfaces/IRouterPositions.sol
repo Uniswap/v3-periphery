@@ -8,8 +8,8 @@ import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.so
 /// @notice Functions for managing positions in Uniswap V3
 interface IRouterPositions is IUniswapV3MintCallback {
     struct CreatePairAndAddLiquidityParams {
-        address tokenA;
-        address tokenB;
+        address token0;
+        address token1;
         uint24 fee;
         uint160 sqrtPriceX96;
         int24 tickLower;
@@ -23,8 +23,8 @@ interface IRouterPositions is IUniswapV3MintCallback {
     function createPoolAndAddLiquidity(CreatePairAndAddLiquidityParams calldata params) external;
 
     struct AddLiquidityParams {
-        address tokenA;
-        address tokenB;
+        address token0;
+        address token1;
         uint24 fee;
         int24 tickLower;
         int24 tickUpper;

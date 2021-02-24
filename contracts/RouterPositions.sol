@@ -20,14 +20,14 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
         checkDeadline(params.deadline)
     {
         IUniswapV3Pool pool =
-            IUniswapV3Pool(IUniswapV3Factory(this.factory()).createPool(params.tokenA, params.tokenB, params.fee));
+            IUniswapV3Pool(IUniswapV3Factory(this.factory()).createPool(params.token0, params.token1, params.fee));
 
         pool.initialize(params.sqrtPriceX96);
 
         // max is irrelevant because the pool creator set the price
         _mint(
             pool,
-            PoolAddress.PoolKey({tokenA: params.tokenA, tokenB: params.tokenB, fee: params.fee}),
+            PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee}),
             params.recipient,
             params.tickLower,
             params.tickUpper,
@@ -40,7 +40,7 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
     /// @inheritdoc IRouterPositions
     function addLiquidity(AddLiquidityParams calldata params) external override checkDeadline(params.deadline) {
         PoolAddress.PoolKey memory poolKey =
-            PoolAddress.PoolKey({tokenA: params.tokenA, tokenB: params.tokenB, fee: params.fee});
+            PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
 
         _mint(
             IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey)),
@@ -74,6 +74,7 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
         uint256 amount0Max,
         uint256 amount1Max
     ) internal {
+        require(poolKey.token0 < poolKey.token1, 'Token order');
         MintCallbackData memory callbackData =
             MintCallbackData({payer: msg.sender, poolKey: poolKey, amount0Max: amount0Max, amount1Max: amount1Max});
         pool.mint(recipient, tickLower, tickUpper, amount, abi.encode(callbackData));
@@ -90,12 +91,9 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
         require(amount0Owed <= decoded.amount0Max);
         require(amount1Owed <= decoded.amount1Max);
 
-        (address token0, address token1) =
-            decoded.poolKey.tokenA < decoded.poolKey.tokenB
-                ? (decoded.poolKey.tokenA, decoded.poolKey.tokenB)
-                : (decoded.poolKey.tokenB, decoded.poolKey.tokenA);
-
-        if (amount0Owed > 0) TransferHelper.safeTransferFrom(token0, decoded.payer, msg.sender, amount0Owed);
-        if (amount1Owed > 0) TransferHelper.safeTransferFrom(token1, decoded.payer, msg.sender, amount1Owed);
+        if (amount0Owed > 0)
+            TransferHelper.safeTransferFrom(decoded.poolKey.token0, decoded.payer, msg.sender, amount0Owed);
+        if (amount1Owed > 0)
+            TransferHelper.safeTransferFrom(decoded.poolKey.token1, decoded.payer, msg.sender, amount1Owed);
     }
 }
