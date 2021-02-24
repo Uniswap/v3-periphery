@@ -34,42 +34,42 @@ describe('LiquidityAmounts', async () => {
       const sqrtPriceX96 = encodePriceSqrt(1, 1)
       const sqrtPriceAX96 = encodePriceSqrt(100, 110)
       const sqrtPriceBX96 = encodePriceSqrt(110, 100)
-      const liquidity = await liquidityFromAmounts.getGasCostOfGetLiquidityForAmounts(
+      const liquidity = await liquidityFromAmounts.getLiquidityForAmounts(
         sqrtPriceX96,
         sqrtPriceAX96,
         sqrtPriceBX96,
         100,
         200
       )
-      expect(liquidity).to.eq(1508)
+      expect(liquidity).to.eq(2148)
     })
 
     it('amounts for price below', async () => {
       const sqrtPriceX96 = encodePriceSqrt(99, 100)
       const sqrtPriceAX96 = encodePriceSqrt(100, 110)
       const sqrtPriceBX96 = encodePriceSqrt(110, 100)
-      const liquidity = await liquidityFromAmounts.getGasCostOfGetLiquidityForAmounts(
+      const liquidity = await liquidityFromAmounts.getLiquidityForAmounts(
         sqrtPriceX96,
         sqrtPriceAX96,
         sqrtPriceBX96,
         100,
         200
       )
-      expect(liquidity).to.eq(1508)
+      expect(liquidity).to.eq(1938)
     })
 
     it('amounts for price above', async () => {
       const sqrtPriceX96 = encodePriceSqrt(111, 100)
       const sqrtPriceAX96 = encodePriceSqrt(100, 110)
       const sqrtPriceBX96 = encodePriceSqrt(110, 100)
-      const liquidity = await liquidityFromAmounts.getGasCostOfGetLiquidityForAmounts(
+      const liquidity = await liquidityFromAmounts.getLiquidityForAmounts(
         sqrtPriceX96,
         sqrtPriceAX96,
         sqrtPriceBX96,
         100,
         200
       )
-      expect(liquidity).to.eq(669)
+      expect(liquidity).to.eq(2097)
     })
 
     it('gas for price below', async () => {
