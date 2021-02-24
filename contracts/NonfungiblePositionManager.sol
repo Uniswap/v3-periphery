@@ -91,6 +91,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
         _;
     }
 
+    /// @inheritdoc IERC721
     function _transferFrom(
         address _from,
         address _to,
@@ -102,6 +103,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
         emit Transfer(_from, _to, _tokenId);
     }
 
+    /// @inheritdoc IERC721
     function _safeTransferFrom(
         address _from,
         address _to,
@@ -117,6 +119,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
         );
     }
 
+    /// @inheritdoc IERC721
     function safeTransferFrom(
         address _from,
         address _to,
@@ -126,6 +129,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
         _safeTransferFrom(_from, _to, _tokenId, data);
     }
 
+    /// @inheritdoc IERC721
     function safeTransferFrom(
         address _from,
         address _to,
@@ -134,6 +138,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
         _safeTransferFrom(_from, _to, _tokenId, '');
     }
 
+    /// @inheritdoc IERC721
     function transferFrom(
         address _from,
         address _to,
