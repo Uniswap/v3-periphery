@@ -1,15 +1,15 @@
 import { ethers } from 'hardhat'
-import { LiquidityFromAmountsTest } from '../typechain/LiquidityFromAmountsTest'
+import { LiquidityAmountsTest } from '../typechain/LiquidityAmountsTest'
 
 import snapshotGasCost from './shared/snapshotGasCost'
 import { encodePriceSqrt } from './shared/utilities'
 
-describe('LiquidityFromAmounts', async () => {
-  let liquidityFromAmounts: LiquidityFromAmountsTest
+describe('LiquidityAmounts', async () => {
+  let liquidityFromAmounts: LiquidityAmountsTest
 
   before('deploy test library', async () => {
-    const liquidityFromAmountsTestFactory = await ethers.getContractFactory('LiquidityFromAmountsTest')
-    liquidityFromAmounts = (await liquidityFromAmountsTestFactory.deploy()) as LiquidityFromAmountsTest
+    const liquidityFromAmountsTestFactory = await ethers.getContractFactory('LiquidityAmountsTest')
+    liquidityFromAmounts = (await liquidityFromAmountsTestFactory.deploy()) as LiquidityAmountsTest
   })
 
   describe('#getLiquidityForAmount0', () => {
@@ -30,10 +30,11 @@ describe('LiquidityFromAmounts', async () => {
 
   describe('#getLiquidityForAmounts', () => {
     it('gas', async () => {
+      const sqrtPriceX96 = encodePriceSqrt(1, 1)
       const sqrtPriceAX96 = encodePriceSqrt(100, 110)
       const sqrtPriceBX96 = encodePriceSqrt(110, 100)
       await snapshotGasCost(
-        liquidityFromAmounts.getGasCostOfGetLiquidityForAmounts(sqrtPriceAX96, sqrtPriceBX96, 100, 200)
+        liquidityFromAmounts.getGasCostOfGetLiquidityForAmounts(sqrtPriceX96, sqrtPriceAX96, sqrtPriceBX96, 100, 200)
       )
     })
   })
