@@ -55,7 +55,7 @@ interface IERC721 is IERC165 {
         address _to,
         uint256 _tokenId,
         bytes calldata data
-    ) external payable;
+    ) external;
 
     /// @notice Transfers the ownership of an NFT from one address to another address
     /// @dev This works identically to the other function with an extra data parameter,
@@ -67,7 +67,7 @@ interface IERC721 is IERC165 {
         address _from,
         address _to,
         uint256 _tokenId
-    ) external payable;
+    ) external;
 
     /// @notice Transfer ownership of an NFT -- THE CALLER IS RESPONSIBLE
     ///  TO CONFIRM THAT `_to` IS CAPABLE OF RECEIVING NFTS OR ELSE
@@ -83,7 +83,7 @@ interface IERC721 is IERC165 {
         address _from,
         address _to,
         uint256 _tokenId
-    ) external payable;
+    ) external;
 
     /// @notice Change or reaffirm the approved address for an NFT
     /// @dev The zero address indicates there is no approved address.
@@ -91,7 +91,7 @@ interface IERC721 is IERC165 {
     ///  operator of the current owner.
     /// @param _approved The new approved NFT controller
     /// @param _tokenId The NFT to approve
-    function approve(address _approved, uint256 _tokenId) external payable;
+    function approve(address _approved, uint256 _tokenId) external;
 
     /// @notice Enable or disable approval for a third party ("operator") to manage
     ///  all of `msg.sender`'s assets
