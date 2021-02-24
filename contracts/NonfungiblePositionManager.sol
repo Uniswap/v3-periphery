@@ -45,7 +45,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
         int24 tickUpper;
         // the liquidity of the position
         uint128 liquidity;
-        // the fee growth of the position as of the last action on the position
+        // the fee growth of the aggregate position as of the last action on the individual position
         uint256 feeGrowthInside0LastX128;
         uint256 feeGrowthInside1LastX128;
         // how many uncollected fees are held by this contract owed to the position, as of the last computation
@@ -53,9 +53,8 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
         uint128 feesOwed1;
     }
 
-    // positions by id
-    // todo: natspec
-    mapping(uint256 => Position) public positions;
+    /// @inheritdoc INonfungiblePositionManager
+    mapping(uint256 => Position) public override positions;
 
     /// @inheritdoc IERC721
     function ownerOf(uint256 _tokenId) public view override returns (address owner) {
