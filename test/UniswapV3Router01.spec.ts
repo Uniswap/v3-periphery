@@ -14,7 +14,7 @@ import {
   getMinTick,
   TICK_SPACINGS,
   encodePath,
-  expandTo18Decimals
+  expandTo18Decimals,
 } from './shared/utilities'
 
 import { abi as POOL_ABI } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
