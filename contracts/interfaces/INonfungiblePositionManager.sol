@@ -39,7 +39,13 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
     }
 
     /// @notice Creates a new position wrapped in a NFT for the first time for a given token0/token1/fee
-    function firstMint(FirstMintParams calldata params) external returns (uint256 tokenId);
+    function firstMint(FirstMintParams calldata params)
+        external
+        returns (
+            uint256 tokenId,
+            uint256 amount0,
+            uint256 amount1
+        );
 
     struct MintParams {
         address token0;
@@ -55,17 +61,19 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
     }
 
     /// @notice Creates a new position wrapped in a NFT
-    function mint(MintParams calldata params) external returns (uint256 tokenId);
+    function mint(MintParams calldata params)
+        external
+        returns (
+            uint256 tokenId,
+            uint256 amount0,
+            uint256 amount1
+        );
 
     /// @notice Increases the amount of liquidity in a position, with tokens paid by the `msg.sender`
-    function increaseLiquidity(uint256 tokenId, uint256 amount) external;
+    function increaseLiquidity(uint256 tokenId, uint256 amount) external returns (uint256 amount0, uint256 amount1);
 
-    /// @notice Decreases the amount of liquidity in a position, sending the proceeds to the specified recipient
-    function decreaseLiquidity(
-        uint256 tokenId,
-        uint256 amount,
-        address recipient
-    ) external;
+    /// @notice Decreases the amount of liquidity in a position, keeping the fees
+    function decreaseLiquidity(uint256 tokenId, uint256 amount) external returns (uint256 amount0, uint256 amount1);
 
     /// @notice Collects up to a maximum amount of fees owed to a specific position to the recipient
     function collect(
@@ -73,10 +81,11 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
         uint256 amount0Max,
         uint256 amount1Max,
         address recipient
-    ) external;
+    ) external returns (uint256 amount0, uint256 amount1);
 
-    /// @notice Exits a position by decreasing liquidity to 0, and sending any fees plus
-    function exit(uint256 tokenId, address recipient) external;
+    /// @notice Exits a position by decreasing liquidity to 0, and sending all fees + tokens from liquidity to the recipient,
+    /// then burns the NFT token ID.
+    function exit(uint256 tokenId, address recipient) external returns (uint256 amount0, uint256 amount1);
 
     /// @notice Accept approval of a token via signature
     function permit(

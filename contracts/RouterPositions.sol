@@ -18,6 +18,7 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
         public
         override
         checkDeadline(params.deadline)
+        returns (uint256 amount0, uint256 amount1)
     {
         IUniswapV3Pool pool =
             IUniswapV3Pool(IUniswapV3Factory(this.factory()).createPool(params.token0, params.token1, params.fee));
@@ -25,33 +26,40 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
         pool.initialize(params.sqrtPriceX96);
 
         // max is irrelevant because the pool creator set the price
-        _addLiquidity(
-            pool,
-            PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee}),
-            params.recipient,
-            params.tickLower,
-            params.tickUpper,
-            params.amount,
-            type(uint256).max,
-            type(uint256).max
-        );
+        return
+            _addLiquidity(
+                pool,
+                PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee}),
+                params.recipient,
+                params.tickLower,
+                params.tickUpper,
+                params.amount,
+                type(uint256).max,
+                type(uint256).max
+            );
     }
 
     /// @inheritdoc IRouterPositions
-    function addLiquidity(AddLiquidityParams calldata params) external override checkDeadline(params.deadline) {
+    function addLiquidity(AddLiquidityParams calldata params)
+        external
+        override
+        checkDeadline(params.deadline)
+        returns (uint256 amount0, uint256 amount1)
+    {
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
 
-        _addLiquidity(
-            IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey)),
-            poolKey,
-            params.recipient,
-            params.tickLower,
-            params.tickUpper,
-            params.amount,
-            params.amount0Max,
-            params.amount1Max
-        );
+        return
+            _addLiquidity(
+                IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey)),
+                poolKey,
+                params.recipient,
+                params.tickLower,
+                params.tickUpper,
+                params.amount,
+                params.amount0Max,
+                params.amount1Max
+            );
     }
 
     struct MintCallbackData {
@@ -73,11 +81,11 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
         uint128 amount,
         uint256 amount0Max,
         uint256 amount1Max
-    ) internal {
+    ) internal returns (uint256 amount0, uint256 amount1) {
         require(poolKey.token0 < poolKey.token1, 'Token order');
         MintCallbackData memory callbackData =
             MintCallbackData({payer: msg.sender, poolKey: poolKey, amount0Max: amount0Max, amount1Max: amount1Max});
-        pool.mint(recipient, tickLower, tickUpper, amount, abi.encode(callbackData));
+        return pool.mint(recipient, tickLower, tickUpper, amount, abi.encode(callbackData));
     }
 
     /// @inheritdoc IUniswapV3MintCallback

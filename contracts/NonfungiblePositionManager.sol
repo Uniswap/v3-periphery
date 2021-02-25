@@ -40,14 +40,18 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         external
         override
         checkDeadline(params.deadline)
-        returns (uint256 tokenId)
+        returns (
+            uint256 tokenId,
+            uint256 amount0,
+            uint256 amount1
+        )
     {
         IUniswapV3Pool pool =
             IUniswapV3Pool(IUniswapV3Factory(this.factory()).createPool(params.token0, params.token1, params.fee));
 
         pool.initialize(params.sqrtPriceX96);
 
-        _addLiquidity(
+        (amount0, amount1) = _addLiquidity(
             pool,
             PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee}),
             address(this),
@@ -78,14 +82,18 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         external
         override
         checkDeadline(params.deadline)
-        returns (uint256 tokenId)
+        returns (
+            uint256 tokenId,
+            uint256 amount0,
+            uint256 amount1
+        )
     {
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
 
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
 
-        _addLiquidity(
+        (amount0, amount1) = _addLiquidity(
             pool,
             poolKey,
             address(this),
@@ -121,16 +129,22 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
     }
 
     /// @inheritdoc INonfungiblePositionManager
-    function increaseLiquidity(uint256 tokenId, uint256 amount) external override isAuthorizedForToken(tokenId) {
+    function increaseLiquidity(uint256 tokenId, uint256 amount)
+        external
+        override
+        isAuthorizedForToken(tokenId)
+        returns (uint256 amount0, uint256 amount1)
+    {
         revert('TODO');
     }
 
     /// @inheritdoc INonfungiblePositionManager
-    function decreaseLiquidity(
-        uint256 tokenId,
-        uint256 amount,
-        address recipient
-    ) external override isAuthorizedForToken(tokenId) {
+    function decreaseLiquidity(uint256 tokenId, uint256 amount)
+        external
+        override
+        isAuthorizedForToken(tokenId)
+        returns (uint256 amount0, uint256 amount1)
+    {
         revert('TODO');
     }
 
@@ -140,12 +154,17 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         uint256 amount0Max,
         uint256 amount1Max,
         address recipient
-    ) external override isAuthorizedForToken(tokenId) {
+    ) external override isAuthorizedForToken(tokenId) returns (uint256 amount0, uint256 amount1) {
         revert('TODO');
     }
 
     /// @inheritdoc INonfungiblePositionManager
-    function exit(uint256 tokenId, address recipient) external override isAuthorizedForToken(tokenId) {
+    function exit(uint256 tokenId, address recipient)
+        external
+        override
+        isAuthorizedForToken(tokenId)
+        returns (uint256 amount0, uint256 amount1)
+    {
         revert('TODO');
     }
 
@@ -159,7 +178,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external override {
+    ) external override checkDeadline(deadline) {
         revert('TODO');
     }
 }
