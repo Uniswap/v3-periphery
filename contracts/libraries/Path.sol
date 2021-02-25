@@ -4,16 +4,21 @@ pragma solidity >=0.6.0;
 import 'hardhat/console.sol';
 
 import './BytesLib.sol';
+import './PoolAddress.sol';
 
 library Path {
     uint256 internal constant ADDR_SIZE = 20;
     uint256 internal constant FEE_SIZE = 2;
 
-    uint256 internal constant LENGTH_SIZE = 1;
     uint256 internal constant POP_OFFSET = ADDR_SIZE + FEE_SIZE + ADDR_SIZE;
     uint256 internal constant NEXT_OFFSET = ADDR_SIZE + FEE_SIZE;
 
     using BytesLib for bytes;
+
+    // checks if the path has enough data in it to construct a pair
+    function hasPairs(bytes memory path) internal pure returns (bool) {
+        return path.length > POP_OFFSET;
+    }
 
     // decodes a single element
     function decode(bytes memory path)
@@ -30,18 +35,18 @@ library Path {
         token1 = path.toAddress(ADDR_SIZE + FEE_SIZE);
     }
 
-    function len(bytes memory path) internal pure returns (uint8) {
-        return uint8(path.slice(0, 1)[0]);
+    function peekPool(bytes memory path, address factory) internal pure returns (address) {
+        (address token0, address token1, uint24 fee) = decode(path);
+        PoolAddress.PoolKey memory key = PoolAddress.PoolKey({tokenA: token0, tokenB: token1, fee: fee});
+        return PoolAddress.computeAddress(factory, key);
     }
 
-    function pop(bytes memory path) internal pure returns (bytes memory popped, bytes memory rest) {
-        // slice the first element: token0, fee, token1
-        popped = path.slice(LENGTH_SIZE, POP_OFFSET);
-        // get the rest of the buffer with 1 extra leading byte from the previous
-        // element for the length
-        rest = path.slice(NEXT_OFFSET, path.length - NEXT_OFFSET);
-        // subtract 1 from the array length
-        bytes1 length = bytes1(uint8(path.slice(0, 1)[0]) - 1);
-        rest[0] = length;
+    function get(bytes memory path, uint256 i) internal pure returns (bytes memory el) {
+        el = path.slice(i * NEXT_OFFSET, POP_OFFSET);
+    }
+
+    // skips `i` items from the buffer and return the remaining bufer
+    function skip(bytes memory path, uint256 i) internal pure returns (bytes memory rest) {
+        rest = path.slice(i * NEXT_OFFSET, path.length - i * NEXT_OFFSET);
     }
 }

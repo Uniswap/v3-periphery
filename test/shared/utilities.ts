@@ -69,7 +69,6 @@ export function encodePriceSqrt(reserve1: BigNumberish, reserve0: BigNumberish):
 
 const FEE_SIZE = 2
 const ADDR_SIZE = 20
-const LENGTH_SIZE = 1
 
 export function encodeOne(token0: string, token1: string, fee: FeeAmount): string {
   // 20 byte encoding of token0
@@ -109,11 +108,8 @@ export function encodePath(path: string[], fees: FeeAmount[]): string {
   // encode the final token
   encoded += path[path.length - 1].slice(2)
 
-  // 1 byte encoding of the number of pairs we expect to see (equal to the number of fees)
-  const length = Buffer.from([fees.length]).toString('hex')
-
   // num els + els flattened
-  return '0x' + length + encoded
+  return '0x' + encoded
 }
 
 interface PoolAddress {
@@ -122,21 +118,24 @@ interface PoolAddress {
   fee: FeeAmount
 }
 
+const OFFSET = ADDR_SIZE + FEE_SIZE
+const DATA_SIZE = ADDR_SIZE * 2 + FEE_SIZE
+
 export function decodePath(path: string): PoolAddress[] {
-  const pathBytes = Buffer.from(path.slice(2), 'hex')
-  const length = pathBytes[0]
-  const data = pathBytes.slice(1)
+  let data = Buffer.from(path.slice(2), 'hex')
 
   let decoded = []
-  for (let i = 0; i < length; i++) {
-    const res = decodeOne(data, (ADDR_SIZE + FEE_SIZE) * i)
+  let i = 1;
+  while(data.length >= DATA_SIZE) {
+    const res = decodeOne(data, 0)
     decoded.push(res)
+    data = data.slice(i *  OFFSET, (i + 1) *  DATA_SIZE)
+    i += 1
   }
 
   return decoded
 }
 
-// 2 <token> <fee> <token> <fee> <token>
 export function decodeOne(tokenFeeAndToken: Buffer, offset: number): PoolAddress {
   // reads the next 20 bytes for the token address
   let start = offset
@@ -160,26 +159,5 @@ export function decodeOne(tokenFeeAndToken: Buffer, offset: number): PoolAddress
     token0,
     token1,
     fee,
-  }
-}
-
-const NEXT_OFFSET = LENGTH_SIZE + ADDR_SIZE + FEE_SIZE
-const POP_OFFSET = LENGTH_SIZE + ADDR_SIZE + FEE_SIZE + ADDR_SIZE
-
-export function popFromPath(path: string): { popped: string; rest: string } {
-  let pathBytes = Buffer.from(path.slice(2), 'hex')
-  const length = pathBytes[0]
-
-  // skip first byte because that's where the length is
-  const popped = pathBytes.slice(1, POP_OFFSET)
-
-  // decrement length
-  const newLength = Buffer.from([length - 1])
-  // todo: figure out how to do this inplace in solidity w/o recopying?
-  const rest = Buffer.concat([newLength, pathBytes.slice(NEXT_OFFSET)])
-
-  return {
-    popped: '0x' + popped.toString('hex'),
-    rest: '0x' + rest.toString('hex'),
   }
 }
