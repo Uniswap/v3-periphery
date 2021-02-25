@@ -14,8 +14,8 @@ import './RouterValidation.sol';
 /// @title Logic for positions
 abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, RouterValidation {
     /// @inheritdoc IRouterPositions
-    function createPoolAndAddLiquidity(CreatePairAndAddLiquidityParams calldata params)
-        external
+    function createPoolAndAddLiquidity(CreatePoolAndAddLiquidityParams calldata params)
+        public
         override
         checkDeadline(params.deadline)
     {
@@ -25,7 +25,7 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
         pool.initialize(params.sqrtPriceX96);
 
         // max is irrelevant because the pool creator set the price
-        _mint(
+        _addLiquidity(
             pool,
             PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee}),
             params.recipient,
@@ -42,7 +42,7 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
 
-        _mint(
+        _addLiquidity(
             IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey)),
             poolKey,
             params.recipient,
@@ -64,7 +64,7 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
         uint256 amount1Max;
     }
 
-    function _mint(
+    function _addLiquidity(
         IUniswapV3Pool pool,
         PoolAddress.PoolKey memory poolKey,
         address recipient,

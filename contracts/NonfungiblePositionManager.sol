@@ -32,5 +32,13 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
     /// @inheritdoc INonfungiblePositionManager
     mapping(uint256 => Position) public override positions;
 
+    uint64 private _nextId = 1;
+
     constructor() ERC721('Uniswap V3 Positions', 'UNI-V3-POS') {}
+
+    /// @inheritdoc INonfungiblePositionManager
+    function firstMint(FirstMintParams calldata params) external override returns (uint256 tokenId) {}
+
+    /// @inheritdoc INonfungiblePositionManager
+    function mint(MintParams calldata params) external override returns (uint256 tokenId) {}
 }

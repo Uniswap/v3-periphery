@@ -7,7 +7,7 @@ import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.so
 /// @title Router token position management
 /// @notice Functions for managing positions in Uniswap V3
 interface IRouterPositions is IUniswapV3MintCallback {
-    struct CreatePairAndAddLiquidityParams {
+    struct CreatePoolAndAddLiquidityParams {
         address token0;
         address token1;
         uint24 fee;
@@ -20,7 +20,7 @@ interface IRouterPositions is IUniswapV3MintCallback {
     }
 
     /// @notice Called to add liquidity for a pool that does not exist
-    function createPoolAndAddLiquidity(CreatePairAndAddLiquidityParams calldata params) external;
+    function createPoolAndAddLiquidity(CreatePoolAndAddLiquidityParams calldata params) external;
 
     struct AddLiquidityParams {
         address token0;
