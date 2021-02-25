@@ -36,17 +36,17 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     /// @notice Swaps a maximum amount of one token for an exact amount another
     /// @dev zeroForOne The direction of the swap: 0 for 1
     function swapTokensForExactTokens(SwapExactOutParams calldata params) external override {
-        (IUniswapV3Pool pool, bytes memory rest) = poolFromPath(params.path, false);
         uint160 limit = params.zeroForOne ? MIN_SQRT_RATIO + 1 : MAX_SQRT_RATIO - 1;
 
         SwapCallbackData memory callbackData =
             SwapCallbackData({
                 payer: msg.sender,
-                buffer: rest,
+                path: params.path,
                 zeroForOne: params.zeroForOne,
                 maxAmountIn: params.maxAmountIn
             });
-        pool.swap(
+
+        IUniswapV3Pool(params.path.peekPool(this.factory())).swap(
             params.recipient,
             params.zeroForOne,
             // positive number = exact in
@@ -58,7 +58,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
 
     struct SwapCallbackData {
         address payer;
-        bytes buffer;
+        bytes path;
         bool zeroForOne;
         uint256 maxAmountIn;
     }
@@ -73,68 +73,52 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         SwapCallbackData memory decoded = abi.decode(data, (SwapCallbackData));
 
         // decide if we need to forward it to the next pair or pay up
-        if (decoded.buffer.len() > 1) {
-            forward(amount0Delta, amount1Delta, decoded);
-        } else {
-            pay(decoded.payer, decoded.zeroForOne, amount0Delta, amount1Delta, decoded.maxAmountIn);
-        }
+        decoded.path.hasPairs()
+            ? forward(amount0Delta, amount1Delta, decoded)
+            : pay(amount0Delta, amount1Delta, decoded);
     }
 
     function forward(
         int256 amount0Delta,
         int256 amount1Delta,
-        SwapCallbackData memory callbackData
+        SwapCallbackData memory callback
     ) private {
-        // get the next pool address
-        (IUniswapV3Pool nextPool, bytes memory rest) = poolFromPath(callbackData.buffer, true);
+        // verifies that the thing comes from the correct place
+        (address token0, address token1, uint24 fee) = callback.path.get(0).decode();
+        PoolAddress.PoolKey memory key = PoolAddress.PoolKey({tokenA: token0, tokenB: token1, fee: fee});
+        verifyCallback(key);
+
+        // gets the next pool
+        IUniswapV3Pool nextPool = IUniswapV3Pool(callback.path.get(1).peekPool(this.factory()));
+        // remove 1 element from the buffer
+        callback.path = callback.path.skip(1);
 
         // figure out if we should send token0 or token1
-        address tokenToBePaid =
-            amount0Delta > 0 ? IUniswapV3Pool(msg.sender).token0() : IUniswapV3Pool(msg.sender).token1();
+        (address tokenToBePaid, int256 amountToBePaid) =
+            amount0Delta > 0
+                ? (IUniswapV3Pool(msg.sender).token0(), amount0Delta)
+                : (IUniswapV3Pool(msg.sender).token1(), amount1Delta);
 
-        // we send the amount that corresponds to the positive value
-        int256 amountToBePaid = amount0Delta > 0 ? amount0Delta : amount1Delta;
-
+        // get the direction of the swap
         bool zeroForOne = tokenToBePaid == nextPool.token1();
+
+        // get the limit of the swap
         uint160 limit = zeroForOne ? MIN_SQRT_RATIO + 1 : MAX_SQRT_RATIO - 1;
 
-        callbackData.buffer = rest;
-        nextPool.swap(
-            msg.sender,
-            zeroForOne,
-            -amountToBePaid,
-            limit,
-            abi.encode(callbackData) // TODO: can we avoid
-        );
+        // send it
+        nextPool.swap(msg.sender, zeroForOne, -amountToBePaid, limit, abi.encode(callback));
     }
 
     function pay(
-        address payer,
-        bool originZeroForOne,
         int256 amount0Delta,
         int256 amount1Delta,
-        uint256 maxAmountIn
+        SwapCallbackData memory callback
     ) private {
         (address token, uint256 amount) =
-            originZeroForOne
+            callback.zeroForOne
                 ? (IUniswapV3Pool(msg.sender).token0(), uint256(amount0Delta))
                 : (IUniswapV3Pool(msg.sender).token1(), uint256(amount1Delta));
-        require(maxAmountIn >= amount, 'too much requested');
-        TransferHelper.safeTransferFrom(token, payer, msg.sender, amount);
-    }
-
-    /// gets a pool from the path and also optionally verifies that the msg.sender for the call
-    function poolFromPath(bytes memory path, bool verify) private view returns (IUniswapV3Pool, bytes memory) {
-        // get the first element
-        (bytes memory poolBytes, bytes memory rest) = path.pop();
-        // decode it
-        (address token0, address token1, uint24 fee) = poolBytes.decode();
-        // get the pool address from it
-        PoolAddress.PoolKey memory key = PoolAddress.PoolKey({tokenA: token0, tokenB: token1, fee: fee});
-        if (verify) verifyCallback(key);
-
-        address poolAddress = PoolAddress.computeAddress(this.factory(), key);
-
-        return (IUniswapV3Pool(poolAddress), rest);
+        require(callback.maxAmountIn >= amount, 'too much requested');
+        TransferHelper.safeTransferFrom(token, callback.payer, msg.sender, amount);
     }
 }
