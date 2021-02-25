@@ -125,11 +125,11 @@ export function decodePath(path: string): PoolAddress[] {
   let data = Buffer.from(path.slice(2), 'hex')
 
   let decoded = []
-  let i = 1;
-  while(data.length >= DATA_SIZE) {
+  let i = 1
+  while (data.length >= DATA_SIZE) {
     const res = decodeOne(data, 0)
     decoded.push(res)
-    data = data.slice(i *  OFFSET, (i + 1) *  DATA_SIZE)
+    data = data.slice(i * OFFSET, (i + 1) * DATA_SIZE)
     i += 1
   }
 
