@@ -5,14 +5,11 @@ pragma abicoder v2;
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 
 import './interfaces/INonfungiblePositionManager.sol';
+import './libraries/PositionKey.sol';
 import './RouterPositions.sol';
 
 abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC721, RouterPositions {
     struct Position {
-        // the owner of the position
-        address owner;
-        // a single operator that is authorized to work with this position
-        address operator;
         // details about the uniswap position
         // the pool of the position
         address pool;
@@ -60,6 +57,17 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         );
 
         _mint(params.recipient, (tokenId = _nextId++));
+
+        positions[tokenId] = Position({
+            pool: address(pool),
+            tickLower: params.tickLower,
+            tickUpper: params.tickUpper,
+            liquidity: params.liquidity,
+            feeGrowthInside0LastX128: 0,
+            feeGrowthInside1LastX128: 0,
+            feesOwed0: 0,
+            feesOwed1: 0
+        });
     }
 
     /// @inheritdoc INonfungiblePositionManager
@@ -72,8 +80,10 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
 
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
+
         _addLiquidity(
-            IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey)),
+            pool,
             poolKey,
             address(this),
             params.tickLower,
@@ -84,5 +94,20 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         );
 
         _mint(params.recipient, (tokenId = _nextId++));
+
+        bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);
+
+        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
+
+        positions[tokenId] = Position({
+            pool: address(pool),
+            tickLower: params.tickLower,
+            tickUpper: params.tickUpper,
+            liquidity: params.liquidity,
+            feeGrowthInside0LastX128: feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+            feesOwed0: 0,
+            feesOwed1: 0
+        });
     }
 }

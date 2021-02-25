@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 
-/// @title Router token position management
+/// @title Position management functions
 /// @notice Functions for managing positions in Uniswap V3
 interface IRouterPositions is IUniswapV3MintCallback {
     struct CreatePoolAndAddLiquidityParams {
@@ -35,6 +35,6 @@ interface IRouterPositions is IUniswapV3MintCallback {
         uint256 deadline;
     }
 
-    /// @notice Add liquidity for the pool
+    /// @notice Add liquidity for an existing pool
     function addLiquidity(AddLiquidityParams calldata params) external;
 }
