@@ -5,6 +5,7 @@ import { expect } from './shared/expect'
 import { PathTest } from '../typechain'
 
 import { encodePath, decodePath, decodeOne, popFromPath, FeeAmount, encodeOne } from './shared/utilities'
+import snapshotGasCost from './shared/snapshotGasCost'
 
 describe.only('Path', () => {
   const wallets = waffle.provider.getWallets()
@@ -53,6 +54,11 @@ describe.only('Path', () => {
         { token0: tokenAddrs[1], token1: tokenAddrs[2], fee: FeeAmount.MEDIUM },
       ])
     })
+
+    it("gas cost", async () => {
+      const encodedPath = encodeOne(tokenAddrs[0], tokenAddrs[1], fees[0])
+      await snapshotGasCost(path.getGasCostOfDecode('0x' + encodedPath))
+    })
   })
 
   describe("#pop", () => {
@@ -70,6 +76,11 @@ describe.only('Path', () => {
       // the rest also matches
       const decodedPath = decodePath(rest)
       expect(decodedPath).to.be.deep.eq([{ token0: tokenAddrs[1], token1: tokenAddrs[2], fee: FeeAmount.MEDIUM }])
+    })
+
+    it("gas cost", async () => {
+      const encodedPath = encodePath(tokenAddrs, fees)
+      await snapshotGasCost(path.getGasCostOfPop(encodedPath))
     })
   })
 })

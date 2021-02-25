@@ -11,4 +11,16 @@ contract PathTest {
     function pop(bytes memory path) public pure returns (bytes memory popped, bytes memory rest) {
         return Path.pop(path);
     }
+
+    function getGasCostOfDecode(bytes memory path) public view returns (uint256) {
+        uint256 gasBefore = gasleft();
+        Path.decode(path);
+        return gasBefore - gasleft();
+    }
+
+    function getGasCostOfPop(bytes memory path) public view returns (uint256) {
+        uint256 gasBefore = gasleft();
+        Path.pop(path);
+        return gasBefore - gasleft();
+    }
 }
