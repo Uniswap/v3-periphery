@@ -7,7 +7,7 @@ import { PathTest } from '../typechain'
 import { encodePath, decodePath, decodeOne, popFromPath, FeeAmount, encodeOne } from './shared/utilities'
 import snapshotGasCost from './shared/snapshotGasCost'
 
-describe.only('Path', () => {
+describe('Path', () => {
   const wallets = waffle.provider.getWallets()
 
   let path: PathTest
