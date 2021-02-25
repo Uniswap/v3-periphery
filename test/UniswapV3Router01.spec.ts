@@ -189,8 +189,8 @@ describe('UniswapV3Router01', () => {
           amount: 10,
           deadline: 1,
           fee: FeeAmount.MEDIUM,
-          amountAMax: constants.MaxUint256,
-          amountBMax: constants.MaxUint256,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
         })
       ).to.be.reverted
     })
@@ -213,8 +213,8 @@ describe('UniswapV3Router01', () => {
           amount: 10,
           deadline: 1,
           fee: FeeAmount.MEDIUM,
-          amountAMax: constants.MaxUint256,
-          amountBMax: constants.MaxUint256,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
         })
       })
 
@@ -231,8 +231,8 @@ describe('UniswapV3Router01', () => {
             amount: 10,
             deadline: 1,
             fee: FeeAmount.MEDIUM,
-            amountAMax: constants.MaxUint256,
-            amountBMax: constants.MaxUint256,
+            amount0Max: constants.MaxUint256,
+            amount1Max: constants.MaxUint256,
           })
         )
       })

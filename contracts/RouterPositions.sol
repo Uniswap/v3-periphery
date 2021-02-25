@@ -49,8 +49,8 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
             params.tickLower,
             params.tickUpper,
             params.amount,
-            params.amountAMax,
-            params.amountBMax
+            params.amount0Max,
+            params.amount1Max
         );
     }
 

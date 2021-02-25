@@ -35,6 +35,8 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
         int24 tickLower;
         int24 tickUpper;
         uint128 liquidity;
+        address recipient;
+        uint256 deadline;
     }
 
     /// @notice Creates a new position wrapped in a NFT for the first time for a given token0/token1/fee
@@ -48,6 +50,10 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
         int24 tickLower;
         int24 tickUpper;
         uint128 liquidity;
+        uint256 amount0Max;
+        uint256 amount1Max;
+        address recipient;
+        uint256 deadline;
     }
 
     /// @notice Creates a new position wrapped in a NFT

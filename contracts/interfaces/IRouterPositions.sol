@@ -29,8 +29,8 @@ interface IRouterPositions is IUniswapV3MintCallback {
         int24 tickLower;
         int24 tickUpper;
         uint128 amount;
-        uint256 amountAMax;
-        uint256 amountBMax;
+        uint256 amount0Max;
+        uint256 amount1Max;
         address recipient;
         uint256 deadline;
     }
