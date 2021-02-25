@@ -36,16 +36,16 @@ describe.only('Path', () => {
     path = await loadFixture(pathTestFixture)
   })
 
-  describe('#paths', () => {
+  describe('#decode', () => {
     it("solidity decode one", async () => {
       const encodedPath = encodeOne(tokenAddrs[0], tokenAddrs[1], fees[0])
       const { token0, token1, fee } = await path.decode('0x' + encodedPath)
       const decodedPath = { token0, token1, fee }
       expect(decodedPath).to.be.deep.eq({ token0: tokenAddrs[0], token1: tokenAddrs[1], fee: fees[0] })
+      expect(decodedPath).to.be.deep.eq(decodeOne(Buffer.from(encodedPath, 'hex'), 0))
     })
 
-
-    it("encodes and decodes a path", async () => {
+    it("js: encodes and decodes a path", async () => {
       const encodedPath = encodePath(tokenAddrs, fees)
       const decodedPath = decodePath(encodedPath)
       expect(decodedPath).to.be.deep.eq([
@@ -53,10 +53,15 @@ describe.only('Path', () => {
         { token0: tokenAddrs[1], token1: tokenAddrs[2], fee: FeeAmount.MEDIUM },
       ])
     })
+  })
 
-    it("pops the front item from the path", async () => {
+  describe("#pop", () => {
+    it("encodes & pops", async () => {
       const encodedPath = encodePath(tokenAddrs, fees)
-      const { popped, rest } = popFromPath(encodedPath)
+      const { popped, rest } = await path.pop(encodedPath)
+      const { popped: popped2, rest: rest2 } = popFromPath(encodedPath)
+      expect(popped2).to.be.eq(popped)
+      expect(rest2).to.be.eq(rest)
 
       // the popped element is the first one
       const decodedOne = decodeOne(Buffer.from(popped.slice(2), 'hex'), 0)
@@ -67,5 +72,4 @@ describe.only('Path', () => {
       expect(decodedPath).to.be.deep.eq([{ token0: tokenAddrs[1], token1: tokenAddrs[2], fee: FeeAmount.MEDIUM }])
     })
   })
-
 })
