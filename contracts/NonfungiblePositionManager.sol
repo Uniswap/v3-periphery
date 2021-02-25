@@ -9,8 +9,8 @@ import './libraries/PositionKey.sol';
 import './RouterPositions.sol';
 
 abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC721, RouterPositions {
+    // details about the uniswap position
     struct Position {
-        // details about the uniswap position
         // the pool of the position
         address pool;
         // the tick range of the position
@@ -109,5 +109,53 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
             feesOwed0: 0,
             feesOwed1: 0
         });
+    }
+
+    modifier isAuthorizedForToken(uint256 tokenId) {
+        require(_isApprovedOrOwner(msg.sender, tokenId));
+        _;
+    }
+
+    /// @inheritdoc INonfungiblePositionManager
+    function increaseLiquidity(uint256 tokenId, uint256 amount) external override isAuthorizedForToken(tokenId) {
+        revert('TODO');
+    }
+
+    /// @inheritdoc INonfungiblePositionManager
+    function decreaseLiquidity(
+        uint256 tokenId,
+        uint256 amount,
+        address recipient
+    ) external override isAuthorizedForToken(tokenId) {
+        revert('TODO');
+    }
+
+    /// @inheritdoc INonfungiblePositionManager
+    function collect(
+        uint256 tokenId,
+        uint256 amount0Max,
+        uint256 amount1Max,
+        address recipient
+    ) external override isAuthorizedForToken(tokenId) {
+        revert('TODO');
+    }
+
+    /// @inheritdoc INonfungiblePositionManager
+    function exit(uint256 tokenId, address recipient) external override isAuthorizedForToken(tokenId) {
+        revert('TODO');
+    }
+
+    /// @inheritdoc INonfungiblePositionManager
+    function permit(
+        address owner,
+        address spender,
+        uint256 tokenId,
+        uint256 nonce,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external override {
+        revert('TODO');
     }
 }
