@@ -15,6 +15,7 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
         external
         view
         returns (
+            uint64 nonce,
             address pool,
             int24 tickLower,
             int24 tickUpper,

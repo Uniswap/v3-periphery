@@ -11,6 +11,8 @@ import './RouterPositions.sol';
 abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC721, RouterPositions {
     // details about the uniswap position
     struct Position {
+        // the nonce for permits
+        uint64 nonce;
         // the pool of the position
         address pool;
         // the tick range of the position
@@ -59,6 +61,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         _mint(params.recipient, (tokenId = _nextId++));
 
         positions[tokenId] = Position({
+            nonce: 0,
             pool: address(pool),
             tickLower: params.tickLower,
             tickUpper: params.tickUpper,
@@ -100,6 +103,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
 
         positions[tokenId] = Position({
+            nonce: 0,
             pool: address(pool),
             tickLower: params.tickLower,
             tickUpper: params.tickUpper,
