@@ -16,7 +16,15 @@ library Path {
     using BytesLib for bytes;
 
     // decodes a single element
-    function decode(bytes memory path) internal pure returns (address token0, address token1, uint24 fee) {
+    function decode(bytes memory path)
+        internal
+        pure
+        returns (
+            address token0,
+            address token1,
+            uint24 fee
+        )
+    {
         token0 = path.toAddress(0);
         fee = uint24(path.toUint16(ADDR_SIZE));
         token1 = path.toAddress(ADDR_SIZE + FEE_SIZE);

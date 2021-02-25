@@ -72,11 +72,11 @@ const ADDR_SIZE = 20
 const LENGTH_SIZE = 1
 
 export function encodeOne(token0: string, token1: string, fee: FeeAmount): string {
-    // 20 byte encoding of token0
+  // 20 byte encoding of token0
   let encoded = token0.slice(2)
   // 4 byte encoding of the fee
   encoded += Buffer.from(fee.toString(16).padStart(2 * FEE_SIZE, '0'), 'hex').toString('hex')
-    // 20 byte encoding of token1
+  // 20 byte encoding of token1
   encoded += token1.slice(2)
   // encode the final token
   encoded += token1.slice(2)
@@ -87,14 +87,14 @@ export function encodeOne(token0: string, token1: string, fee: FeeAmount): strin
 // 2 fees 3 tokens
 export function encodePath(path: string[], fees: FeeAmount[]): string {
   if (path.length != fees.length + 1) {
-    throw new Error("path/fee lengths do not match")
+    throw new Error('path/fee lengths do not match')
   }
 
   if (path.length > 255) {
-    throw new Error("path too long")
+    throw new Error('path too long')
   }
 
-  let encoded = ""
+  let encoded = ''
   for (let i = 0; i < fees.length; i++) {
     // this should never be hit
     if (fees[i] > 16 ** (2 * FEE_SIZE)) {
@@ -105,7 +105,6 @@ export function encodePath(path: string[], fees: FeeAmount[]): string {
     encoded += path[i].slice(2)
     // 4 byte encoding of the fee
     encoded += Buffer.from(fees[i].toString(16).padStart(2 * FEE_SIZE, '0'), 'hex').toString('hex')
-
   }
   // encode the final token
   encoded += path[path.length - 1].slice(2)
@@ -139,35 +138,35 @@ export function decodePath(path: string): PoolAddress[] {
 
 // 2 <token> <fee> <token> <fee> <token>
 export function decodeOne(tokenFeeAndToken: Buffer, offset: number): PoolAddress {
-    // reads the next 20 bytes for the token address
-    let start = offset
-    let end = offset + ADDR_SIZE
-    const token0Buf = tokenFeeAndToken.slice(start, end)
-    const token0 = utils.getAddress('0x' + token0Buf.toString('hex'))
+  // reads the next 20 bytes for the token address
+  let start = offset
+  let end = offset + ADDR_SIZE
+  const token0Buf = tokenFeeAndToken.slice(start, end)
+  const token0 = utils.getAddress('0x' + token0Buf.toString('hex'))
 
-    // reads the next 2 bytes for the fee
-    start = end
-    end = start + FEE_SIZE
-    const feeBuf = tokenFeeAndToken.slice(start, end)
-    const fee = feeBuf.readUIntBE(0, FEE_SIZE)
+  // reads the next 2 bytes for the fee
+  start = end
+  end = start + FEE_SIZE
+  const feeBuf = tokenFeeAndToken.slice(start, end)
+  const fee = feeBuf.readUIntBE(0, FEE_SIZE)
 
-    // reads the next 20 bytes for the token address
-    start = end
-    end = start + ADDR_SIZE
-    const token1Buf = tokenFeeAndToken.slice(start, end)
-    const token1 = utils.getAddress('0x' + token1Buf.toString('hex'))
+  // reads the next 20 bytes for the token address
+  start = end
+  end = start + ADDR_SIZE
+  const token1Buf = tokenFeeAndToken.slice(start, end)
+  const token1 = utils.getAddress('0x' + token1Buf.toString('hex'))
 
-    return {
-      token0,
-      token1,
-      fee
-    }
+  return {
+    token0,
+    token1,
+    fee,
+  }
 }
 
 const NEXT_OFFSET = LENGTH_SIZE + ADDR_SIZE + FEE_SIZE
 const POP_OFFSET = LENGTH_SIZE + ADDR_SIZE + FEE_SIZE + ADDR_SIZE
 
-export function popFromPath(path: string): { popped: string, rest: string } {
+export function popFromPath(path: string): { popped: string; rest: string } {
   let pathBytes = Buffer.from(path.slice(2), 'hex')
   const length = pathBytes[0]
 

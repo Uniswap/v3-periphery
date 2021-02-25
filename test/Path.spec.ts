@@ -11,16 +11,13 @@ describe.only('Path', () => {
   const wallets = waffle.provider.getWallets()
 
   let path: PathTest
-  
+
   const tokenAddrs = [
     '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707',
     '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9',
-    '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9'
+    '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9',
   ]
-  const fees = [
-    FeeAmount.MEDIUM,
-    FeeAmount.MEDIUM
-  ]
+  const fees = [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
 
   const pathTestFixture = async () => {
     const pathTestFactory = await ethers.getContractFactory('PathTest')
@@ -38,7 +35,7 @@ describe.only('Path', () => {
   })
 
   describe('#decode', () => {
-    it("solidity decode one", async () => {
+    it('solidity decode one', async () => {
       const encodedPath = encodeOne(tokenAddrs[0], tokenAddrs[1], fees[0])
       const { token0, token1, fee } = await path.decode('0x' + encodedPath)
       const decodedPath = { token0, token1, fee }
@@ -46,7 +43,7 @@ describe.only('Path', () => {
       expect(decodedPath).to.be.deep.eq(decodeOne(Buffer.from(encodedPath, 'hex'), 0))
     })
 
-    it("js: encodes and decodes a path", async () => {
+    it('js: encodes and decodes a path', async () => {
       const encodedPath = encodePath(tokenAddrs, fees)
       const decodedPath = decodePath(encodedPath)
       expect(decodedPath).to.be.deep.eq([
@@ -55,14 +52,14 @@ describe.only('Path', () => {
       ])
     })
 
-    it("gas cost", async () => {
+    it('gas cost', async () => {
       const encodedPath = encodeOne(tokenAddrs[0], tokenAddrs[1], fees[0])
       await snapshotGasCost(path.getGasCostOfDecode('0x' + encodedPath))
     })
   })
 
-  describe("#pop", () => {
-    it("encodes & pops", async () => {
+  describe('#pop', () => {
+    it('encodes & pops', async () => {
       const encodedPath = encodePath(tokenAddrs, fees)
       const { popped, rest } = await path.pop(encodedPath)
       const { popped: popped2, rest: rest2 } = popFromPath(encodedPath)
@@ -78,7 +75,7 @@ describe.only('Path', () => {
       expect(decodedPath).to.be.deep.eq([{ token0: tokenAddrs[1], token1: tokenAddrs[2], fee: FeeAmount.MEDIUM }])
     })
 
-    it("gas cost", async () => {
+    it('gas cost', async () => {
       const encodedPath = encodePath(tokenAddrs, fees)
       await snapshotGasCost(path.getGasCostOfPop(encodedPath))
     })
