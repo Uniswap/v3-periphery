@@ -256,6 +256,8 @@ describe('UniswapV3Router01', () => {
   })
 
   describe('#swapTokensForExactTokens', () => {
+    const trader = other
+
     beforeEach(async () => {
       let liquidityParams = {
         tokenA: tokens[1].address,
@@ -276,8 +278,6 @@ describe('UniswapV3Router01', () => {
     })
 
     describe('single-hop', async () => {
-      const trader = other
-
       // helper for executing a single hop trade
       const singleHop = async (zeroForOne: boolean) => {
         const tokenAddrs = tokens.slice(0, 2).map((t) => t.address)
@@ -338,6 +338,42 @@ describe('UniswapV3Router01', () => {
         // the pool sent out (trader received) 1 token1
         expect(poolAfter.token0).to.be.eq(poolBefore.token1.sub(1))
         expect(traderAfter.token0).to.be.eq(traderBefore.token1.add(1))
+      })
+    })
+
+    describe('multi-hop', async () => {
+      // helper for executing a single hop trade
+      const multihop = async (zeroForOne: boolean) => {
+        const tokenAddrs = tokens.map((t) => t.address)
+        const fees = [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
+        const path = encodePath(tokenAddrs, fees)
+
+        // OK
+        let params = {
+          zeroForOne,
+          amountOut: 1,
+          maxAmountIn: 5,
+          path,
+          recipient: trader.address,
+          deadline: 1,
+        }
+        await router.connect(trader).swapTokensForExactTokens(params)
+
+        // make it fail by making the limit tighter
+        params.maxAmountIn = 2
+        await expect(router.swapTokensForExactTokens(params)).to.be.revertedWith('too much requested')
+      }
+
+      it('zero for one', async () => {
+        const traderBefore = await balances(tokens, trader.address)
+        console.log(traderBefore)
+        await multihop(true)
+        const traderAfter = await balances(tokens, trader.address)
+        console.log(traderAfter)
+
+        expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(3))
+        expect(traderAfter.token1).to.be.eq(traderBefore.token1.add(1))
+        expect(traderAfter.token2).to.be.eq(traderBefore.token2.add(1))
       })
     })
   })
