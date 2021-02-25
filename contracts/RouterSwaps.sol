@@ -72,8 +72,6 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         // decode the callback data
         SwapCallbackData memory decoded = abi.decode(data, (SwapCallbackData));
 
-        console.logBytes(decoded.buffer);
-
         // decide if we need to forward it to the next pair or pay up
         if (decoded.buffer.len() > 1) {
             forward(amount0Delta, amount1Delta, decoded);
