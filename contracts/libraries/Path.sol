@@ -30,6 +30,10 @@ library Path {
         token1 = path.toAddress(ADDR_SIZE + FEE_SIZE);
     }
 
+    function len(bytes memory path) internal pure returns (uint8) {
+        return uint8(path.slice(0, 1)[0]);
+    }
+
     function pop(bytes memory path) internal pure returns (bytes memory popped, bytes memory rest) {
         // slice the first element: token0, fee, token1
         popped = path.slice(LENGTH_SIZE, POP_OFFSET);
