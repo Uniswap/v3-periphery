@@ -260,9 +260,9 @@ describe('UniswapV3Router01', () => {
 
     beforeEach(async () => {
       let liquidityParams = {
-        tokenA: tokens[1].address,
-        tokenB: tokens[0].address,
-        sqrtPriceX96: encodePriceSqrt(100, 100),
+        tokenA: tokens[0].address,
+        tokenB: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: wallet.address,
@@ -277,12 +277,13 @@ describe('UniswapV3Router01', () => {
       await router.connect(wallet).createPoolAndAddLiquidity(liquidityParams)
     })
 
-    describe('single-hop', async () => {
-      // helper for executing a single hop exact output trade
-      const singleHop = async (zeroForOne: boolean) => {
-        const tokenAddrs = tokens.slice(0, 2).map((t) => t.address)
+    describe('single-pair', async () => {
+      // helper for executing a single pair exact output trade
+      const singlePair = async (zeroForOne: boolean) => {
+        const tokenAddresses = tokens.slice(0, 2).map((t) => t.address)
         const fees = [FeeAmount.MEDIUM]
-        const path = encodePath(zeroForOne ? tokenAddrs.reverse() : tokenAddrs, fees)
+        // for now, reverse the path
+        const path = encodePath(zeroForOne ? tokenAddresses.reverse() : tokenAddresses, fees)
 
         let params = {
           path,
@@ -301,53 +302,50 @@ describe('UniswapV3Router01', () => {
       }
 
       it('zero for one', async () => {
+        const pool0 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+
         // get balances before
-        const pool1 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
-        const poolBefore = await balances(tokens, pool1)
+        const poolBefore = await balances(tokens, pool0)
         const traderBefore = await balances(tokens, trader.address)
 
-        await singleHop(true)
+        await singlePair(true)
 
         // get balances after
-        const poolAfter = await balances(tokens, pool1)
+        const poolAfter = await balances(tokens, pool0)
         const traderAfter = await balances(tokens, trader.address)
 
-        // the pool received (trader sent) 3  token0
-        expect(poolAfter.token0).to.be.eq(poolBefore.token0.add(3))
         expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(3))
-        // the pool sent out (trader received) 1 token1
-        expect(poolAfter.token1).to.be.eq(poolBefore.token1.sub(1))
         expect(traderAfter.token1).to.be.eq(traderBefore.token1.add(1))
+        expect(poolAfter.token0).to.be.eq(poolBefore.token0.add(3))
+        expect(poolAfter.token1).to.be.eq(poolBefore.token1.sub(1))
       })
 
       it('one for zero', async () => {
-        // get balances before
         const pool1 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+
+        // get balances before
         const poolBefore = await balances(tokens, pool1)
         const traderBefore = await balances(tokens, trader.address)
 
-        await singleHop(false)
+        await singlePair(false)
 
         // get balances after
         const poolAfter = await balances(tokens, pool1)
         const traderAfter = await balances(tokens, trader.address)
 
-        // the pool received (trader sent) 3  token0
-        expect(poolAfter.token1).to.be.eq(poolBefore.token0.add(3))
-        expect(traderAfter.token1).to.be.eq(traderBefore.token0.sub(3))
-        // the pool sent out (trader received) 1 token1
-        expect(poolAfter.token0).to.be.eq(poolBefore.token1.sub(1))
-        expect(traderAfter.token0).to.be.eq(traderBefore.token1.add(1))
+        expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
+        expect(traderAfter.token1).to.be.eq(traderBefore.token1.sub(3))
+        expect(poolAfter.token0).to.be.eq(poolBefore.token0.sub(1))
+        expect(poolAfter.token1).to.be.eq(poolBefore.token1.add(3))
       })
     })
 
-    describe('multi-hop', async () => {
-      const multihop = async (startFromBeginning: boolean) => {
-        const tokenAddrs = tokens.map((t) => t.address)
+    describe('multi-pair', async () => {
+      const multiPair = async (startFromZero: boolean) => {
+        const tokenAddresses = tokens.map((t) => t.address)
         const fees = [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
-        const path = encodePath(startFromBeginning ? tokenAddrs.reverse() : tokenAddrs, fees)
+        const path = encodePath(startFromZero ? tokenAddresses.reverse() : tokenAddresses, fees)
 
-        // OK
         let params = {
           path,
           maxAmountIn: 5,
@@ -364,9 +362,9 @@ describe('UniswapV3Router01', () => {
         await router.connect(trader).swapTokensForExactTokens(params)
       }
 
-      it('start at beginning', async () => {
+      it('start from zero', async () => {
         const traderBefore = await balances(tokens, trader.address)
-        await multihop(true)
+        await multiPair(true)
         const traderAfter = await balances(tokens, trader.address)
 
         expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(5))
@@ -374,9 +372,9 @@ describe('UniswapV3Router01', () => {
         expect(traderAfter.token2).to.be.eq(traderBefore.token2.add(1))
       })
 
-      it('start at end', async () => {
+      it('end at zero', async () => {
         const traderBefore = await balances(tokens, trader.address)
-        await multihop(false)
+        await multiPair(false)
         const traderAfter = await balances(tokens, trader.address)
 
         expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
