@@ -48,10 +48,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         uint160 limit = zeroForOne ? MIN_SQRT_RATIO + 1 : MAX_SQRT_RATIO - 1;
 
         // we don't need to send this data through the callback
-        swapStaticData = SwapStaticData({
-            maxAmountIn: params.maxAmountIn,
-            payer: msg.sender
-        });
+        swapStaticData = SwapStaticData({maxAmountIn: params.maxAmountIn, payer: msg.sender});
 
         // this is happening in reverse
         IUniswapV3Pool(params.path.peekPool(this.factory())).swap(
@@ -74,9 +71,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         bytes memory path = abi.decode(data, (bytes));
 
         // decide if we need to forward it to the next pair or pay up
-        path.hasPairs()
-            ? forward(amount0Delta, amount1Delta, path)
-            : pay(amount0Delta, amount1Delta, path);
+        path.hasPairs() ? forward(amount0Delta, amount1Delta, path) : pay(amount0Delta, amount1Delta, path);
     }
 
     // TODO remove the token{0,1} from this function
@@ -121,9 +116,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
 
         (address token, uint256 amount) =
-            amount0Delta > 0
-                ? (token0, uint256(amount0Delta))
-                : (token1, uint256(amount1Delta));
+            amount0Delta > 0 ? (token0, uint256(amount0Delta)) : (token1, uint256(amount1Delta));
         require(swapStaticData.maxAmountIn >= amount, 'too much requested');
         TransferHelper.safeTransferFrom(token, swapStaticData.payer, msg.sender, amount);
         delete swapStaticData;
