@@ -278,13 +278,12 @@ describe('UniswapV3Router01', () => {
     })
 
     describe('single-hop', async () => {
-      // helper for executing a single hop trade
+      // helper for executing a single hop exact output trade
       const singleHop = async (zeroForOne: boolean) => {
         const tokenAddrs = tokens.slice(0, 2).map((t) => t.address)
         const fees = [FeeAmount.MEDIUM]
         const path = encodePath(zeroForOne ? tokenAddrs.reverse() : tokenAddrs, fees)
 
-        // OK
         let params = {
           path,
           maxAmountIn: 3,
@@ -292,11 +291,13 @@ describe('UniswapV3Router01', () => {
           recipient: trader.address,
           deadline: 1,
         }
-        await router.connect(trader).swapTokensForExactTokens(params)
 
-        // make it fail by making the limit tighter
+        // ensure that it fails if the limit is any tighter
         params.maxAmountIn = 2
-        await expect(router.swapTokensForExactTokens(params)).to.be.revertedWith('too much requested')
+        await expect(router.connect(trader).swapTokensForExactTokens(params)).to.be.revertedWith('too much requested')
+        params.maxAmountIn = 3
+
+        await router.connect(trader).swapTokensForExactTokens(params)
       }
 
       it('zero for one', async () => {
@@ -341,11 +342,10 @@ describe('UniswapV3Router01', () => {
     })
 
     describe('multi-hop', async () => {
-      // helper for executing a single hop trade
-      const multihop = async (zeroForOne: boolean) => {
+      const multihop = async (startFromBeginning: boolean) => {
         const tokenAddrs = tokens.map((t) => t.address)
         const fees = [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
-        const path = encodePath(tokenAddrs.reverse(), fees)
+        const path = encodePath(startFromBeginning ? tokenAddrs.reverse() : tokenAddrs, fees)
 
         // OK
         let params = {
@@ -355,14 +355,16 @@ describe('UniswapV3Router01', () => {
           recipient: trader.address,
           deadline: 1,
         }
-        await router.connect(trader).swapTokensForExactTokens(params)
 
-        // make it fail by making the limit tighter
+        // ensure that it fails if the limit is any tighter
         params.maxAmountIn = 4
-        await expect(router.swapTokensForExactTokens(params)).to.be.revertedWith('too much requested')
+        await expect(router.connect(trader).swapTokensForExactTokens(params)).to.be.revertedWith('too much requested')
+        params.maxAmountIn = 5
+
+        await router.connect(trader).swapTokensForExactTokens(params)
       }
 
-      it('zero for one', async () => {
+      it('start at beginning', async () => {
         const traderBefore = await balances(tokens, trader.address)
         await multihop(true)
         const traderAfter = await balances(tokens, trader.address)
@@ -370,6 +372,16 @@ describe('UniswapV3Router01', () => {
         expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(5))
         expect(traderAfter.token1).to.be.eq(traderBefore.token1)
         expect(traderAfter.token2).to.be.eq(traderBefore.token2.add(1))
+      })
+
+      it('start at end', async () => {
+        const traderBefore = await balances(tokens, trader.address)
+        await multihop(false)
+        const traderAfter = await balances(tokens, trader.address)
+
+        expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
+        expect(traderAfter.token1).to.be.eq(traderBefore.token1)
+        expect(traderAfter.token2).to.be.eq(traderBefore.token2.sub(5))
       })
     })
   })
