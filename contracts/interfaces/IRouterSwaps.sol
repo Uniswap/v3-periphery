@@ -17,15 +17,14 @@ interface IRouterSwaps is IUniswapV3SwapCallback {
         uint256 deadline
     ) external;
 
-    struct SwapExactOutParams {
-        bool zeroForOne;
-        uint256 amountOut;
-        uint256 maxAmountIn;
+    struct swapForExactParams {
         bytes path;
+        uint256 maxAmountIn;
+        uint256 amountOut;
         address recipient;
         uint256 deadline;
     }
 
-    /// @notice Swaps a maximum amount of one token for an exact amount another
-    function swapTokensForExactTokens(SwapExactOutParams calldata params) external;
+    /// @notice Swaps a maximum amount of one token for an exact amount of another
+    function swapTokensForExactTokens(swapForExactParams calldata params) external;
 }

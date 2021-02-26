@@ -89,10 +89,6 @@ export function encodePath(path: string[], fees: FeeAmount[]): string {
     throw new Error('path/fee lengths do not match')
   }
 
-  if (path.length > 255) {
-    throw new Error('path too long')
-  }
-
   let encoded = ''
   for (let i = 0; i < fees.length; i++) {
     // this should never be hit
@@ -100,7 +96,7 @@ export function encodePath(path: string[], fees: FeeAmount[]): string {
       throw new Error(`fee doesnt fit in ${2 * FEE_SIZE} bytes, consider growing your buffer`)
     }
 
-    // 20 byte encoding of thet address
+    // 20 byte encoding of the address
     encoded += path[i].slice(2)
     // 4 byte encoding of the fee
     encoded += Buffer.from(fees[i].toString(16).padStart(2 * FEE_SIZE, '0'), 'hex').toString('hex')
@@ -108,7 +104,6 @@ export function encodePath(path: string[], fees: FeeAmount[]): string {
   // encode the final token
   encoded += path[path.length - 1].slice(2)
 
-  // num els + els flattened
   return '0x' + encoded
 }
 
