@@ -1,26 +1,24 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.6.0;
 
-import 'hardhat/console.sol';
-
 import './BytesLib.sol';
 import './PoolAddress.sol';
 
 library Path {
-    uint256 internal constant ADDR_SIZE = 20;
-    uint256 internal constant FEE_SIZE = 2;
-
-    uint256 internal constant POP_OFFSET = ADDR_SIZE + FEE_SIZE + ADDR_SIZE;
-    uint256 internal constant NEXT_OFFSET = ADDR_SIZE + FEE_SIZE;
-
     using BytesLib for bytes;
 
-    // checks if the path has enough data in it to construct a pair
+    uint256 private constant ADDR_SIZE = 20;
+    uint256 private constant FEE_SIZE = 3;
+
+    uint256 private constant NEXT_OFFSET = ADDR_SIZE + FEE_SIZE;
+    uint256 private constant POP_OFFSET = NEXT_OFFSET + ADDR_SIZE;
+
+    // checks if the path contains more than one pair
     function hasPairs(bytes memory path) internal pure returns (bool) {
         return path.length > POP_OFFSET;
     }
 
-    // decodes a single element
+    // decodes the first pair in path
     function decode(bytes memory path)
         internal
         pure
@@ -31,22 +29,12 @@ library Path {
         )
     {
         tokenA = path.toAddress(0);
-        fee = uint24(path.toUint16(ADDR_SIZE));
-        tokenB = path.toAddress(ADDR_SIZE + FEE_SIZE);
+        fee = path.toUint24(ADDR_SIZE);
+        tokenB = path.toAddress(NEXT_OFFSET);
     }
 
-    function peekPool(bytes memory path, address factory) internal pure returns (address) {
-        (address tokenA, address tokenB, uint24 fee) = decode(path);
-        PoolAddress.PoolKey memory key = PoolAddress.PoolKey({tokenA: tokenA, tokenB: tokenB, fee: fee});
-        return PoolAddress.computeAddress(factory, key);
-    }
-
-    function get(bytes memory path, uint256 i) internal pure returns (bytes memory el) {
-        el = path.slice(i * NEXT_OFFSET, POP_OFFSET);
-    }
-
-    // skips `i` items from the buffer and return the remaining bufer
-    function skip(bytes memory path, uint256 i) internal pure returns (bytes memory rest) {
-        rest = path.slice(i * NEXT_OFFSET, path.length - i * NEXT_OFFSET);
+    // skips a token/fee elements from the buffer and return the remainder
+    function skipOne(bytes memory path) internal pure returns (bytes memory rest) {
+        rest = path.slice(NEXT_OFFSET, path.length - NEXT_OFFSET);
     }
 }

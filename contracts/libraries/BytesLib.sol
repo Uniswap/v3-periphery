@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: UNLICENSED
 /*
  * @title Solidity Bytes Arrays Utils
  * @author Gonçalo Sá <goncalo.sa@consensys.net>
@@ -87,13 +87,13 @@ library BytesLib {
         return tempAddress;
     }
 
-    function toUint16(bytes memory _bytes, uint256 _start) internal pure returns (uint16) {
-        require(_start + 2 >= _start, 'toUint16_overflow');
-        require(_bytes.length >= _start + 2, 'toUint16_outOfBounds');
-        uint16 tempUint;
+    function toUint24(bytes memory _bytes, uint256 _start) internal pure returns (uint24) {
+        require(_start + 3 >= _start, 'toUint24_overflow');
+        require(_bytes.length >= _start + 3, 'toUint24_outOfBounds');
+        uint24 tempUint;
 
         assembly {
-            tempUint := mload(add(add(_bytes, 0x2), _start))
+            tempUint := mload(add(add(_bytes, 0x3), _start))
         }
 
         return tempUint;

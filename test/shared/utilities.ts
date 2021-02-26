@@ -11,9 +11,6 @@ export const getMaxLiquidityPerTick = (tickSpacing: number) =>
     .sub(1)
     .div((getMaxTick(tickSpacing) - getMinTick(tickSpacing)) / tickSpacing + 1)
 
-export const MIN_SQRT_RATIO = BigNumber.from('4295128739')
-export const MAX_SQRT_RATIO = BigNumber.from('1461446703485210103287273052203988822378723970342')
-
 export enum FeeAmount {
   LOW = 500,
   MEDIUM = 3000,
@@ -67,92 +64,61 @@ export function encodePriceSqrt(reserve1: BigNumberish, reserve0: BigNumberish):
   )
 }
 
-const FEE_SIZE = 2
 const ADDR_SIZE = 20
+const FEE_SIZE = 3
+const OFFSET = ADDR_SIZE + FEE_SIZE
+const DATA_SIZE = OFFSET + ADDR_SIZE
 
-export function encodeOne(token0: string, token1: string, fee: FeeAmount): string {
-  // 20 byte encoding of token0
-  let encoded = token0.slice(2)
-  // 4 byte encoding of the fee
-  encoded += Buffer.from(fee.toString(16).padStart(2 * FEE_SIZE, '0'), 'hex').toString('hex')
-  // 20 byte encoding of token1
-  encoded += token1.slice(2)
-  // encode the final token
-  encoded += token1.slice(2)
-
-  return encoded
-}
-
-// 2 fees 3 tokens
 export function encodePath(path: string[], fees: FeeAmount[]): string {
   if (path.length != fees.length + 1) {
     throw new Error('path/fee lengths do not match')
   }
 
-  let encoded = ''
+  let encoded = '0x'
   for (let i = 0; i < fees.length; i++) {
-    // this should never be hit
-    if (fees[i] > 16 ** (2 * FEE_SIZE)) {
-      throw new Error(`fee doesnt fit in ${2 * FEE_SIZE} bytes, consider growing your buffer`)
-    }
-
     // 20 byte encoding of the address
     encoded += path[i].slice(2)
-    // 4 byte encoding of the fee
-    encoded += Buffer.from(fees[i].toString(16).padStart(2 * FEE_SIZE, '0'), 'hex').toString('hex')
+    // 3 byte encoding of the fee
+    encoded += fees[i].toString(16).padStart(2 * FEE_SIZE, '0')
   }
   // encode the final token
   encoded += path[path.length - 1].slice(2)
 
-  return '0x' + encoded
+  return encoded.toLowerCase()
 }
 
-interface PoolAddress {
-  token0: string
-  token1: string
-  fee: FeeAmount
-}
-
-const OFFSET = ADDR_SIZE + FEE_SIZE
-const DATA_SIZE = ADDR_SIZE * 2 + FEE_SIZE
-
-export function decodePath(path: string): PoolAddress[] {
-  let data = Buffer.from(path.slice(2), 'hex')
-
-  let decoded = []
-  let i = 1
-  while (data.length >= DATA_SIZE) {
-    const res = decodeOne(data, 0)
-    decoded.push(res)
-    data = data.slice(i * OFFSET, (i + 1) * DATA_SIZE)
-    i += 1
-  }
-
-  return decoded
-}
-
-export function decodeOne(tokenFeeAndToken: Buffer, offset: number): PoolAddress {
-  // reads the next 20 bytes for the token address
-  let start = offset
-  let end = offset + ADDR_SIZE
-  const token0Buf = tokenFeeAndToken.slice(start, end)
-  const token0 = utils.getAddress('0x' + token0Buf.toString('hex'))
+function decodeOne(tokenFeeToken: Buffer): [[string, string], number] {
+  // reads the first 20 bytes for the token address
+  const tokenABuf = tokenFeeToken.slice(0, ADDR_SIZE)
+  const tokenA = utils.getAddress('0x' + tokenABuf.toString('hex'))
 
   // reads the next 2 bytes for the fee
-  start = end
-  end = start + FEE_SIZE
-  const feeBuf = tokenFeeAndToken.slice(start, end)
+  const feeBuf = tokenFeeToken.slice(ADDR_SIZE, OFFSET)
   const fee = feeBuf.readUIntBE(0, FEE_SIZE)
 
   // reads the next 20 bytes for the token address
-  start = end
-  end = start + ADDR_SIZE
-  const token1Buf = tokenFeeAndToken.slice(start, end)
-  const token1 = utils.getAddress('0x' + token1Buf.toString('hex'))
+  const tokenBBuf = tokenFeeToken.slice(OFFSET, DATA_SIZE)
+  const tokenB = utils.getAddress('0x' + tokenBBuf.toString('hex'))
 
-  return {
-    token0,
-    token1,
-    fee,
+  return [[tokenA, tokenB], fee]
+}
+
+export function decodePath(path: string): [string[], number[]] {
+  let data = Buffer.from(path.slice(2), 'hex')
+
+  let tokens: string[] = []
+  let fees: number[] = []
+  let i = 0
+  let finalToken: string = ''
+  while (data.length >= DATA_SIZE) {
+    const [[tokenA, tokenB], fee] = decodeOne(data)
+    finalToken = tokenB
+    tokens = [...tokens, tokenA]
+    fees = [...fees, fee]
+    data = data.slice((i + 1) * OFFSET)
+    i += 1
   }
+  tokens = [...tokens, finalToken]
+
+  return [tokens, fees]
 }

@@ -18,10 +18,10 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     using Path for bytes;
     using SafeCast for uint256;
 
-    /// @dev The minimum value that can be returned from #getSqrtRatioAtTick. Equivalent to getSqrtRatioAtTick(MIN_TICK)
-    uint160 internal constant MIN_SQRT_RATIO = 4295128739;
-    /// @dev The maximum value that can be returned from #getSqrtRatioAtTick. Equivalent to getSqrtRatioAtTick(MAX_TICK)
-    uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
+    /// @dev The minimum value that can be returned from #getSqrtRatioAtTick, plus 1
+    uint160 private constant MIN_SQRT_RATIO = 4295128739 + 1;
+    /// @dev The maximum value that can be returned from #getSqrtRatioAtTick, minus 1
+    uint160 private constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342 - 1;
 
     struct SwapForExactData {
         uint256 maxAmountIn;
@@ -31,7 +31,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
 
     /// @inheritdoc IRouterSwaps
     function swapTokensForExactTokens(swapForExactParams calldata params) external override {
-        (address tokenA, address tokenB, uint24 fee) = params.path.get(0).decode();
+        (address tokenA, address tokenB, uint24 fee) = params.path.decode();
 
         IUniswapV3Pool pool =
             IUniswapV3Pool(
@@ -41,8 +41,8 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
                 )
             );
 
-        bool zeroForOne = tokenB < tokenA; // note that we're swapping in reverse here (exact output)
-        uint160 limit = zeroForOne ? MIN_SQRT_RATIO + 1 : MAX_SQRT_RATIO - 1;
+        bool zeroForOne = tokenB < tokenA; // we're swapping in reverse (exact output)
+        uint160 limit = zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO;
 
         // we don't need to send this data through the callback
         swapForExactData = SwapForExactData({maxAmountIn: params.maxAmountIn, payer: msg.sender});
@@ -66,13 +66,13 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         bytes memory path = abi.decode(data, (bytes));
 
         // verify the callback
-        (address tokenA, address tokenB, uint24 fee) = path.get(0).decode();
+        (address tokenA, address tokenB, uint24 fee) = path.decode();
         verifyCallback(PoolAddress.PoolKey({tokenA: tokenA, tokenB: tokenB, fee: fee}));
 
         int256 amountToBePaid = amount0Delta > 0 ? amount0Delta : amount1Delta;
 
-        // decide if we need to forward it to the next pair or pay up
-        path.hasPairs() ? forward(amountToBePaid, tokenB, path.skip(1)) : pay(uint256(amountToBePaid), tokenB);
+        // decide if we need to forward to the next pair or pay up
+        path.hasPairs() ? forward(amountToBePaid, tokenB, path.skipOne()) : pay(uint256(amountToBePaid), tokenB);
     }
 
     function forward(
@@ -80,7 +80,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         address tokenB,
         bytes memory pathNext
     ) private {
-        (, address tokenC, uint24 fee) = pathNext.get(0).decode(); // tokenB is the other token
+        (, address tokenC, uint24 fee) = pathNext.decode(); // tokenB is the other token
 
         // get the next pool
         IUniswapV3Pool nextPool =
@@ -92,7 +92,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
             );
 
         bool zeroForOne = tokenC < tokenB;
-        uint160 limit = zeroForOne ? MIN_SQRT_RATIO + 1 : MAX_SQRT_RATIO - 1;
+        uint160 limit = zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO;
 
         // send it
         nextPool.swap(msg.sender, zeroForOne, -amountToBePaid, limit, abi.encode(pathNext));
