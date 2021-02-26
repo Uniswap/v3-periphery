@@ -8,15 +8,6 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 /// @title Router token swapping functionality
 /// @notice Functions for swapping tokens via Uniswap V3
 interface IRouterSwaps is IUniswapV3SwapCallback {
-    /// @notice Swaps the exact amount of one token for the minimum amount of another
-    function swapExactTokensForTokens(
-        uint256 amountIn,
-        uint256 minAmountOut,
-        bytes memory path,
-        address recipient,
-        uint256 deadline
-    ) external;
-
     struct swapForExactParams {
         bytes path;
         uint256 maxAmountIn;
@@ -25,6 +16,17 @@ interface IRouterSwaps is IUniswapV3SwapCallback {
         uint256 deadline;
     }
 
-    /// @notice Swaps a maximum amount of one token for an exact amount of another
+    /// @notice Swaps as little as possible of one token for an exact amount of another
     function swapTokensForExactTokens(swapForExactParams calldata params) external;
+
+    struct swapExactForParams {
+        bytes path;
+        uint256 amountIn;
+        uint256 minAmountOut;
+        address recipient;
+        uint256 deadline;
+    }
+
+    /// @notice Swaps an exact amount of one token for as little as possible of another
+    function swapExactTokensForTokens(swapExactForParams calldata params) external;
 }
