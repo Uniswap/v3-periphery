@@ -16,7 +16,9 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
         view
         returns (
             uint64 nonce,
-            address pool,
+            address token0,
+            address token1,
+            uint24 fee,
             int24 tickLower,
             int24 tickUpper,
             uint128 liquidity,
@@ -70,7 +72,13 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
         );
 
     /// @notice Increases the amount of liquidity in a position, with tokens paid by the `msg.sender`
-    function increaseLiquidity(uint256 tokenId, uint256 amount) external returns (uint256 amount0, uint256 amount1);
+    function increaseLiquidity(
+        uint256 tokenId,
+        uint128 amount,
+        uint256 amount0Max,
+        uint256 amount1Max,
+        uint256 deadline
+    ) external returns (uint256 amount0, uint256 amount1);
 
     /// @notice Decreases the amount of liquidity in a position, keeping the fees
     function decreaseLiquidity(uint256 tokenId, uint256 amount) external returns (uint256 amount0, uint256 amount1);

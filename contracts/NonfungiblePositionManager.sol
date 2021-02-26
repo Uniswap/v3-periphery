@@ -6,6 +6,7 @@ import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 
 import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
+import './libraries/FullMath.sol';
 import './RouterPositions.sol';
 
 abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC721, RouterPositions {
@@ -13,8 +14,10 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
     struct Position {
         // the nonce for permits
         uint64 nonce;
-        // the pool of the position
-        address pool;
+        // the immutable pool key of the position
+        address token0;
+        address token1;
+        uint24 fee;
         // the tick range of the position
         int24 tickLower;
         int24 tickUpper;
@@ -39,34 +42,33 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
     function firstMint(FirstMintParams calldata params)
         external
         override
-        checkDeadline(params.deadline)
         returns (
             uint256 tokenId,
             uint256 amount0,
             uint256 amount1
         )
     {
-        IUniswapV3Pool pool =
-            IUniswapV3Pool(IUniswapV3Factory(this.factory()).createPool(params.token0, params.token1, params.fee));
-
-        pool.initialize(params.sqrtPriceX96);
-
-        (amount0, amount1) = _addLiquidity(
-            pool,
-            PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee}),
-            address(this),
-            params.tickLower,
-            params.tickUpper,
-            params.liquidity,
-            0,
-            0
+        (amount0, amount1) = createPoolAndAddLiquidity(
+            CreatePoolAndAddLiquidityParams({
+                token0: params.token0,
+                token1: params.token1,
+                fee: params.fee,
+                sqrtPriceX96: params.sqrtPriceX96,
+                tickLower: params.tickLower,
+                tickUpper: params.tickUpper,
+                amount: params.liquidity,
+                recipient: address(this),
+                deadline: params.deadline
+            })
         );
 
         _mint(params.recipient, (tokenId = _nextId++));
 
         positions[tokenId] = Position({
             nonce: 0,
-            pool: address(pool),
+            token0: params.token0,
+            token1: params.token1,
+            fee: params.fee,
             tickLower: params.tickLower,
             tickUpper: params.tickUpper,
             liquidity: params.liquidity,
@@ -81,30 +83,33 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
     function mint(MintParams calldata params)
         external
         override
-        checkDeadline(params.deadline)
         returns (
             uint256 tokenId,
             uint256 amount0,
             uint256 amount1
         )
     {
+        (amount0, amount1) = addLiquidity(
+            AddLiquidityParams({
+                token0: params.token0,
+                token1: params.token1,
+                fee: params.fee,
+                tickLower: params.tickLower,
+                tickUpper: params.tickUpper,
+                amount: params.liquidity,
+                amount0Max: params.amount0Max,
+                amount1Max: params.amount1Max,
+                recipient: address(this),
+                deadline: params.deadline
+            })
+        );
+
+        _mint(params.recipient, (tokenId = _nextId++));
+
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
 
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
-
-        (amount0, amount1) = _addLiquidity(
-            pool,
-            poolKey,
-            address(this),
-            params.tickLower,
-            params.tickUpper,
-            params.liquidity,
-            params.amount0Max,
-            params.amount1Max
-        );
-
-        _mint(params.recipient, (tokenId = _nextId++));
 
         bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);
 
@@ -112,7 +117,9 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
 
         positions[tokenId] = Position({
             nonce: 0,
-            pool: address(pool),
+            token0: params.token0,
+            token1: params.token1,
+            fee: params.fee,
             tickLower: params.tickLower,
             tickUpper: params.tickUpper,
             liquidity: params.liquidity,
@@ -129,13 +136,51 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
     }
 
     /// @inheritdoc INonfungiblePositionManager
-    function increaseLiquidity(uint256 tokenId, uint256 amount)
-        external
-        override
-        isAuthorizedForToken(tokenId)
-        returns (uint256 amount0, uint256 amount1)
-    {
-        revert('TODO');
+    function increaseLiquidity(
+        uint256 tokenId,
+        uint128 amount,
+        uint256 amount0Max,
+        uint256 amount1Max,
+        uint256 deadline
+    ) external override returns (uint256 amount0, uint256 amount1) {
+        require(amount > 0);
+        Position storage position = positions[tokenId];
+
+        PoolAddress.PoolKey memory poolKey =
+            PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee});
+
+        (amount0, amount1) = addLiquidity(
+            AddLiquidityParams({
+                token0: position.token0,
+                token1: position.token1,
+                fee: position.fee,
+                tickLower: position.tickLower,
+                tickUpper: position.tickUpper,
+                amount: amount,
+                amount0Max: amount0Max,
+                amount1Max: amount1Max,
+                recipient: address(this),
+                deadline: deadline
+            })
+        );
+
+        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
+
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
+
+        // this is now updated to the current transaction
+        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
+
+        position.feesOwed0 += uint128(
+            FullMath.mulDiv(feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128, position.liquidity, 1 << 128)
+        );
+        position.feesOwed1 += uint128(
+            FullMath.mulDiv(feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128, position.liquidity, 1 << 128)
+        );
+
+        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
+        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
+        position.liquidity += amount;
     }
 
     /// @inheritdoc INonfungiblePositionManager
