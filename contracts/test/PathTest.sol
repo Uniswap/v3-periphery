@@ -16,19 +16,26 @@ contract PathTest {
         return Path.decode(path);
     }
 
-    function pop(bytes memory path) public pure returns (bytes memory popped, bytes memory rest) {
-        return Path.pop(path);
+    function hasPairs(bytes memory path) public pure returns (bool) {
+        return Path.hasPairs(path);
     }
 
+    function peekPool(bytes memory path, address factory) public pure returns (address) {
+        return Path.peekPool(path, factory);
+    }
+
+    function get(bytes memory path, uint256 i) public pure returns (bytes memory) {
+        return Path.get(path, i);
+    }
+
+    function skip(bytes memory path, uint256 i) public pure returns (bytes memory) {
+        return Path.skip(path, i);
+    }
+
+    // gas funcs
     function getGasCostOfDecode(bytes memory path) public view returns (uint256) {
         uint256 gasBefore = gasleft();
         Path.decode(path);
-        return gasBefore - gasleft();
-    }
-
-    function getGasCostOfPop(bytes memory path) public view returns (uint256) {
-        uint256 gasBefore = gasleft();
-        Path.pop(path);
         return gasBefore - gasleft();
     }
 }
