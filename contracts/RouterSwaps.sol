@@ -33,10 +33,13 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     function swapTokensForExactTokens(swapForExactParams calldata params) external override {
         (address tokenA, address tokenB, uint24 fee) = params.path.get(0).decode();
 
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(
-            this.factory(),
-            PoolAddress.PoolKey({tokenA: tokenA, tokenB: tokenB, fee: fee})
-        ));
+        IUniswapV3Pool pool =
+            IUniswapV3Pool(
+                PoolAddress.computeAddress(
+                    this.factory(),
+                    PoolAddress.PoolKey({tokenA: tokenA, tokenB: tokenB, fee: fee})
+                )
+            );
 
         bool zeroForOne = tokenB < tokenA; // note that we're swapping in reverse here (exact output)
         uint160 limit = zeroForOne ? MIN_SQRT_RATIO + 1 : MAX_SQRT_RATIO - 1;
@@ -69,9 +72,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         int256 amountToBePaid = amount0Delta > 0 ? amount0Delta : amount1Delta;
 
         // decide if we need to forward it to the next pair or pay up
-        path.hasPairs()
-            ? forward(amountToBePaid, tokenB, path.skip(1))
-            : pay(uint256(amountToBePaid), tokenB);
+        path.hasPairs() ? forward(amountToBePaid, tokenB, path.skip(1)) : pay(uint256(amountToBePaid), tokenB);
     }
 
     function forward(
@@ -82,10 +83,13 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         (, address tokenC, uint24 fee) = pathNext.get(0).decode(); // tokenB is the other token
 
         // get the next pool
-        IUniswapV3Pool nextPool = IUniswapV3Pool(PoolAddress.computeAddress(
-            this.factory(),
-            PoolAddress.PoolKey({tokenA: tokenB, tokenB: tokenC, fee: fee})
-        ));
+        IUniswapV3Pool nextPool =
+            IUniswapV3Pool(
+                PoolAddress.computeAddress(
+                    this.factory(),
+                    PoolAddress.PoolKey({tokenA: tokenB, tokenB: tokenC, fee: fee})
+                )
+            );
 
         bool zeroForOne = tokenC < tokenB;
         uint160 limit = zeroForOne ? MIN_SQRT_RATIO + 1 : MAX_SQRT_RATIO - 1;
@@ -94,17 +98,14 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         nextPool.swap(msg.sender, zeroForOne, -amountToBePaid, limit, abi.encode(pathNext));
     }
 
-    function pay(
-        uint256 amountToBePaid,
-        address tokenB
-    ) private {
+    function pay(uint256 amountToBePaid, address tokenB) private {
         require(amountToBePaid <= swapForExactData.maxAmountIn, 'too much requested');
         TransferHelper.safeTransferFrom(tokenB, swapForExactData.payer, msg.sender, amountToBePaid);
         delete swapForExactData;
     }
 
     /// @inheritdoc IRouterSwaps
-    function swapExactTokensForTokens(swapExactForParams calldata) external override pure {
+    function swapExactTokensForTokens(swapExactForParams calldata) external pure override {
         revert('unimplemented');
     }
 }
