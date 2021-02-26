@@ -35,7 +35,7 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
         uint160 sqrtPriceX96;
         int24 tickLower;
         int24 tickUpper;
-        uint128 liquidity;
+        uint128 amount;
         address recipient;
         uint256 deadline;
     }
@@ -55,7 +55,7 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
         uint24 fee;
         int24 tickLower;
         int24 tickUpper;
-        uint128 liquidity;
+        uint128 amount;
         uint256 amount0Max;
         uint256 amount1Max;
         address recipient;
