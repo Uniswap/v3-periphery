@@ -1,9 +1,9 @@
 import { ethers } from 'hardhat'
 import { LiquidityAmountsTest } from '../typechain/LiquidityAmountsTest'
+import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
 
 import snapshotGasCost from './shared/snapshotGasCost'
-import { encodePriceSqrt } from './shared/utilities'
 
 describe('LiquidityAmounts', async () => {
   let liquidityFromAmounts: LiquidityAmountsTest

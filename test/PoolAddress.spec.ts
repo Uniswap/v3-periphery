@@ -1,9 +1,9 @@
-import { constants, utils } from 'ethers'
+import { constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { PoolAddressTest } from '../typechain'
+import { POOL_BYTECODE_HASH } from './shared/computePoolAddress'
 import { expect } from './shared/expect'
-import { bytecode } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
 import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('PoolAddress', () => {
@@ -28,7 +28,7 @@ describe('PoolAddress', () => {
 
   describe('#POOL_INIT_CODE_HASH', () => {
     it('equals the hash of the pool bytecode', async () => {
-      expect(await poolAddress.POOL_INIT_CODE_HASH()).to.eq(utils.keccak256(bytecode))
+      expect(await poolAddress.POOL_INIT_CODE_HASH()).to.eq(POOL_BYTECODE_HASH)
     })
   })
 
