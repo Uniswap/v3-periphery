@@ -1,21 +1,17 @@
-import { constants, Contract, Wallet, utils } from 'ethers'
-const { getAddress } = utils
+import { constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
 import { UniswapV3Router01, WETH9, TestERC20 } from '../typechain'
+import { computePoolAddress } from './shared/computePoolAddress'
+import { FeeAmount, TICK_SPACINGS } from './shared/constants'
+import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
 import { v3CoreFactoryFixture } from './shared/fixtures'
+import { encodePath } from './shared/path'
 import snapshotGasCost from './shared/snapshotGasCost'
-import {
-  encodePriceSqrt,
-  FeeAmount,
-  getMaxTick,
-  getMinTick,
-  TICK_SPACINGS,
-  encodePath,
-  expandTo18Decimals,
-} from './shared/utilities'
+import { getMaxTick, getMinTick } from './shared/ticks'
+import { expandTo18Decimals } from './shared/expandTo18Decimals'
 
 import { abi as POOL_ABI } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
 
@@ -102,7 +98,14 @@ describe('UniswapV3Router01', () => {
   })
 
   describe('#createPoolAndAddLiquidity', () => {
-    it('creates a pool', async () => {
+    it('creates a pool at expected address', async () => {
+      const expectedAddress = computePoolAddress(
+        v3CoreFactory.address,
+        [tokens[0].address, tokens[1].address],
+        FeeAmount.MEDIUM
+      )
+      const code = await wallet.provider.getCode(expectedAddress)
+      expect(code).to.eq('0x')
       await router.createPoolAndAddLiquidity({
         token0: tokens[0].address,
         token1: tokens[1].address,
@@ -114,6 +117,8 @@ describe('UniswapV3Router01', () => {
         deadline: 1,
         fee: FeeAmount.MEDIUM,
       })
+      const codeAfter = await wallet.provider.getCode(expectedAddress)
+      expect(codeAfter).to.not.eq('0x')
     })
 
     it('fails if pool already exists', async () => {
@@ -387,6 +392,31 @@ describe('UniswapV3Router01', () => {
         expect(traderAfter.token1).to.be.eq(traderBefore.token1)
         expect(traderAfter.token2).to.be.eq(traderBefore.token2.sub(5))
       })
+    })
+  })
+
+  describe('#firstMint', () => {
+    it('creates the pair at the expected address', async () => {
+      const expectedAddress = computePoolAddress(
+        v3CoreFactory.address,
+        [tokens[0].address, tokens[1].address],
+        FeeAmount.MEDIUM
+      )
+      const code = await wallet.provider.getCode(expectedAddress)
+      expect(code).to.eq('0x')
+      await router.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: wallet.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+      const codeAfter = await wallet.provider.getCode(expectedAddress)
+      expect(codeAfter).to.not.eq('0x')
     })
   })
 })

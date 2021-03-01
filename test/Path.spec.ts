@@ -1,10 +1,11 @@
 import { waffle, ethers } from 'hardhat'
+import { FeeAmount } from './shared/constants'
 
 import { expect } from './shared/expect'
 
 import { PathTest } from '../typechain'
+import { decodePath, encodePath } from './shared/path'
 
-import { FeeAmount, encodePath, decodePath } from './shared/utilities'
 import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('Path', () => {
