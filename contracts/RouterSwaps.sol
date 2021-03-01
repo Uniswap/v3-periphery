@@ -128,10 +128,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         }
     }
 
-    function forwardExactInput(
-        int256 amountReceived,
-        SwapCallbackData memory swapCallbackData
-    ) private {
+    function forwardExactInput(int256 amountReceived, SwapCallbackData memory swapCallbackData) private {
         (address tokenB, address tokenC, uint24 fee) = swapCallbackData.path.decode();
 
         // get the next pool
@@ -151,10 +148,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         );
     }
 
-    function forwardExactOutput(
-        int256 amountToPay,
-        SwapCallbackData memory swapCallbackData
-    ) private {
+    function forwardExactOutput(int256 amountToPay, SwapCallbackData memory swapCallbackData) private {
         (address tokenB, address tokenC, uint24 fee) = swapCallbackData.path.decode();
 
         // get the next pool

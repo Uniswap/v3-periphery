@@ -17,6 +17,7 @@ interface IRouterSwaps is IUniswapV3SwapCallback {
 
     /// @notice Swaps an exact amount of one token for as much as possible of another
     function exactInput(SwapParams calldata) external;
+
     /// @notice Swaps as little as possible of one token for an exact amount of another
     function exactOutput(SwapParams calldata) external;
 }
