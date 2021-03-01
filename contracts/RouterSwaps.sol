@@ -34,12 +34,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         (address tokenA, address tokenB, uint24 fee) = params.path.decode();
 
         IUniswapV3Pool pool =
-            IUniswapV3Pool(
-                PoolAddress.computeAddress(
-                    this.factory(),
-                    PoolAddress.getPoolKey(tokenA, tokenB, fee)
-                )
-            );
+            IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), PoolAddress.getPoolKey(tokenA, tokenB, fee)));
 
         bool zeroForOne = tokenB < tokenA; // we're swapping in reverse (exact output)
         uint160 limit = zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO;
@@ -84,12 +79,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
 
         // get the next pool
         IUniswapV3Pool nextPool =
-            IUniswapV3Pool(
-                PoolAddress.computeAddress(
-                    this.factory(),
-                    PoolAddress.getPoolKey(tokenB, tokenC, fee)
-                )
-            );
+            IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), PoolAddress.getPoolKey(tokenB, tokenC, fee)));
 
         bool zeroForOne = tokenC < tokenB;
         uint160 limit = zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO;
