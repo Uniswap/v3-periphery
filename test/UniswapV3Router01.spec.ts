@@ -266,7 +266,7 @@ describe('UniswapV3Router01', () => {
     })
   })
 
-  describe('#swapTokensForExactTokens', () => {
+  describe('swaps', () => {
     const trader = other
 
     beforeEach(async () => {
@@ -288,109 +288,219 @@ describe('UniswapV3Router01', () => {
       await router.connect(wallet).createPoolAndAddLiquidity(liquidityParams)
     })
 
-    describe('single-pair', async () => {
-      // helper for executing a single pair exact output trade
-      const singlePair = async (zeroForOne: boolean) => {
-        const tokenAddresses = tokens.slice(0, 2).map((t) => t.address)
-        const fees = [FeeAmount.MEDIUM]
-        // for now, reverse the path
-        const path = encodePath(zeroForOne ? tokenAddresses.reverse() : tokenAddresses, fees)
+    describe('#exactInput', () => {
+      describe('single-pair', async () => {
+        // helper for executing a single pair exact input trade
+        const singlePair = async (zeroForOne: boolean) => {
+          const tokenAddresses = tokens.slice(0, 2).map((t) => t.address)
+          const fees = [FeeAmount.MEDIUM]
+          const path = encodePath(zeroForOne ? tokenAddresses : tokenAddresses.reverse(), fees)
 
-        let params = {
-          path,
-          maxAmountIn: 3,
-          amountOut: 1,
-          recipient: trader.address,
-          deadline: 1,
+          let params = {
+            path,
+            amount: 3,
+            amountSlippage: 1,
+            recipient: trader.address,
+            deadline: 1,
+          }
+
+          // ensure that it fails if the limit is any tighter
+          params.amountSlippage = 2
+          await expect(router.connect(trader).exactInput(params)).to.be.revertedWith('too little received')
+          params.amountSlippage = 1
+
+          await router.connect(trader).exactInput(params)
         }
 
-        // ensure that it fails if the limit is any tighter
-        params.maxAmountIn = 2
-        await expect(router.connect(trader).swapTokensForExactTokens(params)).to.be.revertedWith('too much requested')
-        params.maxAmountIn = 3
+        it('zero for one', async () => {
+          const pool0 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
 
-        await router.connect(trader).swapTokensForExactTokens(params)
-      }
+          // get balances before
+          const poolBefore = await balances(tokens, pool0)
+          const traderBefore = await balances(tokens, trader.address)
 
-      it('zero for one', async () => {
-        const pool0 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+          await singlePair(true)
 
-        // get balances before
-        const poolBefore = await balances(tokens, pool0)
-        const traderBefore = await balances(tokens, trader.address)
+          // get balances after
+          const poolAfter = await balances(tokens, pool0)
+          const traderAfter = await balances(tokens, trader.address)
 
-        await singlePair(true)
+          expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(3))
+          expect(traderAfter.token1).to.be.eq(traderBefore.token1.add(1))
+          expect(poolAfter.token0).to.be.eq(poolBefore.token0.add(3))
+          expect(poolAfter.token1).to.be.eq(poolBefore.token1.sub(1))
+        })
 
-        // get balances after
-        const poolAfter = await balances(tokens, pool0)
-        const traderAfter = await balances(tokens, trader.address)
+        it('one for zero', async () => {
+          const pool1 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
 
-        expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(3))
-        expect(traderAfter.token1).to.be.eq(traderBefore.token1.add(1))
-        expect(poolAfter.token0).to.be.eq(poolBefore.token0.add(3))
-        expect(poolAfter.token1).to.be.eq(poolBefore.token1.sub(1))
+          // get balances before
+          const poolBefore = await balances(tokens, pool1)
+          const traderBefore = await balances(tokens, trader.address)
+
+          await singlePair(false)
+
+          // get balances after
+          const poolAfter = await balances(tokens, pool1)
+          const traderAfter = await balances(tokens, trader.address)
+
+          expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
+          expect(traderAfter.token1).to.be.eq(traderBefore.token1.sub(3))
+          expect(poolAfter.token0).to.be.eq(poolBefore.token0.sub(1))
+          expect(poolAfter.token1).to.be.eq(poolBefore.token1.add(3))
+        })
       })
 
-      it('one for zero', async () => {
-        const pool1 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+      describe('multi-pair', async () => {
+        const multiPair = async (startFromZero: boolean) => {
+          const tokenAddresses = tokens.map((t) => t.address)
+          const fees = [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
+          const path = encodePath(startFromZero ? tokenAddresses : tokenAddresses.reverse(), fees)
 
-        // get balances before
-        const poolBefore = await balances(tokens, pool1)
-        const traderBefore = await balances(tokens, trader.address)
+          let params = {
+            path,
+            amount: 5,
+            amountSlippage: 1,
+            recipient: trader.address,
+            deadline: 1,
+          }
 
-        await singlePair(false)
+          // ensure that it fails if the limit is any tighter
+          params.amountSlippage = 2
+          await expect(router.connect(trader).exactInput(params)).to.be.revertedWith('too little received')
+          params.amountSlippage = 1
 
-        // get balances after
-        const poolAfter = await balances(tokens, pool1)
-        const traderAfter = await balances(tokens, trader.address)
+          await router.connect(trader).exactInput(params)
+        }
 
-        expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
-        expect(traderAfter.token1).to.be.eq(traderBefore.token1.sub(3))
-        expect(poolAfter.token0).to.be.eq(poolBefore.token0.sub(1))
-        expect(poolAfter.token1).to.be.eq(poolBefore.token1.add(3))
+        it('start from zero', async () => {
+          const traderBefore = await balances(tokens, trader.address)
+          await multiPair(true)
+          const traderAfter = await balances(tokens, trader.address)
+
+          expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(5))
+          expect(traderAfter.token1).to.be.eq(traderBefore.token1)
+          expect(traderAfter.token2).to.be.eq(traderBefore.token2.add(1))
+        })
+
+        it('end at zero', async () => {
+          const traderBefore = await balances(tokens, trader.address)
+          await multiPair(false)
+          const traderAfter = await balances(tokens, trader.address)
+
+          expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
+          expect(traderAfter.token1).to.be.eq(traderBefore.token1)
+          expect(traderAfter.token2).to.be.eq(traderBefore.token2.sub(5))
+        })
       })
     })
 
-    describe('multi-pair', async () => {
-      const multiPair = async (startFromZero: boolean) => {
-        const tokenAddresses = tokens.map((t) => t.address)
-        const fees = [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
-        const path = encodePath(startFromZero ? tokenAddresses.reverse() : tokenAddresses, fees)
+    describe('#exactOutput', () => {
+      describe('single-pair', async () => {
+        // helper for executing a single pair exact output trade
+        const singlePair = async (zeroForOne: boolean) => {
+          const tokenAddresses = tokens.slice(0, 2).map((t) => t.address)
+          const fees = [FeeAmount.MEDIUM]
+          // reverse the path
+          const path = encodePath(zeroForOne ? tokenAddresses.reverse() : tokenAddresses, fees)
 
-        let params = {
-          path,
-          maxAmountIn: 5,
-          amountOut: 1,
-          recipient: trader.address,
-          deadline: 1,
+          let params = {
+            path,
+            amount: 1,
+            amountSlippage: 3,
+            recipient: trader.address,
+            deadline: 1,
+          }
+
+          // ensure that it fails if the limit is any tighter
+          params.amountSlippage = 2
+          await expect(router.connect(trader).exactOutput(params)).to.be.revertedWith('too much requested')
+          params.amountSlippage = 3
+
+          await router.connect(trader).exactOutput(params)
         }
 
-        // ensure that it fails if the limit is any tighter
-        params.maxAmountIn = 4
-        await expect(router.connect(trader).swapTokensForExactTokens(params)).to.be.revertedWith('too much requested')
-        params.maxAmountIn = 5
+        it('zero for one', async () => {
+          const pool0 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
 
-        await router.connect(trader).swapTokensForExactTokens(params)
-      }
+          // get balances before
+          const poolBefore = await balances(tokens, pool0)
+          const traderBefore = await balances(tokens, trader.address)
 
-      it('start from zero', async () => {
-        const traderBefore = await balances(tokens, trader.address)
-        await multiPair(true)
-        const traderAfter = await balances(tokens, trader.address)
+          await singlePair(true)
 
-        expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(5))
-        expect(traderAfter.token1).to.be.eq(traderBefore.token1)
-        expect(traderAfter.token2).to.be.eq(traderBefore.token2.add(1))
+          // get balances after
+          const poolAfter = await balances(tokens, pool0)
+          const traderAfter = await balances(tokens, trader.address)
+
+          expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(3))
+          expect(traderAfter.token1).to.be.eq(traderBefore.token1.add(1))
+          expect(poolAfter.token0).to.be.eq(poolBefore.token0.add(3))
+          expect(poolAfter.token1).to.be.eq(poolBefore.token1.sub(1))
+        })
+
+        it('one for zero', async () => {
+          const pool1 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+
+          // get balances before
+          const poolBefore = await balances(tokens, pool1)
+          const traderBefore = await balances(tokens, trader.address)
+
+          await singlePair(false)
+
+          // get balances after
+          const poolAfter = await balances(tokens, pool1)
+          const traderAfter = await balances(tokens, trader.address)
+
+          expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
+          expect(traderAfter.token1).to.be.eq(traderBefore.token1.sub(3))
+          expect(poolAfter.token0).to.be.eq(poolBefore.token0.sub(1))
+          expect(poolAfter.token1).to.be.eq(poolBefore.token1.add(3))
+        })
       })
 
-      it('end at zero', async () => {
-        const traderBefore = await balances(tokens, trader.address)
-        await multiPair(false)
-        const traderAfter = await balances(tokens, trader.address)
+      describe('multi-pair', async () => {
+        const multiPair = async (startFromZero: boolean) => {
+          const tokenAddresses = tokens.map((t) => t.address)
+          const fees = [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
+          // reverse the path
+          const path = encodePath(startFromZero ? tokenAddresses.reverse() : tokenAddresses, fees)
 
-        expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
-        expect(traderAfter.token1).to.be.eq(traderBefore.token1)
-        expect(traderAfter.token2).to.be.eq(traderBefore.token2.sub(5))
+          let params = {
+            path,
+            amount: 1,
+            amountSlippage: 5,
+            recipient: trader.address,
+            deadline: 1,
+          }
+
+          // ensure that it fails if the limit is any tighter
+          params.amountSlippage = 4
+          await expect(router.connect(trader).exactOutput(params)).to.be.revertedWith('too much requested')
+          params.amountSlippage = 5
+
+          await router.connect(trader).exactOutput(params)
+        }
+
+        it('start from zero', async () => {
+          const traderBefore = await balances(tokens, trader.address)
+          await multiPair(true)
+          const traderAfter = await balances(tokens, trader.address)
+
+          expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(5))
+          expect(traderAfter.token1).to.be.eq(traderBefore.token1)
+          expect(traderAfter.token2).to.be.eq(traderBefore.token2.add(1))
+        })
+
+        it('end at zero', async () => {
+          const traderBefore = await balances(tokens, trader.address)
+          await multiPair(false)
+          const traderAfter = await balances(tokens, trader.address)
+
+          expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
+          expect(traderAfter.token1).to.be.eq(traderBefore.token1)
+          expect(traderAfter.token2).to.be.eq(traderBefore.token2.sub(5))
+        })
       })
     })
   })

@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`UniswapV3Router01 #addLiquidity pool exists gas cost 1`] = `316157`;
+exports[`UniswapV3Router01 #addLiquidity pool exists gas cost 1`] = `316200`;
 
 exports[`UniswapV3Router01 #createPoolAndAddLiquidity gas cost 1`] = `4810934`;
 
-exports[`UniswapV3Router01 router bytecode size 1`] = `21491`;
+exports[`UniswapV3Router01 router bytecode size 1`] = `23124`;
