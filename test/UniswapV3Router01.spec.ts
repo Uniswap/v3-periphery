@@ -1,4 +1,4 @@
-import { constants, Contract } from 'ethers'
+import { BigNumber, BigNumberish, constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
@@ -9,11 +9,10 @@ import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
 import { v3CoreFactoryFixture } from './shared/fixtures'
 import { encodePath } from './shared/path'
+import poolAtAddress from './shared/poolAtAddress'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
-
-import { abi as POOL_ABI } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
 
 describe('UniswapV3Router01', () => {
   const wallets = waffle.provider.getWallets()
@@ -122,7 +121,7 @@ describe('UniswapV3Router01', () => {
     })
 
     it('fails if pool already exists', async () => {
-      await router.createPoolAndAddLiquidity({
+      const params = {
         token0: tokens[0].address,
         token1: tokens[1].address,
         sqrtPriceX96: encodePriceSqrt(1, 1),
@@ -132,21 +131,10 @@ describe('UniswapV3Router01', () => {
         amount: 10,
         deadline: 1,
         fee: FeeAmount.MEDIUM,
-      })
+      }
+      await router.createPoolAndAddLiquidity(params)
 
-      await expect(
-        router.createPoolAndAddLiquidity({
-          token0: tokens[0].address,
-          token1: tokens[1].address,
-          sqrtPriceX96: encodePriceSqrt(1, 1),
-          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          recipient: wallet.address,
-          amount: 10,
-          deadline: 1,
-          fee: FeeAmount.MEDIUM,
-        })
-      ).to.be.reverted
+      await expect(router.createPoolAndAddLiquidity(params)).to.be.reverted
     })
 
     it('cannot take tokens in opposite order', async () => {
@@ -179,7 +167,7 @@ describe('UniswapV3Router01', () => {
       })
       const poolAddress = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
       expect(poolAddress).to.not.eq(constants.AddressZero)
-      const pool = new Contract(poolAddress, POOL_ABI, wallet)
+      const pool = poolAtAddress(poolAddress, wallet)
       const { sqrtPriceX96, tick } = await pool.slot0()
       expect(sqrtPriceX96).to.eq(encodePriceSqrt(1, 1))
       expect(tick).to.eq(0)
@@ -226,8 +214,8 @@ describe('UniswapV3Router01', () => {
       const startingPrice = encodePriceSqrt(1, 1)
       beforeEach('create the pool directly', async () => {
         await v3CoreFactory.createPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
-        const pool = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
-        await new Contract(pool, POOL_ABI, wallet).initialize(startingPrice)
+        const poolAddress = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+        await poolAtAddress(poolAddress, wallet).initialize(startingPrice)
       })
 
       it('allows adding liquidity', async () => {
@@ -527,6 +515,154 @@ describe('UniswapV3Router01', () => {
       })
       const codeAfter = await wallet.provider.getCode(expectedAddress)
       expect(codeAfter).to.not.eq('0x')
+    })
+
+    it('creates a token', async () => {
+      await router.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+      expect(await router.balanceOf(other.address)).to.eq(1)
+      expect(await router.tokenOfOwnerByIndex(other.address, 0)).to.eq(1)
+      const {
+        fee,
+        token0,
+        token1,
+        tickLower,
+        tickUpper,
+        liquidity,
+        tokensOwed0,
+        tokensOwed1,
+        feeGrowthInside0LastX128,
+        feeGrowthInside1LastX128,
+      } = await router.positions(1)
+      expect(token0).to.eq(tokens[0].address)
+      expect(token1).to.eq(tokens[1].address)
+      expect(fee).to.eq(FeeAmount.MEDIUM)
+      expect(tickLower).to.eq(getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]))
+      expect(tickUpper).to.eq(getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]))
+      expect(liquidity).to.eq(10)
+      expect(tokensOwed0).to.eq(0)
+      expect(tokensOwed1).to.eq(0)
+      expect(feeGrowthInside0LastX128).to.eq(0)
+      expect(feeGrowthInside1LastX128).to.eq(0)
+    })
+
+    it('fails if pool already exists', async () => {
+      const params = {
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: wallet.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      }
+      await router.firstMint(params)
+
+      await expect(router.firstMint(params)).to.be.reverted
+    })
+  })
+
+  describe('#mint', () => {
+    it('fails if pool does not exist', async () => {
+      await expect(
+        router.mint({
+          token0: tokens[0].address,
+          token1: tokens[1].address,
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
+          recipient: wallet.address,
+          amount: 10,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+        })
+      ).to.be.reverted
+    })
+
+    it('creates a token', async () => {
+      await router.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+
+      await router.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
+        amount: 15,
+        deadline: 10,
+        fee: FeeAmount.MEDIUM,
+      })
+      expect(await router.balanceOf(other.address)).to.eq(2)
+      expect(await router.tokenOfOwnerByIndex(other.address, 1)).to.eq(2)
+      const {
+        fee,
+        token0,
+        token1,
+        tickLower,
+        tickUpper,
+        liquidity,
+        tokensOwed0,
+        tokensOwed1,
+        feeGrowthInside0LastX128,
+        feeGrowthInside1LastX128,
+      } = await router.positions(2)
+      expect(token0).to.eq(tokens[0].address)
+      expect(token1).to.eq(tokens[1].address)
+      expect(fee).to.eq(FeeAmount.MEDIUM)
+      expect(tickLower).to.eq(getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]))
+      expect(tickUpper).to.eq(getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]))
+      expect(liquidity).to.eq(15)
+      expect(tokensOwed0).to.eq(0)
+      expect(tokensOwed1).to.eq(0)
+      expect(feeGrowthInside0LastX128).to.eq(0)
+      expect(feeGrowthInside1LastX128).to.eq(0)
+    })
+  })
+
+  describe('#increaseLiquidity', () => {
+    const tokenId = 1
+    beforeEach('create a position', async () => {
+      await router.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 100,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    it('increases position liquidity', async () => {
+      await router.increaseLiquidity(tokenId, 150, constants.MaxUint256, constants.MaxUint256, 1)
+      const { liquidity } = await router.positions(1)
+      expect(liquidity).to.eq(250)
     })
   })
 })

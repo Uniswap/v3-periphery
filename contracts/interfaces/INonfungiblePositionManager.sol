@@ -24,8 +24,8 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
             uint128 liquidity,
             uint256 feeGrowthInside0LastX128,
             uint256 feeGrowthInside1LastX128,
-            uint128 feesOwed0,
-            uint128 feesOwed1
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
         );
 
     struct FirstMintParams {

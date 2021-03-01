@@ -27,8 +27,8 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         uint256 feeGrowthInside0LastX128;
         uint256 feeGrowthInside1LastX128;
         // how many uncollected fees are held by this contract owed to the position, as of the last computation
-        uint128 feesOwed0;
-        uint128 feesOwed1;
+        uint128 tokensOwed0;
+        uint128 tokensOwed1;
     }
 
     /// @inheritdoc INonfungiblePositionManager
@@ -74,8 +74,8 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
             liquidity: params.amount,
             feeGrowthInside0LastX128: 0,
             feeGrowthInside1LastX128: 0,
-            feesOwed0: 0,
-            feesOwed1: 0
+            tokensOwed0: 0,
+            tokensOwed1: 0
         });
     }
 
@@ -125,8 +125,8 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
             liquidity: params.amount,
             feeGrowthInside0LastX128: feeGrowthInside0LastX128,
             feeGrowthInside1LastX128: feeGrowthInside1LastX128,
-            feesOwed0: 0,
-            feesOwed1: 0
+            tokensOwed0: 0,
+            tokensOwed1: 0
         });
     }
 
@@ -171,10 +171,10 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         // this is now updated to the current transaction
         (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
 
-        position.feesOwed0 += uint128(
+        position.tokensOwed0 += uint128(
             FullMath.mulDiv(feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128, position.liquidity, 1 << 128)
         );
-        position.feesOwed1 += uint128(
+        position.tokensOwed1 += uint128(
             FullMath.mulDiv(feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128, position.liquidity, 1 << 128)
         );
 
