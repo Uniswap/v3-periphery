@@ -22,7 +22,8 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^3.4.0-solc-0.7"
+    "@openzeppelin/contracts": "3.4.0-solc-0.7",
+    "@uniswap/v3-core": "1.0.0-beta.5"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
@@ -30,7 +31,6 @@
     "@typechain/ethers-v5": "^4.0.0",
     "@types/chai": "^4.2.6",
     "@types/mocha": "^5.2.7",
-    "@uniswap/v3-core": "^1.0.0-beta.3",
     "chai": "^4.2.0",
     "decimal.js": "^10.2.1",
     "ethereum-waffle": "^3.0.2",
