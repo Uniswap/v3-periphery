@@ -37,7 +37,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
             IUniswapV3Pool(
                 PoolAddress.computeAddress(
                     this.factory(),
-                    PoolAddress.PoolKey({tokenA: tokenA, tokenB: tokenB, fee: fee})
+                    PoolAddress.getPoolKey(tokenA, tokenB, fee)
                 )
             );
 
@@ -67,7 +67,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
 
         // verify the callback
         (address tokenA, address tokenB, uint24 fee) = path.decode();
-        verifyCallback(PoolAddress.PoolKey({tokenA: tokenA, tokenB: tokenB, fee: fee}));
+        verifyCallback(PoolAddress.getPoolKey(tokenA, tokenB, fee));
 
         int256 amountToBePaid = amount0Delta > 0 ? amount0Delta : amount1Delta;
 
@@ -87,7 +87,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
             IUniswapV3Pool(
                 PoolAddress.computeAddress(
                     this.factory(),
-                    PoolAddress.PoolKey({tokenA: tokenB, tokenB: tokenC, fee: fee})
+                    PoolAddress.getPoolKey(tokenB, tokenC, fee)
                 )
             );
 

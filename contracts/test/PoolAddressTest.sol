@@ -10,20 +10,20 @@ contract PoolAddressTest {
 
     function computeAddress(
         address factory,
-        address tokenA,
-        address tokenB,
+        address token0,
+        address token1,
         uint24 fee
     ) external pure returns (address) {
-        return PoolAddress.computeAddress(factory, PoolAddress.PoolKey({tokenA: tokenA, tokenB: tokenB, fee: fee}));
+        return PoolAddress.computeAddress(factory, PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee}));
     }
 
     function getGasCostOfComputeAddress(
         address factory,
-        address tokenA,
-        address tokenB,
+        address token0,
+        address token1,
         uint24 fee
     ) external view returns (uint256) {
-        PoolAddress.PoolKey memory poolKey = PoolAddress.PoolKey({tokenA: tokenA, tokenB: tokenB, fee: fee});
+        PoolAddress.PoolKey memory poolKey = PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee});
         uint256 gasBefore = gasleft();
         PoolAddress.computeAddress(factory, poolKey);
         return gasBefore - gasleft();

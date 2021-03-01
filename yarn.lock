@@ -524,6 +524,11 @@
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
 
+"@openzeppelin/contracts@3.4.0-solc-0.7":
+  version "3.4.0-solc-0.7"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.4.0-solc-0.7.tgz#c4fbd1b761714745c4bce6fc97e8b44d4c29d5b9"
+  integrity sha512-bJz1YgmeKRYVnYZedYSiy5/YmaYTxOhb76ftCseN1z2r4DK7PwCGvRCF2fRavTxAmGkIC/Q5zSy/Dr3OerPw0w==
+
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/@resolver-engine/core/-/core-0.3.3.tgz#590f77d85d45bc7ecc4e06c654f41345db6ca967"
@@ -822,10 +827,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@uniswap/v3-core@^1.0.0-beta.3":
-  version "1.0.0-beta.3"
-  resolved "https://registry.yarnpkg.com/@uniswap/v3-core/-/v3-core-1.0.0-beta.3.tgz#cbfc7e21ea3852057c1cbae95ef71cf43fcda657"
-  integrity sha512-YA773M2UZWekLAdEU3m7RTzGFCKtIN5zuernuHJsZNQ1IJrtyPkngAiAq5MerD77nZltAPVXzW4YvMrBV0nj9Q==
+"@uniswap/v3-core@1.0.0-beta.7":
+  version "1.0.0-beta.7"
+  resolved "https://registry.yarnpkg.com/@uniswap/v3-core/-/v3-core-1.0.0-beta.7.tgz#6b2bbb1ec5341c29e623d08915232a0b32a4dc8d"
+  integrity sha512-bwXMHStycf9QUKwWLavzPrDPO0b7nwq9yZQyjxVWlFr7lCx8hsYSjOCL6noA59LpV2y/GiRQ1lgkMGEIEkSavg==
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"

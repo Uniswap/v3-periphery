@@ -2,44 +2,22 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+
 import './interfaces/INonfungiblePositionManager.sol';
-import './interfaces/external/IERC721TokenReceiver.sol';
+import './libraries/PositionKey.sol';
+import './libraries/FullMath.sol';
 import './RouterPositions.sol';
 
-abstract contract NonfungiblePositionManager is INonfungiblePositionManager, RouterPositions {
-    /// @inheritdoc IERC721Metadata
-    string public constant override name = 'Uniswap V3 Positions';
-    /// @inheritdoc IERC721Metadata
-    string public constant override symbol = 'UNI-V3-P';
-
-    /// @inheritdoc IERC165
-    function supportsInterface(bytes4 interfaceID) external pure override returns (bool) {
-        return interfaceID == 0xffffffff || interfaceID == 0x80ac58cd;
-    }
-
-    /// @inheritdoc IERC721Metadata
-    function tokenURI(uint256 _tokenId) external view override returns (string memory) {
-        Position storage position = positions[_tokenId];
-        // todo: json encode the position info into name, description, image uri
-        // could even query the pool to encode fees outstanding, value in token0/token1, etc.
-        // this could be quite large, and probably should be in an external library since this is never called on-chain
-        return string(abi.encode('data:application/json,'));
-    }
-
-    /// @inheritdoc IERC721
-    mapping(address => uint256) public override balanceOf;
-
-    /// @inheritdoc IERC721
-    mapping(address => mapping(address => bool)) public override isApprovedForAll;
-
+abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC721, RouterPositions {
+    // details about the uniswap position
     struct Position {
-        // the owner of the position
-        address owner;
-        // a single operator that is authorized to work with this position
-        address operator;
-        // details about the uniswap position
-        // the pool of the position
-        address pool;
+        // the nonce for permits
+        uint64 nonce;
+        // the immutable pool key of the position
+        address token0;
+        address token1;
+        uint24 fee;
         // the tick range of the position
         int24 tickLower;
         int24 tickUpper;
@@ -56,91 +34,196 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, Rou
     /// @inheritdoc INonfungiblePositionManager
     mapping(uint256 => Position) public override positions;
 
-    /// @inheritdoc IERC721
-    function ownerOf(uint256 _tokenId) public view override returns (address owner) {
-        owner = positions[_tokenId].owner;
-        require(owner != address(0), 'Invalid ID');
-    }
+    uint64 private _nextId = 1;
 
-    /// @inheritdoc IERC721
-    function approve(address _approved, uint256 _tokenId) external override {
-        Position storage position = positions[_tokenId];
-        require(position.owner == msg.sender, 'Not owner');
-        position.operator = _approved;
-        emit Approval(msg.sender, _approved, _tokenId);
-    }
+    constructor() ERC721('Uniswap V3 Positions', 'UNI-V3-POS') {}
 
-    /// @inheritdoc IERC721
-    function getApproved(uint256 _tokenId) public view override returns (address) {
-        return positions[_tokenId].operator;
-    }
-
-    /// @inheritdoc IERC721
-    function setApprovalForAll(address _operator, bool _approved) external override {
-        isApprovedForAll[msg.sender][_operator] = _approved;
-        emit ApprovalForAll(msg.sender, _operator, _approved);
-    }
-
-    modifier isAuthorized(uint256 _tokenId) {
-        address owner = ownerOf(_tokenId);
-        require(
-            msg.sender == owner || isApprovedForAll[owner][msg.sender] || msg.sender == getApproved(_tokenId),
-            'Not authorized'
+    /// @inheritdoc INonfungiblePositionManager
+    function firstMint(FirstMintParams calldata params)
+        external
+        override
+        returns (
+            uint256 tokenId,
+            uint256 amount0,
+            uint256 amount1
+        )
+    {
+        (amount0, amount1) = createPoolAndAddLiquidity(
+            CreatePoolAndAddLiquidityParams({
+                token0: params.token0,
+                token1: params.token1,
+                fee: params.fee,
+                sqrtPriceX96: params.sqrtPriceX96,
+                tickLower: params.tickLower,
+                tickUpper: params.tickUpper,
+                amount: params.amount,
+                recipient: address(this),
+                deadline: params.deadline
+            })
         );
+
+        _mint(params.recipient, (tokenId = _nextId++));
+
+        positions[tokenId] = Position({
+            nonce: 0,
+            token0: params.token0,
+            token1: params.token1,
+            fee: params.fee,
+            tickLower: params.tickLower,
+            tickUpper: params.tickUpper,
+            liquidity: params.amount,
+            feeGrowthInside0LastX128: 0,
+            feeGrowthInside1LastX128: 0,
+            feesOwed0: 0,
+            feesOwed1: 0
+        });
+    }
+
+    /// @inheritdoc INonfungiblePositionManager
+    function mint(MintParams calldata params)
+        external
+        override
+        returns (
+            uint256 tokenId,
+            uint256 amount0,
+            uint256 amount1
+        )
+    {
+        (amount0, amount1) = addLiquidity(
+            AddLiquidityParams({
+                token0: params.token0,
+                token1: params.token1,
+                fee: params.fee,
+                tickLower: params.tickLower,
+                tickUpper: params.tickUpper,
+                amount: params.amount,
+                amount0Max: params.amount0Max,
+                amount1Max: params.amount1Max,
+                recipient: address(this),
+                deadline: params.deadline
+            })
+        );
+
+        _mint(params.recipient, (tokenId = _nextId++));
+
+        PoolAddress.PoolKey memory poolKey =
+            PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
+
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
+
+        bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);
+
+        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
+
+        positions[tokenId] = Position({
+            nonce: 0,
+            token0: params.token0,
+            token1: params.token1,
+            fee: params.fee,
+            tickLower: params.tickLower,
+            tickUpper: params.tickUpper,
+            liquidity: params.amount,
+            feeGrowthInside0LastX128: feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128: feeGrowthInside1LastX128,
+            feesOwed0: 0,
+            feesOwed1: 0
+        });
+    }
+
+    modifier isAuthorizedForToken(uint256 tokenId) {
+        require(_isApprovedOrOwner(msg.sender, tokenId));
         _;
     }
 
-    function _transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) private isAuthorized(_tokenId) {
-        require(positions[_tokenId].owner == _from, 'Invalid _from');
-        require(_to != address(0), 'Invalid _to');
-        positions[_tokenId].owner = _to;
-        emit Transfer(_from, _to, _tokenId);
-    }
+    /// @inheritdoc INonfungiblePositionManager
+    function increaseLiquidity(
+        uint256 tokenId,
+        uint128 amount,
+        uint256 amount0Max,
+        uint256 amount1Max,
+        uint256 deadline
+    ) external override returns (uint256 amount0, uint256 amount1) {
+        require(amount > 0);
+        Position storage position = positions[tokenId];
 
-    function _safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId,
-        bytes memory data
-    ) private {
-        _transferFrom(_from, _to, _tokenId);
+        PoolAddress.PoolKey memory poolKey =
+            PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee});
 
-        require(
-            IERC721TokenReceiver(_to).onERC721Received(msg.sender, _from, _tokenId, data) ==
-                IERC721TokenReceiver.onERC721Received.selector,
-            'Unsafe transfer'
+        (amount0, amount1) = addLiquidity(
+            AddLiquidityParams({
+                token0: position.token0,
+                token1: position.token1,
+                fee: position.fee,
+                tickLower: position.tickLower,
+                tickUpper: position.tickUpper,
+                amount: amount,
+                amount0Max: amount0Max,
+                amount1Max: amount1Max,
+                recipient: address(this),
+                deadline: deadline
+            })
         );
+
+        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
+
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
+
+        // this is now updated to the current transaction
+        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
+
+        position.feesOwed0 += uint128(
+            FullMath.mulDiv(feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128, position.liquidity, 1 << 128)
+        );
+        position.feesOwed1 += uint128(
+            FullMath.mulDiv(feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128, position.liquidity, 1 << 128)
+        );
+
+        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
+        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
+        position.liquidity += amount;
     }
 
-    /// @inheritdoc IERC721
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId,
-        bytes calldata data
-    ) external override {
-        _safeTransferFrom(_from, _to, _tokenId, data);
+    /// @inheritdoc INonfungiblePositionManager
+    function decreaseLiquidity(uint256 tokenId, uint256 amount)
+        external
+        override
+        isAuthorizedForToken(tokenId)
+        returns (uint256 amount0, uint256 amount1)
+    {
+        revert('TODO');
     }
 
-    /// @inheritdoc IERC721
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external override {
-        _safeTransferFrom(_from, _to, _tokenId, '');
+    /// @inheritdoc INonfungiblePositionManager
+    function collect(
+        uint256 tokenId,
+        uint256 amount0Max,
+        uint256 amount1Max,
+        address recipient
+    ) external override isAuthorizedForToken(tokenId) returns (uint256 amount0, uint256 amount1) {
+        revert('TODO');
     }
 
-    /// @inheritdoc IERC721
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external override isAuthorized(_tokenId) {
-        _transferFrom(_from, _to, _tokenId);
+    /// @inheritdoc INonfungiblePositionManager
+    function exit(uint256 tokenId, address recipient)
+        external
+        override
+        isAuthorizedForToken(tokenId)
+        returns (uint256 amount0, uint256 amount1)
+    {
+        revert('TODO');
+    }
+
+    /// @inheritdoc INonfungiblePositionManager
+    function permit(
+        address owner,
+        address spender,
+        uint256 tokenId,
+        uint256 nonce,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external override checkDeadline(deadline) {
+        revert('TODO');
     }
 }

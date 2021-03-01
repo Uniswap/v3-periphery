@@ -85,6 +85,10 @@ describe('UniswapV3Router01', () => {
     ;({ router, weth, v3CoreFactory, tokens } = await loadFixture(routerFixture))
   })
 
+  it('router bytecode size', async () => {
+    expect(((await router.provider.getCode(router.address)).length - 2) / 2).to.matchSnapshot()
+  })
+
   describe('#WETH', () => {
     it('points to WETH', async () => {
       expect(await router.WETH()).to.eq(weth.address)
@@ -100,8 +104,8 @@ describe('UniswapV3Router01', () => {
   describe('#createPoolAndAddLiquidity', () => {
     it('creates a pool', async () => {
       await router.createPoolAndAddLiquidity({
-        tokenA: tokens[0].address,
-        tokenB: tokens[1].address,
+        token0: tokens[0].address,
+        token1: tokens[1].address,
         sqrtPriceX96: encodePriceSqrt(1, 1),
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
@@ -114,8 +118,8 @@ describe('UniswapV3Router01', () => {
 
     it('fails if pool already exists', async () => {
       await router.createPoolAndAddLiquidity({
-        tokenA: tokens[0].address,
-        tokenB: tokens[1].address,
+        token0: tokens[0].address,
+        token1: tokens[1].address,
         sqrtPriceX96: encodePriceSqrt(1, 1),
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
@@ -127,8 +131,8 @@ describe('UniswapV3Router01', () => {
 
       await expect(
         router.createPoolAndAddLiquidity({
-          tokenA: tokens[0].address,
-          tokenB: tokens[1].address,
+          token0: tokens[0].address,
+          token1: tokens[1].address,
           sqrtPriceX96: encodePriceSqrt(1, 1),
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
@@ -140,24 +144,26 @@ describe('UniswapV3Router01', () => {
       ).to.be.reverted
     })
 
-    it('can take tokens in opposite order', async () => {
-      await router.createPoolAndAddLiquidity({
-        tokenA: tokens[1].address,
-        tokenB: tokens[0].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: wallet.address,
-        amount: 10,
-        deadline: 1,
-        fee: FeeAmount.MEDIUM,
-      })
+    it('cannot take tokens in opposite order', async () => {
+      await expect(
+        router.createPoolAndAddLiquidity({
+          token1: tokens[0].address,
+          token0: tokens[1].address,
+          sqrtPriceX96: encodePriceSqrt(1, 1),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: wallet.address,
+          amount: 10,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+        })
+      ).to.be.revertedWith('Token order')
     })
 
     it('deploys pool with expected parameters', async () => {
       await router.createPoolAndAddLiquidity({
-        tokenA: tokens[1].address,
-        tokenB: tokens[0].address,
+        token0: tokens[0].address,
+        token1: tokens[1].address,
         sqrtPriceX96: encodePriceSqrt(1, 1),
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
@@ -179,8 +185,8 @@ describe('UniswapV3Router01', () => {
     it('gas cost', async () => {
       await snapshotGasCost(
         router.createPoolAndAddLiquidity({
-          tokenA: tokens[0].address,
-          tokenB: tokens[1].address,
+          token0: tokens[0].address,
+          token1: tokens[1].address,
           sqrtPriceX96: encodePriceSqrt(1, 1),
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
@@ -197,16 +203,16 @@ describe('UniswapV3Router01', () => {
     it('reverts if pool does not exist', async () => {
       await expect(
         router.addLiquidity({
-          tokenA: tokens[0].address,
-          tokenB: tokens[1].address,
+          token0: tokens[0].address,
+          token1: tokens[1].address,
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           recipient: wallet.address,
           amount: 10,
           deadline: 1,
           fee: FeeAmount.MEDIUM,
-          amountAMax: constants.MaxUint256,
-          amountBMax: constants.MaxUint256,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
         })
       ).to.be.reverted
     })
@@ -221,16 +227,16 @@ describe('UniswapV3Router01', () => {
 
       it('allows adding liquidity', async () => {
         await router.addLiquidity({
-          tokenA: tokens[0].address,
-          tokenB: tokens[1].address,
+          token0: tokens[0].address,
+          token1: tokens[1].address,
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           recipient: wallet.address,
           amount: 10,
           deadline: 1,
           fee: FeeAmount.MEDIUM,
-          amountAMax: constants.MaxUint256,
-          amountBMax: constants.MaxUint256,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
         })
       })
 
@@ -239,16 +245,16 @@ describe('UniswapV3Router01', () => {
       it('gas cost', async () => {
         await snapshotGasCost(
           router.addLiquidity({
-            tokenA: tokens[0].address,
-            tokenB: tokens[1].address,
+            token0: tokens[0].address,
+            token1: tokens[1].address,
             tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
             tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
             recipient: wallet.address,
             amount: 10,
             deadline: 1,
             fee: FeeAmount.MEDIUM,
-            amountAMax: constants.MaxUint256,
-            amountBMax: constants.MaxUint256,
+            amount0Max: constants.MaxUint256,
+            amount1Max: constants.MaxUint256,
           })
         )
       })
@@ -260,20 +266,20 @@ describe('UniswapV3Router01', () => {
 
     beforeEach(async () => {
       let liquidityParams = {
-        tokenA: tokens[0].address,
-        tokenB: tokens[1].address,
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        fee: FeeAmount.MEDIUM,
         sqrtPriceX96: encodePriceSqrt(1, 1),
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: wallet.address,
         amount: 1000000,
         deadline: 1,
-        fee: FeeAmount.MEDIUM,
       }
 
       await router.connect(wallet).createPoolAndAddLiquidity(liquidityParams)
-      liquidityParams.tokenA = tokens[1].address
-      liquidityParams.tokenB = tokens[2].address
+      liquidityParams.token0 = tokens[1].address
+      liquidityParams.token1 = tokens[2].address
       await router.connect(wallet).createPoolAndAddLiquidity(liquidityParams)
     })
 

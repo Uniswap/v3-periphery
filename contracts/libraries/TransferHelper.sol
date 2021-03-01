@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.6.0;
 
-import '../interfaces/external/IERC20Minimal.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 library TransferHelper {
     function safeTransferFrom(
@@ -11,7 +11,7 @@ library TransferHelper {
         uint256 value
     ) internal {
         (bool success, bytes memory data) =
-            token.call(abi.encodeWithSelector(IERC20Minimal.transferFrom.selector, from, to, value));
+            token.call(abi.encodeWithSelector(IERC20.transferFrom.selector, from, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'STF');
     }
 }
