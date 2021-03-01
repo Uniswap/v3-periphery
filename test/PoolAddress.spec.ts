@@ -46,7 +46,7 @@ describe('PoolAddress', () => {
           '0x2000000000000000000000000000000000000000',
           250
         )
-      ).to.eq('0xFA5299022D5367419744d8E88C017e2066823638')
+      ).to.eq('0xbd68b01f205e877610FA07CC90EF855CB836B52D')
     })
 
     it('token argument order cannot be in reverse', async () => {
