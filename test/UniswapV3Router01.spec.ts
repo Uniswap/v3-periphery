@@ -1,4 +1,4 @@
-import { constants, Contract } from 'ethers'
+import { BigNumber, constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
@@ -56,9 +56,11 @@ describe('UniswapV3Router01', () => {
     }
   }
 
+  // helper for getting token0-2 balances
   // helper for getting the token0-2 balances
   const balances = async ([token0, token1, token2]: TestERC20[], who: string) => {
     return {
+      weth: await weth.balanceOf(who),
       token0: await token0.balanceOf(who),
       token1: await token1.balanceOf(who),
       token2: await token2.balanceOf(who),
@@ -274,6 +276,60 @@ describe('UniswapV3Router01', () => {
       liquidityParams.token0 = tokens[1].address
       liquidityParams.token1 = tokens[2].address
       await router.connect(wallet).createPoolAndAddLiquidity(liquidityParams)
+    })
+
+    describe('#depositETHAndMulticall', () => {
+      beforeEach(async () => {
+        // create WETH pair at t1he beginning of the chain
+        const liquidityParams = {
+          token0: weth.address < tokens[0].address ? weth.address : tokens[0].address,
+          token1: weth.address < tokens[0].address ? tokens[0].address : weth.address,
+          fee: FeeAmount.MEDIUM,
+          sqrtPriceX96: encodePriceSqrt(1, 1),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: wallet.address,
+          amount: 1000000,
+          deadline: 1,
+        }
+
+        await weth.deposit({ value: 1000000 })
+        await weth.approve(router.address, constants.MaxUint256)
+        await router.createPoolAndAddLiquidity(liquidityParams)
+      })
+
+      it('ETH input', async () => {
+        const path = encodePath(
+          [weth, tokens[0]].map((token) => token.address),
+          [FeeAmount.MEDIUM]
+        )
+        const params = {
+          path,
+          amountIn: 3,
+          amountOutMinimum: 1,
+          recipient: trader.address,
+          deadline: 1,
+        }
+        const data = []
+        data.push(router.interface.encodeFunctionData('exactInput', [params]))
+
+        const pool = await v3CoreFactory.getPool(weth.address, tokens[0].address, FeeAmount.MEDIUM)
+
+        // get balances before
+        const poolBefore = await balances(tokens, pool)
+        const traderBefore = await balances(tokens, trader.address)
+
+        await router.connect(trader).depositETHAndMulticall(data, { value: params.amountIn })
+
+        // get balances after
+        const poolAfter = await balances(tokens, pool)
+        const traderAfter = await balances(tokens, trader.address)
+
+        // TODO add trader balance check
+        expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
+        expect(poolAfter.weth).to.be.eq(poolBefore.weth.add(3))
+        expect(poolAfter.token0).to.be.eq(poolBefore.token0.sub(1))
+      })
     })
 
     describe('#exactInput', () => {

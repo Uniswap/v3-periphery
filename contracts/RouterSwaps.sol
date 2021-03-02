@@ -7,6 +7,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import './interfaces/IRouterImmutableState.sol';
 import './interfaces/IRouterSwaps.sol';
+import './interfaces/external/IWETH.sol';
 import './libraries/PoolAddress.sol';
 import './libraries/Path.sol';
 import './libraries/SafeCast.sol';
@@ -109,7 +110,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
             // pay
             if (swapCallbackData.payer != address(0)) {
                 // for the first leg of exact input swaps, pay the pool from the swap initiator
-                TransferHelper.safeTransferFrom(tokenA, swapCallbackData.payer, msg.sender, uint256(amountToPay));
+                pay(tokenA, swapCallbackData.payer, msg.sender, uint256(amountToPay));
                 swapCallbackData.payer = address(0); // zero out the payer
             } else {
                 // for subsequent legs, pay from this address
@@ -128,8 +129,17 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
                 forwardExactOutput(amountToPay, swapCallbackData);
             } else {
                 require(uint256(amountToPay) <= swapCallbackData.slippageCheck, 'too much requested');
-                TransferHelper.safeTransferFrom(tokenB, swapCallbackData.payer, msg.sender, uint256(amountToPay));
+                pay(tokenB, swapCallbackData.payer, msg.sender, uint256(amountToPay));
             }
+        }
+    }
+
+    function pay(address token, address from, address to, uint256 value) private {
+        if (token == this.WETH() && address(this).balance >= value) {
+            IWETH(this.WETH()).deposit{value: value}();
+            IWETH(this.WETH()).transfer(to, value);
+        } else {
+            TransferHelper.safeTransferFrom(token, from, to, value);
         }
     }
 
