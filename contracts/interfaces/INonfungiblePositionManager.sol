@@ -92,14 +92,13 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
     /// @notice Collects up to a maximum amount of fees owed to a specific position to the recipient
     function collect(
         uint256 tokenId,
-        uint256 amount0Max,
-        uint256 amount1Max,
+        uint128 amount0Max,
+        uint128 amount1Max,
         address recipient
     ) external returns (uint256 amount0, uint256 amount1);
 
-    /// @notice Exits a position by decreasing liquidity to 0, and sending all fees + tokens from liquidity to the recipient,
-    /// then burns the NFT token ID.
-    function exit(uint256 tokenId, address recipient) external returns (uint256 amount0, uint256 amount1);
+    /// @notice Burns a token ID, which must have 0 liquidity and 0 of both tokensOwed0 and tokensOwed1
+    function burn(uint256 tokenId) external;
 
     /// @notice Accept approval of a token via signature
     function permit(
