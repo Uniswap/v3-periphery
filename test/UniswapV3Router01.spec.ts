@@ -286,16 +286,16 @@ describe('UniswapV3Router01', () => {
 
           let params = {
             path,
-            amount: 3,
-            amountSlippage: 1,
+            amountIn: 3,
+            amountOutMinimum: 1,
             recipient: trader.address,
             deadline: 1,
           }
 
           // ensure that it fails if the limit is any tighter
-          params.amountSlippage = 2
+          params.amountOutMinimum = 2
           await expect(router.connect(trader).exactInput(params)).to.be.revertedWith('too little received')
-          params.amountSlippage = 1
+          params.amountOutMinimum = 1
 
           await router.connect(trader).exactInput(params)
         }
@@ -347,16 +347,16 @@ describe('UniswapV3Router01', () => {
 
           let params = {
             path,
-            amount: 5,
-            amountSlippage: 1,
+            amountIn: 5,
+            amountOutMinimum: 1,
             recipient: trader.address,
             deadline: 1,
           }
 
           // ensure that it fails if the limit is any tighter
-          params.amountSlippage = 2
+          params.amountOutMinimum = 2
           await expect(router.connect(trader).exactInput(params)).to.be.revertedWith('too little received')
-          params.amountSlippage = 1
+          params.amountOutMinimum = 1
 
           await router.connect(trader).exactInput(params)
         }
@@ -394,16 +394,16 @@ describe('UniswapV3Router01', () => {
 
           let params = {
             path,
-            amount: 1,
-            amountSlippage: 3,
+            amountOut: 1,
+            amountInMaximum: 3,
             recipient: trader.address,
             deadline: 1,
           }
 
           // ensure that it fails if the limit is any tighter
-          params.amountSlippage = 2
+          params.amountInMaximum = 2
           await expect(router.connect(trader).exactOutput(params)).to.be.revertedWith('too much requested')
-          params.amountSlippage = 3
+          params.amountInMaximum = 3
 
           await router.connect(trader).exactOutput(params)
         }
@@ -456,16 +456,16 @@ describe('UniswapV3Router01', () => {
 
           let params = {
             path,
-            amount: 1,
-            amountSlippage: 5,
+            amountOut: 1,
+            amountInMaximum: 5,
             recipient: trader.address,
             deadline: 1,
           }
 
           // ensure that it fails if the limit is any tighter
-          params.amountSlippage = 4
+          params.amountInMaximum = 4
           await expect(router.connect(trader).exactOutput(params)).to.be.revertedWith('too much requested')
-          params.amountSlippage = 5
+          params.amountInMaximum = 5
 
           await router.connect(trader).exactOutput(params)
         }

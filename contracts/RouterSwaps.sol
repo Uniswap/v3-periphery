@@ -25,30 +25,31 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
 
     struct SwapCallbackData {
         bytes path;
-        uint256 amountSlippage;
+        uint256 slippageCheck;
         address payer;
         address recipient;
     }
 
     /// @inheritdoc IRouterSwaps
-    function exactInput(SwapParams calldata params) external override checkDeadline(params.deadline) {
+    function exactInput(ExactInputParams calldata params) external override checkDeadline(params.deadline) {
         (address tokenA, address tokenB, uint24 fee) = params.path.decode();
 
         IUniswapV3Pool pool =
             IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), PoolAddress.getPoolKey(tokenA, tokenB, fee)));
 
+        // send directly to recipient if this is a single-pair swap, otherwise send to address(this)
         address recipient = params.path.hasPairs() ? address(this) : params.recipient;
         bool zeroForOne = tokenA < tokenB;
 
         pool.swap(
             recipient,
             zeroForOne,
-            params.amount.toInt256(),
+            params.amountIn.toInt256(),
             zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
             abi.encode(
                 SwapCallbackData({
                     path: params.path,
-                    amountSlippage: params.amountSlippage,
+                    slippageCheck: params.amountOutMinimum,
                     payer: msg.sender,
                     recipient: params.recipient
                 })
@@ -57,7 +58,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     }
 
     /// @inheritdoc IRouterSwaps
-    function exactOutput(SwapParams calldata params) external override checkDeadline(params.deadline) {
+    function exactOutput(ExactOutputParams calldata params) external override checkDeadline(params.deadline) {
         (address tokenA, address tokenB, uint24 fee) = params.path.decode();
 
         IUniswapV3Pool pool =
@@ -68,12 +69,12 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         pool.swap(
             params.recipient,
             zeroForOne,
-            -params.amount.toInt256(), // negative number = exact output
+            -params.amountOut.toInt256(), // negative number = exact output
             zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
             abi.encode(
                 SwapCallbackData({
                     path: params.path,
-                    amountSlippage: params.amountSlippage,
+                    slippageCheck: params.amountInMaximum,
                     payer: msg.sender,
                     recipient: params.recipient
                 })
@@ -98,6 +99,13 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         int256 amountToPay = amount0Delta > 0 ? amount0Delta : amount1Delta;
 
         if (exactIn) {
+            // check
+            int256 amountReceived = amount0Delta > 0 ? amount1Delta : amount0Delta;
+            if (!swapCallbackData.path.hasPairs()) {
+                // if this is the last callback, perform the slippage check early
+                require(uint256(-amountReceived) >= swapCallbackData.slippageCheck, 'too little received');
+            }
+
             // pay
             if (swapCallbackData.payer != address(0)) {
                 // for the first leg of exact input swaps, pay the pool from the swap initiator
@@ -108,21 +116,18 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
                 TransferHelper.safeTransfer(tokenA, msg.sender, uint256(amountToPay));
             }
 
-            // either forward or check
-            int256 amountReceived = amount0Delta > 0 ? amount1Delta : amount0Delta;
+            // forward
             if (swapCallbackData.path.hasPairs()) {
                 swapCallbackData.path = swapCallbackData.path.skipOne();
                 forwardExactInput(amountReceived, swapCallbackData);
-            } else {
-                require(uint256(-amountReceived) >= swapCallbackData.amountSlippage, 'too little received');
             }
         } else {
-            // either forward or check/pay
+            // either forward or check and pay
             if (swapCallbackData.path.hasPairs()) {
                 swapCallbackData.path = swapCallbackData.path.skipOne();
                 forwardExactOutput(amountToPay, swapCallbackData);
             } else {
-                require(uint256(amountToPay) <= swapCallbackData.amountSlippage, 'too much requested');
+                require(uint256(amountToPay) <= swapCallbackData.slippageCheck, 'too much requested');
                 TransferHelper.safeTransferFrom(tokenB, swapCallbackData.payer, msg.sender, uint256(amountToPay));
             }
         }
@@ -131,14 +136,13 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     function forwardExactInput(int256 amountReceived, SwapCallbackData memory swapCallbackData) private {
         (address tokenB, address tokenC, uint24 fee) = swapCallbackData.path.decode();
 
-        // get the next pool
         IUniswapV3Pool nextPool =
             IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), PoolAddress.getPoolKey(tokenB, tokenC, fee)));
 
         address recipient = swapCallbackData.path.hasPairs() ? address(this) : swapCallbackData.recipient;
         bool zeroForOne = tokenB < tokenC;
 
-        require(-amountReceived > 0); // fairly hacky
+        require(-amountReceived > 0); // somewhat hacky, probably never happens, but better safe than sorry for now
         nextPool.swap(
             recipient,
             zeroForOne,
@@ -151,7 +155,6 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     function forwardExactOutput(int256 amountToPay, SwapCallbackData memory swapCallbackData) private {
         (address tokenB, address tokenC, uint24 fee) = swapCallbackData.path.decode();
 
-        // get the next pool
         IUniswapV3Pool nextPool =
             IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), PoolAddress.getPoolKey(tokenB, tokenC, fee)));
 
