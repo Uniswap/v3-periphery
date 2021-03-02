@@ -134,7 +134,12 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         }
     }
 
-    function pay(address token, address from, address to, uint256 value) private {
+    function pay(
+        address token,
+        address from,
+        address to,
+        uint256 value
+    ) private {
         if (token == this.WETH() && address(this).balance >= value) {
             IWETH(this.WETH()).deposit{value: value}();
             IWETH(this.WETH()).transfer(to, value);

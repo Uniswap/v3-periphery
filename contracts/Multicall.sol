@@ -15,7 +15,7 @@ contract Multicall is IMulticall {
         return results;
     }
 
-    function depositETHAndMulticall(bytes[] calldata data) external override payable returns (bytes[] memory results) {
+    function depositETHAndMulticall(bytes[] calldata data) external payable override returns (bytes[] memory results) {
         return this.multicall(data);
     }
 }
