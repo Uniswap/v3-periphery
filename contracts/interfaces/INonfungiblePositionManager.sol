@@ -9,6 +9,22 @@ import '@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol';
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
 interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
+    /// @notice The permit typehash for the permit function
+    function PERMIT_TYPEHASH() external pure returns (bytes32);
+
+    /// @notice The domain separator used in the permit signature
+    function DOMAIN_SEPARATOR() external view returns (bytes32);
+
+    /// @notice Accept approval of a token via signature
+    function permit(
+        address spender,
+        uint256 tokenId,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
+
     /// @notice Returns the position information associated with a given token ID.
     /// @param tokenId The ID of the token that represents the position
     function positions(uint256 tokenId)
@@ -81,7 +97,6 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
     ) external returns (uint256 amount0, uint256 amount1);
 
     /// @notice Decreases the amount of liquidity in a position, keeping the fees
-    /// TODO: how to support withdrawing and burning
     function decreaseLiquidity(
         uint256 tokenId,
         uint128 amount,
@@ -99,16 +114,4 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
 
     /// @notice Burns a token ID, which must have 0 liquidity and 0 of both tokensOwed0 and tokensOwed1
     function burn(uint256 tokenId) external;
-
-    /// @notice Accept approval of a token via signature
-    function permit(
-        address owner,
-        address spender,
-        uint256 tokenId,
-        uint256 nonce,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
 }
