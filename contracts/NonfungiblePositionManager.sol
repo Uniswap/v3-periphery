@@ -3,6 +3,7 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
@@ -184,13 +185,49 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
     }
 
     /// @inheritdoc INonfungiblePositionManager
-    function decreaseLiquidity(uint256 tokenId, uint256 amount)
-        external
-        override
-        isAuthorizedForToken(tokenId)
-        returns (uint256 amount0, uint256 amount1)
-    {
-        revert('TODO');
+    function decreaseLiquidity(
+        uint256 tokenId,
+        uint128 amount,
+        uint256 amount0Min,
+        uint256 amount1Min
+    ) external override isAuthorizedForToken(tokenId) returns (uint256 amount0, uint256 amount1) {
+        require(amount > 0);
+        Position storage position = positions[tokenId];
+
+        PoolAddress.PoolKey memory poolKey =
+            PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee});
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
+        (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, amount);
+
+        require(amount0 >= amount0Min);
+        require(amount1 >= amount0Min);
+
+        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
+        // this is now updated to the current transaction
+        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
+
+        position.tokensOwed0 +=
+            uint128(amount0) +
+            uint128(
+                FullMath.mulDiv(
+                    feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,
+                    position.liquidity,
+                    1 << 128
+                )
+            );
+        position.tokensOwed1 +=
+            uint128(amount1) +
+            uint128(
+                FullMath.mulDiv(
+                    feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,
+                    position.liquidity,
+                    1 << 128
+                )
+            );
+
+        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
+        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
+        position.liquidity -= amount;
     }
 
     /// @inheritdoc INonfungiblePositionManager
