@@ -233,11 +233,28 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
     /// @inheritdoc INonfungiblePositionManager
     function collect(
         uint256 tokenId,
-        uint256 amount0Max,
-        uint256 amount1Max,
+        uint128 amount0Max,
+        uint128 amount1Max,
         address recipient
     ) external override isAuthorizedForToken(tokenId) returns (uint256 amount0, uint256 amount1) {
-        revert('TODO');
+        require(amount0Max > 0 || amount1Max > 0);
+        Position storage position = positions[tokenId];
+
+        (uint128 tokensOwed0, uint128 tokensOwed1) = (position.tokensOwed0, position.tokensOwed1);
+
+        // adjust amount0Max, amount1Max to the max for the position
+        (amount0Max, amount1Max) = (
+            amount0Max > tokensOwed0 ? tokensOwed0 : amount0Max,
+            amount1Max > tokensOwed1 ? tokensOwed1 : amount1Max
+        );
+
+        PoolAddress.PoolKey memory poolKey =
+            PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee});
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
+        (amount0, amount1) = pool.collect(recipient, position.tickLower, position.tickUpper, amount0Max, amount1Max);
+
+        // sometimes there will be a few wei left over due to rounding down in core
+        (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - uint128(amount0), tokensOwed1 - uint128(amount1));
     }
 
     /// @inheritdoc INonfungiblePositionManager

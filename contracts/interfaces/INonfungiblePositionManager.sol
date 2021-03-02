@@ -92,8 +92,8 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
     /// @notice Collects up to a maximum amount of fees owed to a specific position to the recipient
     function collect(
         uint256 tokenId,
-        uint256 amount0Max,
-        uint256 amount1Max,
+        uint128 amount0Max,
+        uint128 amount1Max,
         address recipient
     ) external returns (uint256 amount0, uint256 amount1);
 
