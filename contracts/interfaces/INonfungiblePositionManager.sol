@@ -97,7 +97,6 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
     ) external returns (uint256 amount0, uint256 amount1);
 
     /// @notice Decreases the amount of liquidity in a position, keeping the fees
-    /// TODO: how to support withdrawing and burning
     function decreaseLiquidity(
         uint256 tokenId,
         uint128 amount,
