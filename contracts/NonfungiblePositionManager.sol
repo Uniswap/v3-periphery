@@ -253,18 +253,17 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
         (amount0, amount1) = pool.collect(recipient, position.tickLower, position.tickUpper, amount0Max, amount1Max);
 
-        // sometimes there will be a few wei left over due to rounding down in core
-        (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - uint128(amount0), tokensOwed1 - uint128(amount1));
+        // sometimes there will be a few less wei than expected due to rounding down in core, but we just subtract the full amount expected
+        // instead of the actual amount so we can burn the token
+        (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - amount0Max, tokensOwed1 - amount1Max);
     }
 
     /// @inheritdoc INonfungiblePositionManager
-    function exit(uint256 tokenId, address recipient)
-        external
-        override
-        isAuthorizedForToken(tokenId)
-        returns (uint256 amount0, uint256 amount1)
-    {
-        revert('TODO');
+    function burn(uint256 tokenId) external override isAuthorizedForToken(tokenId) {
+        Position storage position = positions[tokenId];
+        require(position.liquidity == 0 && position.tokensOwed0 == 0 && position.tokensOwed1 == 0, 'Not cleared');
+        delete positions[tokenId];
+        _burn(tokenId);
     }
 
     /// @inheritdoc INonfungiblePositionManager
