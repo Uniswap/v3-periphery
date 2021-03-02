@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, constants, Contract } from 'ethers'
+import { constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
@@ -175,7 +175,7 @@ describe('UniswapV3Router01', () => {
 
     it('fails if deadline is in past')
 
-    it('gas cost', async () => {
+    it('gas', async () => {
       await snapshotGasCost(
         router.createPoolAndAddLiquidity({
           token0: tokens[0].address,
@@ -235,7 +235,7 @@ describe('UniswapV3Router01', () => {
 
       it('fails if deadline is in past')
 
-      it('gas cost', async () => {
+      it('gas', async () => {
         await snapshotGasCost(
           router.addLiquidity({
             token0: tokens[0].address,
@@ -706,8 +706,54 @@ describe('UniswapV3Router01', () => {
 
     it('increases position liquidity', async () => {
       await router.increaseLiquidity(tokenId, 150, constants.MaxUint256, constants.MaxUint256, 1)
-      const { liquidity } = await router.positions(1)
+      const { liquidity } = await router.positions(tokenId)
       expect(liquidity).to.eq(250)
+    })
+
+    it('gas', async () => {
+      await snapshotGasCost(router.increaseLiquidity(tokenId, 150, constants.MaxUint256, constants.MaxUint256, 1))
+    })
+  })
+
+  describe('#decreaseLiquidity', () => {
+    const tokenId = 1
+    beforeEach('create a position', async () => {
+      await router.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 100,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    it('cannot be called by other addresses', async () => {
+      await expect(router.decreaseLiquidity(tokenId, 50, 0, 0)).to.be.revertedWith('AUTH')
+    })
+
+    it('decreases position liquidity', async () => {
+      await router.connect(other).decreaseLiquidity(tokenId, 25, 0, 0)
+      const { liquidity } = await router.positions(tokenId)
+      expect(liquidity).to.eq(75)
+    })
+
+    it('accounts for tokens owed', async () => {
+      await router.connect(other).decreaseLiquidity(tokenId, 25, 0, 0)
+      const { tokensOwed0, tokensOwed1 } = await router.positions(tokenId)
+      expect(tokensOwed0).to.eq(24)
+      expect(tokensOwed1).to.eq(24)
+    })
+
+    it('gas partial decrease', async () => {
+      await snapshotGasCost(router.connect(other).decreaseLiquidity(tokenId, 50, 0, 0))
+    })
+
+    it('gas complete decrease', async () => {
+      await snapshotGasCost(router.connect(other).decreaseLiquidity(tokenId, 100, 0, 0))
     })
   })
 })

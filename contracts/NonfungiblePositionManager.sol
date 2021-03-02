@@ -132,7 +132,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
     }
 
     modifier isAuthorizedForToken(uint256 tokenId) {
-        require(_isApprovedOrOwner(msg.sender, tokenId));
+        require(_isApprovedOrOwner(msg.sender, tokenId), 'AUTH');
         _;
     }
 
@@ -200,7 +200,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, amount);
 
         require(amount0 >= amount0Min);
-        require(amount1 >= amount0Min);
+        require(amount1 >= amount1Min);
 
         bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
         // this is now updated to the current transaction
