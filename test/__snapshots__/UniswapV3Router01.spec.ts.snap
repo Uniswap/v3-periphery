@@ -14,4 +14,4 @@ exports[`UniswapV3Router01 #increaseLiquidity gas 1`] = `184417`;
 
 exports[`UniswapV3Router01 #mint gas 1`] = `362963`;
 
-exports[`UniswapV3Router01 router bytecode size 1`] = `24423`;
+exports[`UniswapV3Router01 router bytecode size 1`] = `24994`;
