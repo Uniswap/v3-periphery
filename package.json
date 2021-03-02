@@ -16,7 +16,8 @@
     "url": "https://github.com/Uniswap/uniswap-v3-periphery"
   },
   "files": [
-    "contracts/interfaces"
+    "contracts/interfaces",
+    "artifacts/contracts/UniswapV3Router01.sol/UniswapV3Router01.json"
   ],
   "engines": {
     "node": ">=10"
