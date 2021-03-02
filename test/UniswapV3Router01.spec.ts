@@ -571,6 +571,22 @@ describe('UniswapV3Router01', () => {
 
       await expect(router.firstMint(params)).to.be.reverted
     })
+
+    it('gas', async () => {
+      await snapshotGasCost(
+        router.firstMint({
+          token0: tokens[0].address,
+          token1: tokens[1].address,
+          sqrtPriceX96: encodePriceSqrt(1, 1),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: wallet.address,
+          amount: 10,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+        })
+      )
+    })
   })
 
   describe('#mint', () => {
@@ -640,6 +656,35 @@ describe('UniswapV3Router01', () => {
       expect(tokensOwed1).to.eq(0)
       expect(feeGrowthInside0LastX128).to.eq(0)
       expect(feeGrowthInside1LastX128).to.eq(0)
+    })
+
+    it('gas', async () => {
+      await router.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+
+      await snapshotGasCost(
+        router.mint({
+          token0: tokens[0].address,
+          token1: tokens[1].address,
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: other.address,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
+          amount: 15,
+          deadline: 10,
+          fee: FeeAmount.MEDIUM,
+        })
+      )
     })
   })
 
