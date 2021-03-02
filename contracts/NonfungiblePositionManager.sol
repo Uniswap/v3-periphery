@@ -37,7 +37,7 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
 
     uint64 private _nextId = 1;
 
-    constructor() ERC721('Uniswap V3 Positions', 'UNI-V3-POS') {}
+    constructor() ERC721('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS') {}
 
     /// @inheritdoc INonfungiblePositionManager
     function firstMint(FirstMintParams calldata params)
@@ -266,17 +266,50 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         _burn(tokenId);
     }
 
+    function DOMAIN_SEPARATOR() public view override returns (bytes32) {
+        uint256 chainId;
+        assembly {
+            chainId := chainid()
+        }
+        return
+            keccak256(
+                abi.encode(
+                    keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+                    // keccak256(bytes('Uniswap V3 Positions NFT-V1'))
+                    0x193ae757ecb6ead396a72d38c6cc38e1be93297aa66ffefea29e32ce3045475f,
+                    // keccak256(bytes('1'))
+                    0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6,
+                    chainId,
+                    address(this)
+                )
+            );
+    }
+
+    // keccak256("Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)");
+    bytes32 public constant override PERMIT_TYPEHASH =
+        0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
+
     /// @inheritdoc INonfungiblePositionManager
     function permit(
-        address owner,
         address spender,
         uint256 tokenId,
-        uint256 nonce,
         uint256 deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) external override checkDeadline(deadline) {
-        revert('TODO');
+        bytes32 digest =
+            keccak256(
+                abi.encodePacked(
+                    '\x19\x01',
+                    DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(PERMIT_TYPEHASH, spender, tokenId, positions[tokenId].nonce++, deadline))
+                )
+            );
+        address owner = ownerOf(tokenId);
+        address recoveredAddress = ecrecover(digest, v, r, s);
+        require(recoveredAddress == owner, 'Invalid signature');
+        // cannot be done yet because of https://github.com/OpenZeppelin/openzeppelin-contracts/issues/2550
+        revert('todo');
     }
 }
