@@ -11,7 +11,7 @@ import './libraries/PoolAddress.sol';
 import './libraries/TransferHelper.sol';
 import './RouterValidation.sol';
 
-/// @title Logic for positions
+/// @title Stateless functions for managing positions
 abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, RouterValidation {
     /// @inheritdoc IRouterPositions
     function createPoolAndAddLiquidity(CreatePoolAndAddLiquidityParams memory params)

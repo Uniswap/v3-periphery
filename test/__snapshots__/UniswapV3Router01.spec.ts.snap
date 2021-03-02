@@ -2,6 +2,14 @@
 
 exports[`UniswapV3Router01 #addLiquidity pool exists gas 1`] = `321092`;
 
+exports[`UniswapV3Router01 #burn gas 1`] = `53146`;
+
+exports[`UniswapV3Router01 #collect gas transfers both 1`] = `61293`;
+
+exports[`UniswapV3Router01 #collect gas transfers token0 only 1`] = `73370`;
+
+exports[`UniswapV3Router01 #collect gas transfers token1 only 1`] = `73403`;
+
 exports[`UniswapV3Router01 #createPoolAndAddLiquidity gas 1`] = `4815914`;
 
 exports[`UniswapV3Router01 #decreaseLiquidity gas complete decrease 1`] = `96758`;

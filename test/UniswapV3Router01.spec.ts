@@ -4,7 +4,7 @@ import { waffle, ethers } from 'hardhat'
 import { Fixture } from 'ethereum-waffle'
 import { UniswapV3Router01, WETH9, TestERC20 } from '../typechain'
 import { computePoolAddress } from './shared/computePoolAddress'
-import { FeeAmount, TICK_SPACINGS } from './shared/constants'
+import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
 import { v3CoreFactoryFixture } from './shared/fixtures'
@@ -754,6 +754,120 @@ describe('UniswapV3Router01', () => {
 
     it('gas complete decrease', async () => {
       await snapshotGasCost(router.connect(other).decreaseLiquidity(tokenId, 100, 0, 0))
+    })
+  })
+
+  describe('#collect', () => {
+    const tokenId = 1
+    beforeEach('create a position', async () => {
+      await router.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 100,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    it('cannot be called by other addresses', async () => {
+      await expect(router.collect(tokenId, MaxUint128, MaxUint128, wallet.address)).to.be.revertedWith('AUTH')
+    })
+
+    it('cannot be called with 0 amounts', async () => {
+      await expect(router.connect(other).collect(tokenId, 0, 0, wallet.address)).to.be.reverted
+    })
+
+    it('no op if no tokens are owed', async () => {
+      await expect(router.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address))
+        .to.not.emit(tokens[0], 'Transfer')
+        .to.not.emit(tokens[1], 'Transfer')
+    })
+
+    it('transfers tokens owed from burn', async () => {
+      await router.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
+      const poolAddress = computePoolAddress(
+        v3CoreFactory.address,
+        [tokens[0].address, tokens[1].address],
+        FeeAmount.MEDIUM
+      )
+      await expect(router.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address))
+        .to.emit(tokens[0], 'Transfer')
+        .withArgs(poolAddress, wallet.address, 49)
+        .to.emit(tokens[1], 'Transfer')
+        .withArgs(poolAddress, wallet.address, 49)
+    })
+
+    it('gas transfers both', async () => {
+      await router.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
+      await snapshotGasCost(router.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address))
+    })
+
+    it('gas transfers token0 only', async () => {
+      await router.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
+      await snapshotGasCost(router.connect(other).collect(tokenId, MaxUint128, 0, wallet.address))
+    })
+
+    it('gas transfers token1 only', async () => {
+      await router.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
+      await snapshotGasCost(router.connect(other).collect(tokenId, 0, MaxUint128, wallet.address))
+    })
+  })
+
+  describe('#burn', () => {
+    const tokenId = 1
+    beforeEach('create a position', async () => {
+      await router.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 100,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    it('cannot be called by other addresses', async () => {
+      await expect(router.burn(tokenId)).to.be.revertedWith('AUTH')
+    })
+
+    it('cannot be called while there is still liquidity', async () => {
+      await expect(router.connect(other).burn(tokenId)).to.be.revertedWith('Not cleared')
+    })
+
+    it('cannot be called while there is still partial liquidity', async () => {
+      await router.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
+      await expect(router.connect(other).burn(tokenId)).to.be.revertedWith('Not cleared')
+    })
+
+    it('cannot be called while there is still tokens owed', async () => {
+      await router.connect(other).decreaseLiquidity(tokenId, 100, 0, 0)
+      await expect(router.connect(other).burn(tokenId)).to.be.revertedWith('Not cleared')
+    })
+
+    it('deletes the token', async () => {
+      await router.connect(other).decreaseLiquidity(tokenId, 100, 0, 0)
+      await router.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address)
+      await router.connect(other).burn(tokenId)
+      const { liquidity, token0, token1, fee, tokensOwed0, tokensOwed1 } = await router.positions(tokenId)
+      expect(token0).to.eq(constants.AddressZero)
+      expect(token1).to.eq(constants.AddressZero)
+      expect(fee).to.eq(fee)
+      expect(liquidity).to.eq(0)
+      expect(tokensOwed0).to.eq(0)
+      expect(tokensOwed1).to.eq(0)
+    })
+
+    it('gas', async () => {
+      await router.connect(other).decreaseLiquidity(tokenId, 100, 0, 0)
+      await router.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address)
+      await snapshotGasCost(router.connect(other).burn(tokenId))
     })
   })
 })
