@@ -317,29 +317,31 @@ describe('NonfungiblePositionManager', () => {
       })
     })
 
+    it('fails if past deadline')
+
     it('cannot be called by other addresses', async () => {
-      await expect(positionManager.decreaseLiquidity(tokenId, 50, 0, 0)).to.be.revertedWith('Not approved')
+      await expect(positionManager.decreaseLiquidity(tokenId, 50, 0, 0, 1)).to.be.revertedWith('Not approved')
     })
 
     it('decreases position liquidity', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 25, 0, 0)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 25, 0, 0, 1)
       const { liquidity } = await positionManager.positions(tokenId)
       expect(liquidity).to.eq(75)
     })
 
     it('accounts for tokens owed', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 25, 0, 0)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 25, 0, 0, 1)
       const { tokensOwed0, tokensOwed1 } = await positionManager.positions(tokenId)
       expect(tokensOwed0).to.eq(24)
       expect(tokensOwed1).to.eq(24)
     })
 
     it('gas partial decrease', async () => {
-      await snapshotGasCost(positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0))
+      await snapshotGasCost(positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1))
     })
 
     it('gas complete decrease', async () => {
-      await snapshotGasCost(positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0))
+      await snapshotGasCost(positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1))
     })
   })
 
@@ -360,29 +362,29 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('cannot be called by other addresses', async () => {
-      await expect(positionManager.collect(tokenId, MaxUint128, MaxUint128, wallet.address)).to.be.revertedWith(
+      await expect(positionManager.collect(tokenId, wallet.address, MaxUint128, MaxUint128)).to.be.revertedWith(
         'Not approved'
       )
     })
 
     it('cannot be called with 0 amounts', async () => {
-      await expect(positionManager.connect(other).collect(tokenId, 0, 0, wallet.address)).to.be.reverted
+      await expect(positionManager.connect(other).collect(tokenId, wallet.address, 0, 0)).to.be.reverted
     })
 
     it('no op if no tokens are owed', async () => {
-      await expect(positionManager.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address))
+      await expect(positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128))
         .to.not.emit(tokens[0], 'Transfer')
         .to.not.emit(tokens[1], 'Transfer')
     })
 
     it('transfers tokens owed from burn', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
       const poolAddress = computePoolAddress(
         v3CoreFactory.address,
         [tokens[0].address, tokens[1].address],
         FeeAmount.MEDIUM
       )
-      await expect(positionManager.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address))
+      await expect(positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128))
         .to.emit(tokens[0], 'Transfer')
         .withArgs(poolAddress, wallet.address, 49)
         .to.emit(tokens[1], 'Transfer')
@@ -390,18 +392,18 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('gas transfers both', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
-      await snapshotGasCost(positionManager.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address))
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
+      await snapshotGasCost(positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128))
     })
 
     it('gas transfers token0 only', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
-      await snapshotGasCost(positionManager.connect(other).collect(tokenId, MaxUint128, 0, wallet.address))
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
+      await snapshotGasCost(positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, 0))
     })
 
     it('gas transfers token1 only', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
-      await snapshotGasCost(positionManager.connect(other).collect(tokenId, 0, MaxUint128, wallet.address))
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
+      await snapshotGasCost(positionManager.connect(other).collect(tokenId, wallet.address, 0, MaxUint128))
     })
   })
 
@@ -430,18 +432,18 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('cannot be called while there is still partial liquidity', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
       await expect(positionManager.connect(other).burn(tokenId)).to.be.revertedWith('Not cleared')
     })
 
     it('cannot be called while there is still tokens owed', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
       await expect(positionManager.connect(other).burn(tokenId)).to.be.revertedWith('Not cleared')
     })
 
     it('deletes the token', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0)
-      await positionManager.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
+      await positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128)
       await positionManager.connect(other).burn(tokenId)
       const { liquidity, token0, token1, fee, tokensOwed0, tokensOwed1 } = await positionManager.positions(tokenId)
       expect(token0).to.eq(constants.AddressZero)
@@ -453,8 +455,8 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('gas', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0)
-      await positionManager.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
+      await positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128)
       await snapshotGasCost(positionManager.connect(other).burn(tokenId))
     })
   })
@@ -495,12 +497,13 @@ describe('NonfungiblePositionManager', () => {
         liquidity,
         amount0Min,
         amount1Min,
+        /*deadline=*/ 1,
       ])
       const collectData = positionManager.interface.encodeFunctionData('collect', [
         tokenId,
-        MaxUint128,
-        MaxUint128,
         recipient,
+        MaxUint128,
+        MaxUint128,
       ])
       const burnData = positionManager.interface.encodeFunctionData('burn', [tokenId])
 

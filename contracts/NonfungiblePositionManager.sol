@@ -212,8 +212,15 @@ contract NonfungiblePositionManager is
         uint256 tokenId,
         uint128 amount,
         uint256 amount0Min,
-        uint256 amount1Min
-    ) external override isAuthorizedForToken(tokenId) returns (uint256 amount0, uint256 amount1) {
+        uint256 amount1Min,
+        uint256 deadline
+    )
+        external
+        override
+        isAuthorizedForToken(tokenId)
+        checkDeadline(deadline)
+        returns (uint256 amount0, uint256 amount1)
+    {
         require(amount > 0);
         Position storage position = positions[tokenId];
 
@@ -256,9 +263,9 @@ contract NonfungiblePositionManager is
     /// @inheritdoc INonfungiblePositionManager
     function collect(
         uint256 tokenId,
+        address recipient,
         uint128 amount0Max,
-        uint128 amount1Max,
-        address recipient
+        uint128 amount1Max
     ) external override isAuthorizedForToken(tokenId) returns (uint256 amount0, uint256 amount1) {
         require(amount0Max > 0 || amount1Max > 0);
         Position storage position = positions[tokenId];

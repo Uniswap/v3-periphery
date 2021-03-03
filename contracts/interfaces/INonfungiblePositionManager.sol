@@ -98,7 +98,8 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable, IER
         uint256 tokenId,
         uint128 amount,
         uint256 amount0Min,
-        uint256 amount1Min
+        uint256 amount1Min,
+        uint256 deadline
     ) external returns (uint256 amount0, uint256 amount1);
 
     /// @notice Collects up to a maximum amount of fees owed to a specific position to the recipient
@@ -108,9 +109,9 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable, IER
     /// @param recipient The account that should receive the tokens
     function collect(
         uint256 tokenId,
+        address recipient,
         uint128 amount0Max,
-        uint128 amount1Max,
-        address recipient
+        uint128 amount1Max
     ) external returns (uint256 amount0, uint256 amount1);
 
     /// @notice Burns a token ID, which deletes it from the NFT contract. The token must have 0 liquidity and all tokens
