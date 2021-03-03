@@ -1,25 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`UniswapV3Router01 #addLiquidity pool exists gas 1`] = `321473`;
+exports[`UniswapV3Router01 #addLiquidity pool exists gas 1`] = `320928`;
 
-exports[`UniswapV3Router01 #burn gas 1`] = `53188`;
+exports[`UniswapV3Router01 #createPoolAndAddLiquidity gas 1`] = `4815706`;
 
-exports[`UniswapV3Router01 #collect gas transfers both 1`] = `61425`;
-
-exports[`UniswapV3Router01 #collect gas transfers token0 only 1`] = `73502`;
-
-exports[`UniswapV3Router01 #collect gas transfers token1 only 1`] = `73535`;
-
-exports[`UniswapV3Router01 #createPoolAndAddLiquidity gas 1`] = `4816334`;
-
-exports[`UniswapV3Router01 #decreaseLiquidity gas complete decrease 1`] = `96821`;
-
-exports[`UniswapV3Router01 #decreaseLiquidity gas partial decrease 1`] = `161544`;
-
-exports[`UniswapV3Router01 #firstMint gas 1`] = `5039159`;
-
-exports[`UniswapV3Router01 #increaseLiquidity gas 1`] = `189798`;
-
-exports[`UniswapV3Router01 #mint gas 1`] = `368565`;
-
-exports[`UniswapV3Router01 router bytecode size 1`] = `24510`;
+exports[`UniswapV3Router01 router bytecode size 1`] = `9984`;

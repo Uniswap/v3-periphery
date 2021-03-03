@@ -9,8 +9,9 @@ import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
 import './libraries/FullMath.sol';
 import './RouterPositions.sol';
+import './RouterImmutableState.sol';
 
-abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC721, RouterPositions {
+contract NonfungiblePositionManager is INonfungiblePositionManager, ERC721, RouterImmutableState, RouterPositions {
     // details about the uniswap position
     struct Position {
         // the nonce for permits
@@ -37,7 +38,10 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
 
     uint64 private _nextId = 1;
 
-    constructor() ERC721('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS') {}
+    constructor(address _factory, address _WETH)
+        ERC721('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS')
+        RouterImmutableState(_factory, _WETH)
+    {}
 
     /// @inheritdoc INonfungiblePositionManager
     function firstMint(FirstMintParams calldata params)
