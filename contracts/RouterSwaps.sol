@@ -103,7 +103,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
             // check
             int256 amountReceived = amount0Delta > 0 ? amount1Delta : amount0Delta;
             if (!swapCallbackData.path.hasPairs()) {
-                // if this is the last callback, perform the slippage check early
+                // if this is the last callback, perform the slippage check early to save gas in failure case
                 require(uint256(-amountReceived) >= swapCallbackData.slippageCheck, 'too little received');
             }
 

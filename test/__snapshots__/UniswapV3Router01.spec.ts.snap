@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`UniswapV3Router01 #addLiquidity pool exists gas 1`] = `321452`;
+exports[`UniswapV3Router01 #addLiquidity pool exists gas 1`] = `321497`;
 
 exports[`UniswapV3Router01 #burn gas 1`] = `53188`;
 
@@ -22,4 +22,4 @@ exports[`UniswapV3Router01 #increaseLiquidity gas 1`] = `189777`;
 
 exports[`UniswapV3Router01 #mint gas 1`] = `368544`;
 
-exports[`UniswapV3Router01 router bytecode size 1`] = `26331`;
+exports[`UniswapV3Router01 router bytecode size 1`] = `27623`;

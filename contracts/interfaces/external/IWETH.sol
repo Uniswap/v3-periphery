@@ -4,6 +4,9 @@ pragma solidity >=0.5.0;
 /// @title Interface for WETH
 /// @notice Wrapped Ether contract interface
 interface IWETH {
+    /// @notice Get address' balance of wrapped ether
+    function balanceOf(address) external view returns (uint256);
+
     /// @notice Deposit some ether to get wrapped ether
     function deposit() external payable;
 
