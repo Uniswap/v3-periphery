@@ -285,7 +285,8 @@ contract NonfungiblePositionManager is
         return
             keccak256(
                 abi.encode(
-                    keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+                    // keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')
+                    0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f,
                     // keccak256(bytes('Uniswap V3 Positions NFT-V1'))
                     0x193ae757ecb6ead396a72d38c6cc38e1be93297aa66ffefea29e32ce3045475f,
                     // keccak256(bytes('1'))
