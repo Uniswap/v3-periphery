@@ -9,6 +9,14 @@ library NonfungibleTokenPositionDescriptor {
     function tokenURI(address positionManager, uint256 tokenId) public view returns (string memory) {
         (, address token0, address token1, uint24 fee, , , , , , , ) =
             INonfungiblePositionManager(positionManager).positions(tokenId);
-        return 'data:application/json;base64,<data>';
+
+        require(token0 != address(0), 'Invalid token ID');
+
+        // todo: compute name and description from details about the position
+        string memory name = 'ABC';
+        string memory description = 'XYZ';
+
+        return
+            string(abi.encodePacked('data:application/json,{"name":"', name, '", "description":"', description, '"}'));
     }
 }
