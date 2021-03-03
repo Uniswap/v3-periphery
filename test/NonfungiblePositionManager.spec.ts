@@ -2,7 +2,7 @@ import { BigNumberish, constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { NonfungiblePositionManager, WETH9, TestERC20 } from '../typechain'
+import { MockTimeNonfungiblePositionManager, WETH9, TestERC20 } from '../typechain'
 import { computePoolAddress } from './shared/computePoolAddress'
 import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -18,7 +18,7 @@ describe('NonfungiblePositionManager', () => {
   const [wallet, other] = wallets
 
   const nonfungiblePositionManagerFixture: Fixture<{
-    positionManager: NonfungiblePositionManager
+    positionManager: MockTimeNonfungiblePositionManager
     weth: WETH9
     v3CoreFactory: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
@@ -32,7 +32,7 @@ describe('NonfungiblePositionManager', () => {
     const positionManager = (await positionManagerFactory.deploy(
       v3CoreFactory.address,
       weth.address
-    )) as NonfungiblePositionManager
+    )) as MockTimeNonfungiblePositionManager
 
     const tokenFactory = await ethers.getContractFactory('TestERC20')
     const tokens = (await Promise.all([
@@ -60,7 +60,7 @@ describe('NonfungiblePositionManager', () => {
 
   let v3CoreFactory: Contract
   let weth: WETH9
-  let positionManager: NonfungiblePositionManager
+  let positionManager: MockTimeNonfungiblePositionManager
   let tokens: [TestERC20, TestERC20, TestERC20]
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
@@ -318,7 +318,7 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('cannot be called by other addresses', async () => {
-      await expect(positionManager.decreaseLiquidity(tokenId, 50, 0, 0)).to.be.revertedWith('AUTH')
+      await expect(positionManager.decreaseLiquidity(tokenId, 50, 0, 0)).to.be.revertedWith('Not approved')
     })
 
     it('decreases position liquidity', async () => {
@@ -360,7 +360,9 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('cannot be called by other addresses', async () => {
-      await expect(positionManager.collect(tokenId, MaxUint128, MaxUint128, wallet.address)).to.be.revertedWith('AUTH')
+      await expect(positionManager.collect(tokenId, MaxUint128, MaxUint128, wallet.address)).to.be.revertedWith(
+        'Not approved'
+      )
     })
 
     it('cannot be called with 0 amounts', async () => {
@@ -420,7 +422,7 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('cannot be called by other addresses', async () => {
-      await expect(positionManager.burn(tokenId)).to.be.revertedWith('AUTH')
+      await expect(positionManager.burn(tokenId)).to.be.revertedWith('Not approved')
     })
 
     it('cannot be called while there is still liquidity', async () => {
@@ -481,7 +483,7 @@ describe('NonfungiblePositionManager', () => {
       amount1Min,
       recipient,
     }: {
-      positionManager: NonfungiblePositionManager
+      positionManager: MockTimeNonfungiblePositionManager
       tokenId: BigNumberish
       liquidity: BigNumberish
       amount0Min: BigNumberish
