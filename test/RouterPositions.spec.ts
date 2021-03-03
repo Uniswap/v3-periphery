@@ -2,7 +2,7 @@ import { constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { RouterPositions, WETH9, TestERC20 } from '../typechain'
+import { MockTimeRouterPositions, WETH9, TestERC20 } from '../typechain'
 import { computePoolAddress } from './shared/computePoolAddress'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -18,7 +18,7 @@ describe('RouterPositions', () => {
   const [wallet, other] = wallets
 
   const positionsFixture: Fixture<{
-    positions: RouterPositions
+    positions: MockTimeRouterPositions
     weth: WETH9
     v3CoreFactory: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
@@ -29,7 +29,7 @@ describe('RouterPositions', () => {
     const weth = (await wethFactory.deploy()) as WETH9
 
     const positionsFactory = await ethers.getContractFactory('MockTimeRouterPositions')
-    const positions = (await positionsFactory.deploy(v3CoreFactory.address, weth.address)) as RouterPositions
+    const positions = (await positionsFactory.deploy(v3CoreFactory.address, weth.address)) as MockTimeRouterPositions
 
     const tokenFactory = await ethers.getContractFactory('TestERC20')
     const tokens = (await Promise.all([
@@ -57,7 +57,7 @@ describe('RouterPositions', () => {
 
   let v3CoreFactory: Contract
   let weth: WETH9
-  let positions: RouterPositions
+  let positions: MockTimeRouterPositions
   let tokens: [TestERC20, TestERC20, TestERC20]
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>

@@ -2,7 +2,7 @@ import { constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { UniswapV3Router01, WETH9, TestERC20 } from '../typechain'
+import { MockTimeUniswapV3Router01, WETH9, TestERC20 } from '../typechain'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
@@ -16,7 +16,7 @@ describe('UniswapV3Router01', () => {
   const [wallet, other] = wallets
 
   const routerFixture: Fixture<{
-    router: UniswapV3Router01
+    router: MockTimeUniswapV3Router01
     weth: WETH9
     v3CoreFactory: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
@@ -27,7 +27,7 @@ describe('UniswapV3Router01', () => {
     const weth = (await wethFactory.deploy()) as WETH9
 
     const routerFactory = await ethers.getContractFactory('MockTimeUniswapV3Router01')
-    const router = (await routerFactory.deploy(v3CoreFactory.address, weth.address)) as UniswapV3Router01
+    const router = (await routerFactory.deploy(v3CoreFactory.address, weth.address)) as MockTimeUniswapV3Router01
 
     const tokenFactory = await ethers.getContractFactory('TestERC20')
     const tokens = (await Promise.all([
@@ -64,7 +64,7 @@ describe('UniswapV3Router01', () => {
 
   let v3CoreFactory: Contract
   let weth: WETH9
-  let router: UniswapV3Router01
+  let router: MockTimeUniswapV3Router01
   let tokens: [TestERC20, TestERC20, TestERC20]
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
