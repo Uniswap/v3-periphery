@@ -9,8 +9,16 @@ import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
 import './libraries/FullMath.sol';
 import './RouterPositions.sol';
+import './RouterImmutableState.sol';
+import './Multicall.sol';
 
-abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC721, RouterPositions {
+contract NonfungiblePositionManager is
+    INonfungiblePositionManager,
+    Multicall,
+    ERC721,
+    RouterImmutableState,
+    RouterPositions
+{
     // details about the uniswap position
     struct Position {
         // the nonce for permits
@@ -37,7 +45,10 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
 
     uint64 private _nextId = 1;
 
-    constructor() ERC721('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS') {}
+    constructor(address _factory, address _WETH)
+        ERC721('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS')
+        RouterImmutableState(_factory, _WETH)
+    {}
 
     /// @inheritdoc INonfungiblePositionManager
     function firstMint(FirstMintParams calldata params)
@@ -274,7 +285,8 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
         return
             keccak256(
                 abi.encode(
-                    keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+                    // keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')
+                    0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f,
                     // keccak256(bytes('Uniswap V3 Positions NFT-V1'))
                     0x193ae757ecb6ead396a72d38c6cc38e1be93297aa66ffefea29e32ce3045475f,
                     // keccak256(bytes('1'))
@@ -285,7 +297,8 @@ abstract contract NonfungiblePositionManager is INonfungiblePositionManager, ERC
             );
     }
 
-    // keccak256("Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)");
+    /// @inheritdoc INonfungiblePositionManager
+    /// @dev Value is equal to keccak256("Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)");
     bytes32 public constant override PERMIT_TYPEHASH =
         0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
 
