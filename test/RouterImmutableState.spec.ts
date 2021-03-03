@@ -2,13 +2,12 @@ import { Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { RouterImmutableState, WETH9, TestERC20 } from '../typechain'
+import { RouterImmutableState, WETH9 } from '../typechain'
 import { expect } from './shared/expect'
 import { v3CoreFactoryFixture } from './shared/fixtures'
 
 describe('RouterImmutableState', () => {
   const wallets = waffle.provider.getWallets()
-  const [wallet, other] = wallets
 
   const nonfungiblePositionManagerFixture: Fixture<{
     weth: WETH9
