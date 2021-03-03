@@ -318,7 +318,7 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('cannot be called by other addresses', async () => {
-      await expect(positionManager.decreaseLiquidity(tokenId, 50, 0, 0)).to.be.revertedWith('AUTH')
+      await expect(positionManager.decreaseLiquidity(tokenId, 50, 0, 0)).to.be.revertedWith('Not approved')
     })
 
     it('decreases position liquidity', async () => {
@@ -360,7 +360,9 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('cannot be called by other addresses', async () => {
-      await expect(positionManager.collect(tokenId, MaxUint128, MaxUint128, wallet.address)).to.be.revertedWith('AUTH')
+      await expect(positionManager.collect(tokenId, MaxUint128, MaxUint128, wallet.address)).to.be.revertedWith(
+        'Not approved'
+      )
     })
 
     it('cannot be called with 0 amounts', async () => {
@@ -420,7 +422,7 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('cannot be called by other addresses', async () => {
-      await expect(positionManager.burn(tokenId)).to.be.revertedWith('AUTH')
+      await expect(positionManager.burn(tokenId)).to.be.revertedWith('Not approved')
     })
 
     it('cannot be called while there is still liquidity', async () => {
