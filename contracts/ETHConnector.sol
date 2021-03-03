@@ -10,7 +10,7 @@ import './libraries/TransferHelper.sol';
 
 abstract contract ETHConnector is IETHConnector, IRouterImmutableState {
     /// @inheritdoc IETHConnector
-    function depositETHAndMulticall(bytes[] calldata data) external override payable returns (bytes[] memory) {
+    function depositETHAndMulticall(bytes[] calldata data) external payable override returns (bytes[] memory) {
         return this.multicall(data);
     }
 
