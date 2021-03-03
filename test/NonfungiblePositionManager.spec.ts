@@ -1,4 +1,4 @@
-import { constants, Contract } from 'ethers'
+import { BigNumberish, constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
@@ -8,6 +8,7 @@ import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
 import { v3CoreFactoryFixture } from './shared/fixtures'
+import poolAtAddress from './shared/poolAtAddress'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
@@ -453,6 +454,87 @@ describe('NonfungiblePositionManager', () => {
       await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0)
       await positionManager.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address)
       await snapshotGasCost(positionManager.connect(other).burn(tokenId))
+    })
+  })
+
+  describe('multicall exit', () => {
+    const tokenId = 1
+    beforeEach('create a position', async () => {
+      await positionManager.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 100,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    async function exit({
+      positionManager,
+      liquidity,
+      tokenId,
+      amount0Min,
+      amount1Min,
+      recipient,
+    }: {
+      positionManager: NonfungiblePositionManager
+      tokenId: BigNumberish
+      liquidity: BigNumberish
+      amount0Min: BigNumberish
+      amount1Min: BigNumberish
+      recipient: string
+    }) {
+      const decreaseLiquidityData = positionManager.interface.encodeFunctionData('decreaseLiquidity', [
+        tokenId,
+        liquidity,
+        amount0Min,
+        amount1Min,
+      ])
+      const collectData = positionManager.interface.encodeFunctionData('collect', [
+        tokenId,
+        MaxUint128,
+        MaxUint128,
+        recipient,
+      ])
+      const burnData = positionManager.interface.encodeFunctionData('burn', [tokenId])
+
+      return positionManager.multicall([decreaseLiquidityData, collectData, burnData])
+    }
+
+    it('executes all the actions', async () => {
+      const pool = poolAtAddress(
+        computePoolAddress(v3CoreFactory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+        wallet
+      )
+      await expect(
+        exit({
+          positionManager: positionManager.connect(other),
+          tokenId,
+          liquidity: 100,
+          amount0Min: 0,
+          amount1Min: 0,
+          recipient: wallet.address,
+        })
+      )
+        .to.emit(pool, 'Burn')
+        .to.emit(pool, 'Collect')
+    })
+
+    it('gas', async () => {
+      await snapshotGasCost(
+        exit({
+          positionManager: positionManager.connect(other),
+          tokenId,
+          liquidity: 100,
+          amount0Min: 0,
+          amount1Min: 0,
+          recipient: wallet.address,
+        })
+      )
     })
   })
 })
