@@ -4,27 +4,12 @@ pragma abicoder v2;
 
 import '@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol';
+import './IERC721Permit.sol';
 
 /// @title Non-fungible token for positions
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
-interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
-    /// @notice The permit typehash for the permit function
-    function PERMIT_TYPEHASH() external pure returns (bytes32);
-
-    /// @notice The domain separator used in the permit signature
-    function DOMAIN_SEPARATOR() external view returns (bytes32);
-
-    /// @notice Accept approval of a token via signature
-    function permit(
-        address spender,
-        uint256 tokenId,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
-
+interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable, IERC721Permit {
     /// @notice Returns the position information associated with a given token ID.
     /// @param tokenId The ID of the token that represents the position
     function positions(uint256 tokenId)
@@ -57,6 +42,7 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
     }
 
     /// @notice Creates a new position wrapped in a NFT for the first time for a given token0/token1/fee
+    /// @dev Call this when the pool does not exist to create it and initialize the pool before minting
     function firstMint(FirstMintParams calldata params)
         external
         returns (
@@ -79,6 +65,8 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
     }
 
     /// @notice Creates a new position wrapped in a NFT
+    /// @dev Call this when the pool does exist and is initialized. Note that if the pool is created but not initialized
+    /// a method does not exist, i.e. the pool is assumed to be initialized.
     function mint(MintParams calldata params)
         external
         returns (
@@ -88,6 +76,11 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
         );
 
     /// @notice Increases the amount of liquidity in a position, with tokens paid by the `msg.sender`
+    /// @param tokenId The ID of the token for which liquidity is being increased
+    /// @param amount The amount by which liquidity will be increased
+    /// @param amount0Max The maximum amount of token0 that should be paid to
+    /// @param amount1Max The maximum amount of token1 that should be
+    /// @param deadline The time by which the transaction must be included to effect the change
     function increaseLiquidity(
         uint256 tokenId,
         uint128 amount,
@@ -96,7 +89,11 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
         uint256 deadline
     ) external returns (uint256 amount0, uint256 amount1);
 
-    /// @notice Decreases the amount of liquidity in a position, keeping the fees
+    /// @notice Decreases the amount of liquidity in a position and accounts it to the position
+    /// @param tokenId The ID of the token for which liquidity is being decreased
+    /// @param amount The amount by which liquidity will be decreased
+    /// @param amount0Min The minimum amount of token0 that should be received in the burn
+    /// @param amount1Min The minimum amount of token1 that should be received in the burn
     function decreaseLiquidity(
         uint256 tokenId,
         uint128 amount,
@@ -105,6 +102,10 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
     ) external returns (uint256 amount0, uint256 amount1);
 
     /// @notice Collects up to a maximum amount of fees owed to a specific position to the recipient
+    /// @param tokenId The ID of the NFT for which tokens are being collected
+    /// @param amount0Max The maximum amount of token0 to collect
+    /// @param amount1Max The maximum amount of token1 to collect
+    /// @param recipient The account that should receive the tokens
     function collect(
         uint256 tokenId,
         uint128 amount0Max,
@@ -112,6 +113,8 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable {
         address recipient
     ) external returns (uint256 amount0, uint256 amount1);
 
-    /// @notice Burns a token ID, which must have 0 liquidity and 0 of both tokensOwed0 and tokensOwed1
+    /// @notice Burns a token ID, which deletes it from the NFT contract. The token must have 0 liquidity and all tokens
+    /// must be collected first.
+    /// @param tokenId The ID of the token that is being burned
     function burn(uint256 tokenId) external;
 }

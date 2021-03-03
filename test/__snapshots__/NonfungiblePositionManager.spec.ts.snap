@@ -12,12 +12,12 @@ exports[`NonfungiblePositionManager #decreaseLiquidity gas complete decrease 1`]
 
 exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] = `161439`;
 
-exports[`NonfungiblePositionManager #firstMint gas 1`] = `5038569`;
+exports[`NonfungiblePositionManager #firstMint gas 1`] = `5038533`;
 
 exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189413`;
 
-exports[`NonfungiblePositionManager #mint gas 1`] = `367982`;
+exports[`NonfungiblePositionManager #mint gas 1`] = `367946`;
 
-exports[`NonfungiblePositionManager bytecode size 1`] = `22850`;
+exports[`NonfungiblePositionManager bytecode size 1`] = `22798`;
 
 exports[`NonfungiblePositionManager multicall exit gas 1`] = `176203`;
