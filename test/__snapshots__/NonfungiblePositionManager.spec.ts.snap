@@ -18,4 +18,4 @@ exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189348`;
 
 exports[`NonfungiblePositionManager #mint gas 1`] = `367982`;
 
-exports[`NonfungiblePositionManager router bytecode size 1`] = `22178`;
+exports[`NonfungiblePositionManager bytecode size 1`] = `22178`;

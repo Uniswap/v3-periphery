@@ -57,15 +57,6 @@ describe('NonfungiblePositionManager', () => {
     }
   }
 
-  // helper for getting the token0-2 balances
-  const balances = async ([token0, token1, token2]: TestERC20[], who: string) => {
-    return {
-      token0: await token0.balanceOf(who),
-      token1: await token1.balanceOf(who),
-      token2: await token2.balanceOf(who),
-    }
-  }
-
   let v3CoreFactory: Contract
   let weth: WETH9
   let positionManager: NonfungiblePositionManager
@@ -81,20 +72,8 @@ describe('NonfungiblePositionManager', () => {
     ;({ positionManager, weth, v3CoreFactory, tokens } = await loadFixture(nonfungiblePositionManagerFixture))
   })
 
-  it('router bytecode size', async () => {
+  it('bytecode size', async () => {
     expect(((await positionManager.provider.getCode(positionManager.address)).length - 2) / 2).to.matchSnapshot()
-  })
-
-  describe('#WETH', () => {
-    it('points to WETH', async () => {
-      expect(await positionManager.WETH()).to.eq(weth.address)
-    })
-  })
-
-  describe('#factory', () => {
-    it('points to v3 core factory', async () => {
-      expect(await positionManager.factory()).to.eq(v3CoreFactory.address)
-    })
   })
 
   describe('#firstMint', () => {

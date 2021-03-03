@@ -70,20 +70,8 @@ describe('RouterPositions', () => {
     ;({ positions, weth, v3CoreFactory, tokens } = await loadFixture(positionsFixture))
   })
 
-  it('router bytecode size', async () => {
+  it('bytecode size', async () => {
     expect(((await positions.provider.getCode(positions.address)).length - 2) / 2).to.matchSnapshot()
-  })
-
-  describe('#WETH', () => {
-    it('points to WETH', async () => {
-      expect(await positions.WETH()).to.eq(weth.address)
-    })
-  })
-
-  describe('#factory', () => {
-    it('points to v3 core factory', async () => {
-      expect(await positions.factory()).to.eq(v3CoreFactory.address)
-    })
   })
 
   describe('#createPoolAndAddLiquidity', () => {

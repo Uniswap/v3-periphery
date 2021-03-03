@@ -77,20 +77,8 @@ describe('UniswapV3Router01', () => {
     ;({ router, weth, v3CoreFactory, tokens } = await loadFixture(routerFixture))
   })
 
-  it('router bytecode size', async () => {
+  it('bytecode size', async () => {
     expect(((await router.provider.getCode(router.address)).length - 2) / 2).to.matchSnapshot()
-  })
-
-  describe('#WETH', () => {
-    it('points to WETH', async () => {
-      expect(await router.WETH()).to.eq(weth.address)
-    })
-  })
-
-  describe('#factory', () => {
-    it('points to v3 core factory', async () => {
-      expect(await router.factory()).to.eq(v3CoreFactory.address)
-    })
   })
 
   describe('swaps', () => {
