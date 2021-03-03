@@ -8,6 +8,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
 import './libraries/FullMath.sol';
+import './libraries/FixedPoint128.sol';
 import './RouterPositions.sol';
 import './RouterImmutableState.sol';
 import './Multicall.sol';
@@ -37,7 +38,7 @@ contract NonfungiblePositionManager is
         // the fee growth of the aggregate position as of the last action on the individual position
         uint256 feeGrowthInside0LastX128;
         uint256 feeGrowthInside1LastX128;
-        // how many uncollected fees are held by this contract owed to the position, as of the last computation
+        // how many uncollected tokens are owed to the position, as of the last computation
         uint128 tokensOwed0;
         uint128 tokensOwed1;
     }
@@ -45,7 +46,8 @@ contract NonfungiblePositionManager is
     /// @inheritdoc INonfungiblePositionManager
     mapping(uint256 => Position) public override positions;
 
-    uint64 private _nextId = 1;
+    /// @dev The ID of the next token that will be minted. Skips 0
+    uint256 private _nextId = 1;
 
     constructor(address _factory, address _WETH)
         ERC721('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS')
@@ -186,10 +188,18 @@ contract NonfungiblePositionManager is
         (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
 
         position.tokensOwed0 += uint128(
-            FullMath.mulDiv(feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128, position.liquidity, 1 << 128)
+            FullMath.mulDiv(
+                feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,
+                position.liquidity,
+                FixedPoint128.Q128
+            )
         );
         position.tokensOwed1 += uint128(
-            FullMath.mulDiv(feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128, position.liquidity, 1 << 128)
+            FullMath.mulDiv(
+                feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,
+                position.liquidity,
+                FixedPoint128.Q128
+            )
         );
 
         position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
@@ -225,7 +235,7 @@ contract NonfungiblePositionManager is
                 FullMath.mulDiv(
                     feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,
                     position.liquidity,
-                    1 << 128
+                    FixedPoint128.Q128
                 )
             );
         position.tokensOwed1 +=
@@ -234,7 +244,7 @@ contract NonfungiblePositionManager is
                 FullMath.mulDiv(
                     feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,
                     position.liquidity,
-                    1 << 128
+                    FixedPoint128.Q128
                 )
             );
 
@@ -279,6 +289,7 @@ contract NonfungiblePositionManager is
         _burn(tokenId);
     }
 
+    /// @inheritdoc IERC721Permit
     function DOMAIN_SEPARATOR() public view override returns (bytes32) {
         uint256 chainId;
         assembly {
@@ -299,12 +310,12 @@ contract NonfungiblePositionManager is
             );
     }
 
-    /// @inheritdoc INonfungiblePositionManager
+    /// @inheritdoc IERC721Permit
     /// @dev Value is equal to keccak256("Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)");
     bytes32 public constant override PERMIT_TYPEHASH =
         0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
 
-    /// @inheritdoc INonfungiblePositionManager
+    /// @inheritdoc IERC721Permit
     function permit(
         address spender,
         uint256 tokenId,
