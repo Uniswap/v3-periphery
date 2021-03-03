@@ -28,7 +28,14 @@ describe('NonfungiblePositionManager', () => {
     const wethFactory = await ethers.getContractFactory('WETH9')
     const weth = (await wethFactory.deploy()) as WETH9
 
-    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')
+    const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor')
+    const positionDescriptor = await positionDescriptorFactory.deploy()
+
+    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager', {
+      libraries: {
+        NonfungibleTokenPositionDescriptor: positionDescriptor.address,
+      },
+    })
     const positionManager = (await positionManagerFactory.deploy(
       v3CoreFactory.address,
       weth.address
