@@ -1,7 +1,3 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`UniswapV3Router01 #addLiquidity pool exists gas 1`] = `320928`;
-
-exports[`UniswapV3Router01 #createPoolAndAddLiquidity gas 1`] = `4815706`;
-
 exports[`UniswapV3Router01 router bytecode size 1`] = `9984`;
