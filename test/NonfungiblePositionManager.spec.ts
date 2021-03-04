@@ -29,7 +29,14 @@ describe('NonfungiblePositionManager', () => {
     const wethFactory = await ethers.getContractFactory('WETH9')
     const weth = (await wethFactory.deploy()) as WETH9
 
-    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')
+    const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor')
+    const positionDescriptor = await positionDescriptorFactory.deploy()
+
+    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager', {
+      libraries: {
+        NonfungibleTokenPositionDescriptor: positionDescriptor.address,
+      },
+    })
     const positionManager = (await positionManagerFactory.deploy(
       v3CoreFactory.address,
       weth.address
@@ -612,6 +619,36 @@ describe('NonfungiblePositionManager', () => {
           recipient: wallet.address,
         })
       )
+    })
+  })
+
+  describe('#tokenURI', async () => {
+    const tokenId = 1
+    beforeEach('create a position', async () => {
+      await positionManager.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 100,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    it('reverts for invalid token id', async () => {
+      await expect(positionManager.tokenURI(tokenId + 1)).to.be.revertedWith('Invalid token ID')
+    })
+
+    it('returns a data URI with correct mime type', async () => {
+      expect(await positionManager.tokenURI(tokenId)).to.match(/data:application\/json,.+/)
+    })
+    it('content is valid JSON and structure', async () => {
+      const content = JSON.parse((await positionManager.tokenURI(tokenId)).substr('data:application/json,'.length))
+      expect(content).to.haveOwnProperty('name').is.a('string')
+      expect(content).to.haveOwnProperty('description').is.a('string')
     })
   })
 })

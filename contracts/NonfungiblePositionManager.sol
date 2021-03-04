@@ -7,6 +7,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
+import './libraries/NonfungibleTokenPositionDescriptor.sol';
 import './libraries/FullMath.sol';
 import './libraries/FixedPoint128.sol';
 import './RouterPositions.sol';
@@ -153,6 +154,10 @@ contract NonfungiblePositionManager is
     modifier isAuthorizedForToken(uint256 tokenId) {
         require(_isApprovedOrOwner(msg.sender, tokenId), 'Not approved');
         _;
+    }
+
+    function tokenURI(uint256 tokenId) public view override(ERC721, IERC721Metadata) returns (string memory) {
+        return NonfungibleTokenPositionDescriptor.tokenURI(address(this), tokenId);
     }
 
     /// @inheritdoc INonfungiblePositionManager
