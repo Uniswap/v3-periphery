@@ -498,6 +498,50 @@ describe('NonfungiblePositionManager', () => {
     })
   })
 
+  describe('#transferFrom', () => {
+    const tokenId = 1
+    beforeEach('create a position', async () => {
+      await positionManager.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 100,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    it('can only be called by authorized or owner', async () => {
+      await expect(positionManager.transferFrom(other.address, wallet.address, tokenId)).to.be.revertedWith(
+        'ERC721: transfer caller is not owner nor approved'
+      )
+    })
+
+    it('changes the owner', async () => {
+      await positionManager.connect(other).transferFrom(other.address, wallet.address, tokenId)
+      expect(await positionManager.ownerOf(tokenId)).to.eq(wallet.address)
+    })
+
+    it('removes existing approval', async () => {
+      await positionManager.connect(other).approve(wallet.address, tokenId)
+      expect(await positionManager.getApproved(tokenId)).to.eq(wallet.address)
+      await positionManager.transferFrom(other.address, wallet.address, tokenId)
+      expect(await positionManager.getApproved(tokenId)).to.eq(constants.AddressZero)
+    })
+
+    it('gas', async () => {
+      await snapshotGasCost(positionManager.connect(other).transferFrom(other.address, wallet.address, tokenId))
+    })
+
+    it('gas comes from approved', async () => {
+      await positionManager.connect(other).approve(wallet.address, tokenId)
+      await snapshotGasCost(positionManager.transferFrom(other.address, wallet.address, tokenId))
+    })
+  })
+
   describe('#permit', () => {
     const tokenId = 1
     beforeEach('create a position', async () => {

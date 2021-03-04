@@ -22,6 +22,10 @@ exports[`NonfungiblePositionManager #mint gas ticks already used 1`] = `369620`;
 
 exports[`NonfungiblePositionManager #permit gas 1`] = `59334`;
 
+exports[`NonfungiblePositionManager #transferFrom gas 1`] = `84063`;
+
+exports[`NonfungiblePositionManager #transferFrom gas comes from approved 1`] = `75227`;
+
 exports[`NonfungiblePositionManager bytecode size 1`] = `22014`;
 
 exports[`NonfungiblePositionManager multicall exit gas 1`] = `178061`;
