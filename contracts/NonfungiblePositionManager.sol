@@ -7,6 +7,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
+import './libraries/NonfungibleTokenPositionDescriptor.sol';
 import './libraries/FullMath.sol';
 import './libraries/FixedPoint128.sol';
 import './RouterPositions.sol';
@@ -26,6 +27,8 @@ contract NonfungiblePositionManager is
     struct Position {
         // the nonce for permits
         uint64 nonce;
+        // the address that is approved for spending this token
+        address operator;
         // the immutable pool key of the position
         address token0;
         address token1;
@@ -82,6 +85,7 @@ contract NonfungiblePositionManager is
 
         positions[tokenId] = Position({
             nonce: 0,
+            operator: address(0),
             token0: params.token0,
             token1: params.token1,
             fee: params.fee,
@@ -133,6 +137,7 @@ contract NonfungiblePositionManager is
 
         positions[tokenId] = Position({
             nonce: 0,
+            operator: address(0),
             token0: params.token0,
             token1: params.token1,
             fee: params.fee,
@@ -149,6 +154,10 @@ contract NonfungiblePositionManager is
     modifier isAuthorizedForToken(uint256 tokenId) {
         require(_isApprovedOrOwner(msg.sender, tokenId), 'Not approved');
         _;
+    }
+
+    function tokenURI(uint256 tokenId) public view override(ERC721, IERC721Metadata) returns (string memory) {
+        return NonfungibleTokenPositionDescriptor.tokenURI(address(this), tokenId);
     }
 
     /// @inheritdoc INonfungiblePositionManager
@@ -212,8 +221,15 @@ contract NonfungiblePositionManager is
         uint256 tokenId,
         uint128 amount,
         uint256 amount0Min,
-        uint256 amount1Min
-    ) external override isAuthorizedForToken(tokenId) returns (uint256 amount0, uint256 amount1) {
+        uint256 amount1Min,
+        uint256 deadline
+    )
+        external
+        override
+        isAuthorizedForToken(tokenId)
+        checkDeadline(deadline)
+        returns (uint256 amount0, uint256 amount1)
+    {
         require(amount > 0);
         Position storage position = positions[tokenId];
 
@@ -256,9 +272,9 @@ contract NonfungiblePositionManager is
     /// @inheritdoc INonfungiblePositionManager
     function collect(
         uint256 tokenId,
+        address recipient,
         uint128 amount0Max,
-        uint128 amount1Max,
-        address recipient
+        uint128 amount1Max
     ) external override isAuthorizedForToken(tokenId) returns (uint256 amount0, uint256 amount1) {
         require(amount0Max > 0 || amount1Max > 0);
         Position storage position = positions[tokenId];
@@ -335,7 +351,17 @@ contract NonfungiblePositionManager is
         address owner = ownerOf(tokenId);
         address recoveredAddress = ecrecover(digest, v, r, s);
         require(recoveredAddress == owner, 'Invalid signature');
-        // cannot be done yet because of https://github.com/OpenZeppelin/openzeppelin-contracts/issues/2550
-        revert('todo');
+        _approve(spender, tokenId);
+    }
+
+    function getApproved(uint256 tokenId) public view override(ERC721, IERC721) returns (address) {
+        require(_exists(tokenId), 'ERC721: approved query for nonexistent token');
+
+        return positions[tokenId].operator;
+    }
+
+    function _approve(address to, uint256 tokenId) internal override(ERC721) {
+        positions[tokenId].operator = to;
+        emit Approval(ownerOf(tokenId), to, tokenId);
     }
 }

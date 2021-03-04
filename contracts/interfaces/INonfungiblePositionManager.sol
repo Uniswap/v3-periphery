@@ -4,12 +4,14 @@ pragma abicoder v2;
 
 import '@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol';
+
 import './IERC721Permit.sol';
+import './IRouterImmutableState.sol';
 
 /// @title Non-fungible token for positions
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
-interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable, IERC721Permit {
+interface INonfungiblePositionManager is IRouterImmutableState, IERC721Metadata, IERC721Enumerable, IERC721Permit {
     /// @notice Returns the position information associated with a given token ID.
     /// @param tokenId The ID of the token that represents the position
     function positions(uint256 tokenId)
@@ -17,6 +19,7 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable, IER
         view
         returns (
             uint64 nonce,
+            address operator,
             address token0,
             address token1,
             uint24 fee,
@@ -98,7 +101,8 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable, IER
         uint256 tokenId,
         uint128 amount,
         uint256 amount0Min,
-        uint256 amount1Min
+        uint256 amount1Min,
+        uint256 deadline
     ) external returns (uint256 amount0, uint256 amount1);
 
     /// @notice Collects up to a maximum amount of fees owed to a specific position to the recipient
@@ -108,9 +112,9 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable, IER
     /// @param recipient The account that should receive the tokens
     function collect(
         uint256 tokenId,
+        address recipient,
         uint128 amount0Max,
-        uint128 amount1Max,
-        address recipient
+        uint128 amount1Max
     ) external returns (uint256 amount0, uint256 amount1);
 
     /// @notice Burns a token ID, which deletes it from the NFT contract. The token must have 0 liquidity and all tokens

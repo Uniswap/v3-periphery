@@ -8,6 +8,7 @@ import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
 import { v3CoreFactoryFixture } from './shared/fixtures'
+import getPermitNFTSignature from './shared/getPermitNFTSignature'
 import poolAtAddress from './shared/poolAtAddress'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
@@ -30,7 +31,14 @@ describe('NonfungiblePositionManager', () => {
     const weth10Factory = await ethers.getContractFactory('WETH10')
     const weth10 = (await weth10Factory.deploy()) as WETH10
 
-    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')
+    const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor')
+    const positionDescriptor = await positionDescriptorFactory.deploy()
+
+    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager', {
+      libraries: {
+        NonfungibleTokenPositionDescriptor: positionDescriptor.address,
+      },
+    })
     const positionManager = (await positionManagerFactory.deploy(
       v3CoreFactory.address,
       weth9.address,
@@ -243,7 +251,7 @@ describe('NonfungiblePositionManager', () => {
       expect(feeGrowthInside1LastX128).to.eq(0)
     })
 
-    it('gas', async () => {
+    it('gas ticks already used', async () => {
       await positionManager.firstMint({
         token0: tokens[0].address,
         token1: tokens[1].address,
@@ -262,6 +270,35 @@ describe('NonfungiblePositionManager', () => {
           token1: tokens[1].address,
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: other.address,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
+          amount: 15,
+          deadline: 10,
+          fee: FeeAmount.MEDIUM,
+        })
+      )
+    })
+
+    it('gas first mint for ticks', async () => {
+      await positionManager.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+
+      await snapshotGasCost(
+        positionManager.mint({
+          token0: tokens[0].address,
+          token1: tokens[1].address,
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]) + TICK_SPACINGS[FeeAmount.MEDIUM],
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]) - TICK_SPACINGS[FeeAmount.MEDIUM],
           recipient: other.address,
           amount0Max: constants.MaxUint256,
           amount1Max: constants.MaxUint256,
@@ -318,29 +355,31 @@ describe('NonfungiblePositionManager', () => {
       })
     })
 
+    it('fails if past deadline')
+
     it('cannot be called by other addresses', async () => {
-      await expect(positionManager.decreaseLiquidity(tokenId, 50, 0, 0)).to.be.revertedWith('Not approved')
+      await expect(positionManager.decreaseLiquidity(tokenId, 50, 0, 0, 1)).to.be.revertedWith('Not approved')
     })
 
     it('decreases position liquidity', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 25, 0, 0)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 25, 0, 0, 1)
       const { liquidity } = await positionManager.positions(tokenId)
       expect(liquidity).to.eq(75)
     })
 
     it('accounts for tokens owed', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 25, 0, 0)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 25, 0, 0, 1)
       const { tokensOwed0, tokensOwed1 } = await positionManager.positions(tokenId)
       expect(tokensOwed0).to.eq(24)
       expect(tokensOwed1).to.eq(24)
     })
 
     it('gas partial decrease', async () => {
-      await snapshotGasCost(positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0))
+      await snapshotGasCost(positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1))
     })
 
     it('gas complete decrease', async () => {
-      await snapshotGasCost(positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0))
+      await snapshotGasCost(positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1))
     })
   })
 
@@ -361,29 +400,29 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('cannot be called by other addresses', async () => {
-      await expect(positionManager.collect(tokenId, MaxUint128, MaxUint128, wallet.address)).to.be.revertedWith(
+      await expect(positionManager.collect(tokenId, wallet.address, MaxUint128, MaxUint128)).to.be.revertedWith(
         'Not approved'
       )
     })
 
     it('cannot be called with 0 amounts', async () => {
-      await expect(positionManager.connect(other).collect(tokenId, 0, 0, wallet.address)).to.be.reverted
+      await expect(positionManager.connect(other).collect(tokenId, wallet.address, 0, 0)).to.be.reverted
     })
 
     it('no op if no tokens are owed', async () => {
-      await expect(positionManager.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address))
+      await expect(positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128))
         .to.not.emit(tokens[0], 'Transfer')
         .to.not.emit(tokens[1], 'Transfer')
     })
 
     it('transfers tokens owed from burn', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
       const poolAddress = computePoolAddress(
         v3CoreFactory.address,
         [tokens[0].address, tokens[1].address],
         FeeAmount.MEDIUM
       )
-      await expect(positionManager.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address))
+      await expect(positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128))
         .to.emit(tokens[0], 'Transfer')
         .withArgs(poolAddress, wallet.address, 49)
         .to.emit(tokens[1], 'Transfer')
@@ -391,18 +430,18 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('gas transfers both', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
-      await snapshotGasCost(positionManager.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address))
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
+      await snapshotGasCost(positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128))
     })
 
     it('gas transfers token0 only', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
-      await snapshotGasCost(positionManager.connect(other).collect(tokenId, MaxUint128, 0, wallet.address))
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
+      await snapshotGasCost(positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, 0))
     })
 
     it('gas transfers token1 only', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
-      await snapshotGasCost(positionManager.connect(other).collect(tokenId, 0, MaxUint128, wallet.address))
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
+      await snapshotGasCost(positionManager.connect(other).collect(tokenId, wallet.address, 0, MaxUint128))
     })
   })
 
@@ -431,18 +470,18 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('cannot be called while there is still partial liquidity', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
       await expect(positionManager.connect(other).burn(tokenId)).to.be.revertedWith('Not cleared')
     })
 
     it('cannot be called while there is still tokens owed', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
       await expect(positionManager.connect(other).burn(tokenId)).to.be.revertedWith('Not cleared')
     })
 
     it('deletes the token', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0)
-      await positionManager.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
+      await positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128)
       await positionManager.connect(other).burn(tokenId)
       const { liquidity, token0, token1, fee, tokensOwed0, tokensOwed1 } = await positionManager.positions(tokenId)
       expect(token0).to.eq(constants.AddressZero)
@@ -454,9 +493,95 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('gas', async () => {
-      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0)
-      await positionManager.connect(other).collect(tokenId, MaxUint128, MaxUint128, wallet.address)
+      await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
+      await positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128)
       await snapshotGasCost(positionManager.connect(other).burn(tokenId))
+    })
+  })
+
+  describe('#transferFrom', () => {
+    const tokenId = 1
+    beforeEach('create a position', async () => {
+      await positionManager.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 100,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    it('can only be called by authorized or owner', async () => {
+      await expect(positionManager.transferFrom(other.address, wallet.address, tokenId)).to.be.revertedWith(
+        'ERC721: transfer caller is not owner nor approved'
+      )
+    })
+
+    it('changes the owner', async () => {
+      await positionManager.connect(other).transferFrom(other.address, wallet.address, tokenId)
+      expect(await positionManager.ownerOf(tokenId)).to.eq(wallet.address)
+    })
+
+    it('removes existing approval', async () => {
+      await positionManager.connect(other).approve(wallet.address, tokenId)
+      expect(await positionManager.getApproved(tokenId)).to.eq(wallet.address)
+      await positionManager.transferFrom(other.address, wallet.address, tokenId)
+      expect(await positionManager.getApproved(tokenId)).to.eq(constants.AddressZero)
+    })
+
+    it('gas', async () => {
+      await snapshotGasCost(positionManager.connect(other).transferFrom(other.address, wallet.address, tokenId))
+    })
+
+    it('gas comes from approved', async () => {
+      await positionManager.connect(other).approve(wallet.address, tokenId)
+      await snapshotGasCost(positionManager.transferFrom(other.address, wallet.address, tokenId))
+    })
+  })
+
+  describe('#permit', () => {
+    const tokenId = 1
+    beforeEach('create a position', async () => {
+      await positionManager.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 100,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    it('changes the operator of the position and increments the nonce', async () => {
+      const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+      await positionManager.permit(wallet.address, tokenId, 1, v, r, s)
+      expect((await positionManager.positions(tokenId)).nonce).to.eq(1)
+      expect((await positionManager.positions(tokenId)).operator).to.eq(wallet.address)
+    })
+
+    it('fails with signature not from owner', async () => {
+      const { v, r, s } = await getPermitNFTSignature(wallet, positionManager, wallet.address, tokenId, 1)
+      await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith('Invalid signature')
+    })
+
+    it('fails with expired signature', async () => {
+      await positionManager.setTime(2)
+      const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+      await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith(
+        'Transaction too old'
+      )
+    })
+
+    it('gas', async () => {
+      const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+      await snapshotGasCost(positionManager.permit(wallet.address, tokenId, 1, v, r, s))
     })
   })
 
@@ -496,12 +621,13 @@ describe('NonfungiblePositionManager', () => {
         liquidity,
         amount0Min,
         amount1Min,
+        /*deadline=*/ 1,
       ])
       const collectData = positionManager.interface.encodeFunctionData('collect', [
         tokenId,
-        MaxUint128,
-        MaxUint128,
         recipient,
+        MaxUint128,
+        MaxUint128,
       ])
       const burnData = positionManager.interface.encodeFunctionData('burn', [tokenId])
 
@@ -538,6 +664,36 @@ describe('NonfungiblePositionManager', () => {
           recipient: wallet.address,
         })
       )
+    })
+  })
+
+  describe('#tokenURI', async () => {
+    const tokenId = 1
+    beforeEach('create a position', async () => {
+      await positionManager.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 100,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    it('reverts for invalid token id', async () => {
+      await expect(positionManager.tokenURI(tokenId + 1)).to.be.revertedWith('Invalid token ID')
+    })
+
+    it('returns a data URI with correct mime type', async () => {
+      expect(await positionManager.tokenURI(tokenId)).to.match(/data:application\/json,.+/)
+    })
+    it('content is valid JSON and structure', async () => {
+      const content = JSON.parse((await positionManager.tokenURI(tokenId)).substr('data:application/json,'.length))
+      expect(content).to.haveOwnProperty('name').is.a('string')
+      expect(content).to.haveOwnProperty('description').is.a('string')
     })
   })
 })

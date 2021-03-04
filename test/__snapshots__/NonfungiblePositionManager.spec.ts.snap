@@ -1,23 +1,31 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`NonfungiblePositionManager #burn gas 1`] = `53145`;
+exports[`NonfungiblePositionManager #burn gas 1`] = `53943`;
 
-exports[`NonfungiblePositionManager #collect gas transfers both 1`] = `61293`;
+exports[`NonfungiblePositionManager #collect gas transfers both 1`] = `61245`;
 
-exports[`NonfungiblePositionManager #collect gas transfers token0 only 1`] = `73370`;
+exports[`NonfungiblePositionManager #collect gas transfers token0 only 1`] = `73322`;
 
-exports[`NonfungiblePositionManager #collect gas transfers token1 only 1`] = `73403`;
+exports[`NonfungiblePositionManager #collect gas transfers token1 only 1`] = `73355`;
 
-exports[`NonfungiblePositionManager #decreaseLiquidity gas complete decrease 1`] = `96779`;
+exports[`NonfungiblePositionManager #decreaseLiquidity gas complete decrease 1`] = `97750`;
 
-exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] = `161461`;
+exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] = `163403`;
 
-exports[`NonfungiblePositionManager #firstMint gas 1`] = `5038401`;
+exports[`NonfungiblePositionManager #firstMint gas 1`] = `5040072`;
 
-exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189238`;
+exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189256`;
 
-exports[`NonfungiblePositionManager #mint gas 1`] = `367814`;
+exports[`NonfungiblePositionManager #mint gas first mint for ticks 1`] = `434903`;
 
-exports[`NonfungiblePositionManager bytecode size 1`] = `23298`;
+exports[`NonfungiblePositionManager #mint gas ticks already used 1`] = `369488`;
 
-exports[`NonfungiblePositionManager multicall exit gas 1`] = `176235`;
+exports[`NonfungiblePositionManager #permit gas 1`] = `59368`;
+
+exports[`NonfungiblePositionManager #transferFrom gas 1`] = `84063`;
+
+exports[`NonfungiblePositionManager #transferFrom gas comes from approved 1`] = `75227`;
+
+exports[`NonfungiblePositionManager bytecode size 1`] = `22514`;
+
+exports[`NonfungiblePositionManager multicall exit gas 1`] = `178028`;
