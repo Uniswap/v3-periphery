@@ -13,9 +13,10 @@ import './libraries/Path.sol';
 import './libraries/SafeCast.sol';
 import './libraries/TransferHelper.sol';
 import './RouterValidation.sol';
+import './ETHConnector.sol';
 
 /// @title Logic for trading
-abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterValidation {
+abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterValidation, ETHConnector {
     using Path for bytes;
     using SafeCast for uint256;
 
@@ -23,6 +24,22 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     uint160 private constant MIN_SQRT_RATIO = 4295128739 + 1;
     /// @dev The maximum value that can be returned from #getSqrtRatioAtTick, minus 1
     uint160 private constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342 - 1;
+
+    function pay(
+        address token,
+        address from,
+        address to,
+        uint256 value
+    ) private {
+        // can't use msg.value, as this is not called in the original context
+        if (token == this.WETH() && address(this).balance >= value) {
+            // wrap the contract's entire ETH balance so noRemainingETH doesn't fail
+            IWETH(this.WETH()).deposit{value: address(this).balance}();
+            IWETH(this.WETH()).transfer(to, value);
+        } else {
+            TransferHelper.safeTransferFrom(token, from, to, value);
+        }
+    }
 
     struct SwapCallbackData {
         bytes path;
@@ -32,7 +49,13 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     }
 
     /// @inheritdoc IRouterSwaps
-    function exactInput(ExactInputParams calldata params) external override checkDeadline(params.deadline) {
+    function exactInput(ExactInputParams calldata params)
+        external
+        override
+        payable
+        noRemainingETH
+        checkDeadline(params.deadline)
+    {
         (address tokenA, address tokenB, uint24 fee) = params.path.decode();
 
         IUniswapV3Pool pool =
@@ -59,7 +82,13 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     }
 
     /// @inheritdoc IRouterSwaps
-    function exactOutput(ExactOutputParams calldata params) external override checkDeadline(params.deadline) {
+    function exactOutput(ExactOutputParams calldata params)
+        external
+        override
+        payable
+        noRemainingETH
+        checkDeadline(params.deadline)
+    {
         (address tokenA, address tokenB, uint24 fee) = params.path.decode();
 
         IUniswapV3Pool pool =
@@ -131,20 +160,6 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
                 require(uint256(amountToPay) <= swapCallbackData.slippageCheck, 'too much requested');
                 pay(tokenB, swapCallbackData.payer, msg.sender, uint256(amountToPay));
             }
-        }
-    }
-
-    function pay(
-        address token,
-        address from,
-        address to,
-        uint256 value
-    ) private {
-        if (token == this.WETH() && address(this).balance >= value) {
-            IWETH(this.WETH()).deposit{value: value}();
-            IWETH(this.WETH()).transfer(to, value);
-        } else {
-            TransferHelper.safeTransferFrom(token, from, to, value);
         }
     }
 

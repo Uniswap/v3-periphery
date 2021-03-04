@@ -9,23 +9,16 @@ import './interfaces/external/IWETH.sol';
 import './libraries/TransferHelper.sol';
 
 abstract contract ETHConnector is IETHConnector, IRouterImmutableState {
-    /// @inheritdoc IETHConnector
-    function depositETHAndMulticall(bytes[] calldata data) external payable override returns (bytes[] memory) {
-        return this.multicall(data);
+    modifier noRemainingETH() {
+        _;
+        if (msg.value > 0) require(address(this).balance == 0, 'ETH balance remains');
     }
 
     /// @inheritdoc IETHConnector
-    function sweepETH(address recipient) public override {
-        uint256 balance = address(this).balance;
-        if (balance > 0) TransferHelper.safeTransferETH(recipient, balance);
-    }
-
-    /// @inheritdoc IETHConnector
-    function unwrapAndWithdrawETH(address recipient) external override {
+    function unwrapWETH9(address recipient) external override payable noRemainingETH {
         uint256 balance = IWETH(this.WETH()).balanceOf(address(this));
-        require(balance > 0, 'ZW');
-        IWETH(this.WETH()).withdraw(balance);
-        this.sweepETH(recipient);
+        if (balance > 0) IWETH(this.WETH()).withdraw(balance);
+        TransferHelper.safeTransferETH(recipient, address(this).balance);
     }
 
     receive() external payable {

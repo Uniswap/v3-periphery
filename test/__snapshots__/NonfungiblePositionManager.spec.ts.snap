@@ -18,6 +18,6 @@ exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189413`;
 
 exports[`NonfungiblePositionManager #mint gas 1`] = `367946`;
 
-exports[`NonfungiblePositionManager bytecode size 1`] = `22798`;
+exports[`NonfungiblePositionManager bytecode size 1`] = `23214`;
 
-exports[`NonfungiblePositionManager multicall exit gas 1`] = `176203`;
+exports[`NonfungiblePositionManager multicall exit gas 1`] = `176191`;

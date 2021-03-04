@@ -135,7 +135,7 @@ describe('UniswapV3Router01', () => {
         const poolBefore = await balances(tokens, pool)
         const traderBefore = await balances(tokens, trader.address)
 
-        await expect(router.connect(trader).depositETHAndMulticall(data, { value: params.amountIn }))
+        await expect(router.connect(trader).multicall(data, { value: params.amountIn }))
           .to.emit(weth, 'Deposit') // trader (w)eth amount check
           .withArgs(router.address, params.amountIn)
 
@@ -165,8 +165,8 @@ describe('UniswapV3Router01', () => {
           }
           data = []
           data.push(router.interface.encodeFunctionData('exactOutput', [params]))
-          // the ETH amount for exactOutput swaps that pay in ETH isn't always exact, we have to sweep at the end
-          data.push(router.interface.encodeFunctionData('sweepETH', [trader.address]))
+          // the ETH amount for exactOutput swaps that pay in ETH isn't always exact, we have to unwrap at the end
+          data.push(router.interface.encodeFunctionData('unwrapWETH9', [trader.address]))
         })
 
         it('works', async () => {
@@ -176,7 +176,7 @@ describe('UniswapV3Router01', () => {
           const poolBefore = await balances(tokens, pool)
           const traderBefore = await balances(tokens, trader.address)
 
-          await expect(router.connect(trader).depositETHAndMulticall(data, { value: params.amountInMaximum }))
+          await expect(router.connect(trader).multicall(data, { value: params.amountInMaximum }))
             .to.emit(weth, 'Deposit') // trader (w)eth amount check
             .withArgs(router.address, params.amountInMaximum)
 
@@ -190,10 +190,10 @@ describe('UniswapV3Router01', () => {
           expect(poolAfter.token0).to.be.eq(poolBefore.token0.sub(1))
         })
 
-        it('only takes as much ETH as needed', async () => {
-          await expect(router.connect(trader).depositETHAndMulticall(data, { value: params.amountInMaximum + 1 }))
+        it('takes all ETH', async () => {
+          await expect(router.connect(trader).multicall(data, { value: params.amountInMaximum + 1 }))
             .to.emit(weth, 'Deposit')
-            .withArgs(router.address, params.amountInMaximum)
+            .withArgs(router.address, params.amountInMaximum + 1)
         })
 
         // TODO
@@ -219,7 +219,7 @@ describe('UniswapV3Router01', () => {
           }
           data = []
           data.push(router.interface.encodeFunctionData('exactInput', [params]))
-          data.push(router.interface.encodeFunctionData('unwrapAndWithdrawETH', [trader.address]))
+          data.push(router.interface.encodeFunctionData('unwrapWETH9', [trader.address]))
         })
 
         it('works', async () => {
@@ -262,7 +262,7 @@ describe('UniswapV3Router01', () => {
           }
           data = []
           data.push(router.interface.encodeFunctionData('exactOutput', [params]))
-          data.push(router.interface.encodeFunctionData('unwrapAndWithdrawETH', [trader.address]))
+          data.push(router.interface.encodeFunctionData('unwrapWETH9', [trader.address]))
         })
 
         it('works', async () => {
