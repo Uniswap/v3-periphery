@@ -149,7 +149,22 @@ describe('RouterPositions', () => {
       expect(tick).to.eq(0)
     })
 
-    it('fails if deadline is in past')
+    it('fails if deadline is in past', async () => {
+      await positions.setTime(2)
+      await expect(
+        positions.createPoolAndAddLiquidity({
+          token0: tokens[0].address,
+          token1: tokens[1].address,
+          sqrtPriceX96: encodePriceSqrt(1, 1),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: wallet.address,
+          amount: 10,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+        })
+      ).to.be.revertedWith('Transaction too old')
+    })
 
     it('gas', async () => {
       await snapshotGasCost(
@@ -209,7 +224,23 @@ describe('RouterPositions', () => {
         })
       })
 
-      it('fails if deadline is in past')
+      it('fails if deadline is in past', async () => {
+        await positions.setTime(2)
+        await expect(
+          positions.addLiquidity({
+            token0: tokens[0].address,
+            token1: tokens[1].address,
+            tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+            tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+            recipient: wallet.address,
+            amount: 10,
+            deadline: 1,
+            fee: FeeAmount.MEDIUM,
+            amount0Max: constants.MaxUint256,
+            amount1Max: constants.MaxUint256,
+          })
+        ).to.be.revertedWith('Transaction too old')
+      })
 
       it('gas', async () => {
         await snapshotGasCost(

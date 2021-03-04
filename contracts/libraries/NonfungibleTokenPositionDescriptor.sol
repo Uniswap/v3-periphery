@@ -25,8 +25,8 @@ library NonfungibleTokenPositionDescriptor {
             );
 
         // todo: compute name and description from details about the position and the pool
-        string memory name = 'ABC';
-        string memory description = 'XYZ';
+        string memory name = 'Uniswap V3 Position';
+        string memory description = 'Represents a position in Uniswap V3.';
 
         return
             string(abi.encodePacked('data:application/json,{"name":"', name, '", "description":"', description, '"}'));

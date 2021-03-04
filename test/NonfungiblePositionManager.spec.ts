@@ -745,6 +745,7 @@ describe('NonfungiblePositionManager', () => {
     it('returns a data URI with correct mime type', async () => {
       expect(await positionManager.tokenURI(tokenId)).to.match(/data:application\/json,.+/)
     })
+
     it('content is valid JSON and structure', async () => {
       const content = JSON.parse((await positionManager.tokenURI(tokenId)).substr('data:application/json,'.length))
       expect(content).to.haveOwnProperty('name').is.a('string')
