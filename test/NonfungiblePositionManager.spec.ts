@@ -8,6 +8,7 @@ import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
 import { v3CoreFactoryFixture } from './shared/fixtures'
+import getPermitNFTSignature from './shared/getPermitNFTSignature'
 import poolAtAddress from './shared/poolAtAddress'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
@@ -458,6 +459,48 @@ describe('NonfungiblePositionManager', () => {
       await positionManager.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
       await positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128)
       await snapshotGasCost(positionManager.connect(other).burn(tokenId))
+    })
+  })
+
+  describe('#permit', () => {
+    const tokenId = 1
+    beforeEach('create a position', async () => {
+      await positionManager.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 100,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+    })
+
+    it('changes the operator of the position and increments the nonce', async () => {
+      const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+      await positionManager.permit(wallet.address, tokenId, 1, v, r, s)
+      expect((await positionManager.positions(tokenId)).nonce).to.eq(1)
+      expect((await positionManager.positions(tokenId)).operator).to.eq(wallet.address)
+    })
+
+    it('fails with signature not from owner', async () => {
+      const { v, r, s } = await getPermitNFTSignature(wallet, positionManager, wallet.address, tokenId, 1)
+      await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith('Invalid signature')
+    })
+
+    it('fails with expired signature', async () => {
+      await positionManager.setTime(2)
+      const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+      await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith(
+        'Transaction too old'
+      )
+    })
+
+    it('gas', async () => {
+      const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+      await snapshotGasCost(positionManager.permit(wallet.address, tokenId, 1, v, r, s))
     })
   })
 

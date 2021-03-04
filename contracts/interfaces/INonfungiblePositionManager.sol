@@ -17,6 +17,7 @@ interface INonfungiblePositionManager is IERC721Metadata, IERC721Enumerable, IER
         view
         returns (
             uint64 nonce,
+            address operator,
             address token0,
             address token1,
             uint24 fee,

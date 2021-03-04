@@ -26,6 +26,8 @@ contract NonfungiblePositionManager is
     struct Position {
         // the nonce for permits
         uint64 nonce;
+        // the address that is approved for spending this token
+        address operator;
         // the immutable pool key of the position
         address token0;
         address token1;
@@ -82,6 +84,7 @@ contract NonfungiblePositionManager is
 
         positions[tokenId] = Position({
             nonce: 0,
+            operator: address(0),
             token0: params.token0,
             token1: params.token1,
             fee: params.fee,
@@ -133,6 +136,7 @@ contract NonfungiblePositionManager is
 
         positions[tokenId] = Position({
             nonce: 0,
+            operator: address(0),
             token0: params.token0,
             token1: params.token1,
             fee: params.fee,
@@ -342,7 +346,17 @@ contract NonfungiblePositionManager is
         address owner = ownerOf(tokenId);
         address recoveredAddress = ecrecover(digest, v, r, s);
         require(recoveredAddress == owner, 'Invalid signature');
-        // cannot be done yet because of https://github.com/OpenZeppelin/openzeppelin-contracts/issues/2550
-        revert('todo');
+        _approve(spender, tokenId);
+    }
+
+    function getApproved(uint256 tokenId) public view override(ERC721, IERC721) returns (address) {
+        require(_exists(tokenId), 'ERC721: approved query for nonexistent token');
+
+        return positions[tokenId].operator;
+    }
+
+    function _approve(address to, uint256 tokenId) internal override(ERC721) {
+        positions[tokenId].operator = to;
+        emit Approval(ownerOf(tokenId), to, tokenId);
     }
 }
