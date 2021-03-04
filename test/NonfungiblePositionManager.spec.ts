@@ -2,7 +2,7 @@ import { BigNumberish, constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeNonfungiblePositionManager, TestERC20 } from '../typechain'
+import { TestPositionNFTOwner, MockTimeNonfungiblePositionManager, TestERC20 } from '../typechain'
 import { computePoolAddress } from './shared/computePoolAddress'
 import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -534,44 +534,109 @@ describe('NonfungiblePositionManager', () => {
   })
 
   describe('#permit', () => {
-    const tokenId = 1
-    beforeEach('create a position', async () => {
-      await positionManager.firstMint({
-        token0: tokens[0].address,
-        token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: other.address,
-        amount: 100,
-        deadline: 1,
-        fee: FeeAmount.MEDIUM,
+    describe('owned by eoa', () => {
+      const tokenId = 1
+      beforeEach('create a position', async () => {
+        await positionManager.firstMint({
+          token0: tokens[0].address,
+          token1: tokens[1].address,
+          sqrtPriceX96: encodePriceSqrt(1, 1),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: other.address,
+          amount: 100,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+        })
+      })
+
+      it('changes the operator of the position and increments the nonce', async () => {
+        const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+        await positionManager.permit(wallet.address, tokenId, 1, v, r, s)
+        expect((await positionManager.positions(tokenId)).nonce).to.eq(1)
+        expect((await positionManager.positions(tokenId)).operator).to.eq(wallet.address)
+      })
+
+      it('fails with signature not from owner', async () => {
+        const { v, r, s } = await getPermitNFTSignature(wallet, positionManager, wallet.address, tokenId, 1)
+        await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith(
+          'Invalid signature'
+        )
+      })
+
+      it('fails with expired signature', async () => {
+        await positionManager.setTime(2)
+        const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+        await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith(
+          'Transaction too old'
+        )
+      })
+
+      it('gas', async () => {
+        const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+        await snapshotGasCost(positionManager.permit(wallet.address, tokenId, 1, v, r, s))
       })
     })
+    describe('owned by verifying contract', () => {
+      const tokenId = 1
+      let testPositionNFTOwner: TestPositionNFTOwner
 
-    it('changes the operator of the position and increments the nonce', async () => {
-      const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
-      await positionManager.permit(wallet.address, tokenId, 1, v, r, s)
-      expect((await positionManager.positions(tokenId)).nonce).to.eq(1)
-      expect((await positionManager.positions(tokenId)).operator).to.eq(wallet.address)
-    })
+      beforeEach('deploy test owner and create a position', async () => {
+        testPositionNFTOwner = (await (
+          await ethers.getContractFactory('TestPositionNFTOwner')
+        ).deploy()) as TestPositionNFTOwner
 
-    it('fails with signature not from owner', async () => {
-      const { v, r, s } = await getPermitNFTSignature(wallet, positionManager, wallet.address, tokenId, 1)
-      await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith('Invalid signature')
-    })
+        await positionManager.firstMint({
+          token0: tokens[0].address,
+          token1: tokens[1].address,
+          sqrtPriceX96: encodePriceSqrt(1, 1),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: testPositionNFTOwner.address,
+          amount: 100,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+        })
+      })
 
-    it('fails with expired signature', async () => {
-      await positionManager.setTime(2)
-      const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
-      await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith(
-        'Transaction too old'
-      )
-    })
+      it('changes the operator of the position and increments the nonce', async () => {
+        const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+        await testPositionNFTOwner.setOwner(other.address)
+        await positionManager.permit(wallet.address, tokenId, 1, v, r, s)
+        expect((await positionManager.positions(tokenId)).nonce).to.eq(1)
+        expect((await positionManager.positions(tokenId)).operator).to.eq(wallet.address)
+      })
 
-    it('gas', async () => {
-      const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
-      await snapshotGasCost(positionManager.permit(wallet.address, tokenId, 1, v, r, s))
+      it('fails if owner contract is owned by different address', async () => {
+        const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+        await testPositionNFTOwner.setOwner(wallet.address)
+        await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith(
+          'Invalid signature'
+        )
+      })
+
+      it('fails with signature not from owner', async () => {
+        const { v, r, s } = await getPermitNFTSignature(wallet, positionManager, wallet.address, tokenId, 1)
+        await testPositionNFTOwner.setOwner(other.address)
+        await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith(
+          'Invalid signature'
+        )
+      })
+
+      it('fails with expired signature', async () => {
+        await positionManager.setTime(2)
+        const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+        await testPositionNFTOwner.setOwner(other.address)
+        await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith(
+          'Transaction too old'
+        )
+      })
+
+      it('gas', async () => {
+        const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
+        await testPositionNFTOwner.setOwner(other.address)
+        await snapshotGasCost(positionManager.permit(wallet.address, tokenId, 1, v, r, s))
+      })
     })
   })
 

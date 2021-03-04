@@ -3,8 +3,10 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import '@openzeppelin/contracts/utils/Address.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
+import './interfaces/external/IERC1271.sol';
 import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
 import './libraries/NonfungibleTokenPositionDescriptor.sol';
@@ -350,8 +352,17 @@ contract NonfungiblePositionManager is
                 )
             );
         address owner = ownerOf(tokenId);
-        address recoveredAddress = ecrecover(digest, v, r, s);
-        require(recoveredAddress == owner, 'Invalid signature');
+
+        if (Address.isContract(owner)) {
+            require(
+                IERC1271(owner).isValidSignature(digest, abi.encodePacked(r, s, v)) == 0x1626ba7e,
+                'Invalid signature'
+            );
+        } else {
+            address recoveredAddress = ecrecover(digest, v, r, s);
+            require(recoveredAddress == owner, 'Invalid signature');
+        }
+
         _approve(spender, tokenId);
     }
 
