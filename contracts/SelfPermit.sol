@@ -6,8 +6,8 @@ import './interfaces/external/IERC2612.sol';
 /// @title Self Permit
 /// @notice Functionality to call permit on any EIP-2612-compliant token for use in the route
 abstract contract SelfPermit {
-    /// @notice The permit `owner` is always msg.sender, as this is a safety condition for now 
-    /// @dev The permit `owner` is always msg.sender, as this is a safety condition for now 
+    /// @notice The permit `owner` is always msg.sender, as this is a safety condition for now
+    /// @dev The permit `owner` is always msg.sender, as this is a safety condition for now
     /// @dev The permit `spender` is always address(this)
     function selfPermit(
         address token,
