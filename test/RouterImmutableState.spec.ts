@@ -49,7 +49,7 @@ describe('RouterImmutableState', () => {
 
   describe('#WETH', () => {
     it('points to WETH', async () => {
-      expect(await state.WETH()).to.eq(weth.address)
+      expect(await state.WETH9()).to.eq(weth.address)
     })
   })
 

@@ -9,10 +9,10 @@ contract RouterImmutableState is IRouterImmutableState {
     /// @inheritdoc IRouterImmutableState
     address public immutable override factory;
     /// @inheritdoc IRouterImmutableState
-    address public immutable override WETH;
+    address public immutable override WETH9;
 
-    constructor(address _factory, address _WETH) {
+    constructor(address _factory, address _WETH9) {
         factory = _factory;
-        WETH = _WETH;
+        WETH9 = _WETH9;
     }
 }

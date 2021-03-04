@@ -2,22 +2,22 @@
 
 exports[`NonfungiblePositionManager #burn gas 1`] = `53134`;
 
-exports[`NonfungiblePositionManager #collect gas transfers both 1`] = `61271`;
+exports[`NonfungiblePositionManager #collect gas transfers both 1`] = `61293`;
 
-exports[`NonfungiblePositionManager #collect gas transfers token0 only 1`] = `73348`;
+exports[`NonfungiblePositionManager #collect gas transfers token0 only 1`] = `73370`;
 
-exports[`NonfungiblePositionManager #collect gas transfers token1 only 1`] = `73381`;
+exports[`NonfungiblePositionManager #collect gas transfers token1 only 1`] = `73403`;
 
-exports[`NonfungiblePositionManager #decreaseLiquidity gas complete decrease 1`] = `96768`;
+exports[`NonfungiblePositionManager #decreaseLiquidity gas complete decrease 1`] = `96779`;
 
-exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] = `161439`;
+exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] = `161461`;
 
 exports[`NonfungiblePositionManager #firstMint gas 1`] = `5038533`;
 
-exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189413`;
+exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189348`;
 
 exports[`NonfungiblePositionManager #mint gas 1`] = `367946`;
 
 exports[`NonfungiblePositionManager bytecode size 1`] = `23214`;
 
-exports[`NonfungiblePositionManager multicall exit gas 1`] = `176191`;
+exports[`NonfungiblePositionManager multicall exit gas 1`] = `176224`;

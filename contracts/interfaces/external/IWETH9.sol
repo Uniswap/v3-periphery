@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.5.0;
 
-/// @title Interface for WETH
+/// @title Interface for WETH9
 /// @notice Wrapped Ether contract interface
-interface IWETH {
+interface IWETH9 {
     /// @notice Get address' balance of wrapped ether
     function balanceOf(address) external view returns (uint256);
 
