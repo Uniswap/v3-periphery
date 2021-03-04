@@ -24,8 +24,8 @@ interface IRouterSwaps is IUniswapV3SwapCallback {
     }
 
     /// @notice Swaps an exact amount of one token for as much as possible of another
-    function exactInput(ExactInputParams calldata) external;
+    function exactInput(ExactInputParams calldata) external payable;
 
     /// @notice Swaps as little as possible of one token for an exact amount of another
-    function exactOutput(ExactOutputParams calldata) external;
+    function exactOutput(ExactOutputParams calldata) external payable;
 }

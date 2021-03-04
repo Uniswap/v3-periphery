@@ -2,7 +2,7 @@ import { BigNumberish, constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeNonfungiblePositionManager, WETH9, TestERC20 } from '../typechain'
+import { MockTimeNonfungiblePositionManager, WETH9, WETH10, TestERC20 } from '../typechain'
 import { computePoolAddress } from './shared/computePoolAddress'
 import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -20,14 +20,16 @@ describe('NonfungiblePositionManager', () => {
 
   const nonfungiblePositionManagerFixture: Fixture<{
     positionManager: MockTimeNonfungiblePositionManager
-    weth: WETH9
     v3CoreFactory: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
     const { factory: v3CoreFactory } = await v3CoreFactoryFixture(wallets, provider)
 
-    const wethFactory = await ethers.getContractFactory('WETH9')
-    const weth = (await wethFactory.deploy()) as WETH9
+    const weth9Factory = await ethers.getContractFactory('WETH9')
+    const weth9 = (await weth9Factory.deploy()) as WETH9
+
+    const weth10Factory = await ethers.getContractFactory('WETH10')
+    const weth10 = (await weth10Factory.deploy()) as WETH10
 
     const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor')
     const positionDescriptor = await positionDescriptorFactory.deploy()
@@ -39,7 +41,8 @@ describe('NonfungiblePositionManager', () => {
     })
     const positionManager = (await positionManagerFactory.deploy(
       v3CoreFactory.address,
-      weth.address
+      weth9.address,
+      weth10.address
     )) as MockTimeNonfungiblePositionManager
 
     const tokenFactory = await ethers.getContractFactory('TestERC20')
@@ -59,7 +62,6 @@ describe('NonfungiblePositionManager', () => {
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
     return {
-      weth,
       positionManager,
       v3CoreFactory,
       tokens,
@@ -67,7 +69,6 @@ describe('NonfungiblePositionManager', () => {
   }
 
   let v3CoreFactory: Contract
-  let weth: WETH9
   let positionManager: MockTimeNonfungiblePositionManager
   let tokens: [TestERC20, TestERC20, TestERC20]
 
@@ -78,7 +79,7 @@ describe('NonfungiblePositionManager', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ positionManager, weth, v3CoreFactory, tokens } = await loadFixture(nonfungiblePositionManagerFixture))
+    ;({ positionManager, v3CoreFactory, tokens } = await loadFixture(nonfungiblePositionManagerFixture))
   })
 
   it('bytecode size', async () => {

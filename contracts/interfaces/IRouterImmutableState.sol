@@ -7,6 +7,9 @@ interface IRouterImmutableState {
     /// @notice Returns the address of the Uniswap V3 factory
     function factory() external view returns (address);
 
-    /// @notice Returns the address of the WETH contract used for wrapping ETH for use with Uniswap V3
-    function WETH() external view returns (address);
+    /// @notice Returns the address of WETH9
+    function WETH9() external view returns (address);
+
+    /// @notice Returns the address of WETH10
+    function WETH10() external view returns (address);
 }

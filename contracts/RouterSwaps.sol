@@ -7,14 +7,17 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import './interfaces/IRouterImmutableState.sol';
 import './interfaces/IRouterSwaps.sol';
+import './interfaces/external/IWETH9.sol';
+import './interfaces/external/IWETH10.sol';
 import './libraries/PoolAddress.sol';
 import './libraries/Path.sol';
 import './libraries/SafeCast.sol';
 import './libraries/TransferHelper.sol';
 import './RouterValidation.sol';
+import './ETHConnector.sol';
 
 /// @title Logic for trading
-abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterValidation {
+abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterValidation, ETHConnector {
     using Path for bytes;
     using SafeCast for uint256;
 
@@ -22,6 +25,30 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     uint160 private constant MIN_SQRT_RATIO = 4295128739 + 1;
     /// @dev The maximum value that can be returned from #getSqrtRatioAtTick, minus 1
     uint160 private constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342 - 1;
+
+    function pay(
+        address token,
+        address from,
+        address to,
+        uint256 value
+    ) private {
+        uint256 selfBalance;
+        if (token == this.WETH9() && (selfBalance = address(this).balance) >= value) {
+            // wrap the contract's entire ETH balance so noRemainingETH doesn't fail
+            IWETH9(this.WETH9()).deposit{value: selfBalance}();
+            IWETH9(this.WETH9()).transfer(to, value);
+        } else if (token == this.WETH10() && (selfBalance = address(this).balance) >= value) {
+            if (selfBalance == value) {
+                IWETH10(this.WETH10()).depositTo{value: selfBalance}(to);
+            } else {
+                // this is to handle the (slightly unlikely) case when the contract has balance > value
+                IWETH10(this.WETH10()).deposit{value: selfBalance}();
+                IWETH10(this.WETH10()).transfer(to, value);
+            }
+        } else {
+            TransferHelper.safeTransferFrom(token, from, to, value);
+        }
+    }
 
     struct SwapCallbackData {
         bytes path;
@@ -31,7 +58,13 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     }
 
     /// @inheritdoc IRouterSwaps
-    function exactInput(ExactInputParams calldata params) external override checkDeadline(params.deadline) {
+    function exactInput(ExactInputParams calldata params)
+        external
+        payable
+        override
+        noRemainingETH
+        checkDeadline(params.deadline)
+    {
         (address tokenA, address tokenB, uint24 fee) = params.path.decode();
 
         IUniswapV3Pool pool =
@@ -58,7 +91,13 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     }
 
     /// @inheritdoc IRouterSwaps
-    function exactOutput(ExactOutputParams calldata params) external override checkDeadline(params.deadline) {
+    function exactOutput(ExactOutputParams calldata params)
+        external
+        payable
+        override
+        noRemainingETH
+        checkDeadline(params.deadline)
+    {
         (address tokenA, address tokenB, uint24 fee) = params.path.decode();
 
         IUniswapV3Pool pool =
@@ -102,14 +141,14 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
             // check
             int256 amountReceived = amount0Delta > 0 ? amount1Delta : amount0Delta;
             if (!swapCallbackData.path.hasPairs()) {
-                // if this is the last callback, perform the slippage check early
+                // if this is the last callback, perform the slippage check early to save gas in failure case
                 require(uint256(-amountReceived) >= swapCallbackData.slippageCheck, 'too little received');
             }
 
             // pay
             if (swapCallbackData.payer != address(0)) {
                 // for the first leg of exact input swaps, pay the pool from the swap initiator
-                TransferHelper.safeTransferFrom(tokenA, swapCallbackData.payer, msg.sender, uint256(amountToPay));
+                pay(tokenA, swapCallbackData.payer, msg.sender, uint256(amountToPay));
                 swapCallbackData.payer = address(0); // zero out the payer
             } else {
                 // for subsequent legs, pay from this address
@@ -128,7 +167,7 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
                 forwardExactOutput(amountToPay, swapCallbackData);
             } else {
                 require(uint256(amountToPay) <= swapCallbackData.slippageCheck, 'too much requested');
-                TransferHelper.safeTransferFrom(tokenB, swapCallbackData.payer, msg.sender, uint256(amountToPay));
+                pay(tokenB, swapCallbackData.payer, msg.sender, uint256(amountToPay));
             }
         }
     }
