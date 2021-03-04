@@ -5,6 +5,7 @@ import '@nomiclabs/hardhat-waffle'
 export default {
   networks: {
     hardhat: {
+      chainId: 1,
       allowUnlimitedContractSize: false,
     },
   },
