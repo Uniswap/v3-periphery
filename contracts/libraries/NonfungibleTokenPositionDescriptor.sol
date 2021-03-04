@@ -11,7 +11,7 @@ import './PoolAddress.sol';
 library NonfungibleTokenPositionDescriptor {
     /// @dev Produces the URI for metadata about a specific token by fetching the data from relative contracts
     function tokenURI(address positionManager, uint256 tokenId) public view returns (string memory) {
-        (, address token0, address token1, uint24 fee, , , , , , , ) =
+        (, , address token0, address token1, uint24 fee, , , , , , , ) =
             INonfungiblePositionManager(positionManager).positions(tokenId);
 
         require(token0 != address(0), 'Invalid token ID');
