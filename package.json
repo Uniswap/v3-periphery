@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "restricted"
   },
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "homepage": "https://uniswap.org",
   "keywords": [
     "uniswap",
@@ -17,7 +17,10 @@
   },
   "files": [
     "contracts/interfaces",
-    "artifacts/contracts/UniswapV3Router01.sol/UniswapV3Router01.json"
+    "artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json",
+    "artifacts/contracts/UniswapV3Router01.sol/UniswapV3Router01.json",
+    "artifacts/contracts/interfaces/**/*.json",
+    "!artifacts/contracts/interfaces/**/*.dbg.json"
   ],
   "engines": {
     "node": ">=10"
