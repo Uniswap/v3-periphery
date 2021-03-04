@@ -2,10 +2,10 @@ import { constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeUniswapV3Router01, TestERC20, WETH10, WETH9 } from '../typechain'
+import { MockTimeUniswapV3Router01, TestERC20 } from '../typechain'
 import { expect } from 'chai'
 import { getPermitSignature } from './shared/permit'
-import { v3CoreFactoryFixture } from './shared/fixtures'
+import { v3RouterFixture } from './shared/fixtures'
 
 describe('SelfPermit', () => {
   const wallets = waffle.provider.getWallets()
@@ -16,21 +16,9 @@ describe('SelfPermit', () => {
     router: MockTimeUniswapV3Router01
   }> = async (wallets, provider) => {
     const factory = await ethers.getContractFactory('TestERC20')
-    const token = (await factory.deploy(constants.MaxUint256.div(2))) as TestERC20
+    const token = (await factory.deploy(0)) as TestERC20
 
-    const weth9Factory = await ethers.getContractFactory('WETH9')
-    const weth9 = (await weth9Factory.deploy()) as WETH9
-
-    const weth10Factory = await ethers.getContractFactory('WETH10')
-    const weth10 = (await weth10Factory.deploy()) as WETH10
-
-    const routerFactory = await ethers.getContractFactory('MockTimeUniswapV3Router01')
-    const { factory: v3CoreFactory } = await v3CoreFactoryFixture(wallets, provider)
-    const router = (await routerFactory.deploy(
-      v3CoreFactory.address,
-      weth9.address,
-      weth10.address
-    )) as MockTimeUniswapV3Router01
+    const { router } = await v3RouterFixture(wallets, provider)
 
     return {
       token,

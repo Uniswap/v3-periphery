@@ -1,41 +1,28 @@
-import { BigNumber, constants, Contract } from 'ethers'
+import { constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeUniswapV3Router01, WETH9, WETH10, TestERC20 } from '../typechain'
+import { MockTimeUniswapV3Router01, IWETH9, IWETH10, TestERC20 } from '../typechain'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
-import { v3CoreFactoryFixture } from './shared/fixtures'
+import { v3RouterFixture } from './shared/fixtures'
 import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 
 describe('UniswapV3Router01', () => {
   const wallets = waffle.provider.getWallets()
-  const [wallet, other] = wallets
+  const [wallet, trader] = wallets
 
   const routerFixture: Fixture<{
+    weth9: IWETH9
+    weth10: IWETH10
+    factory: Contract
     router: MockTimeUniswapV3Router01
-    weth9: WETH9
-    weth10: WETH10
-    v3CoreFactory: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
-    const { factory: v3CoreFactory } = await v3CoreFactoryFixture(wallets, provider)
-
-    const weth9Factory = await ethers.getContractFactory('WETH9')
-    const weth9 = (await weth9Factory.deploy()) as WETH9
-
-    const weth10Factory = await ethers.getContractFactory('WETH10')
-    const weth10 = (await weth10Factory.deploy()) as WETH10
-
-    const routerFactory = await ethers.getContractFactory('MockTimeUniswapV3Router01')
-    const router = (await routerFactory.deploy(
-      v3CoreFactory.address,
-      weth9.address,
-      weth10.address
-    )) as MockTimeUniswapV3Router01
+    const { weth9, weth10, factory, router } = await v3RouterFixture(wallets, provider)
 
     const tokenFactory = await ethers.getContractFactory('TestERC20')
     const tokens = (await Promise.all([
@@ -46,9 +33,11 @@ describe('UniswapV3Router01', () => {
 
     // approve & fund wallets
     for (const token of tokens) {
-      await token.approve(router.address, constants.MaxUint256)
-      await token.connect(other).approve(router.address, constants.MaxUint256)
-      await token.transfer(other.address, expandTo18Decimals(1_000_000))
+      await Promise.all([
+        token.approve(router.address, constants.MaxUint256),
+        token.connect(trader).approve(router.address, constants.MaxUint256),
+        token.transfer(trader.address, expandTo18Decimals(1_000_000)),
+      ])
     }
 
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
@@ -56,14 +45,13 @@ describe('UniswapV3Router01', () => {
     return {
       weth9,
       weth10,
+      factory,
       router,
-      v3CoreFactory,
       tokens,
     }
   }
 
-  // helper for getting token0-2 balances
-  // helper for getting the token0-2 balances
+  // helper for getting weth and token balances
   const balances = async ([token0, token1, token2]: TestERC20[], who: string) => {
     return {
       weth9: await weth9.balanceOf(who),
@@ -73,9 +61,9 @@ describe('UniswapV3Router01', () => {
     }
   }
 
-  let v3CoreFactory: Contract
-  let weth9: WETH9
-  let weth10: WETH10
+  let factory: Contract
+  let weth9: IWETH9
+  let weth10: IWETH10
   let router: MockTimeUniswapV3Router01
   let tokens: [TestERC20, TestERC20, TestERC20]
 
@@ -86,7 +74,7 @@ describe('UniswapV3Router01', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ router, weth9, weth10, v3CoreFactory, tokens } = await loadFixture(routerFixture))
+    ;({ router, weth9, weth10, factory, tokens } = await loadFixture(routerFixture))
   })
 
   it('bytecode size', async () => {
@@ -94,8 +82,6 @@ describe('UniswapV3Router01', () => {
   })
 
   describe('swaps', () => {
-    const trader = other
-
     beforeEach(async () => {
       let liquidityParams = {
         token0: tokens[0].address,
@@ -139,7 +125,7 @@ describe('UniswapV3Router01', () => {
         const data = []
         data.push(router.interface.encodeFunctionData('exactInput', [params]))
 
-        const pool = await v3CoreFactory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
+        const pool = await factory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
 
         // get balances before
         const poolBefore = await balances(tokens, pool)
@@ -180,7 +166,7 @@ describe('UniswapV3Router01', () => {
         })
 
         it('works', async () => {
-          const pool = await v3CoreFactory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
+          const pool = await factory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
 
           // get balances before
           const poolBefore = await balances(tokens, pool)
@@ -233,7 +219,7 @@ describe('UniswapV3Router01', () => {
         })
 
         it('works', async () => {
-          const pool = await v3CoreFactory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
+          const pool = await factory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
 
           // get balances before
           const poolBefore = await balances(tokens, pool)
@@ -276,7 +262,7 @@ describe('UniswapV3Router01', () => {
         })
 
         it('works', async () => {
-          const pool = await v3CoreFactory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
+          const pool = await factory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
 
           // get balances before
           const poolBefore = await balances(tokens, pool)
@@ -327,7 +313,7 @@ describe('UniswapV3Router01', () => {
         }
 
         it('zero for one', async () => {
-          const pool0 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+          const pool0 = await factory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
 
           // get balances before
           const poolBefore = await balances(tokens, pool0)
@@ -346,7 +332,7 @@ describe('UniswapV3Router01', () => {
         })
 
         it('one for zero', async () => {
-          const pool1 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+          const pool1 = await factory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
 
           // get balances before
           const poolBefore = await balances(tokens, pool1)
@@ -435,7 +421,7 @@ describe('UniswapV3Router01', () => {
         }
 
         it('zero for one', async () => {
-          const pool0 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+          const pool0 = await factory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
 
           // get balances before
           const poolBefore = await balances(tokens, pool0)
@@ -454,7 +440,7 @@ describe('UniswapV3Router01', () => {
         })
 
         it('one for zero', async () => {
-          const pool1 = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+          const pool1 = await factory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
 
           // get balances before
           const poolBefore = await balances(tokens, pool1)

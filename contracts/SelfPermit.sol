@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.5.0;
 
-import './interfaces/external/IERC2612.sol';
+import '@openzeppelin/contracts/drafts/IERC20Permit.sol';
 
 /// @title Self Permit
 /// @notice Functionality to call permit on any EIP-2612-compliant token for use in the route
@@ -17,6 +17,6 @@ abstract contract SelfPermit {
         bytes32 r,
         bytes32 s
     ) external {
-        IERC2612(token).permit(msg.sender, address(this), value, deadline, v, r, s);
+        IERC20Permit(token).permit(msg.sender, address(this), value, deadline, v, r, s);
     }
 }

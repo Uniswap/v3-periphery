@@ -2,12 +2,12 @@ import { constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeRouterPositions, WETH9, WETH10, TestERC20 } from '../typechain'
+import { MockTimeRouterPositions, TestERC20 } from '../typechain'
 import { computePoolAddress } from './shared/computePoolAddress'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
-import { v3CoreFactoryFixture } from './shared/fixtures'
+import { v3RouterFixture } from './shared/fixtures'
 import poolAtAddress from './shared/poolAtAddress'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
@@ -19,20 +19,14 @@ describe('RouterPositions', () => {
 
   const positionsFixture: Fixture<{
     positions: MockTimeRouterPositions
-    v3CoreFactory: Contract
+    factory: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
-    const { factory: v3CoreFactory } = await v3CoreFactoryFixture(wallets, provider)
-
-    const weth9Factory = await ethers.getContractFactory('WETH9')
-    const weth9 = (await weth9Factory.deploy()) as WETH9
-
-    const weth10Factory = await ethers.getContractFactory('WETH10')
-    const weth10 = (await weth10Factory.deploy()) as WETH10
+    const { weth9, weth10, factory } = await v3RouterFixture(wallets, provider)
 
     const positionsFactory = await ethers.getContractFactory('MockTimeRouterPositions')
     const positions = (await positionsFactory.deploy(
-      v3CoreFactory.address,
+      factory.address,
       weth9.address,
       weth10.address
     )) as MockTimeRouterPositions
@@ -55,12 +49,12 @@ describe('RouterPositions', () => {
 
     return {
       positions,
-      v3CoreFactory,
+      factory,
       tokens,
     }
   }
 
-  let v3CoreFactory: Contract
+  let factory: Contract
   let positions: MockTimeRouterPositions
   let tokens: [TestERC20, TestERC20, TestERC20]
 
@@ -71,7 +65,7 @@ describe('RouterPositions', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ positions, v3CoreFactory, tokens } = await loadFixture(positionsFixture))
+    ;({ positions, factory, tokens } = await loadFixture(positionsFixture))
   })
 
   it('bytecode size', async () => {
@@ -81,7 +75,7 @@ describe('RouterPositions', () => {
   describe('#createPoolAndAddLiquidity', () => {
     it('creates a pool at expected address', async () => {
       const expectedAddress = computePoolAddress(
-        v3CoreFactory.address,
+        factory.address,
         [tokens[0].address, tokens[1].address],
         FeeAmount.MEDIUM
       )
@@ -147,7 +141,7 @@ describe('RouterPositions', () => {
         deadline: 1,
         fee: FeeAmount.MEDIUM,
       })
-      const poolAddress = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+      const poolAddress = await factory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
       expect(poolAddress).to.not.eq(constants.AddressZero)
       const pool = poolAtAddress(poolAddress, wallet)
       const { sqrtPriceX96, tick } = await pool.slot0()
@@ -195,8 +189,8 @@ describe('RouterPositions', () => {
     describe('pool exists', () => {
       const startingPrice = encodePriceSqrt(1, 1)
       beforeEach('create the pool directly', async () => {
-        await v3CoreFactory.createPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
-        const poolAddress = await v3CoreFactory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+        await factory.createPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+        const poolAddress = await factory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
         await poolAtAddress(poolAddress, wallet).initialize(startingPrice)
       })
 

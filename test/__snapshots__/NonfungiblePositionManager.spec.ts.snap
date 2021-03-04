@@ -20,7 +20,7 @@ exports[`NonfungiblePositionManager #mint gas first mint for ticks 1`] = `434903
 
 exports[`NonfungiblePositionManager #mint gas ticks already used 1`] = `369488`;
 
-exports[`NonfungiblePositionManager #permit gas 1`] = `59368`;
+exports[`NonfungiblePositionManager #permit gas 1`] = `59356`;
 
 exports[`NonfungiblePositionManager #transferFrom gas 1`] = `84063`;
 

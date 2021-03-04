@@ -2,45 +2,35 @@ import { Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { RouterImmutableState, WETH9, WETH10 } from '../typechain'
+import { RouterImmutableState, IWETH9, IWETH10 } from '../typechain'
 import { expect } from './shared/expect'
-import { v3CoreFactoryFixture } from './shared/fixtures'
+import { v3RouterFixture } from './shared/fixtures'
 
 describe('RouterImmutableState', () => {
   const wallets = waffle.provider.getWallets()
 
   const nonfungiblePositionManagerFixture: Fixture<{
-    weth9: WETH9
-    weth10: WETH10
-    v3CoreFactory: Contract
+    weth9: IWETH9
+    weth10: IWETH10
+    factory: Contract
     state: RouterImmutableState
   }> = async (wallets, provider) => {
-    const { factory: v3CoreFactory } = await v3CoreFactoryFixture(wallets, provider)
-
-    const weth9Factory = await ethers.getContractFactory('WETH9')
-    const weth9 = (await weth9Factory.deploy()) as WETH9
-
-    const weth10Factory = await ethers.getContractFactory('WETH10')
-    const weth10 = (await weth10Factory.deploy()) as WETH10
+    const { weth9, weth10, factory, router } = await v3RouterFixture(wallets, provider)
 
     const stateFactory = await ethers.getContractFactory('RouterImmutableState')
-    const state = (await stateFactory.deploy(
-      v3CoreFactory.address,
-      weth9.address,
-      weth10.address
-    )) as RouterImmutableState
+    const state = (await stateFactory.deploy(factory.address, weth9.address, weth10.address)) as RouterImmutableState
 
     return {
       weth9,
       weth10,
-      v3CoreFactory,
+      factory,
       state,
     }
   }
 
-  let v3CoreFactory: Contract
-  let weth9: WETH9
-  let weth10: WETH10
+  let factory: Contract
+  let weth9: IWETH9
+  let weth10: IWETH10
   let state: RouterImmutableState
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
@@ -50,7 +40,7 @@ describe('RouterImmutableState', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ state, weth9, weth10, v3CoreFactory } = await loadFixture(nonfungiblePositionManagerFixture))
+    ;({ state, weth9, weth10, factory } = await loadFixture(nonfungiblePositionManagerFixture))
   })
 
   it('bytecode size', async () => {
@@ -71,7 +61,7 @@ describe('RouterImmutableState', () => {
 
   describe('#factory', () => {
     it('points to v3 core factory', async () => {
-      expect(await state.factory()).to.eq(v3CoreFactory.address)
+      expect(await state.factory()).to.eq(factory.address)
     })
   })
 })

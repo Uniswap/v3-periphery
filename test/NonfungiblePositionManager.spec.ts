@@ -2,12 +2,12 @@ import { BigNumberish, constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeNonfungiblePositionManager, WETH9, WETH10, TestERC20 } from '../typechain'
+import { MockTimeNonfungiblePositionManager, TestERC20 } from '../typechain'
 import { computePoolAddress } from './shared/computePoolAddress'
 import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
-import { v3CoreFactoryFixture } from './shared/fixtures'
+import { v3RouterFixture } from './shared/fixtures'
 import getPermitNFTSignature from './shared/getPermitNFTSignature'
 import poolAtAddress from './shared/poolAtAddress'
 import snapshotGasCost from './shared/snapshotGasCost'
@@ -20,16 +20,10 @@ describe('NonfungiblePositionManager', () => {
 
   const nonfungiblePositionManagerFixture: Fixture<{
     positionManager: MockTimeNonfungiblePositionManager
-    v3CoreFactory: Contract
+    factory: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
-    const { factory: v3CoreFactory } = await v3CoreFactoryFixture(wallets, provider)
-
-    const weth9Factory = await ethers.getContractFactory('WETH9')
-    const weth9 = (await weth9Factory.deploy()) as WETH9
-
-    const weth10Factory = await ethers.getContractFactory('WETH10')
-    const weth10 = (await weth10Factory.deploy()) as WETH10
+    const { weth9, weth10, factory } = await v3RouterFixture(wallets, provider)
 
     const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor')
     const positionDescriptor = await positionDescriptorFactory.deploy()
@@ -40,7 +34,7 @@ describe('NonfungiblePositionManager', () => {
       },
     })
     const positionManager = (await positionManagerFactory.deploy(
-      v3CoreFactory.address,
+      factory.address,
       weth9.address,
       weth10.address
     )) as MockTimeNonfungiblePositionManager
@@ -63,12 +57,12 @@ describe('NonfungiblePositionManager', () => {
 
     return {
       positionManager,
-      v3CoreFactory,
+      factory,
       tokens,
     }
   }
 
-  let v3CoreFactory: Contract
+  let factory: Contract
   let positionManager: MockTimeNonfungiblePositionManager
   let tokens: [TestERC20, TestERC20, TestERC20]
 
@@ -79,7 +73,7 @@ describe('NonfungiblePositionManager', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ positionManager, v3CoreFactory, tokens } = await loadFixture(nonfungiblePositionManagerFixture))
+    ;({ positionManager, factory, tokens } = await loadFixture(nonfungiblePositionManagerFixture))
   })
 
   it('bytecode size', async () => {
@@ -89,7 +83,7 @@ describe('NonfungiblePositionManager', () => {
   describe('#firstMint', () => {
     it('creates the pair at the expected address', async () => {
       const expectedAddress = computePoolAddress(
-        v3CoreFactory.address,
+        factory.address,
         [tokens[0].address, tokens[1].address],
         FeeAmount.MEDIUM
       )
@@ -417,11 +411,7 @@ describe('NonfungiblePositionManager', () => {
 
     it('transfers tokens owed from burn', async () => {
       await positionManager.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
-      const poolAddress = computePoolAddress(
-        v3CoreFactory.address,
-        [tokens[0].address, tokens[1].address],
-        FeeAmount.MEDIUM
-      )
+      const poolAddress = computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM)
       await expect(positionManager.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128))
         .to.emit(tokens[0], 'Transfer')
         .withArgs(poolAddress, wallet.address, 49)
@@ -636,7 +626,7 @@ describe('NonfungiblePositionManager', () => {
 
     it('executes all the actions', async () => {
       const pool = poolAtAddress(
-        computePoolAddress(v3CoreFactory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+        computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
         wallet
       )
       await expect(
