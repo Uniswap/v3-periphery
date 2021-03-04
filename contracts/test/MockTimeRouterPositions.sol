@@ -8,7 +8,11 @@ import '../RouterImmutableState.sol';
 contract MockTimeRouterPositions is RouterPositions, RouterImmutableState {
     uint256 time;
 
-    constructor(address _factory, address _WETH9, address _WETH10) RouterImmutableState(_factory, _WETH9, _WETH10) {}
+    constructor(
+        address _factory,
+        address _WETH9,
+        address _WETH10
+    ) RouterImmutableState(_factory, _WETH9, _WETH10) {}
 
     function _blockTimestamp() internal view override returns (uint256) {
         return time;

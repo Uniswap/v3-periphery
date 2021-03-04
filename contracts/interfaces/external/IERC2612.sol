@@ -33,7 +33,15 @@ interface IERC2612 {
      * https://eips.ethereum.org/EIPS/eip-2612#specification[relevant EIP
      * section].
      */
-    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external;
+    function permit(
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
 
     /**
      * @dev Returns the current ERC2612 nonce for `owner`. This value must be
@@ -43,7 +51,7 @@ interface IERC2612 {
      * prevents a signature from being used multiple times.
      */
     function nonces(address owner) external view returns (uint256);
-    
+
     /**
      * @dev Returns the domain separator used in the encoding of the signature for {permit}, as defined by EIP712.
      */

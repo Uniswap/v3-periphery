@@ -60,8 +60,8 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     /// @inheritdoc IRouterSwaps
     function exactInput(ExactInputParams calldata params)
         external
-        override
         payable
+        override
         noRemainingETH
         checkDeadline(params.deadline)
     {
@@ -93,8 +93,8 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
     /// @inheritdoc IRouterSwaps
     function exactOutput(ExactOutputParams calldata params)
         external
-        override
         payable
+        override
         noRemainingETH
         checkDeadline(params.deadline)
     {

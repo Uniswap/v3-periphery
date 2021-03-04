@@ -16,7 +16,7 @@ abstract contract ETHConnector is IETHConnector, IRouterImmutableState {
     }
 
     /// @inheritdoc IETHConnector
-    function unwrapWETH9(address recipient) external override payable noRemainingETH {
+    function unwrapWETH9(address recipient) external payable override noRemainingETH {
         uint256 balance = IWETH9(this.WETH9()).balanceOf(address(this));
         if (balance > 0) IWETH9(this.WETH9()).withdraw(balance);
         // we wrap the entire ETH balance, so there's no need to use address(this).balance
@@ -24,7 +24,7 @@ abstract contract ETHConnector is IETHConnector, IRouterImmutableState {
     }
 
     /// @inheritdoc IETHConnector
-    function unwrapWETH10(address payable recipient) external override payable noRemainingETH {
+    function unwrapWETH10(address payable recipient) external payable override noRemainingETH {
         uint256 balance = IWETH10(this.WETH10()).balanceOf(address(this));
         if (balance > 0) IWETH10(this.WETH10()).withdrawTo(recipient, balance);
         // we wrap the entire ETH balance, so there's no need to transfer ETH directly
