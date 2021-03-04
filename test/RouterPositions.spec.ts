@@ -2,7 +2,7 @@ import { constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeRouterPositions, WETH9, TestERC20 } from '../typechain'
+import { MockTimeRouterPositions, WETH9, WETH10, TestERC20 } from '../typechain'
 import { computePoolAddress } from './shared/computePoolAddress'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -19,17 +19,23 @@ describe('RouterPositions', () => {
 
   const positionsFixture: Fixture<{
     positions: MockTimeRouterPositions
-    weth: WETH9
     v3CoreFactory: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
     const { factory: v3CoreFactory } = await v3CoreFactoryFixture(wallets, provider)
 
-    const wethFactory = await ethers.getContractFactory('WETH9')
-    const weth = (await wethFactory.deploy()) as WETH9
+    const weth9Factory = await ethers.getContractFactory('WETH9')
+    const weth9 = (await weth9Factory.deploy()) as WETH9
+
+    const weth10Factory = await ethers.getContractFactory('WETH10')
+    const weth10 = (await weth10Factory.deploy()) as WETH10
 
     const positionsFactory = await ethers.getContractFactory('MockTimeRouterPositions')
-    const positions = (await positionsFactory.deploy(v3CoreFactory.address, weth.address)) as MockTimeRouterPositions
+    const positions = (await positionsFactory.deploy(
+      v3CoreFactory.address,
+      weth9.address,
+      weth10.address
+    )) as MockTimeRouterPositions
 
     const tokenFactory = await ethers.getContractFactory('TestERC20')
     const tokens = (await Promise.all([
@@ -48,7 +54,6 @@ describe('RouterPositions', () => {
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
     return {
-      weth,
       positions,
       v3CoreFactory,
       tokens,
@@ -56,7 +61,6 @@ describe('RouterPositions', () => {
   }
 
   let v3CoreFactory: Contract
-  let weth: WETH9
   let positions: MockTimeRouterPositions
   let tokens: [TestERC20, TestERC20, TestERC20]
 
@@ -67,7 +71,7 @@ describe('RouterPositions', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ positions, weth, v3CoreFactory, tokens } = await loadFixture(positionsFixture))
+    ;({ positions, v3CoreFactory, tokens } = await loadFixture(positionsFixture))
   })
 
   it('bytecode size', async () => {

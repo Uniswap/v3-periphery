@@ -9,4 +9,7 @@ interface IRouterImmutableState {
 
     /// @notice Returns the address of WETH9
     function WETH9() external view returns (address);
+
+    /// @notice Returns the address of WETH10
+    function WETH10() external view returns (address);
 }

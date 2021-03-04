@@ -8,6 +8,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import './interfaces/IRouterImmutableState.sol';
 import './interfaces/IRouterSwaps.sol';
 import './interfaces/external/IWETH9.sol';
+import './interfaces/external/IWETH10.sol';
 import './libraries/PoolAddress.sol';
 import './libraries/Path.sol';
 import './libraries/SafeCast.sol';
@@ -31,11 +32,19 @@ abstract contract RouterSwaps is IRouterImmutableState, IRouterSwaps, RouterVali
         address to,
         uint256 value
     ) private {
-        // can't use msg.value, as this is not called in the original context
-        if (token == this.WETH9() && address(this).balance >= value) {
+        uint256 selfBalance;
+        if (token == this.WETH9() && (selfBalance = address(this).balance) >= value) {
             // wrap the contract's entire ETH balance so noRemainingETH doesn't fail
-            IWETH9(this.WETH9()).deposit{value: address(this).balance}();
+            IWETH9(this.WETH9()).deposit{value: selfBalance}();
             IWETH9(this.WETH9()).transfer(to, value);
+        } else if (token == this.WETH10() && (selfBalance = address(this).balance) >= value) {
+            if (selfBalance == value) {
+                IWETH10(this.WETH10()).depositTo{value: selfBalance}(to);
+            } else {
+                // this is to handle the (slightly unlikely) case when the contract has balance > value
+                IWETH10(this.WETH10()).deposit{value: selfBalance}();
+                IWETH10(this.WETH10()).transfer(to, value);
+            }
         } else {
             TransferHelper.safeTransferFrom(token, from, to, value);
         }

@@ -7,4 +7,7 @@ pragma abicoder v2;
 interface IETHConnector {
     /// @notice Unwraps the contract's WETH9 balance and sends it to recipient as ETH.
     function unwrapWETH9(address recipient) external payable;
+
+    /// @notice Unwraps the contract's WETH10 balance and sends it to recipient as ETH.
+    function unwrapWETH10(address payable recipient) external payable;
 }

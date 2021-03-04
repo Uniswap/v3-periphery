@@ -12,5 +12,5 @@ import './RouterSwaps.sol';
 /// @title Uniswap V3 Router
 /// @notice Router for interacting with Uniswap V3 core contracts
 contract UniswapV3Router01 is RouterImmutableState, Multicall, ETHConnector, SelfPermit, RouterPositions, RouterSwaps {
-    constructor(address _factory, address _WETH9) RouterImmutableState(_factory, _WETH9) {}
+    constructor(address _factory, address _WETH9, address _WETH10) RouterImmutableState(_factory, _WETH9, _WETH10) {}
 }

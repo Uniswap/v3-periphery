@@ -49,9 +49,9 @@ contract NonfungiblePositionManager is
     /// @dev The ID of the next token that will be minted. Skips 0
     uint256 private _nextId = 1;
 
-    constructor(address _factory, address _WETH9)
+    constructor(address _factory, address _WETH9, address _WETH10)
         ERC721('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS')
-        RouterImmutableState(_factory, _WETH9)
+        RouterImmutableState(_factory, _WETH9, _WETH10)
     {}
 
     /// @inheritdoc INonfungiblePositionManager

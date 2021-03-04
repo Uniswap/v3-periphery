@@ -2,7 +2,7 @@ import { BigNumber, constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeUniswapV3Router01, WETH9, TestERC20 } from '../typechain'
+import { MockTimeUniswapV3Router01, WETH9, WETH10, TestERC20 } from '../typechain'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
@@ -17,17 +17,25 @@ describe('UniswapV3Router01', () => {
 
   const routerFixture: Fixture<{
     router: MockTimeUniswapV3Router01
-    weth: WETH9
+    weth9: WETH9
+    weth10: WETH10
     v3CoreFactory: Contract
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
     const { factory: v3CoreFactory } = await v3CoreFactoryFixture(wallets, provider)
 
-    const wethFactory = await ethers.getContractFactory('WETH9')
-    const weth = (await wethFactory.deploy()) as WETH9
+    const weth9Factory = await ethers.getContractFactory('WETH9')
+    const weth9 = (await weth9Factory.deploy()) as WETH9
+
+    const weth10Factory = await ethers.getContractFactory('WETH10')
+    const weth10 = (await weth10Factory.deploy()) as WETH10
 
     const routerFactory = await ethers.getContractFactory('MockTimeUniswapV3Router01')
-    const router = (await routerFactory.deploy(v3CoreFactory.address, weth.address)) as MockTimeUniswapV3Router01
+    const router = (await routerFactory.deploy(
+      v3CoreFactory.address,
+      weth9.address,
+      weth10.address
+    )) as MockTimeUniswapV3Router01
 
     const tokenFactory = await ethers.getContractFactory('TestERC20')
     const tokens = (await Promise.all([
@@ -46,7 +54,8 @@ describe('UniswapV3Router01', () => {
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
     return {
-      weth,
+      weth9,
+      weth10,
       router,
       v3CoreFactory,
       tokens,
@@ -57,7 +66,7 @@ describe('UniswapV3Router01', () => {
   // helper for getting the token0-2 balances
   const balances = async ([token0, token1, token2]: TestERC20[], who: string) => {
     return {
-      weth: await weth.balanceOf(who),
+      weth9: await weth9.balanceOf(who),
       token0: await token0.balanceOf(who),
       token1: await token1.balanceOf(who),
       token2: await token2.balanceOf(who),
@@ -65,7 +74,8 @@ describe('UniswapV3Router01', () => {
   }
 
   let v3CoreFactory: Contract
-  let weth: WETH9
+  let weth9: WETH9
+  let weth10: WETH10
   let router: MockTimeUniswapV3Router01
   let tokens: [TestERC20, TestERC20, TestERC20]
 
@@ -76,7 +86,7 @@ describe('UniswapV3Router01', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ router, weth, v3CoreFactory, tokens } = await loadFixture(routerFixture))
+    ;({ router, weth9, weth10, v3CoreFactory, tokens } = await loadFixture(routerFixture))
   })
 
   it('bytecode size', async () => {
@@ -105,18 +115,18 @@ describe('UniswapV3Router01', () => {
       liquidityParams.token1 = tokens[2].address
       await router.createPoolAndAddLiquidity(liquidityParams)
 
-      // create weth pools at the beginning
-      await weth.deposit({ value: 1000000 })
-      await weth.approve(router.address, constants.MaxUint256)
-      liquidityParams.token0 = weth.address < tokens[0].address ? weth.address : tokens[0].address
-      liquidityParams.token1 = weth.address < tokens[0].address ? tokens[0].address : weth.address
+      // create weth9 pools at the beginning
+      await weth9.deposit({ value: 1000000 })
+      await weth9.approve(router.address, constants.MaxUint256)
+      liquidityParams.token0 = weth9.address < tokens[0].address ? weth9.address : tokens[0].address
+      liquidityParams.token1 = weth9.address < tokens[0].address ? tokens[0].address : weth9.address
       await router.createPoolAndAddLiquidity(liquidityParams)
     })
 
     describe('ETH input', () => {
       it('#exactInput', async () => {
         const path = encodePath(
-          [weth, tokens[0]].map((token) => token.address),
+          [weth9, tokens[0]].map((token) => token.address),
           [FeeAmount.MEDIUM]
         )
         let params = {
@@ -129,14 +139,14 @@ describe('UniswapV3Router01', () => {
         const data = []
         data.push(router.interface.encodeFunctionData('exactInput', [params]))
 
-        const pool = await v3CoreFactory.getPool(weth.address, tokens[0].address, FeeAmount.MEDIUM)
+        const pool = await v3CoreFactory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
 
         // get balances before
         const poolBefore = await balances(tokens, pool)
         const traderBefore = await balances(tokens, trader.address)
 
         await expect(router.connect(trader).multicall(data, { value: params.amountIn }))
-          .to.emit(weth, 'Deposit') // trader (w)eth amount check
+          .to.emit(weth9, 'Deposit') // trader (w)eth amount check
           .withArgs(router.address, params.amountIn)
 
         // get balances after
@@ -144,7 +154,7 @@ describe('UniswapV3Router01', () => {
         const traderAfter = await balances(tokens, trader.address)
 
         expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
-        expect(poolAfter.weth).to.be.eq(poolBefore.weth.add(3))
+        expect(poolAfter.weth9).to.be.eq(poolBefore.weth9.add(3))
         expect(poolAfter.token0).to.be.eq(poolBefore.token0.sub(1))
       })
 
@@ -153,7 +163,7 @@ describe('UniswapV3Router01', () => {
         let data: string[]
         beforeEach(async () => {
           const path = encodePath(
-            [tokens[0], weth].map((token) => token.address),
+            [tokens[0], weth9].map((token) => token.address),
             [FeeAmount.MEDIUM]
           )
           params = {
@@ -170,14 +180,14 @@ describe('UniswapV3Router01', () => {
         })
 
         it('works', async () => {
-          const pool = await v3CoreFactory.getPool(weth.address, tokens[0].address, FeeAmount.MEDIUM)
+          const pool = await v3CoreFactory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
 
           // get balances before
           const poolBefore = await balances(tokens, pool)
           const traderBefore = await balances(tokens, trader.address)
 
           await expect(router.connect(trader).multicall(data, { value: params.amountInMaximum }))
-            .to.emit(weth, 'Deposit') // trader (w)eth amount check
+            .to.emit(weth9, 'Deposit') // trader (w)eth amount check
             .withArgs(router.address, params.amountInMaximum)
 
           // get balances after
@@ -186,13 +196,13 @@ describe('UniswapV3Router01', () => {
 
           // TODO add trader balance check for ETH
           expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
-          expect(poolAfter.weth).to.be.eq(poolBefore.weth.add(3))
+          expect(poolAfter.weth9).to.be.eq(poolBefore.weth9.add(3))
           expect(poolAfter.token0).to.be.eq(poolBefore.token0.sub(1))
         })
 
         it('takes all ETH', async () => {
           await expect(router.connect(trader).multicall(data, { value: params.amountInMaximum + 1 }))
-            .to.emit(weth, 'Deposit')
+            .to.emit(weth9, 'Deposit')
             .withArgs(router.address, params.amountInMaximum + 1)
         })
 
@@ -207,7 +217,7 @@ describe('UniswapV3Router01', () => {
         let data: string[]
         beforeEach(async () => {
           const path = encodePath(
-            [tokens[0], weth].map((token) => token.address),
+            [tokens[0], weth9].map((token) => token.address),
             [FeeAmount.MEDIUM]
           )
           params = {
@@ -223,14 +233,14 @@ describe('UniswapV3Router01', () => {
         })
 
         it('works', async () => {
-          const pool = await v3CoreFactory.getPool(weth.address, tokens[0].address, FeeAmount.MEDIUM)
+          const pool = await v3CoreFactory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
 
           // get balances before
           const poolBefore = await balances(tokens, pool)
           const traderBefore = await balances(tokens, trader.address)
 
           await expect(router.connect(trader).multicall(data))
-            .to.emit(weth, 'Withdrawal') // trader (w)eth amount check
+            .to.emit(weth9, 'Withdrawal') // trader (w)eth amount check
             .withArgs(router.address, params.amountOutMinimum)
 
           // get balances after
@@ -238,7 +248,7 @@ describe('UniswapV3Router01', () => {
           const traderAfter = await balances(tokens, trader.address)
 
           expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(3))
-          expect(poolAfter.weth).to.be.eq(poolBefore.weth.sub(1))
+          expect(poolAfter.weth9).to.be.eq(poolBefore.weth9.sub(1))
           expect(poolAfter.token0).to.be.eq(poolBefore.token0.add(3))
         })
 
@@ -250,7 +260,7 @@ describe('UniswapV3Router01', () => {
         let data: string[]
         beforeEach(async () => {
           const path = encodePath(
-            [weth, tokens[0]].map((token) => token.address),
+            [weth9, tokens[0]].map((token) => token.address),
             [FeeAmount.MEDIUM]
           )
           params = {
@@ -266,14 +276,14 @@ describe('UniswapV3Router01', () => {
         })
 
         it('works', async () => {
-          const pool = await v3CoreFactory.getPool(weth.address, tokens[0].address, FeeAmount.MEDIUM)
+          const pool = await v3CoreFactory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM)
 
           // get balances before
           const poolBefore = await balances(tokens, pool)
           const traderBefore = await balances(tokens, trader.address)
 
           await expect(router.connect(trader).multicall(data))
-            .to.emit(weth, 'Withdrawal') // trader (w)eth amount check
+            .to.emit(weth9, 'Withdrawal') // trader (w)eth amount check
             .withArgs(router.address, params.amountOut)
 
           // get balances after
@@ -281,7 +291,7 @@ describe('UniswapV3Router01', () => {
           const traderAfter = await balances(tokens, trader.address)
 
           expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(3))
-          expect(poolAfter.weth).to.be.eq(poolBefore.weth.sub(1))
+          expect(poolAfter.weth9).to.be.eq(poolBefore.weth9.sub(1))
           expect(poolAfter.token0).to.be.eq(poolBefore.token0.add(3))
         })
 

@@ -5,6 +5,7 @@ pragma abicoder v2;
 import './interfaces/IETHConnector.sol';
 import './interfaces/IRouterImmutableState.sol';
 import './interfaces/external/IWETH9.sol';
+import './interfaces/external/IWETH10.sol';
 
 import './libraries/TransferHelper.sol';
 
@@ -18,10 +19,18 @@ abstract contract ETHConnector is IETHConnector, IRouterImmutableState {
     function unwrapWETH9(address recipient) external override payable noRemainingETH {
         uint256 balance = IWETH9(this.WETH9()).balanceOf(address(this));
         if (balance > 0) IWETH9(this.WETH9()).withdraw(balance);
-        TransferHelper.safeTransferETH(recipient, address(this).balance);
+        // we wrap the entire ETH balance, so there's no need to use address(this).balance
+        TransferHelper.safeTransferETH(recipient, balance);
+    }
+
+    /// @inheritdoc IETHConnector
+    function unwrapWETH10(address payable recipient) external override payable noRemainingETH {
+        uint256 balance = IWETH10(this.WETH10()).balanceOf(address(this));
+        if (balance > 0) IWETH10(this.WETH10()).withdrawTo(recipient, balance);
+        // we wrap the entire ETH balance, so there's no need to transfer ETH directly
     }
 
     receive() external payable {
-        require(msg.sender == this.WETH9(), 'NW');
+        require(msg.sender == this.WETH9(), 'Not WETH9');
     }
 }

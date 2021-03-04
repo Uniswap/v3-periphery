@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`NonfungiblePositionManager #burn gas 1`] = `53134`;
+exports[`NonfungiblePositionManager #burn gas 1`] = `53145`;
 
 exports[`NonfungiblePositionManager #collect gas transfers both 1`] = `61293`;
 
@@ -14,10 +14,10 @@ exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] 
 
 exports[`NonfungiblePositionManager #firstMint gas 1`] = `5038401`;
 
-exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189216`;
+exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189238`;
 
 exports[`NonfungiblePositionManager #mint gas 1`] = `367814`;
 
-exports[`NonfungiblePositionManager bytecode size 1`] = `23214`;
+exports[`NonfungiblePositionManager bytecode size 1`] = `23298`;
 
-exports[`NonfungiblePositionManager multicall exit gas 1`] = `176224`;
+exports[`NonfungiblePositionManager multicall exit gas 1`] = `176235`;
