@@ -6,8 +6,10 @@ pragma abicoder v2;
 /// @notice Allows deposits and withdrawals of ETH
 interface IETHConnector {
     /// @notice Unwraps the contract's WETH9 balance and sends it to recipient as ETH.
-    function unwrapWETH9(address recipient) external payable;
+    /// @dev The amountMinimum parameter prevents malicious token contracts from stealing WETH9 from users.
+    function unwrapWETH9(uint256 amountMinimum, address recipient) external payable;
 
     /// @notice Unwraps the contract's WETH10 balance and sends it to recipient as ETH.
-    function unwrapWETH10(address payable recipient) external payable;
+    /// @dev The amountMinimum parameter prevents malicious token contracts from stealing WETH10 from users.
+    function unwrapWETH10(uint256 amountMinimum, address payable recipient) external payable;
 }

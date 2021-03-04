@@ -162,7 +162,7 @@ describe('UniswapV3Router01', () => {
           data = []
           data.push(router.interface.encodeFunctionData('exactOutput', [params]))
           // the ETH amount for exactOutput swaps that pay in ETH isn't always exact, we have to unwrap at the end
-          data.push(router.interface.encodeFunctionData('unwrapWETH9', [trader.address]))
+          data.push(router.interface.encodeFunctionData('unwrapWETH9', [0, trader.address]))
         })
 
         it('works', async () => {
@@ -215,7 +215,7 @@ describe('UniswapV3Router01', () => {
           }
           data = []
           data.push(router.interface.encodeFunctionData('exactInput', [params]))
-          data.push(router.interface.encodeFunctionData('unwrapWETH9', [trader.address]))
+          data.push(router.interface.encodeFunctionData('unwrapWETH9', [params.amountOutMinimum, trader.address]))
         })
 
         it('works', async () => {
@@ -258,7 +258,7 @@ describe('UniswapV3Router01', () => {
           }
           data = []
           data.push(router.interface.encodeFunctionData('exactOutput', [params]))
-          data.push(router.interface.encodeFunctionData('unwrapWETH9', [trader.address]))
+          data.push(router.interface.encodeFunctionData('unwrapWETH9', [params.amountOut, trader.address]))
         })
 
         it('works', async () => {
