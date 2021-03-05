@@ -4,14 +4,15 @@ pragma abicoder v2;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/utils/Address.sol';
+
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import '@uniswap/v3-core/contracts/libraries/FixedPoint128.sol';
+import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 
 import './interfaces/external/IERC1271.sol';
 import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
 import './libraries/NonfungibleTokenPositionDescriptor.sol';
-import './libraries/FullMath.sol';
-import './libraries/FixedPoint128.sol';
 import './RouterPositions.sol';
 import './RouterImmutableState.sol';
 import './Multicall.sol';
@@ -366,12 +367,14 @@ contract NonfungiblePositionManager is
         _approve(spender, tokenId);
     }
 
+    /// @inheritdoc IERC721
     function getApproved(uint256 tokenId) public view override(ERC721, IERC721) returns (address) {
         require(_exists(tokenId), 'ERC721: approved query for nonexistent token');
 
         return positions[tokenId].operator;
     }
 
+    /// @dev Overrides _approve to use the operator in the position, which is packed with the position permit nonce
     function _approve(address to, uint256 tokenId) internal override(ERC721) {
         positions[tokenId].operator = to;
         emit Approval(ownerOf(tokenId), to, tokenId);

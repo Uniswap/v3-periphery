@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
 
 import './interfaces/IRouterImmutableState.sol';
 import './interfaces/IRouterSwaps.sol';
@@ -11,7 +12,6 @@ import './interfaces/external/IWETH9.sol';
 import './interfaces/external/IWETH10.sol';
 import './libraries/PoolAddress.sol';
 import './libraries/Path.sol';
-import './libraries/SafeCast.sol';
 import './libraries/TransferHelper.sol';
 import './RouterValidation.sol';
 import './ETHConnector.sol';

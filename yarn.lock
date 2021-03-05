@@ -827,10 +827,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@uniswap/v3-core@1.0.0-beta.8":
-  version "1.0.0-beta.8"
-  resolved "https://registry.yarnpkg.com/@uniswap/v3-core/-/v3-core-1.0.0-beta.8.tgz#3f0987f645980a78ab7bd35510c35a35d6afb2f7"
-  integrity sha512-V83ZmUZC9fpeGC+g9L/y+ERod9IZDXVoja6vB+yvbYS7ZfMWPeGYBOq8c56J3ni8tGkEboSEycGVKwAFWPeptA==
+"@uniswap/v3-core@1.0.0-beta.9":
+  version "1.0.0-beta.9"
+  resolved "https://registry.yarnpkg.com/@uniswap/v3-core/-/v3-core-1.0.0-beta.9.tgz#339eecc9a7a5baea0c41d42c3941eb247786634b"
+  integrity sha512-u9/44IQmoKKYBxQdv3CJ1uhSXXT5KMxgrWYY4HJkdbqkDT/v2Y2buP80mL3Ox3W5fz1OHwpkvckFMp9zrZLoCw==
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"

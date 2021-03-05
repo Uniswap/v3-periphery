@@ -17,6 +17,7 @@
   },
   "files": [
     "contracts/interfaces",
+    "contracts/libraries",
     "artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json",
     "artifacts/contracts/UniswapV3Router01.sol/UniswapV3Router01.json",
     "artifacts/contracts/interfaces/**/*.json",
@@ -27,7 +28,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
-    "@uniswap/v3-core": "1.0.0-beta.8"
+    "@uniswap/v3-core": "1.0.0-beta.9"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
