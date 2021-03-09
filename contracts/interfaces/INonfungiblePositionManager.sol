@@ -18,7 +18,7 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
         external
         view
         returns (
-            uint64 nonce,
+            uint96 nonce,
             address operator,
             address token0,
             address token1,

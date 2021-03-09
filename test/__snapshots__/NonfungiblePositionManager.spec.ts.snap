@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`NonfungiblePositionManager #burn gas 1`] = `53943`;
+exports[`NonfungiblePositionManager #burn gas 1`] = `53540`;
 
 exports[`NonfungiblePositionManager #collect gas transfers both 1`] = `61223`;
 
@@ -12,13 +12,13 @@ exports[`NonfungiblePositionManager #decreaseLiquidity gas complete decrease 1`]
 
 exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] = `163381`;
 
-exports[`NonfungiblePositionManager #firstMint gas 1`] = `5041065`;
+exports[`NonfungiblePositionManager #firstMint gas 1`] = `5041059`;
 
 exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189200`;
 
-exports[`NonfungiblePositionManager #mint gas first mint for ticks 1`] = `453790`;
+exports[`NonfungiblePositionManager #mint gas first mint for ticks 1`] = `453787`;
 
-exports[`NonfungiblePositionManager #mint gas ticks already used 1`] = `388375`;
+exports[`NonfungiblePositionManager #mint gas ticks already used 1`] = `388372`;
 
 exports[`NonfungiblePositionManager #permit owned by eoa gas 1`] = `59960`;
 
@@ -28,6 +28,6 @@ exports[`NonfungiblePositionManager #transferFrom gas 1`] = `84063`;
 
 exports[`NonfungiblePositionManager #transferFrom gas comes from approved 1`] = `75227`;
 
-exports[`NonfungiblePositionManager bytecode size 1`] = `22840`;
+exports[`NonfungiblePositionManager bytecode size 1`] = `22762`;
 
-exports[`NonfungiblePositionManager multicall exit gas 1`] = `177995`;
+exports[`NonfungiblePositionManager multicall exit gas 1`] = `177592`;

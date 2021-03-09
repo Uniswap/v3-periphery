@@ -28,7 +28,7 @@ contract NonfungiblePositionManager is
     // details about the uniswap position
     struct Position {
         // the nonce for permits
-        uint64 nonce;
+        uint96 nonce;
         // the address that is approved for spending this token
         address operator;
         // the immutable pool key of the position
