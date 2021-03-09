@@ -101,7 +101,8 @@ describe('UniswapV3Router01', () => {
   describe('swaps', () => {
     const liquidity = 1000000
     async function createPool(tokenAddressA: string, tokenAddressB: string) {
-      if (tokenAddressA > tokenAddressB) [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
+      if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
+        [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
 
       const liquidityParams = {
         token0: tokenAddressA,
@@ -264,14 +265,14 @@ describe('UniswapV3Router01', () => {
         })
 
         describe('WETH10', () => {
-          it('WETH10 -> 0', async () => {})
-          it('WETH10 -> 0 -> 1', async () => {})
+          it('WETH10 -> 0')
+          it('WETH10 -> 0 -> 1')
         })
       })
 
-      describe('ETH output', () => {})
+      it('ETH output')
 
-      describe('ETH input and output', () => {})
+      it('ETH input and output')
     })
 
     describe('#exactOutput', () => {
@@ -409,14 +410,14 @@ describe('UniswapV3Router01', () => {
         })
 
         describe('WETH10', () => {
-          it('WETH10 -> 0', async () => {})
-          it('WETH10 -> 0 -> 1', async () => {})
+          it('WETH10 -> 0')
+          it('WETH10 -> 0 -> 1')
         })
       })
 
-      describe('ETH output', () => {})
+      it('ETH output')
 
-      describe('ETH input and output', () => {})
+      it('ETH input and output')
     })
   })
 })

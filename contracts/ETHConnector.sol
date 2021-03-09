@@ -10,11 +10,6 @@ import './interfaces/external/IWETH10.sol';
 import './libraries/TransferHelper.sol';
 
 abstract contract ETHConnector is IETHConnector, IRouterImmutableState {
-    modifier noRemainingETH() {
-        _;
-        if (msg.value > 0) require(address(this).balance == 0, 'ETH balance remains');
-    }
-
     receive() external payable {
         require(msg.sender == this.WETH9() || msg.sender == this.WETH10(), 'Not WETH9 or WETH10');
     }
@@ -35,7 +30,7 @@ abstract contract ETHConnector is IETHConnector, IRouterImmutableState {
     }
 
     /// @inheritdoc IETHConnector
-    function unwrapWETH9(uint256 amountMinimum, address recipient) external payable override noRemainingETH {
+    function unwrapWETH9(uint256 amountMinimum, address recipient) external payable override {
         uint256 balance = IWETH9(this.WETH9()).balanceOf(address(this));
         require(balance >= amountMinimum, 'Insufficient WETH9');
         if (balance > 0) IWETH9(this.WETH9()).withdraw(balance);
@@ -44,7 +39,7 @@ abstract contract ETHConnector is IETHConnector, IRouterImmutableState {
     }
 
     /// @inheritdoc IETHConnector
-    function unwrapWETH10(uint256 amountMinimum, address payable recipient) external payable override noRemainingETH {
+    function unwrapWETH10(uint256 amountMinimum, address payable recipient) external payable override {
         uint256 balance = IWETH10(this.WETH10()).balanceOf(address(this));
         require(balance >= amountMinimum, 'Insufficient WETH10');
         if (balance > 0) IWETH10(this.WETH10()).withdrawTo(recipient, balance);
