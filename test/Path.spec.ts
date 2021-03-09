@@ -7,6 +7,10 @@ import { PathTest } from '../typechain'
 import { decodePath, encodePath } from './shared/path'
 
 import snapshotGasCost from './shared/snapshotGasCost'
+import { constants } from 'ethers'
+import { computePoolAddress } from './shared/computePoolAddress'
+
+const factory = constants.AddressZero
 
 describe('Path', () => {
   const wallets = waffle.provider.getWallets()
@@ -55,35 +59,35 @@ describe('Path', () => {
     expect(decodedFees).to.deep.eq(fees)
   })
 
-  describe('#hasPairs / #decode #skipOne', () => {
+  describe('#hasPairs / #decode #skipToken', () => {
     const encodedPath = encodePath(tokenAddresses, fees)
 
     it('works on first pair', async () => {
       expect(await path.hasPairs(encodedPath)).to.be.true
 
-      const { tokenA, tokenB, fee: feeFromPath } = await path.decode(encodedPath)
+      const { tokenA, tokenB, pool } = await path.decodeFirstPair(encodedPath, factory)
       expect(tokenA).to.be.eq(tokenAddresses[0])
       expect(tokenB).to.be.eq(tokenAddresses[1])
-      expect(feeFromPath).to.be.eq(3000)
+      expect(pool).to.be.eq(computePoolAddress(factory, [tokenAddresses[0], tokenAddresses[1]], FeeAmount.MEDIUM))
     })
 
     const offset = 20 + 3
 
     it('skips 1 item', async () => {
-      const skipped = await path.skipOne(encodedPath)
+      const skipped = await path.skipToken(encodedPath)
       expect(skipped).to.be.eq('0x' + encodedPath.slice(2 + offset * 2))
       expect(await path.hasPairs(skipped)).to.be.false
 
-      const { tokenA, tokenB, fee: feeFromPath } = await path.decode(skipped)
+      const { tokenA, tokenB, pool } = await path.decodeFirstPair(skipped, factory)
       expect(tokenA).to.be.eq(tokenAddresses[1])
       expect(tokenB).to.be.eq(tokenAddresses[2])
-      expect(feeFromPath).to.be.eq(3000)
+      expect(pool).to.be.eq(computePoolAddress(factory, [tokenAddresses[1], tokenAddresses[2]], FeeAmount.MEDIUM))
     })
   })
 
   it('gas cost', async () => {
     await snapshotGasCost(
-      path.getGasCostOfDecode(encodePath([tokenAddresses[0], tokenAddresses[1]], [FeeAmount.MEDIUM]))
+      path.getGasCostOfDecodeFirsPair(encodePath([tokenAddresses[0], tokenAddresses[1]], [FeeAmount.MEDIUM]), factory)
     )
   })
 })

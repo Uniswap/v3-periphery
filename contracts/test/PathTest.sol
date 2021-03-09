@@ -8,26 +8,30 @@ contract PathTest {
         return Path.hasPairs(path);
     }
 
-    function decode(bytes memory path)
+    function decodeFirstPair(bytes memory path, address factory)
         public
         pure
         returns (
             address tokenA,
             address tokenB,
-            uint24 fee
+            address pool
         )
     {
-        return Path.decode(path);
+        return Path.decodeFirstPair(path, factory);
     }
 
-    function skipOne(bytes memory path) public pure returns (bytes memory) {
-        return Path.skipOne(path);
+    function getFirstPair(bytes memory path) public pure returns (bytes memory) {
+        return Path.getFirstPair(path);
+    }
+
+    function skipToken(bytes memory path) public pure returns (bytes memory) {
+        return Path.skipToken(path);
     }
 
     // gas funcs
-    function getGasCostOfDecode(bytes memory path) public view returns (uint256) {
+    function getGasCostOfDecodeFirsPair(bytes memory path, address factory) public view returns (uint256) {
         uint256 gasBefore = gasleft();
-        Path.decode(path);
+        Path.decodeFirstPair(path, factory);
         return gasBefore - gasleft();
     }
 }
