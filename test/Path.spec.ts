@@ -8,7 +8,6 @@ import { decodePath, encodePath } from './shared/path'
 
 import snapshotGasCost from './shared/snapshotGasCost'
 import { constants } from 'ethers'
-import { computePoolAddress } from './shared/computePoolAddress'
 
 const factory = constants.AddressZero
 
@@ -65,10 +64,10 @@ describe('Path', () => {
     it('works on first pair', async () => {
       expect(await path.hasPairs(encodedPath)).to.be.true
 
-      const { tokenA, tokenB, pool } = await path.decodeFirstPair(encodedPath, factory)
+      const { tokenA, tokenB, fee } = await path.decodeFirstPair(encodedPath)
       expect(tokenA).to.be.eq(tokenAddresses[0])
       expect(tokenB).to.be.eq(tokenAddresses[1])
-      expect(pool).to.be.eq(computePoolAddress(factory, [tokenAddresses[0], tokenAddresses[1]], FeeAmount.MEDIUM))
+      expect(fee).to.be.eq(FeeAmount.MEDIUM)
     })
 
     const offset = 20 + 3
@@ -78,10 +77,10 @@ describe('Path', () => {
       expect(skipped).to.be.eq('0x' + encodedPath.slice(2 + offset * 2))
       expect(await path.hasPairs(skipped)).to.be.false
 
-      const { tokenA, tokenB, pool } = await path.decodeFirstPair(skipped, factory)
+      const { tokenA, tokenB, fee } = await path.decodeFirstPair(skipped)
       expect(tokenA).to.be.eq(tokenAddresses[1])
       expect(tokenB).to.be.eq(tokenAddresses[2])
-      expect(pool).to.be.eq(computePoolAddress(factory, [tokenAddresses[1], tokenAddresses[2]], FeeAmount.MEDIUM))
+      expect(fee).to.be.eq(FeeAmount.MEDIUM)
     })
   })
 

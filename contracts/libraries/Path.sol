@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.6.0;
 
-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-
 import './BytesLib.sol';
-import './PoolAddress.sol';
 
 library Path {
     using BytesLib for bytes;
@@ -21,19 +18,18 @@ library Path {
     }
 
     // decodes the first pair in path
-    function decodeFirstPair(bytes memory path, address factory)
+    function decodeFirstPair(bytes memory path)
         internal
         pure
         returns (
             address tokenA,
             address tokenB,
-            address pool
+            uint24 fee
         )
     {
         tokenA = path.toAddress(0);
-        uint24 fee = path.toUint24(ADDR_SIZE);
+        fee = path.toUint24(ADDR_SIZE);
         tokenB = path.toAddress(NEXT_OFFSET);
-        pool = PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee));
     }
 
     // gets the segment corresponding to the first pool in the path
