@@ -10,10 +10,10 @@ import '../interfaces/IRouterPositions.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
 import '../libraries/TransferHelper.sol';
-import './RouterValidation.sol';
+import './PeripheryValidation.sol';
 
 /// @title Stateless functions for managing positions
-abstract contract RouterPositions is IPeripheryImmutableState, IRouterPositions, RouterValidation {
+abstract contract RouterPositions is IPeripheryImmutableState, IRouterPositions, PeripheryValidation {
     /// @inheritdoc IRouterPositions
     function createPoolAndAddLiquidity(CreatePoolAndAddLiquidityParams memory params)
         public

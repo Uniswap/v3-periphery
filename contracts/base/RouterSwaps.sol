@@ -12,7 +12,7 @@ import '../interfaces/external/IWETH10.sol';
 import '../libraries/Path.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
-import './RouterValidation.sol';
+import './PeripheryValidation.sol';
 import './RouterPayments.sol';
 import './ETHConnector.sol';
 
@@ -20,7 +20,7 @@ import './ETHConnector.sol';
 abstract contract RouterSwaps is
     IRouterSwaps,
     IPeripheryImmutableState,
-    RouterValidation,
+    PeripheryValidation,
     RouterPayments,
     ETHConnector
 {
