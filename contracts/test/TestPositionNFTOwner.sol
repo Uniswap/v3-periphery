@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.7.6;
 
-import '@openzeppelin/contracts/cryptography/ECDSA.sol';
-
 import '../interfaces/external/IERC1271.sol';
 
 contract TestPositionNFTOwner is IERC1271 {

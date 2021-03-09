@@ -2,27 +2,24 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import '@openzeppelin/contracts/utils/Address.sol';
-
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/FixedPoint128.sol';
 import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 
-import './interfaces/external/IERC1271.sol';
 import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
 import './libraries/NonfungibleTokenPositionDescriptor.sol';
 import './base/RouterPositions.sol';
 import './base/PeripheryImmutableState.sol';
 import './base/Multicall.sol';
+import './base/ERC721Permit.sol';
 
 /// @title NFT positions
 /// @notice Wraps Uniswap V3 positions in the ERC721 non-fungible token interface
 contract NonfungiblePositionManager is
     INonfungiblePositionManager,
     Multicall,
-    ERC721,
+    ERC721Permit,
     PeripheryImmutableState,
     RouterPositions
 {
@@ -59,7 +56,10 @@ contract NonfungiblePositionManager is
         address _factory,
         address _WETH9,
         address _WETH10
-    ) ERC721('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS') PeripheryImmutableState(_factory, _WETH9, _WETH10) {}
+    )
+        ERC721Permit('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS', '1')
+        PeripheryImmutableState(_factory, _WETH9, _WETH10)
+    {}
 
     /// @inheritdoc INonfungiblePositionManager
     function firstMint(FirstMintParams calldata params)
@@ -309,62 +309,12 @@ contract NonfungiblePositionManager is
         _burn(tokenId);
     }
 
-    /// @inheritdoc IERC721Permit
-    function DOMAIN_SEPARATOR() public view override returns (bytes32) {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
-        return
-            keccak256(
-                abi.encode(
-                    // keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')
-                    0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f,
-                    // keccak256(bytes('Uniswap V3 Positions NFT-V1'))
-                    0x193ae757ecb6ead396a72d38c6cc38e1be93297aa66ffefea29e32ce3045475f,
-                    // keccak256(bytes('1'))
-                    0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6,
-                    chainId,
-                    address(this)
-                )
-            );
+    function _blockTimestamp() internal view virtual override(ERC721Permit, PeripheryValidation) returns (uint256) {
+        return block.timestamp;
     }
 
-    /// @inheritdoc IERC721Permit
-    /// @dev Value is equal to keccak256("Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)");
-    bytes32 public constant override PERMIT_TYPEHASH =
-        0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
-
-    /// @inheritdoc IERC721Permit
-    function permit(
-        address spender,
-        uint256 tokenId,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external override checkDeadline(deadline) {
-        bytes32 digest =
-            keccak256(
-                abi.encodePacked(
-                    '\x19\x01',
-                    DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(PERMIT_TYPEHASH, spender, tokenId, positions[tokenId].nonce++, deadline))
-                )
-            );
-        address owner = ownerOf(tokenId);
-
-        if (Address.isContract(owner)) {
-            require(
-                IERC1271(owner).isValidSignature(digest, abi.encodePacked(r, s, v)) == 0x1626ba7e,
-                'Invalid signature'
-            );
-        } else {
-            address recoveredAddress = ecrecover(digest, v, r, s);
-            require(recoveredAddress == owner, 'Invalid signature');
-        }
-
-        _approve(spender, tokenId);
+    function getAndIncrementNonce(uint256 tokenId) internal override returns (uint256) {
+        return uint256(positions[tokenId].nonce++);
     }
 
     /// @inheritdoc IERC721

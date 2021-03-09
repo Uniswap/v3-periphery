@@ -567,9 +567,7 @@ describe('NonfungiblePositionManager', () => {
       it('fails with expired signature', async () => {
         await positionManager.setTime(2)
         const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
-        await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith(
-          'Transaction too old'
-        )
+        await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith('Permit expired')
       })
 
       it('gas', async () => {
@@ -627,9 +625,7 @@ describe('NonfungiblePositionManager', () => {
         await positionManager.setTime(2)
         const { v, r, s } = await getPermitNFTSignature(other, positionManager, wallet.address, tokenId, 1)
         await testPositionNFTOwner.setOwner(other.address)
-        await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith(
-          'Transaction too old'
-        )
+        await expect(positionManager.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith('Permit expired')
       })
 
       it('gas', async () => {
