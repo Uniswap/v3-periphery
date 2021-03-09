@@ -8,6 +8,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import './interfaces/IRouterImmutableState.sol';
 import './interfaces/IRouterPositions.sol';
 import './libraries/PoolAddress.sol';
+import './libraries/CallbackValidation.sol';
 import './libraries/TransferHelper.sol';
 import './RouterValidation.sol';
 
@@ -95,7 +96,7 @@ abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, Ro
         bytes calldata data
     ) external override {
         MintCallbackData memory decoded = abi.decode(data, (MintCallbackData));
-        verifyCallback(decoded.poolKey);
+        CallbackValidation.verifyCallback(this.factory(), decoded.poolKey);
         require(amount0Owed <= decoded.amount0Max);
         require(amount1Owed <= decoded.amount1Max);
 

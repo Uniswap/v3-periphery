@@ -18,12 +18,4 @@ abstract contract RouterValidation is IRouterImmutableState {
         require(_blockTimestamp() <= deadline, 'Transaction too old');
         _;
     }
-
-    function verifyCallback(PoolAddress.PoolKey memory poolKey) internal view {
-        verifyCallback(PoolAddress.computeAddress(this.factory(), poolKey));
-    }
-
-    function verifyCallback(address pool) internal view {
-        require(msg.sender == pool);
-    }
 }

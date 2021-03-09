@@ -10,6 +10,7 @@ import './interfaces/IRouterImmutableState.sol';
 import './interfaces/external/IWETH9.sol';
 import './interfaces/external/IWETH10.sol';
 import './libraries/Path.sol';
+import './libraries/CallbackValidation.sol';
 import './RouterValidation.sol';
 import './RouterPayments.sol';
 import './ETHConnector.sol';
@@ -34,6 +35,14 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         uint256 amountInMaximum;
     }
 
+    function getPool(
+        address tokenA,
+        address tokenB,
+        uint24 fee
+    ) private view returns (IUniswapV3Pool) {
+        return IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), PoolAddress.getPoolKey(tokenA, tokenB, fee)));
+    }
+
     /// @inheritdoc IUniswapV3SwapCallback
     function uniswapV3SwapCallback(
         int256 amount0Delta,
@@ -41,8 +50,8 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         bytes calldata _data
     ) external override {
         SwapData memory data = abi.decode(_data, (SwapData));
-        (address tokenIn, address tokenOut, address pool) = data.path.decodeFirstPair(this.factory());
-        verifyCallback(pool);
+        (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPair();
+        CallbackValidation.verifyCallback(this.factory(), tokenIn, tokenOut, fee);
 
         uint256 amountToPay = uint256(amount0Delta > 0 ? amount0Delta : amount1Delta);
         if (data.exactOutputData.length == 0) {
@@ -73,7 +82,7 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         address recipient,
         SwapData memory data
     ) private returns (uint256 amountOut) {
-        (address tokenIn, address tokenOut, address pool) = data.path.decodeFirstPair(this.factory());
+        (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPair();
 
         if (tokenIn == this.WETH9() && tokenOut == this.WETH10()) {
             pay(this.WETH9(), data.payer, address(this), amountIn);
@@ -88,7 +97,7 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         bool zeroForOne = tokenIn < tokenOut;
 
         (int256 amount0, int256 amount1) =
-            IUniswapV3Pool(pool).swap(
+            getPool(tokenIn, tokenOut, fee).swap(
                 recipient,
                 zeroForOne,
                 amountIn.toInt256(),
@@ -135,11 +144,11 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         address recipient,
         SwapData memory data
     ) private {
-        (address tokenOut, address tokenIn, address pool) = data.path.decodeFirstPair(this.factory());
+        (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPair();
 
         bool zeroForOne = tokenIn < tokenOut;
 
-        IUniswapV3Pool(pool).swap(
+        getPool(tokenOut, tokenIn, fee).swap(
             recipient,
             zeroForOne,
             -amountOut.toInt256(),
