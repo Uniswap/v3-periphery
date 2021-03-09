@@ -5,14 +5,14 @@ pragma abicoder v2;
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 
+import '../base/PeripheryPayments.sol';
 import '../interfaces/IPeripheryImmutableState.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
-import '../libraries/TransferHelper.sol';
 
 /// @title Liquidity management functions
 /// @notice Internal functions for safely managing liquidity in Uniswap V3
-abstract contract LiquidityManagement is IPeripheryImmutableState, IUniswapV3MintCallback {
+abstract contract LiquidityManagement is IPeripheryImmutableState, IUniswapV3MintCallback, PeripheryPayments {
     struct CreatePoolAndAddLiquidityParams {
         address token0;
         address token1;
@@ -115,9 +115,7 @@ abstract contract LiquidityManagement is IPeripheryImmutableState, IUniswapV3Min
         require(amount0Owed <= decoded.amount0Max);
         require(amount1Owed <= decoded.amount1Max);
 
-        if (amount0Owed > 0)
-            TransferHelper.safeTransferFrom(decoded.poolKey.token0, decoded.payer, msg.sender, amount0Owed);
-        if (amount1Owed > 0)
-            TransferHelper.safeTransferFrom(decoded.poolKey.token1, decoded.payer, msg.sender, amount1Owed);
+        if (amount0Owed > 0) pay(decoded.poolKey.token0, decoded.payer, msg.sender, amount0Owed);
+        if (amount1Owed > 0) pay(decoded.poolKey.token1, decoded.payer, msg.sender, amount1Owed);
     }
 }

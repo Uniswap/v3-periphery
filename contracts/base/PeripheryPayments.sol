@@ -42,23 +42,21 @@ abstract contract PeripheryPayments is IPeripheryPayments, IPeripheryImmutableSt
         address recipient,
         uint256 value
     ) internal {
-        if (payer != address(this)) {
-            // this is the typical case, simply pull payment from the payer
-            TransferHelper.safeTransferFrom(token, payer, recipient, value);
+        uint256 selfBalance;
+        if (token == this.WETH9() && (selfBalance = address(this).balance) >= value) {
+            // pay with WETH9 generated from ETH
+            IWETH9(this.WETH9()).deposit{value: selfBalance}(); // wrap whole balance
+            IWETH9(this.WETH9()).transfer(recipient, value);
+        } else if (token == this.WETH10() && (selfBalance = address(this).balance) >= value) {
+            // pay with WETH10 generated from ETH
+            IWETH10(this.WETH10()).depositTo{value: value}(recipient);
+            if (selfBalance > value) IWETH10(this.WETH10()).deposit{value: selfBalance - value}(); // wrap whole balance
+        } else if (payer == address(this)) {
+            // pay with tokens already in the contract
+            if (recipient != address(this)) TransferHelper.safeTransfer(token, recipient, value);
         } else {
-            uint256 selfBalance;
-            if (token == this.WETH9() && (selfBalance = address(this).balance) >= value) {
-                // pay with WETH9 generated from ETH
-                IWETH9(this.WETH9()).deposit{value: selfBalance}(); // wrap the entire ETH balance
-                IWETH9(this.WETH9()).transfer(recipient, value);
-            } else if (token == this.WETH10() && (selfBalance = address(this).balance) >= value) {
-                // pay with WETH10 generated from ETH
-                IWETH10(this.WETH10()).depositTo{value: value}(recipient);
-                if (selfBalance > value) IWETH10(this.WETH10()).deposit{value: selfBalance - value}();
-            } else {
-                // pay with tokens already in the contract
-                if (recipient != address(this)) TransferHelper.safeTransfer(token, recipient, value);
-            }
+            // pull payment from the payer
+            TransferHelper.safeTransferFrom(token, payer, recipient, value);
         }
     }
 }
