@@ -72,10 +72,7 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         uint256 amountIn,
         address recipient,
         SwapData memory data
-    )
-        private
-        returns (uint256 amountOut)
-    {
+    ) private returns (uint256 amountOut) {
         (address tokenIn, address tokenOut, address pool) = data.path.decodeFirstPair(this.factory());
 
         if (tokenIn == this.WETH9() && tokenOut == this.WETH10()) {
@@ -90,13 +87,14 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
 
         bool zeroForOne = tokenIn < tokenOut;
 
-        (int256 amount0, int256 amount1) = IUniswapV3Pool(pool).swap(
-            recipient,
-            zeroForOne,
-            amountIn.toInt256(),
-            zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
-            abi.encode(data)
-        );
+        (int256 amount0, int256 amount1) =
+            IUniswapV3Pool(pool).swap(
+                recipient,
+                zeroForOne,
+                amountIn.toInt256(),
+                zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
+                abi.encode(data)
+            );
         return uint256(-(zeroForOne ? amount1 : amount0));
     }
 
@@ -104,13 +102,7 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         SwapParams memory params,
         uint256 amountIn,
         uint256 amountOutMinimum
-    )
-        external
-        payable
-        override
-        checkDeadline(params.deadline)
-        returns (uint256 amountOut)
-    {
+    ) external payable override checkDeadline(params.deadline) returns (uint256 amountOut) {
         while (true) {
             bool hasPairs = params.path.hasPairs();
 
@@ -142,9 +134,7 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         uint256 amountOut,
         address recipient,
         SwapData memory data
-    )
-        private
-    {
+    ) private {
         (address tokenOut, address tokenIn, address pool) = data.path.decodeFirstPair(this.factory());
 
         bool zeroForOne = tokenIn < tokenOut;
@@ -163,21 +153,14 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         SwapParams calldata params,
         uint256 amountOut,
         uint256 amountInMaximum
-    )
-        external
-        payable
-        override
-        checkDeadline(params.deadline) 
-    {
+    ) external payable override checkDeadline(params.deadline) {
         exactOutputSingle(
             amountOut,
             params.recipient,
             SwapData({
                 path: params.path,
                 payer: params.hasPaid ? address(this) : msg.sender, // lying just costs gas
-                exactOutputData: abi.encode(ExactOutputData({
-                    amountInMaximum: amountInMaximum
-                }))
+                exactOutputData: abi.encode(ExactOutputData({amountInMaximum: amountInMaximum}))
             })
         );
     }

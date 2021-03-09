@@ -17,7 +17,7 @@ interface IWETH10 is IERC20, IERC20Permit {
     function depositTo(address to) external payable;
 
     /// @dev Burn `value` WETH10 token from caller account and withdraw matching ETH to the same.
-    /// Emits {Transfer} event to reflect WETH10 token burn of `value` to `address(0)` from caller account. 
+    /// Emits {Transfer} event to reflect WETH10 token burn of `value` to `address(0)` from caller account.
     /// Requirements:
     ///   - caller account must have at least `value` balance of WETH10 token.
     function withdraw(uint256 value) external;

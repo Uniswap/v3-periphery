@@ -33,10 +33,7 @@ library Path {
         tokenA = path.toAddress(0);
         uint24 fee = path.toUint24(ADDR_SIZE);
         tokenB = path.toAddress(NEXT_OFFSET);
-        pool = PoolAddress.computeAddress(
-            factory,
-            PoolAddress.getPoolKey(tokenA, tokenB, fee)
-        );
+        pool = PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee));
     }
 
     // gets the segment corresponding to the first pool in the path
