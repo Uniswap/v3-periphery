@@ -11,7 +11,7 @@ import './base/RouterSwaps.sol';
 
 /// @title Uniswap V3 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V3
-contract SwapRouter is PeripheryImmutableState, Multicall, ETHConnector, SelfPermit, RouterPositions, RouterSwaps {
+contract SwapRouter is PeripheryImmutableState, Multicall, ETHConnector, SelfPermit, RouterSwaps {
     constructor(
         address _factory,
         address _WETH9,

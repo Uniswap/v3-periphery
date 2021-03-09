@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 import '../SwapRouter.sol';
 
-contract MockTimeSwapRouter is SwapRouter {
+contract MockTimeSwapRouter is SwapRouter, RouterPositions {
     uint256 time;
 
     constructor(
