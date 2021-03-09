@@ -6,7 +6,7 @@ import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.so
 
 /// @title Router token swapping functionality
 /// @notice Functions for swapping tokens via Uniswap V3
-interface IRouterSwaps is IUniswapV3SwapCallback {
+interface ISwapRouter is IUniswapV3SwapCallback {
     struct SwapParams {
         bytes path;
         address recipient;
