@@ -14,13 +14,7 @@ library CallbackValidation {
         address tokenB,
         uint24 fee
     ) internal view returns (IUniswapV3Pool pool) {
-        return
-            verifyCallback(
-                factory,
-                tokenA < tokenB
-                    ? PoolAddress.PoolKey({token0: tokenA, token1: tokenB, fee: fee})
-                    : PoolAddress.PoolKey({token0: tokenB, token1: tokenA, fee: fee})
-            );
+        return verifyCallback(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee));
     }
 
     /// @notice Returns the address of a valid Uniswap V3 Pool
