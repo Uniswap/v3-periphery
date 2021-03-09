@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`RouterPositions #addLiquidity pool exists gas 1`] = `320821`;
+exports[`RouterPositions #addLiquidity pool exists gas 1`] = `320833`;
 
-exports[`RouterPositions #createPoolAndAddLiquidity gas 1`] = `4816777`;
+exports[`RouterPositions #createPoolAndAddLiquidity gas 1`] = `4816789`;
 
-exports[`RouterPositions bytecode size 1`] = `4306`;
+exports[`RouterPositions bytecode size 1`] = `4294`;

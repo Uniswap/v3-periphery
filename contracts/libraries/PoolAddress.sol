@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.5.0;
 
+/// @dev Provides functions for deriving a pool address from the factory, tokens, and the fee
 library PoolAddress {
     bytes32 internal constant POOL_INIT_CODE_HASH = 0xd4f1a40e4bf7e60d35149863dcd741cd4bb1f6b8e723b3140eca4a488aec8a51;
 
+    // The identifying key of the pool
     struct PoolKey {
         address token0;
         address token1;

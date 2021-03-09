@@ -12,13 +12,13 @@ exports[`NonfungiblePositionManager #decreaseLiquidity gas complete decrease 1`]
 
 exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] = `163403`;
 
-exports[`NonfungiblePositionManager #firstMint gas 1`] = `5041320`;
+exports[`NonfungiblePositionManager #firstMint gas 1`] = `5041332`;
 
-exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189304`;
+exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `189316`;
 
-exports[`NonfungiblePositionManager #mint gas first mint for ticks 1`] = `434951`;
+exports[`NonfungiblePositionManager #mint gas first mint for ticks 1`] = `434963`;
 
-exports[`NonfungiblePositionManager #mint gas ticks already used 1`] = `369536`;
+exports[`NonfungiblePositionManager #mint gas ticks already used 1`] = `369548`;
 
 exports[`NonfungiblePositionManager #permit owned by eoa gas 1`] = `60110`;
 
@@ -28,6 +28,6 @@ exports[`NonfungiblePositionManager #transferFrom gas 1`] = `84063`;
 
 exports[`NonfungiblePositionManager #transferFrom gas comes from approved 1`] = `75227`;
 
-exports[`NonfungiblePositionManager bytecode size 1`] = `22924`;
+exports[`NonfungiblePositionManager bytecode size 1`] = `22911`;
 
 exports[`NonfungiblePositionManager multicall exit gas 1`] = `178028`;
