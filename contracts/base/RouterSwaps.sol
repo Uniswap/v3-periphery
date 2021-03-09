@@ -14,15 +14,13 @@ import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
 import './PeripheryValidation.sol';
 import './PeripheryPayments.sol';
-import './ETHConnector.sol';
 
 /// @title Logic for trading
 abstract contract RouterSwaps is
     IRouterSwaps,
     IPeripheryImmutableState,
     PeripheryValidation,
-    PeripheryPayments,
-    ETHConnector
+    PeripheryPayments
 {
     using Path for bytes;
     using SafeCast for uint256;
@@ -32,14 +30,11 @@ abstract contract RouterSwaps is
     /// @dev The maximum value that can be returned from #getSqrtRatioAtTick, minus 1
     uint160 private constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342 - 1;
 
+    uint256 private amountInCached; // used only for exact output swaps
+
     struct SwapData {
         bytes path;
         address payer;
-        bytes exactOutputData; // optional abi-encoded ExactOutputData
-    }
-
-    struct ExactOutputData {
-        uint256 amountInMaximum;
     }
 
     function getPool(
@@ -60,8 +55,10 @@ abstract contract RouterSwaps is
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
         CallbackValidation.verifyCallback(this.factory(), tokenIn, tokenOut, fee);
 
-        uint256 amountToPay = uint256(amount0Delta > 0 ? amount0Delta : amount1Delta);
-        if (data.exactOutputData.length == 0) {
+        (bool isExactInput, uint256 amountToPay) = amount0Delta > 0
+            ? (tokenIn < tokenOut, uint256(amount0Delta))
+            : (tokenOut < tokenIn, uint256(amount1Delta));
+        if (isExactInput) {
             // exact input
             pay(tokenIn, data.payer, msg.sender, amountToPay);
         } else {
@@ -72,35 +69,23 @@ abstract contract RouterSwaps is
             // TODO the WETH stuff might have to happen here
             if (data.path.hasPools()) {
                 data.path = data.path.skipToken();
-                exactOutputSingle(amountToPay, msg.sender, data, 0);
+                exactOutputSingle(amountToPay, msg.sender, data);
             } else {
-                uint256 amountInMaximum = abi.decode(data.exactOutputData, (ExactOutputData)).amountInMaximum;
-                require(amountToPay <= amountInMaximum, 'Too much requested');
+                amountInCached = amountToPay;
                 pay(tokenIn, data.payer, msg.sender, amountToPay);
             }
         }
     }
 
-    /// @dev Performs a single exact input swap. Overloaded to support WETH9<>WETH10 conversion.
+    /// @dev Performs a single exact input swap.
     /// @param amountIn The amount to be swapped
     /// @param recipient The recipient of the swap
     function exactInputSingle(
         uint256 amountIn,
         address recipient,
-        SwapData memory data,
-        uint160 sqrtPriceLimitX96
+        SwapData memory data
     ) private returns (uint256 amountOut) {
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
-
-        if (tokenIn == this.WETH9() && tokenOut == this.WETH10()) {
-            pay(this.WETH9(), data.payer, address(this), amountIn);
-            convertWETH9ToWETH10(amountIn, recipient);
-            return amountIn;
-        } else if (tokenIn == this.WETH10() && tokenOut == this.WETH9()) {
-            pay(this.WETH10(), data.payer, address(this), amountIn);
-            convertWETH10ToWETH9(amountIn, recipient);
-            return amountIn;
-        }
 
         bool zeroForOne = tokenIn < tokenOut;
 
@@ -109,12 +94,14 @@ abstract contract RouterSwaps is
                 recipient,
                 zeroForOne,
                 amountIn.toInt256(),
-                sqrtPriceLimitX96 == 0 ? (zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO) : sqrtPriceLimitX96,
+                zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
                 abi.encode(data)
             );
+
         return uint256(-(zeroForOne ? amount1 : amount0));
     }
 
+    /// @inheritdoc IRouterSwaps
     function exactInput(
         SwapParams memory params,
         uint256 amountIn,
@@ -129,40 +116,39 @@ abstract contract RouterSwaps is
                 hasPools ? address(this) : params.recipient, // for intermediate swaps, this contract custodies
                 SwapData({
                     path: params.path.getFirstPool(), // only the first pair in the path is necessary
-                    payer: params.hasPaid ? address(this) : msg.sender, // lying just costs the caller gas
-                    exactOutputData: new bytes(0)
-                }),
-                hasPools ? 0 : params.sqrtPriceLimitX96 // only binds on the last swap
+                    payer: params.hasPaid ? address(this) : msg.sender // lying just costs the caller gas
+                })
             );
 
-            if (!hasPools) break; // terminate if this was the last pair
-
-            params.path = params.path.skipToken();
-            params.hasPaid = true;
+            // decide whether to continue or terminate
+            if (hasPools) {
+                params.path = params.path.skipToken();
+                params.hasPaid = true;
+            } else {
+                amountOut = amountIn;
+                require(amountOut >= amountOutMinimum, 'Too little received');
+                return amountOut;
+            }
         }
-
-        amountOut = amountIn;
-        require(amountOut >= amountOutMinimum, 'Too little received');
     }
 
-    /// @dev Performs a single exact output swap. Overloaded to support WETH9<>WETH10 conversion.
+    /// @dev Performs a single exact output swap
     /// @param amountOut The amount to be swapped
     /// @param recipient The recipient of the swap
     function exactOutputSingle(
         uint256 amountOut,
         address recipient,
-        SwapData memory data,
-        uint160 sqrtPriceLimitX96
+        SwapData memory data
     ) private {
         (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
 
-        getPool(tokenOut, tokenIn, fee).swap(
+        getPool(tokenIn, tokenOut, fee).swap(
             recipient,
             zeroForOne,
             -amountOut.toInt256(),
-            sqrtPriceLimitX96 == 0 ? (zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO) : sqrtPriceLimitX96,
+            zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
             abi.encode(data)
         );
     }
@@ -172,16 +158,19 @@ abstract contract RouterSwaps is
         SwapParams calldata params,
         uint256 amountOut,
         uint256 amountInMaximum
-    ) external payable override checkDeadline(params.deadline) {
+    ) external payable override checkDeadline(params.deadline) returns (uint256 amountIn) {
         exactOutputSingle(
             amountOut,
             params.recipient,
             SwapData({
                 path: params.path,
-                payer: params.hasPaid ? address(this) : msg.sender, // lying just costs gas
-                exactOutputData: abi.encode(ExactOutputData({amountInMaximum: amountInMaximum}))
-            }),
-            params.sqrtPriceLimitX96 // only binds on the first swap
+                payer: params.hasPaid ? address(this) : msg.sender // lying just costs gas
+            })
         );
+
+        amountIn = amountInCached;
+        delete amountInCached;
+
+        require(amountIn <= amountInMaximum, 'Too much requested');
     }
 }

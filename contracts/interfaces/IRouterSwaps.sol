@@ -12,7 +12,6 @@ interface IRouterSwaps is IUniswapV3SwapCallback {
         address recipient;
         uint256 deadline;
         bool hasPaid;
-        uint160 sqrtPriceLimitX96;
     }
 
     /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path
@@ -27,5 +26,5 @@ interface IRouterSwaps is IUniswapV3SwapCallback {
         SwapParams calldata params,
         uint256 amountOut,
         uint256 amountInMaximum
-    ) external payable;
+    ) external payable returns (uint256 amountIn);
 }

@@ -154,16 +154,17 @@ describe('SwapRouter', () => {
         amountIn: number = 3,
         amountOutMinimum: number = 1
       ): Promise<ContractTransaction> {
+        const value = tokens[0] === weth9.address || tokens[0] === weth10.address ? amountIn : 0
+
         const params = {
           path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
           recipient: trader.address,
           deadline: 1,
-          hasPaid: false,
+          hasPaid: value > 0,
           sqrtPriceLimitX96: 0,
         }
 
         // ensure that the swap fails if the limit is any tighter
-        const value = tokens[0] === weth9.address || tokens[0] === weth10.address ? amountIn : 0
         await expect(
           router.connect(trader).exactInput(params, amountIn, amountOutMinimum + 1, { value })
         ).to.be.revertedWith('Too little received')
@@ -305,16 +306,17 @@ describe('SwapRouter', () => {
         amountOut: number = 1,
         amountInMaximum: number = 3
       ): Promise<ContractTransaction> {
+        const value = tokens[0] === weth9.address || tokens[1] === weth10.address ? amountInMaximum : 0
+
         const params = {
           path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
           recipient: trader.address,
           deadline: 1,
-          hasPaid: false,
+          hasPaid: value > 0,
           sqrtPriceLimitX96: 0,
         }
 
         // ensure that the swap fails if the limit is any tighter
-        const value = tokens[0] === weth9.address || tokens[1] === weth10.address ? amountInMaximum : 0
         await expect(
           router.connect(trader).exactOutput(params, amountOut, amountInMaximum - 1, { value })
         ).to.be.revertedWith('Too much requested')
