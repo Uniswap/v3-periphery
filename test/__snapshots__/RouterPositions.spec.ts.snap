@@ -4,4 +4,4 @@ exports[`RouterPositions #addLiquidity pool exists gas 1`] = `320833`;
 
 exports[`RouterPositions #createPoolAndAddLiquidity gas 1`] = `4816789`;
 
-exports[`RouterPositions bytecode size 1`] = `4294`;
+exports[`RouterPositions bytecode size 1`] = `4345`;

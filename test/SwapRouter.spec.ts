@@ -1,8 +1,8 @@
-import { BigNumber, constants, Contract, ContractTransaction, PayableOverrides } from 'ethers'
+import { BigNumber, constants, Contract, ContractTransaction } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeSwapRouter, IWETH9, IWETH10, TestERC20 } from '../typechain'
+import { MockTimeNonfungiblePositionManager, MockTimeSwapRouter, IWETH9, IWETH10, TestERC20 } from '../typechain'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
@@ -20,6 +20,7 @@ describe('SwapRouter', () => {
     weth10: IWETH10
     factory: Contract
     router: MockTimeSwapRouter
+    nft: MockTimeNonfungiblePositionManager
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
     const { weth9, weth10, factory, router } = await v3RouterFixture(wallets, provider)
@@ -31,10 +32,25 @@ describe('SwapRouter', () => {
       tokenFactory.deploy(constants.MaxUint256.div(2)),
     ])) as [TestERC20, TestERC20, TestERC20]
 
+    const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor')
+    const positionDescriptor = await positionDescriptorFactory.deploy()
+
+    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager', {
+      libraries: {
+        NonfungibleTokenPositionDescriptor: positionDescriptor.address,
+      },
+    })
+    const nft = (await positionManagerFactory.deploy(
+      factory.address,
+      weth9.address,
+      weth10.address
+    )) as MockTimeNonfungiblePositionManager
+
     // approve & fund wallets
     for (const token of tokens) {
       await Promise.all([
         token.approve(router.address, constants.MaxUint256),
+        token.approve(nft.address, constants.MaxUint256),
         token.connect(trader).approve(router.address, constants.MaxUint256),
         token.transfer(trader.address, expandTo18Decimals(1_000_000)),
       ])
@@ -48,6 +64,7 @@ describe('SwapRouter', () => {
       factory,
       router,
       tokens,
+      nft,
     }
   }
 
@@ -55,6 +72,7 @@ describe('SwapRouter', () => {
   let weth9: IWETH9
   let weth10: IWETH10
   let router: MockTimeSwapRouter
+  let nft: MockTimeNonfungiblePositionManager
   let tokens: [TestERC20, TestERC20, TestERC20]
   let getBalances: (
     who: string
@@ -74,7 +92,7 @@ describe('SwapRouter', () => {
 
   // helper for getting weth and token balances
   beforeEach('load fixture', async () => {
-    ;({ router, weth9, weth10, factory, tokens } = await loadFixture(routerFixture))
+    ;({ router, weth9, weth10, factory, tokens, nft } = await loadFixture(routerFixture))
 
     getBalances = async (who: string) => {
       const balances = await Promise.all([
@@ -116,12 +134,12 @@ describe('SwapRouter', () => {
         deadline: 1,
       }
 
-      return router.createPoolAndAddLiquidity(liquidityParams)
+      return nft.firstMint(liquidityParams)
     }
 
     async function createPoolWETH9(tokenAddress: string) {
       await weth9.deposit({ value: liquidity })
-      await weth9.approve(router.address, constants.MaxUint256)
+      await weth9.approve(nft.address, constants.MaxUint256)
       return createPool(weth9.address, tokenAddress)
     }
 

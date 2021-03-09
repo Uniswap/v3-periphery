@@ -3,22 +3,31 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
+import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 
 import '../interfaces/IPeripheryImmutableState.sol';
-import '../interfaces/IRouterPositions.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
 import '../libraries/TransferHelper.sol';
-import './PeripheryValidation.sol';
 
-/// @title Stateless functions for managing positions
-abstract contract RouterPositions is IPeripheryImmutableState, IRouterPositions, PeripheryValidation {
-    /// @inheritdoc IRouterPositions
+/// @title Liquidity management functions
+/// @notice Internal functions for safely managing liquidity in Uniswap V3
+abstract contract LiquidityManagement is IPeripheryImmutableState, IUniswapV3MintCallback {
+    struct CreatePoolAndAddLiquidityParams {
+        address token0;
+        address token1;
+        uint24 fee;
+        uint160 sqrtPriceX96;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 amount;
+        address recipient;
+    }
+
+    /// @notice Called to add liquidity for a pool that does not exist
     function createPoolAndAddLiquidity(CreatePoolAndAddLiquidityParams memory params)
-        public
-        override
-        checkDeadline(params.deadline)
+        internal
         returns (uint256 amount0, uint256 amount1)
     {
         IUniswapV3Pool pool =
@@ -40,13 +49,20 @@ abstract contract RouterPositions is IPeripheryImmutableState, IRouterPositions,
             );
     }
 
-    /// @inheritdoc IRouterPositions
-    function addLiquidity(AddLiquidityParams memory params)
-        public
-        override
-        checkDeadline(params.deadline)
-        returns (uint256 amount0, uint256 amount1)
-    {
+    struct AddLiquidityParams {
+        address token0;
+        address token1;
+        uint24 fee;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 amount;
+        uint256 amount0Max;
+        uint256 amount1Max;
+        address recipient;
+    }
+
+    /// @notice Add liquidity for an existing pool
+    function addLiquidity(AddLiquidityParams memory params) internal returns (uint256 amount0, uint256 amount1) {
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
 

@@ -6,7 +6,6 @@ import './base/PeripheryImmutableState.sol';
 import './base/Multicall.sol';
 import './base/ETHConnector.sol';
 import './base/SelfPermit.sol';
-import './base/RouterPositions.sol';
 import './base/RouterSwaps.sol';
 
 /// @title Uniswap V3 Swap Router

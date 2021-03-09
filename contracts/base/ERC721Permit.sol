@@ -1,21 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.7.6;
-pragma abicoder v2;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/utils/Address.sol';
 
 import '../interfaces/external/IERC1271.sol';
 import '../interfaces/IERC721Permit.sol';
+import './BlockTimestamp.sol';
 
 /// @title ERC721 with permit
 /// @notice Nonfungible tokens that support an approve via signature, i.e. permit
-abstract contract ERC721Permit is ERC721, IERC721Permit {
-    /// @dev Increments and gets the nonce for a specific token ID
-    function getAndIncrementNonce(uint256 tokenId) internal virtual returns (uint256);
-
-    /// @dev Returns the current block timestamp
-    function _blockTimestamp() internal view virtual returns (uint256);
+abstract contract ERC721Permit is BlockTimestamp, ERC721, IERC721Permit {
+    /// @dev Gets the current nonce for a token ID and then increments it, returning the original value
+    function _getAndIncrementNonce(uint256 tokenId) internal virtual returns (uint256);
 
     /// @dev The hash of the name used in the signature verification
     bytes32 public immutable nameHash;
@@ -73,7 +70,7 @@ abstract contract ERC721Permit is ERC721, IERC721Permit {
                 abi.encodePacked(
                     '\x19\x01',
                     DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(PERMIT_TYPEHASH, spender, tokenId, getAndIncrementNonce(tokenId), deadline))
+                    keccak256(abi.encode(PERMIT_TYPEHASH, spender, tokenId, _getAndIncrementNonce(tokenId), deadline))
                 )
             );
         address owner = ownerOf(tokenId);

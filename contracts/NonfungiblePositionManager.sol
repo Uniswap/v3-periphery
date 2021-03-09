@@ -9,10 +9,11 @@ import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
 import './libraries/NonfungibleTokenPositionDescriptor.sol';
-import './base/RouterPositions.sol';
+import './base/LiquidityManagement.sol';
 import './base/PeripheryImmutableState.sol';
 import './base/Multicall.sol';
 import './base/ERC721Permit.sol';
+import './base/PeripheryValidation.sol';
 
 /// @title NFT positions
 /// @notice Wraps Uniswap V3 positions in the ERC721 non-fungible token interface
@@ -21,7 +22,8 @@ contract NonfungiblePositionManager is
     Multicall,
     ERC721Permit,
     PeripheryImmutableState,
-    RouterPositions
+    LiquidityManagement,
+    PeripheryValidation
 {
     // details about the uniswap position
     struct Position {
@@ -65,6 +67,7 @@ contract NonfungiblePositionManager is
     function firstMint(FirstMintParams calldata params)
         external
         override
+        checkDeadline(params.deadline)
         returns (
             uint256 tokenId,
             uint256 amount0,
@@ -80,8 +83,7 @@ contract NonfungiblePositionManager is
                 tickLower: params.tickLower,
                 tickUpper: params.tickUpper,
                 amount: params.amount,
-                recipient: address(this),
-                deadline: params.deadline
+                recipient: address(this)
             })
         );
 
@@ -107,6 +109,7 @@ contract NonfungiblePositionManager is
     function mint(MintParams calldata params)
         external
         override
+        checkDeadline(params.deadline)
         returns (
             uint256 tokenId,
             uint256 amount0,
@@ -123,8 +126,7 @@ contract NonfungiblePositionManager is
                 amount: params.amount,
                 amount0Max: params.amount0Max,
                 amount1Max: params.amount1Max,
-                recipient: address(this),
-                deadline: params.deadline
+                recipient: address(this)
             })
         );
 
@@ -140,7 +142,7 @@ contract NonfungiblePositionManager is
         (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
 
         positions[tokenId] = Position({
-            nonce: 0,
+            nonce: 1,
             operator: address(0),
             token0: params.token0,
             token1: params.token1,
@@ -171,7 +173,7 @@ contract NonfungiblePositionManager is
         uint256 amount0Max,
         uint256 amount1Max,
         uint256 deadline
-    ) external override returns (uint256 amount0, uint256 amount1) {
+    ) external override checkDeadline(deadline) returns (uint256 amount0, uint256 amount1) {
         require(amount > 0);
         Position storage position = positions[tokenId];
 
@@ -188,8 +190,7 @@ contract NonfungiblePositionManager is
                 amount: amount,
                 amount0Max: amount0Max,
                 amount1Max: amount1Max,
-                recipient: address(this),
-                deadline: deadline
+                recipient: address(this)
             })
         );
 
@@ -309,11 +310,7 @@ contract NonfungiblePositionManager is
         _burn(tokenId);
     }
 
-    function _blockTimestamp() internal view virtual override(ERC721Permit, PeripheryValidation) returns (uint256) {
-        return block.timestamp;
-    }
-
-    function getAndIncrementNonce(uint256 tokenId) internal override returns (uint256) {
+    function _getAndIncrementNonce(uint256 tokenId) internal override returns (uint256) {
         return uint256(positions[tokenId].nonce++);
     }
 
