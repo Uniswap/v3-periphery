@@ -36,13 +36,12 @@ contract SwapRouter is
     uint160 private constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342 - 1;
 
     uint256 private amountInCached; // used for exact output swaps
- 
+
     constructor(
         address _factory,
         address _WETH9,
         address _WETH10
     ) PeripheryImmutableState(_factory, _WETH9, _WETH10) {}
-
 
     function getPool(
         address tokenA,
