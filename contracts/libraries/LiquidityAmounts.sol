@@ -42,6 +42,8 @@ library LiquidityAmounts {
         return toUint128(FullMath.mulDiv(amount1, FixedPoint96.Q96, sqrtRatioBX96 - sqrtRatioAX96));
     }
 
+    /// @notice Computes the maximum amount of liquidity received for a given amount of token0, token1, the current
+    /// pool prices and the prices at the tick boundaries
     function getLiquidityForAmounts(
         uint160 sqrtRatioX96,
         uint160 sqrtRatioAX96,

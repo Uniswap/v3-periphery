@@ -2,7 +2,7 @@ import { BigNumber, constants, Contract, ContractTransaction, PayableOverrides }
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeUniswapV3Router01, IWETH9, IWETH10, TestERC20 } from '../typechain'
+import { MockTimeSwapRouter, IWETH9, IWETH10, TestERC20 } from '../typechain'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
@@ -11,7 +11,7 @@ import { getMaxTick, getMinTick } from './shared/ticks'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { encodePath } from './shared/path'
 
-describe('UniswapV3Router01', () => {
+describe('SwapRouter', () => {
   const wallets = waffle.provider.getWallets()
   const [wallet, trader] = wallets
 
@@ -19,7 +19,7 @@ describe('UniswapV3Router01', () => {
     weth9: IWETH9
     weth10: IWETH10
     factory: Contract
-    router: MockTimeUniswapV3Router01
+    router: MockTimeSwapRouter
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
     const { weth9, weth10, factory, router } = await v3RouterFixture(wallets, provider)
@@ -54,7 +54,7 @@ describe('UniswapV3Router01', () => {
   let factory: Contract
   let weth9: IWETH9
   let weth10: IWETH10
-  let router: MockTimeUniswapV3Router01
+  let router: MockTimeSwapRouter
   let tokens: [TestERC20, TestERC20, TestERC20]
   let getBalances: (
     who: string

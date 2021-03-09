@@ -3,7 +3,7 @@ pragma solidity >=0.5.0;
 
 /// @title Router immutable state
 /// @notice Functions that return immutable state of the router
-interface IRouterImmutableState {
+interface IPeripheryImmutableState {
     /// @notice Returns the address of the Uniswap V3 factory
     function factory() external view returns (address);
 

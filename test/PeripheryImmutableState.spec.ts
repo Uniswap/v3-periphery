@@ -2,23 +2,23 @@ import { Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { RouterImmutableState, IWETH9, IWETH10 } from '../typechain'
+import { PeripheryImmutableState, IWETH9, IWETH10 } from '../typechain'
 import { expect } from './shared/expect'
 import { v3RouterFixture } from './shared/fixtures'
 
-describe('RouterImmutableState', () => {
+describe('PeripheryImmutableState', () => {
   const wallets = waffle.provider.getWallets()
 
   const nonfungiblePositionManagerFixture: Fixture<{
     weth9: IWETH9
     weth10: IWETH10
     factory: Contract
-    state: RouterImmutableState
+    state: PeripheryImmutableState
   }> = async (wallets, provider) => {
     const { weth9, weth10, factory, router } = await v3RouterFixture(wallets, provider)
 
-    const stateFactory = await ethers.getContractFactory('RouterImmutableState')
-    const state = (await stateFactory.deploy(factory.address, weth9.address, weth10.address)) as RouterImmutableState
+    const stateFactory = await ethers.getContractFactory('PeripheryImmutableState')
+    const state = (await stateFactory.deploy(factory.address, weth9.address, weth10.address)) as PeripheryImmutableState
 
     return {
       weth9,
@@ -31,7 +31,7 @@ describe('RouterImmutableState', () => {
   let factory: Contract
   let weth9: IWETH9
   let weth10: IWETH10
-  let state: RouterImmutableState
+  let state: PeripheryImmutableState
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 

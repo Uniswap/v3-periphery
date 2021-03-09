@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.7.5;
 
-import './interfaces/IRouterImmutableState.sol';
-import './libraries/TransferHelper.sol';
-import './interfaces/external/IWETH9.sol';
-import './interfaces/external/IWETH10.sol';
+import '../interfaces/IPeripheryImmutableState.sol';
+import '../libraries/TransferHelper.sol';
+import '../interfaces/external/IWETH9.sol';
+import '../interfaces/external/IWETH10.sol';
 
-abstract contract RouterPayments is IRouterImmutableState {
+abstract contract RouterPayments is IPeripheryImmutableState {
     /// @param token The token to pay
     /// @param payer The entity that must pay
     /// @param recipient The entity that will receive payment

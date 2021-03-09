@@ -9,7 +9,7 @@ import {
 
 import WETH9 from '../contracts/WETH9.json'
 import WETH10 from '../contracts/WETH10.json'
-import { IWETH9, IWETH10, MockTimeUniswapV3Router01 } from '../../typechain'
+import { IWETH9, IWETH10, MockTimeSwapRouter } from '../../typechain'
 
 const wethFixture: Fixture<{ weth9: IWETH9; weth10: IWETH10 }> = async ([wallet]) => {
   const [weth9, weth10] = await Promise.all([
@@ -35,16 +35,16 @@ export const v3RouterFixture: Fixture<{
   weth9: IWETH9
   weth10: IWETH10
   factory: Contract
-  router: MockTimeUniswapV3Router01
+  router: MockTimeSwapRouter
 }> = async ([wallet], provider) => {
   const { weth9, weth10 } = await wethFixture([wallet], provider)
   const { factory } = await v3CoreFactoryFixture([wallet], provider)
 
-  const router = (await (await ethers.getContractFactory('MockTimeUniswapV3Router01')).deploy(
+  const router = (await (await ethers.getContractFactory('MockTimeSwapRouter')).deploy(
     factory.address,
     weth9.address,
     weth10.address
-  )) as MockTimeUniswapV3Router01
+  )) as MockTimeSwapRouter
 
   return { factory, weth9, weth10, router }
 }

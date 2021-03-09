@@ -5,15 +5,15 @@ pragma abicoder v2;
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
-import './interfaces/IRouterImmutableState.sol';
-import './interfaces/IRouterPositions.sol';
-import './libraries/PoolAddress.sol';
-import './libraries/CallbackValidation.sol';
-import './libraries/TransferHelper.sol';
+import '../interfaces/IPeripheryImmutableState.sol';
+import '../interfaces/IRouterPositions.sol';
+import '../libraries/PoolAddress.sol';
+import '../libraries/CallbackValidation.sol';
+import '../libraries/TransferHelper.sol';
 import './RouterValidation.sol';
 
 /// @title Stateless functions for managing positions
-abstract contract RouterPositions is IRouterImmutableState, IRouterPositions, RouterValidation {
+abstract contract RouterPositions is IPeripheryImmutableState, IRouterPositions, RouterValidation {
     /// @inheritdoc IRouterPositions
     function createPoolAndAddLiquidity(CreatePoolAndAddLiquidityParams memory params)
         public

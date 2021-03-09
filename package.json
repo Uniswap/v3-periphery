@@ -19,8 +19,9 @@
     "contracts/interfaces",
     "contracts/libraries",
     "artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json",
-    "artifacts/contracts/UniswapV3Router01.sol/UniswapV3Router01.json",
-    "artifacts/contracts/libraries/NonfungibleTokenPositionDescriptor.sol/NonfungibleTokenPositionDescriptor.json",
+    "artifacts/contracts/SwapRouter.sol/SwapRouter.json",
+    "artifacts/contracts/libraries/**/*.json",
+    "!artifacts/contracts/libraries/**/*.dbg.json",
     "artifacts/contracts/interfaces/**/*.json",
     "!artifacts/contracts/interfaces/**/*.dbg.json"
   ],

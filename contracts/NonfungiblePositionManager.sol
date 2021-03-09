@@ -13,9 +13,9 @@ import './interfaces/external/IERC1271.sol';
 import './interfaces/INonfungiblePositionManager.sol';
 import './libraries/PositionKey.sol';
 import './libraries/NonfungibleTokenPositionDescriptor.sol';
-import './RouterPositions.sol';
-import './RouterImmutableState.sol';
-import './Multicall.sol';
+import './base/RouterPositions.sol';
+import './base/PeripheryImmutableState.sol';
+import './base/Multicall.sol';
 
 /// @title NFT positions
 /// @notice Wraps Uniswap V3 positions in the ERC721 non-fungible token interface
@@ -23,7 +23,7 @@ contract NonfungiblePositionManager is
     INonfungiblePositionManager,
     Multicall,
     ERC721,
-    RouterImmutableState,
+    PeripheryImmutableState,
     RouterPositions
 {
     // details about the uniswap position
@@ -59,7 +59,7 @@ contract NonfungiblePositionManager is
         address _factory,
         address _WETH9,
         address _WETH10
-    ) ERC721('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS') RouterImmutableState(_factory, _WETH9, _WETH10) {}
+    ) ERC721('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS') PeripheryImmutableState(_factory, _WETH9, _WETH10) {}
 
     /// @inheritdoc INonfungiblePositionManager
     function firstMint(FirstMintParams calldata params)

@@ -5,11 +5,11 @@ pragma abicoder v2;
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
-import './interfaces/IRouterImmutableState.sol';
-import './interfaces/IRouterPositions.sol';
-import './libraries/PoolAddress.sol';
+import '../interfaces/IPeripheryImmutableState.sol';
+import '../interfaces/IRouterPositions.sol';
+import '../libraries/PoolAddress.sol';
 
-abstract contract RouterValidation is IRouterImmutableState {
+abstract contract RouterValidation is IPeripheryImmutableState {
     function _blockTimestamp() internal view virtual returns (uint256) {
         return block.timestamp;
     }

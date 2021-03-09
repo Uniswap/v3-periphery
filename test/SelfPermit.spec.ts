@@ -2,7 +2,7 @@ import { constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeUniswapV3Router01, TestERC20 } from '../typechain'
+import { MockTimeSwapRouter, TestERC20 } from '../typechain'
 import { expect } from 'chai'
 import { getPermitSignature } from './shared/permit'
 import { v3RouterFixture } from './shared/fixtures'
@@ -13,7 +13,7 @@ describe('SelfPermit', () => {
 
   const fixture: Fixture<{
     token: TestERC20
-    router: MockTimeUniswapV3Router01
+    router: MockTimeSwapRouter
   }> = async (wallets, provider) => {
     const factory = await ethers.getContractFactory('TestERC20')
     const token = (await factory.deploy(0)) as TestERC20
@@ -27,7 +27,7 @@ describe('SelfPermit', () => {
   }
 
   let token: TestERC20
-  let router: MockTimeUniswapV3Router01
+  let router: MockTimeSwapRouter
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 

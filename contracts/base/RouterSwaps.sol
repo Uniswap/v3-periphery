@@ -5,19 +5,25 @@ pragma abicoder v2;
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
 
-import './interfaces/IRouterSwaps.sol';
-import './interfaces/IRouterImmutableState.sol';
-import './interfaces/external/IWETH9.sol';
-import './interfaces/external/IWETH10.sol';
-import './libraries/Path.sol';
-import './libraries/PoolAddress.sol';
-import './libraries/CallbackValidation.sol';
+import '../interfaces/IRouterSwaps.sol';
+import '../interfaces/IPeripheryImmutableState.sol';
+import '../interfaces/external/IWETH9.sol';
+import '../interfaces/external/IWETH10.sol';
+import '../libraries/Path.sol';
+import '../libraries/PoolAddress.sol';
+import '../libraries/CallbackValidation.sol';
 import './RouterValidation.sol';
 import './RouterPayments.sol';
 import './ETHConnector.sol';
 
 /// @title Logic for trading
-abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterValidation, RouterPayments, ETHConnector {
+abstract contract RouterSwaps is
+    IRouterSwaps,
+    IPeripheryImmutableState,
+    RouterValidation,
+    RouterPayments,
+    ETHConnector
+{
     using Path for bytes;
     using SafeCast for uint256;
 

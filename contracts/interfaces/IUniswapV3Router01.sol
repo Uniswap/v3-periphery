@@ -4,12 +4,12 @@ pragma abicoder v2;
 
 import './IRouterPositions.sol';
 import './IRouterSwaps.sol';
-import './IRouterImmutableState.sol';
+import './IPeripheryImmutableState.sol';
 import './INonfungiblePositionManager.sol';
 import './IMulticall.sol';
 
 interface IUniswapV3Router is
-    IRouterImmutableState,
+    IPeripheryImmutableState,
     IRouterSwaps,
     IRouterPositions,
     INonfungiblePositionManager,

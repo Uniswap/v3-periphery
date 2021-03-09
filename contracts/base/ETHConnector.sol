@@ -2,14 +2,14 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import './interfaces/IETHConnector.sol';
-import './interfaces/IRouterImmutableState.sol';
-import './interfaces/external/IWETH9.sol';
-import './interfaces/external/IWETH10.sol';
+import '../interfaces/IETHConnector.sol';
+import '../interfaces/IPeripheryImmutableState.sol';
+import '../interfaces/external/IWETH9.sol';
+import '../interfaces/external/IWETH10.sol';
 
-import './libraries/TransferHelper.sol';
+import '../libraries/TransferHelper.sol';
 
-abstract contract ETHConnector is IETHConnector, IRouterImmutableState {
+abstract contract ETHConnector is IETHConnector, IPeripheryImmutableState {
     receive() external payable {
         require(msg.sender == this.WETH9() || msg.sender == this.WETH10(), 'Not WETH9 or WETH10');
     }
