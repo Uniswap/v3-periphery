@@ -7,10 +7,6 @@ import { PathTest } from '../typechain'
 import { decodePath, encodePath } from './shared/path'
 
 import snapshotGasCost from './shared/snapshotGasCost'
-import { constants } from 'ethers'
-import { computePoolAddress } from './shared/computePoolAddress'
-
-const factory = constants.AddressZero
 
 describe('Path', () => {
   const wallets = waffle.provider.getWallets()
@@ -59,16 +55,18 @@ describe('Path', () => {
     expect(decodedFees).to.deep.eq(fees)
   })
 
-  describe('#hasPairs / #decode #skipToken', () => {
+  describe('#hasPools / #decodeFirstPool / #skipToken / #getFirstPool', () => {
     const encodedPath = encodePath(tokenAddresses, fees)
 
-    it('works on first pair', async () => {
-      expect(await path.hasPairs(encodedPath)).to.be.true
+    it('works on first pool', async () => {
+      expect(await path.hasPools(encodedPath)).to.be.true
 
-      const { tokenA, tokenB, pool } = await path.decodeFirstPair(encodedPath, factory)
-      expect(tokenA).to.be.eq(tokenAddresses[0])
-      expect(tokenB).to.be.eq(tokenAddresses[1])
-      expect(pool).to.be.eq(computePoolAddress(factory, [tokenAddresses[0], tokenAddresses[1]], FeeAmount.MEDIUM))
+      const firstPool = await path.decodeFirstPool(encodedPath)
+      expect(firstPool.tokenA).to.be.eq(tokenAddresses[0])
+      expect(firstPool.tokenB).to.be.eq(tokenAddresses[1])
+      expect(firstPool.fee).to.be.eq(FeeAmount.MEDIUM)
+
+      expect(await path.decodeFirstPool(await path.getFirstPool(encodedPath))).to.deep.eq(firstPool)
     })
 
     const offset = 20 + 3
@@ -76,18 +74,19 @@ describe('Path', () => {
     it('skips 1 item', async () => {
       const skipped = await path.skipToken(encodedPath)
       expect(skipped).to.be.eq('0x' + encodedPath.slice(2 + offset * 2))
-      expect(await path.hasPairs(skipped)).to.be.false
 
-      const { tokenA, tokenB, pool } = await path.decodeFirstPair(skipped, factory)
+      expect(await path.hasPools(skipped)).to.be.false
+
+      const { tokenA, tokenB, fee: decodedFee } = await path.decodeFirstPool(skipped)
       expect(tokenA).to.be.eq(tokenAddresses[1])
       expect(tokenB).to.be.eq(tokenAddresses[2])
-      expect(pool).to.be.eq(computePoolAddress(factory, [tokenAddresses[1], tokenAddresses[2]], FeeAmount.MEDIUM))
+      expect(decodedFee).to.be.eq(FeeAmount.MEDIUM)
     })
   })
 
   it('gas cost', async () => {
     await snapshotGasCost(
-      path.getGasCostOfDecodeFirsPair(encodePath([tokenAddresses[0], tokenAddresses[1]], [FeeAmount.MEDIUM]), factory)
+      path.getGasCostOfDecodeFirstPool(encodePath([tokenAddresses[0], tokenAddresses[1]], [FeeAmount.MEDIUM]))
     )
   })
 })

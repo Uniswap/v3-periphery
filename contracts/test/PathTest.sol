@@ -4,24 +4,24 @@ pragma solidity =0.7.6;
 import '../libraries/Path.sol';
 
 contract PathTest {
-    function hasPairs(bytes memory path) public pure returns (bool) {
-        return Path.hasPairs(path);
+    function hasPools(bytes memory path) public pure returns (bool) {
+        return Path.hasPools(path);
     }
 
-    function decodeFirstPair(bytes memory path, address factory)
+    function decodeFirstPool(bytes memory path)
         public
         pure
         returns (
             address tokenA,
             address tokenB,
-            address pool
+            uint24 fee
         )
     {
-        return Path.decodeFirstPair(path, factory);
+        return Path.decodeFirstPool(path);
     }
 
-    function getFirstPair(bytes memory path) public pure returns (bytes memory) {
-        return Path.getFirstPair(path);
+    function getFirstPool(bytes memory path) public pure returns (bytes memory) {
+        return Path.getFirstPool(path);
     }
 
     function skipToken(bytes memory path) public pure returns (bytes memory) {
@@ -29,9 +29,9 @@ contract PathTest {
     }
 
     // gas funcs
-    function getGasCostOfDecodeFirsPair(bytes memory path, address factory) public view returns (uint256) {
+    function getGasCostOfDecodeFirstPool(bytes memory path) public view returns (uint256) {
         uint256 gasBefore = gasleft();
-        Path.decodeFirstPair(path, factory);
+        Path.decodeFirstPool(path);
         return gasBefore - gasleft();
     }
 }

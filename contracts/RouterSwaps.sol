@@ -10,6 +10,7 @@ import './interfaces/IRouterImmutableState.sol';
 import './interfaces/external/IWETH9.sol';
 import './interfaces/external/IWETH10.sol';
 import './libraries/Path.sol';
+import './libraries/PoolAddress.sol';
 import './RouterValidation.sol';
 import './RouterPayments.sol';
 import './ETHConnector.sol';
@@ -41,8 +42,8 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         bytes calldata _data
     ) external override {
         SwapData memory data = abi.decode(_data, (SwapData));
-        (address tokenIn, address tokenOut, address pool) = data.path.decodeFirstPair(this.factory());
-        verifyCallback(pool);
+        (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
+        verifyCallback(PoolAddress.getPoolKey(tokenIn, tokenOut, fee));
 
         uint256 amountToPay = uint256(amount0Delta > 0 ? amount0Delta : amount1Delta);
         if (data.exactOutputData.length == 0) {
@@ -54,7 +55,7 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
 
             // either initiate the next swap or pay
             // TODO the WETH stuff might have to happen here
-            if (data.path.hasPairs()) {
+            if (data.path.hasPools()) {
                 data.path = data.path.skipToken();
                 exactOutputSingle(amountToPay, msg.sender, data);
             } else {
@@ -73,7 +74,8 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         address recipient,
         SwapData memory data
     ) private returns (uint256 amountOut) {
-        (address tokenIn, address tokenOut, address pool) = data.path.decodeFirstPair(this.factory());
+        (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
+        address pool = PoolAddress.computeAddress(this.factory(), PoolAddress.getPoolKey(tokenIn, tokenOut, fee));
 
         if (tokenIn == this.WETH9() && tokenOut == this.WETH10()) {
             pay(this.WETH9(), data.payer, address(this), amountIn);
@@ -104,20 +106,20 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         uint256 amountOutMinimum
     ) external payable override checkDeadline(params.deadline) returns (uint256 amountOut) {
         while (true) {
-            bool hasPairs = params.path.hasPairs();
+            bool hasPools = params.path.hasPools();
 
             // the outputs of prior swaps become the inputs to subsequent ones
             amountIn = exactInputSingle(
                 amountIn,
-                hasPairs ? address(this) : params.recipient, // for intermediate swaps, this contract custodies
+                hasPools ? address(this) : params.recipient, // for intermediate swaps, this contract custodies
                 SwapData({
-                    path: params.path.getFirstPair(), // only the first pair in the path is necessary
+                    path: params.path.getFirstPool(), // only the first pair in the path is necessary
                     payer: params.hasPaid ? address(this) : msg.sender, // lying just costs the caller gas
                     exactOutputData: new bytes(0)
                 })
             );
 
-            if (!hasPairs) break; // terminate if this was the last pair
+            if (!hasPools) break; // terminate if this was the last pair
 
             params.path = params.path.skipToken();
             params.hasPaid = true;
@@ -135,7 +137,8 @@ abstract contract RouterSwaps is IRouterSwaps, IRouterImmutableState, RouterVali
         address recipient,
         SwapData memory data
     ) private {
-        (address tokenOut, address tokenIn, address pool) = data.path.decodeFirstPair(this.factory());
+        (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
+        address pool = PoolAddress.computeAddress(this.factory(), PoolAddress.getPoolKey(tokenIn, tokenOut, fee));
 
         bool zeroForOne = tokenIn < tokenOut;
 
