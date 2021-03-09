@@ -6,7 +6,7 @@ import '../libraries/TransferHelper.sol';
 import '../interfaces/external/IWETH9.sol';
 import '../interfaces/external/IWETH10.sol';
 
-abstract contract RouterPayments is IPeripheryImmutableState {
+abstract contract PeripheryPayments is IPeripheryImmutableState {
     /// @param token The token to pay
     /// @param payer The entity that must pay
     /// @param recipient The entity that will receive payment

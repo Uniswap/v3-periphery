@@ -13,7 +13,7 @@ import '../libraries/Path.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
 import './PeripheryValidation.sol';
-import './RouterPayments.sol';
+import './PeripheryPayments.sol';
 import './ETHConnector.sol';
 
 /// @title Logic for trading
@@ -21,7 +21,7 @@ abstract contract RouterSwaps is
     IRouterSwaps,
     IPeripheryImmutableState,
     PeripheryValidation,
-    RouterPayments,
+    PeripheryPayments,
     ETHConnector
 {
     using Path for bytes;
