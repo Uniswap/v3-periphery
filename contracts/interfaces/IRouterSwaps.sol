@@ -19,17 +19,12 @@ interface IRouterSwaps is IUniswapV3SwapCallback {
         SwapParams calldata params,
         uint256 amountIn,
         uint256 amountOutMinimum
-    )
-        external
-        payable
-        returns (uint256 amountOut);
+    ) external payable returns (uint256 amountOut);
 
     /// @notice Swaps as little as possible of one token for `amountOut` of another along the specified path (reversed)
     function exactOutput(
         SwapParams calldata params,
         uint256 amountOut,
         uint256 amountInMaximum
-    )
-        external
-        payable;
+    ) external payable;
 }
