@@ -16,12 +16,7 @@ import './PeripheryValidation.sol';
 import './PeripheryPayments.sol';
 
 /// @title Logic for trading
-abstract contract RouterSwaps is
-    IRouterSwaps,
-    IPeripheryImmutableState,
-    PeripheryValidation,
-    PeripheryPayments
-{
+abstract contract RouterSwaps is IRouterSwaps, IPeripheryImmutableState, PeripheryValidation, PeripheryPayments {
     using Path for bytes;
     using SafeCast for uint256;
 
@@ -55,9 +50,10 @@ abstract contract RouterSwaps is
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
         CallbackValidation.verifyCallback(this.factory(), tokenIn, tokenOut, fee);
 
-        (bool isExactInput, uint256 amountToPay) = amount0Delta > 0
-            ? (tokenIn < tokenOut, uint256(amount0Delta))
-            : (tokenOut < tokenIn, uint256(amount1Delta));
+        (bool isExactInput, uint256 amountToPay) =
+            amount0Delta > 0
+                ? (tokenIn < tokenOut, uint256(amount0Delta))
+                : (tokenOut < tokenIn, uint256(amount1Delta));
         if (isExactInput) {
             // exact input
             pay(tokenIn, data.payer, msg.sender, amountToPay);
