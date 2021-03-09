@@ -72,7 +72,7 @@ abstract contract RouterSwaps is
             // TODO the WETH stuff might have to happen here
             if (data.path.hasPools()) {
                 data.path = data.path.skipToken();
-                exactOutputSingle(amountToPay, msg.sender, data);
+                exactOutputSingle(amountToPay, msg.sender, data, 0);
             } else {
                 uint256 amountInMaximum = abi.decode(data.exactOutputData, (ExactOutputData)).amountInMaximum;
                 require(amountToPay <= amountInMaximum, 'Too much requested');
@@ -87,7 +87,8 @@ abstract contract RouterSwaps is
     function exactInputSingle(
         uint256 amountIn,
         address recipient,
-        SwapData memory data
+        SwapData memory data,
+        uint160 sqrtPriceLimitX96
     ) private returns (uint256 amountOut) {
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
 
@@ -108,7 +109,7 @@ abstract contract RouterSwaps is
                 recipient,
                 zeroForOne,
                 amountIn.toInt256(),
-                zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
+                sqrtPriceLimitX96 == 0 ? (zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO) : sqrtPriceLimitX96,
                 abi.encode(data)
             );
         return uint256(-(zeroForOne ? amount1 : amount0));
@@ -130,7 +131,8 @@ abstract contract RouterSwaps is
                     path: params.path.getFirstPool(), // only the first pair in the path is necessary
                     payer: params.hasPaid ? address(this) : msg.sender, // lying just costs the caller gas
                     exactOutputData: new bytes(0)
-                })
+                }),
+                hasPools ? 0 : params.sqrtPriceLimitX96 // only binds on the last swap
             );
 
             if (!hasPools) break; // terminate if this was the last pair
@@ -149,7 +151,8 @@ abstract contract RouterSwaps is
     function exactOutputSingle(
         uint256 amountOut,
         address recipient,
-        SwapData memory data
+        SwapData memory data,
+        uint160 sqrtPriceLimitX96
     ) private {
         (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
 
@@ -159,7 +162,7 @@ abstract contract RouterSwaps is
             recipient,
             zeroForOne,
             -amountOut.toInt256(),
-            zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
+            sqrtPriceLimitX96 == 0 ? (zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO) : sqrtPriceLimitX96,
             abi.encode(data)
         );
     }
@@ -177,7 +180,8 @@ abstract contract RouterSwaps is
                 path: params.path,
                 payer: params.hasPaid ? address(this) : msg.sender, // lying just costs gas
                 exactOutputData: abi.encode(ExactOutputData({amountInMaximum: amountInMaximum}))
-            })
+            }),
+            params.sqrtPriceLimitX96 // only binds on the first swap
         );
     }
 }

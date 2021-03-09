@@ -12,6 +12,7 @@ interface IRouterSwaps is IUniswapV3SwapCallback {
         address recipient;
         uint256 deadline;
         bool hasPaid;
+        uint160 sqrtPriceLimitX96;
     }
 
     /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path

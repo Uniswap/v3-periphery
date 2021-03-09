@@ -141,6 +141,7 @@ describe('SwapRouter', () => {
           recipient: trader.address,
           deadline: 1,
           hasPaid: false,
+          sqrtPriceLimitX96: 0,
         }
 
         // ensure that the swap fails if the limit is any tighter
@@ -195,6 +196,8 @@ describe('SwapRouter', () => {
           expect(poolAfter.token0).to.be.eq(poolBefore.token0.sub(1))
           expect(poolAfter.token1).to.be.eq(poolBefore.token1.add(3))
         })
+
+        it('sqrtPriceLimitX96')
       })
 
       describe('multi-pair', () => {
@@ -272,7 +275,10 @@ describe('SwapRouter', () => {
 
       it('ETH output')
 
+      // TODO do we care about this?
       it('ETH input and output')
+
+      it('ETH bridging')
     })
 
     describe('#exactOutput', () => {
@@ -286,6 +292,7 @@ describe('SwapRouter', () => {
           recipient: trader.address,
           deadline: 1,
           hasPaid: false,
+          sqrtPriceLimitX96: 0,
         }
 
         // ensure that the swap fails if the limit is any tighter
@@ -340,6 +347,8 @@ describe('SwapRouter', () => {
           expect(poolAfter.token0).to.be.eq(poolBefore.token0.sub(1))
           expect(poolAfter.token1).to.be.eq(poolBefore.token1.add(3))
         })
+
+        it('sqrtPriceLimitX96')
       })
 
       describe('multi-pair', () => {
@@ -417,7 +426,10 @@ describe('SwapRouter', () => {
 
       it('ETH output')
 
+      // TODO do we care about this?
       it('ETH input and output')
+
+      it('ETH bridging')
     })
   })
 })
