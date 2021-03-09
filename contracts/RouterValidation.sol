@@ -20,6 +20,10 @@ abstract contract RouterValidation is IRouterImmutableState {
     }
 
     function verifyCallback(PoolAddress.PoolKey memory poolKey) internal view {
-        require(msg.sender == PoolAddress.computeAddress(this.factory(), poolKey));
+        verifyCallback(PoolAddress.computeAddress(this.factory(), poolKey));
+    }
+
+    function verifyCallback(address pool) internal view {
+        require(msg.sender == pool);
     }
 }
