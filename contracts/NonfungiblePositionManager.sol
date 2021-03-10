@@ -7,8 +7,8 @@ import '@uniswap/v3-core/contracts/libraries/FixedPoint128.sol';
 import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 
 import './interfaces/INonfungiblePositionManager.sol';
+import './interfaces/INonfungibleTokenPositionDescriptor.sol';
 import './libraries/PositionKey.sol';
-import './libraries/NonfungibleTokenPositionDescriptor.sol';
 import './base/LiquidityManagement.sol';
 import './base/PeripheryImmutableState.sol';
 import './base/Multicall.sol';
@@ -54,14 +54,19 @@ contract NonfungiblePositionManager is
     /// @dev The ID of the next token that will be minted. Skips 0
     uint256 private _nextId = 1;
 
+    address public immutable tokenDescriptor;
+
     constructor(
         address _factory,
         address _WETH9,
-        address _WETH10
+        address _WETH10,
+        address _tokenDescriptor
     )
         ERC721Permit('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS', '1')
         PeripheryImmutableState(_factory, _WETH9, _WETH10)
-    {}
+    {
+        tokenDescriptor = _tokenDescriptor;
+    }
 
     /// @inheritdoc INonfungiblePositionManager
     function firstMint(FirstMintParams calldata params)
@@ -163,7 +168,8 @@ contract NonfungiblePositionManager is
     }
 
     function tokenURI(uint256 tokenId) public view override(ERC721, IERC721Metadata) returns (string memory) {
-        return NonfungibleTokenPositionDescriptor.tokenURI(address(this), tokenId);
+        require(_exists(tokenId));
+        return INonfungibleTokenPositionDescriptor(tokenDescriptor).tokenURI(this, tokenId);
     }
 
     /// @inheritdoc INonfungiblePositionManager

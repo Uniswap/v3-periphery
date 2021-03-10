@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.7.5;
-pragma abicoder v2;
 
 /// @title Periphery Payments
 /// @notice Functions to ease deposits and withdrawals of ETH

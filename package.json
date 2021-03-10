@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "restricted"
   },
-  "version": "1.0.0-beta.4",
+  "version": "1.0.0-beta.6",
   "homepage": "https://uniswap.org",
   "keywords": [
     "uniswap",
@@ -18,12 +18,10 @@
   "files": [
     "contracts/interfaces",
     "contracts/libraries",
-    "artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json",
-    "artifacts/contracts/SwapRouter.sol/SwapRouter.json",
-    "artifacts/contracts/libraries/**/*.json",
-    "!artifacts/contracts/libraries/**/*.dbg.json",
-    "artifacts/contracts/interfaces/**/*.json",
-    "!artifacts/contracts/interfaces/**/*.dbg.json"
+    "artifacts/contracts/**/*.json",
+    "!artifacts/contracts/**/*.dbg.json",
+    "!artifacts/contracts/test/**/*",
+    "!artifacts/contracts/base/**/*"
   ],
   "engines": {
     "node": ">=10"
