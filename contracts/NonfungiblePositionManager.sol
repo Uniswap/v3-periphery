@@ -140,7 +140,7 @@ contract NonfungiblePositionManager is
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
 
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
 
         bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);
 
@@ -202,7 +202,7 @@ contract NonfungiblePositionManager is
 
         bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
 
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
 
         // this is now updated to the current transaction
         (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
@@ -246,7 +246,7 @@ contract NonfungiblePositionManager is
 
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee});
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
         (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, amount);
 
         require(amount0 >= amount0Min);
@@ -300,7 +300,7 @@ contract NonfungiblePositionManager is
 
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee});
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey));
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
         (amount0, amount1) = pool.collect(recipient, position.tickLower, position.tickUpper, amount0Max, amount1Max);
 
         // sometimes there will be a few less wei than expected due to rounding down in core, but we just subtract the full amount expected

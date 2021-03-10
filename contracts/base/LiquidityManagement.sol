@@ -5,14 +5,15 @@ pragma abicoder v2;
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 
-import '../base/PeripheryPayments.sol';
-import '../interfaces/IPeripheryImmutableState.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
 
+import './PeripheryPayments.sol';
+import './PeripheryImmutableState.sol';
+
 /// @title Liquidity management functions
 /// @notice Internal functions for safely managing liquidity in Uniswap V3
-abstract contract LiquidityManagement is IPeripheryImmutableState, IUniswapV3MintCallback, PeripheryPayments {
+abstract contract LiquidityManagement is IUniswapV3MintCallback, PeripheryImmutableState, PeripheryPayments {
     struct CreatePoolAndAddLiquidityParams {
         address token0;
         address token1;
@@ -30,7 +31,7 @@ abstract contract LiquidityManagement is IPeripheryImmutableState, IUniswapV3Min
         returns (uint256 amount0, uint256 amount1)
     {
         IUniswapV3Pool pool =
-            IUniswapV3Pool(IUniswapV3Factory(this.factory()).createPool(params.token0, params.token1, params.fee));
+            IUniswapV3Pool(IUniswapV3Factory(factory).createPool(params.token0, params.token1, params.fee));
 
         pool.initialize(params.sqrtPriceX96);
 
@@ -67,7 +68,7 @@ abstract contract LiquidityManagement is IPeripheryImmutableState, IUniswapV3Min
 
         return
             _addLiquidity(
-                IUniswapV3Pool(PoolAddress.computeAddress(this.factory(), poolKey)),
+                IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey)),
                 poolKey,
                 params.recipient,
                 params.tickLower,
@@ -111,7 +112,7 @@ abstract contract LiquidityManagement is IPeripheryImmutableState, IUniswapV3Min
         bytes calldata data
     ) external override {
         MintCallbackData memory decoded = abi.decode(data, (MintCallbackData));
-        CallbackValidation.verifyCallback(this.factory(), decoded.poolKey);
+        CallbackValidation.verifyCallback(factory, decoded.poolKey);
         require(amount0Owed <= decoded.amount0Max);
         require(amount1Owed <= decoded.amount1Max);
 
