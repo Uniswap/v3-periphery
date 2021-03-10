@@ -2,10 +2,11 @@
 pragma solidity >=0.5.0;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-
 import './interfaces/INonfungiblePositionManager.sol';
 import './interfaces/INonfungibleTokenPositionDescriptor.sol';
+import './interfaces/IERC20Metadata.sol';
 import './libraries/PoolAddress.sol';
+import './libraries/NFTDescriptor.sol';
 
 /// @title Describes NFT token positions
 /// @notice Produces a string containing the data URI for a JSON metadata string
@@ -17,7 +18,10 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         override
         returns (string memory)
     {
-        (, , address token0, address token1, uint24 fee, , , , , , , ) = positionManager.positions(tokenId);
+        (, , address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) =
+            positionManager.positions(tokenId);
+
+        require(token0 != address(0), 'Invalid token ID');
 
         IUniswapV3Pool pool =
             IUniswapV3Pool(
@@ -27,11 +31,17 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                 )
             );
 
-        // todo: compute name and description from details about the position and the pool
-        string memory name = 'Uniswap V3 Position';
-        string memory description = 'Represents a position in Uniswap V3.';
-
         return
-            string(abi.encodePacked('data:application/json,{"name":"', name, '", "description":"', description, '"}'));
+            NFTDescriptor.constructTokenURI(
+                NFTDescriptor.ConstructTokenURIParams({
+                    token0: token0,
+                    token1: token1,
+                    tickLower: tickLower,
+                    tickUpper: tickUpper,
+                    token0Symbol: IERC20Metadata(token0).symbol(),
+                    token1Symbol: IERC20Metadata(token1).symbol(),
+                    liquidity: liquidity
+                })
+            );
     }
 }
