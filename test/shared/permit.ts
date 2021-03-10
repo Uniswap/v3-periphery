@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, constants, Signature, Wallet } from 'ethers'
+import { BigNumberish, constants, Signature, Wallet } from 'ethers'
 import { splitSignature } from 'ethers/lib/utils'
 import { TestERC20 } from '../../typechain'
 
@@ -7,17 +7,22 @@ export async function getPermitSignature(
   token: TestERC20,
   spender: string,
   value: BigNumberish = constants.MaxUint256,
-  nonce?: BigNumberish,
-  deadline = constants.MaxUint256
+  deadline = constants.MaxUint256,
+  permitConfig?: { nonce?: BigNumberish; name?: string; chainId?: number; version?: string }
 ): Promise<Signature> {
-  nonce = nonce ?? (await token.nonces(wallet.address))
+  const [nonce, name, version, chainId] = await Promise.all([
+    permitConfig?.nonce ?? token.nonces(wallet.address),
+    permitConfig?.name ?? token.name(),
+    permitConfig?.version ?? '1',
+    permitConfig?.chainId ?? wallet.getChainId(),
+  ])
 
   return splitSignature(
     await wallet._signTypedData(
       {
-        name: 'Test ERC20',
-        version: '1',
-        chainId: 1,
+        name,
+        version,
+        chainId,
         verifyingContract: token.address,
       },
       {
