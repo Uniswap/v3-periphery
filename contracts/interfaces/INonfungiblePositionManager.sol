@@ -48,6 +48,7 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
     /// @dev Call this when the pool does not exist to create it and initialize the pool before minting
     function firstMint(FirstMintParams calldata params)
         external
+        payable
         returns (
             uint256 tokenId,
             uint256 amount0,
@@ -72,6 +73,7 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
     /// a method does not exist, i.e. the pool is assumed to be initialized.
     function mint(MintParams calldata params)
         external
+        payable
         returns (
             uint256 tokenId,
             uint256 amount0,
@@ -90,7 +92,7 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
         uint256 amount0Max,
         uint256 amount1Max,
         uint256 deadline
-    ) external returns (uint256 amount0, uint256 amount1);
+    ) external payable returns (uint256 amount0, uint256 amount1);
 
     /// @notice Decreases the amount of liquidity in a position and accounts it to the position
     /// @param tokenId The ID of the token for which liquidity is being decreased

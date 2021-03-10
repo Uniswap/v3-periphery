@@ -73,6 +73,7 @@ contract NonfungiblePositionManager is
     /// @inheritdoc INonfungiblePositionManager
     function firstMint(FirstMintParams calldata params)
         external
+        payable
         override
         checkDeadline(params.deadline)
         returns (
@@ -115,6 +116,7 @@ contract NonfungiblePositionManager is
     /// @inheritdoc INonfungiblePositionManager
     function mint(MintParams calldata params)
         external
+        payable
         override
         checkDeadline(params.deadline)
         returns (
@@ -181,7 +183,7 @@ contract NonfungiblePositionManager is
         uint256 amount0Max,
         uint256 amount1Max,
         uint256 deadline
-    ) external override checkDeadline(deadline) returns (uint256 amount0, uint256 amount1) {
+    ) external payable override checkDeadline(deadline) returns (uint256 amount0, uint256 amount1) {
         require(amount > 0);
         Position storage position = positions[tokenId];
 

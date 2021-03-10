@@ -13,6 +13,7 @@ import poolAtAddress from './shared/poolAtAddress'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
+import { sortedTokens } from './shared/tokenSort'
 
 describe('NonfungiblePositionManager', () => {
   const wallets = waffle.provider.getWallets()
@@ -125,6 +126,28 @@ describe('NonfungiblePositionManager', () => {
       expect(feeGrowthInside1LastX128).to.eq(0)
     })
 
+    it('can use eth via multicall', async () => {
+      const [token0, token1] = sortedTokens(weth9, tokens[0])
+
+      const firstMintData = nft.interface.encodeFunctionData('firstMint', [
+        {
+          token0: token0.address,
+          token1: token1.address,
+          sqrtPriceX96: encodePriceSqrt(1, 1),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: other.address,
+          amount: 10,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+        },
+      ])
+
+      const unwrapWETH9Data = nft.interface.encodeFunctionData('unwrapWETH9', [0, other.address])
+
+      await nft.multicall([firstMintData, unwrapWETH9Data], { value: expandTo18Decimals(1) })
+    })
+
     it('fails if past deadline', async () => {
       await nft.setTime(2)
       await expect(
@@ -157,6 +180,23 @@ describe('NonfungiblePositionManager', () => {
       await nft.firstMint(params)
 
       await expect(nft.firstMint(params)).to.be.reverted
+    })
+
+    it('fails if cannot transfer', async () => {
+      await tokens[0].approve(nft.address, 0)
+      await expect(
+        nft.firstMint({
+          token0: tokens[0].address,
+          token1: tokens[1].address,
+          sqrtPriceX96: encodePriceSqrt(1, 1),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: wallet.address,
+          amount: 10,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+        })
+      ).to.be.revertedWith('STF')
     })
 
     it('gas', async () => {
@@ -243,6 +283,46 @@ describe('NonfungiblePositionManager', () => {
       expect(tokensOwed1).to.eq(0)
       expect(feeGrowthInside0LastX128).to.eq(0)
       expect(feeGrowthInside1LastX128).to.eq(0)
+    })
+
+    it('can use eth via multicall', async () => {
+      const [token0, token1] = sortedTokens(weth9, tokens[0])
+
+      await weth9.deposit({ value: expandTo18Decimals(1) })
+      await weth9.approve(nft.address, constants.MaxUint256)
+
+      await nft.firstMint({
+        token0: token0.address,
+        token1: token1.address,
+        sqrtPriceX96: encodePriceSqrt(1, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: other.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
+
+      await weth9.approve(nft.address, 0)
+
+      const mintData = nft.interface.encodeFunctionData('mint', [
+        {
+          token0: token0.address,
+          token1: token1.address,
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: other.address,
+          amount: 10,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
+        },
+      ])
+
+      const unwrapWETH9Data = nft.interface.encodeFunctionData('unwrapWETH9', [0, other.address])
+
+      await nft.multicall([mintData, unwrapWETH9Data], { value: expandTo18Decimals(1) })
     })
 
     it('gas ticks already used', async () => {
