@@ -11,6 +11,7 @@ import './base/PeripheryValidation.sol';
 import './base/PeripheryPayments.sol';
 import './base/Multicall.sol';
 import './base/SelfPermit.sol';
+import './base/ERC677TransferReceiver.sol';
 import './libraries/Path.sol';
 import './libraries/PoolAddress.sol';
 import './libraries/CallbackValidation.sol';
@@ -25,7 +26,8 @@ contract SwapRouter is
     PeripheryValidation,
     PeripheryPayments,
     Multicall,
-    SelfPermit
+    SelfPermit,
+    ERC677TransferReceiver
 {
     using Path for bytes;
     using SafeCast for uint256;

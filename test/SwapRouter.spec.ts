@@ -156,7 +156,8 @@ describe('SwapRouter', () => {
       async function exactInput(
         tokens: string[],
         amountIn: number = 3,
-        amountOutMinimum: number = 1
+        amountOutMinimum: number = 1,
+        hasPaid = false
       ): Promise<ContractTransaction> {
         const inputIsWETH = [weth9.address, weth10.address].includes(tokens[0])
         const outputIsWETH9 = tokens[tokens.length - 1] === weth9.address
@@ -168,7 +169,7 @@ describe('SwapRouter', () => {
           path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
           recipient: outputIsWETH9 || outputIsWETH10 ? router.address : trader.address,
           deadline: 1,
-          hasPaid: inputIsWETH,
+          hasPaid,
         }
 
         const data = [router.interface.encodeFunctionData('exactInput', [params, amountIn, amountOutMinimum])]
@@ -191,6 +192,31 @@ describe('SwapRouter', () => {
       describe('single-pair', () => {
         it('gas', async () => {
           await snapshotGasCost(exactInput(tokens.slice(0, 2).map((token) => token.address)))
+        })
+
+        it('hasPaid = true', async () => {
+          const pool = await factory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+
+          // get balances before
+          const poolBefore = await getBalances(pool)
+          const traderBefore = await getBalances(trader.address)
+
+          await tokens[0].connect(trader).transfer(router.address, 3)
+          await exactInput(
+            tokens.slice(0, 2).map((token) => token.address),
+            3,
+            1,
+            true
+          )
+
+          // get balances after
+          const poolAfter = await getBalances(pool)
+          const traderAfter = await getBalances(trader.address)
+
+          expect(traderAfter.token0).to.be.eq(traderBefore.token0.sub(3))
+          expect(traderAfter.token1).to.be.eq(traderBefore.token1.add(1))
+          expect(poolAfter.token0).to.be.eq(poolBefore.token0.add(3))
+          expect(poolAfter.token1).to.be.eq(poolBefore.token1.sub(1))
         })
 
         it('0 -> 1', async () => {
@@ -321,6 +347,21 @@ describe('SwapRouter', () => {
         describe('WETH10', () => {
           beforeEach(async () => {
             await createPoolWETH10(tokens[0].address)
+          })
+
+          describe('#depositToAndCall', () => {
+            it('WETH10 -> 0', async () => {
+              const params = {
+                path: encodePath([weth10.address, tokens[0].address], [FeeAmount.MEDIUM]),
+                recipient: trader.address,
+                deadline: 1,
+                hasPaid: true,
+              }
+
+              const data = router.interface.encodeFunctionData('exactInput', [params, 3, 1])
+
+              const a = await weth10.connect(trader).depositToAndCall(router.address, data, { value: 3 })
+            })
           })
 
           it('gas', async () => {

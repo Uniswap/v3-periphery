@@ -21,4 +21,11 @@ interface IWETH10 is IERC20, IERC20Permit {
     /// Requirements:
     ///   - caller account must have at least `value` balance of WETH10 token.
     function withdrawTo(address payable to, uint256 value) external;
+
+    /// @dev `msg.value` of ETH sent to this contract grants `to` account a matching increase in WETH10 token balance,
+    /// after which a call is executed to an ERC677-compliant contract with the `data` parameter.
+    /// Emits {Transfer} event.
+    /// Returns boolean value indicating whether operation succeeded.
+    /// For more information on {transferAndCall} format, see https://github.com/ethereum/EIPs/issues/677.
+    function depositToAndCall(address to, bytes calldata data) external payable returns (bool);
 }
