@@ -33,6 +33,18 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
         if (balanceWETH10 > 0) IWETH10(WETH10).withdrawTo(recipient, balanceWETH10);
     }
 
+    /// @inheritdoc IPeripheryPayments
+    function sweepToken(
+        address token,
+        uint256 amountMinimum,
+        address recipient
+    ) external payable override {
+        uint256 balanceToken = IERC20(token).balanceOf(address(this));
+        if (amountMinimum > 0) require(balanceToken >= amountMinimum, 'Insufficient token');
+
+        if (balanceToken > 0) IERC20(token).transfer(recipient, balanceToken);
+    }
+
     /// @param token The token to pay
     /// @param payer The entity that must pay
     /// @param recipient The entity that will receive payment

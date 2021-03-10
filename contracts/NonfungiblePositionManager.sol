@@ -14,6 +14,7 @@ import './base/PeripheryImmutableState.sol';
 import './base/Multicall.sol';
 import './base/ERC721Permit.sol';
 import './base/PeripheryValidation.sol';
+import './base/SelfPermit.sol';
 
 /// @title NFT positions
 /// @notice Wraps Uniswap V3 positions in the ERC721 non-fungible token interface
@@ -23,7 +24,8 @@ contract NonfungiblePositionManager is
     ERC721Permit,
     PeripheryImmutableState,
     LiquidityManagement,
-    PeripheryValidation
+    PeripheryValidation,
+    SelfPermit
 {
     // details about the uniswap position
     struct Position {
