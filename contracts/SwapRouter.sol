@@ -78,7 +78,6 @@ contract SwapRouter is
             (tokenIn, tokenOut) = (tokenOut, tokenIn);
 
             // either initiate the next swap or pay
-            // TODO the WETH stuff might have to happen here
             if (data.path.hasPools()) {
                 data.path = data.path.skipToken();
                 exactOutputSingle(amountToPay, msg.sender, data);
@@ -136,10 +135,11 @@ contract SwapRouter is
                 params.hasPaid = true;
             } else {
                 amountOut = amountIn;
-                require(amountOut >= amountOutMinimum, 'Too little received');
-                return amountOut;
+                break;
             }
         }
+
+        require(amountOut >= amountOutMinimum, 'Too little received');
     }
 
     /// @dev Performs a single exact output swap
@@ -172,7 +172,7 @@ contract SwapRouter is
             params.recipient,
             SwapData({
                 path: params.path,
-                payer: params.hasPaid ? address(this) : msg.sender // lying just costs gas
+                payer: params.hasPaid ? address(this) : msg.sender // lying just costs the caller gas
             })
         );
 
