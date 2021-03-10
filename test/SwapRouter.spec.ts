@@ -12,7 +12,7 @@ import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { encodePath } from './shared/path'
 import snapshotGasCost from './shared/snapshotGasCost'
 
-describe.only('SwapRouter', () => {
+describe('SwapRouter', () => {
   const wallets = waffle.provider.getWallets()
   const [wallet, trader] = wallets
 
