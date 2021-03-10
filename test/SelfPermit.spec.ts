@@ -5,7 +5,7 @@ import { Fixture } from 'ethereum-waffle'
 import { MockTimeSwapRouter, TestERC20 } from '../typechain'
 import { expect } from 'chai'
 import { getPermitSignature } from './shared/permit'
-import { v3RouterFixture } from './shared/fixtures'
+import { v3RouterFixture } from './shared/externalFixtures'
 
 describe('SelfPermit', () => {
   const wallets = waffle.provider.getWallets()

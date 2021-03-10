@@ -14,6 +14,7 @@ import './base/PeripheryImmutableState.sol';
 import './base/Multicall.sol';
 import './base/ERC721Permit.sol';
 import './base/PeripheryValidation.sol';
+import './base/SelfPermit.sol';
 
 /// @title NFT positions
 /// @notice Wraps Uniswap V3 positions in the ERC721 non-fungible token interface
@@ -23,7 +24,8 @@ contract NonfungiblePositionManager is
     ERC721Permit,
     PeripheryImmutableState,
     LiquidityManagement,
-    PeripheryValidation
+    PeripheryValidation,
+    SelfPermit
 {
     // details about the uniswap position
     struct Position {
@@ -71,6 +73,7 @@ contract NonfungiblePositionManager is
     /// @inheritdoc INonfungiblePositionManager
     function firstMint(FirstMintParams calldata params)
         external
+        payable
         override
         checkDeadline(params.deadline)
         returns (
@@ -113,6 +116,7 @@ contract NonfungiblePositionManager is
     /// @inheritdoc INonfungiblePositionManager
     function mint(MintParams calldata params)
         external
+        payable
         override
         checkDeadline(params.deadline)
         returns (
@@ -179,7 +183,7 @@ contract NonfungiblePositionManager is
         uint256 amount0Max,
         uint256 amount1Max,
         uint256 deadline
-    ) external override checkDeadline(deadline) returns (uint256 amount0, uint256 amount1) {
+    ) external payable override checkDeadline(deadline) returns (uint256 amount0, uint256 amount1) {
         require(amount > 0);
         Position storage position = positions[tokenId];
 

@@ -31,8 +31,12 @@ abstract contract LiquidityManagement is IUniswapV3MintCallback, PeripheryImmuta
         returns (uint256 amount0, uint256 amount1)
     {
         IUniswapV3Pool pool =
-            IUniswapV3Pool(IUniswapV3Factory(factory).createPool(params.token0, params.token1, params.fee));
+            IUniswapV3Pool(IUniswapV3Factory(factory).getPool(params.token0, params.token1, params.fee));
+        if (address(pool) == address(0)) {
+            pool = IUniswapV3Pool(IUniswapV3Factory(factory).createPool(params.token0, params.token1, params.fee));
+        }
 
+        // pool must not already be initialized
         pool.initialize(params.sqrtPriceX96);
 
         // max is irrelevant because the pool creator set the price

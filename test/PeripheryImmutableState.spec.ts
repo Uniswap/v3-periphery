@@ -4,7 +4,7 @@ import { waffle, ethers } from 'hardhat'
 import { Fixture } from 'ethereum-waffle'
 import { PeripheryImmutableState, IWETH9, IWETH10 } from '../typechain'
 import { expect } from './shared/expect'
-import { v3RouterFixture } from './shared/fixtures'
+import { v3RouterFixture } from './shared/externalFixtures'
 
 describe('PeripheryImmutableState', () => {
   const wallets = waffle.provider.getWallets()
@@ -15,7 +15,7 @@ describe('PeripheryImmutableState', () => {
     factory: Contract
     state: PeripheryImmutableState
   }> = async (wallets, provider) => {
-    const { weth9, weth10, factory, router } = await v3RouterFixture(wallets, provider)
+    const { weth9, weth10, factory } = await v3RouterFixture(wallets, provider)
 
     const stateFactory = await ethers.getContractFactory('PeripheryImmutableState')
     const state = (await stateFactory.deploy(factory.address, weth9.address, weth10.address)) as PeripheryImmutableState
