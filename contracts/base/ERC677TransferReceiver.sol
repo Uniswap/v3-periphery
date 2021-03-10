@@ -8,7 +8,11 @@ import './PeripheryImmutableState.sol';
 
 /// @title ERC667 Transfer Receiver
 abstract contract ERC677TransferReceiver is IERC677, PeripheryImmutableState, IMulticall {
-    function onTokenTransfer(address, uint256, bytes calldata data) external override returns (bool) {
+    function onTokenTransfer(
+        address,
+        uint256,
+        bytes calldata data
+    ) external override returns (bool) {
         require(msg.sender == WETH10);
 
         (bool success, ) = address(this).delegatecall(data);
