@@ -3,23 +3,26 @@ pragma solidity >=0.5.0;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
-import '../interfaces/INonfungiblePositionManager.sol';
-import './PoolAddress.sol';
+import './interfaces/INonfungiblePositionManager.sol';
+import './interfaces/INonfungibleTokenPositionDescriptor.sol';
+import './libraries/PoolAddress.sol';
 
 /// @title Describes NFT token positions
 /// @notice Produces a string containing the data URI for a JSON metadata string
-library NonfungibleTokenPositionDescriptor {
-    /// @dev Produces the URI for metadata about a specific token by fetching the data from relative contracts
-    function tokenURI(address positionManager, uint256 tokenId) public view returns (string memory) {
-        (, , address token0, address token1, uint24 fee, , , , , , , ) =
-            INonfungiblePositionManager(positionManager).positions(tokenId);
-
-        require(token0 != address(0), 'Invalid token ID');
+contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescriptor {
+    /// @inheritdoc INonfungibleTokenPositionDescriptor
+    function tokenURI(INonfungiblePositionManager positionManager, uint256 tokenId)
+        external
+        view
+        override
+        returns (string memory)
+    {
+        (, , address token0, address token1, uint24 fee, , , , , , , ) = positionManager.positions(tokenId);
 
         IUniswapV3Pool pool =
             IUniswapV3Pool(
                 PoolAddress.computeAddress(
-                    INonfungiblePositionManager(positionManager).factory(),
+                    positionManager.factory(),
                     PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
                 )
             );

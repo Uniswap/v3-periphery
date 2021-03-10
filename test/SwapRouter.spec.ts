@@ -35,15 +35,12 @@ describe('SwapRouter', () => {
     const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor')
     const positionDescriptor = await positionDescriptorFactory.deploy()
 
-    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager', {
-      libraries: {
-        NonfungibleTokenPositionDescriptor: positionDescriptor.address,
-      },
-    })
+    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')
     const nft = (await positionManagerFactory.deploy(
       factory.address,
       weth9.address,
-      weth10.address
+      weth10.address,
+      positionDescriptor.address
     )) as MockTimeNonfungiblePositionManager
 
     // approve & fund wallets

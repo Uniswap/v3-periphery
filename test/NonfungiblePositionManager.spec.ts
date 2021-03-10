@@ -28,15 +28,12 @@ describe('NonfungiblePositionManager', () => {
     const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor')
     const positionDescriptor = await positionDescriptorFactory.deploy()
 
-    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager', {
-      libraries: {
-        NonfungibleTokenPositionDescriptor: positionDescriptor.address,
-      },
-    })
+    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')
     const positionManager = (await positionManagerFactory.deploy(
       factory.address,
       weth9.address,
-      weth10.address
+      weth10.address,
+      positionDescriptor.address
     )) as MockTimeNonfungiblePositionManager
 
     const tokenFactory = await ethers.getContractFactory('TestERC20')
@@ -735,7 +732,7 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('reverts for invalid token id', async () => {
-      await expect(positionManager.tokenURI(tokenId + 1)).to.be.revertedWith('Invalid token ID')
+      await expect(positionManager.tokenURI(tokenId + 1)).to.be.reverted
     })
 
     it('returns a data URI with correct mime type', async () => {
