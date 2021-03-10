@@ -16,18 +16,18 @@ abstract contract PeripheryPayments is IPeripheryPayments, IPeripheryImmutableSt
     /// @inheritdoc IPeripheryPayments
     function unwrapWETH9(uint256 amountMinimum, address recipient) external payable override {
         uint256 balanceWETH9 = IWETH9(this.WETH9()).balanceOf(address(this));
-        require(balanceWETH9 >= amountMinimum, 'Insufficient WETH9');
+        if (amountMinimum > 0) require(balanceWETH9 >= amountMinimum, 'Insufficient WETH9');
 
         if (balanceWETH9 > 0) {
             IWETH9(this.WETH9()).withdraw(balanceWETH9);
-            TransferHelper.safeTransferETH(recipient, address(this).balance);
+            TransferHelper.safeTransferETH(recipient, balanceWETH9);
         }
     }
 
     /// @inheritdoc IPeripheryPayments
     function unwrapWETH10(uint256 amountMinimum, address payable recipient) external payable override {
         uint256 balanceWETH10 = IWETH10(this.WETH10()).balanceOf(address(this));
-        require(balanceWETH10 >= amountMinimum, 'Insufficient WETH10');
+        if (amountMinimum > 0) require(balanceWETH10 >= amountMinimum, 'Insufficient WETH10');
 
         if (balanceWETH10 > 0) IWETH10(this.WETH10()).withdrawTo(recipient, balanceWETH10);
     }
