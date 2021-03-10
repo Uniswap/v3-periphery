@@ -167,7 +167,7 @@ describe('SwapRouter', () => {
           : router.connect(trader).multicall(data, { value })
       }
 
-      describe('single-pair', () => {
+      describe('single-pool', () => {
         it('gas', async () => {
           await snapshotGasCost(exactInput(tokens.slice(0, 2).map((token) => token.address)))
         })
@@ -216,7 +216,7 @@ describe('SwapRouter', () => {
         })
       })
 
-      describe('multi-pair', () => {
+      describe('multi-pool', () => {
         it('gas', async () => {
           await snapshotGasCost(
             exactInput(
@@ -471,7 +471,7 @@ describe('SwapRouter', () => {
         return router.connect(trader).multicall(data, { value })
       }
 
-      describe('single-pair', () => {
+      describe('single-pool', () => {
         it('gas', async () => {
           await snapshotGasCost(exactOutput(tokens.slice(0, 2).map((token) => token.address)))
         })
@@ -520,7 +520,7 @@ describe('SwapRouter', () => {
         })
       })
 
-      describe('multi-pair', () => {
+      describe('multi-pool', () => {
         it('gas', async () => {
           await snapshotGasCost(
             exactOutput(

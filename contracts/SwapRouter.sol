@@ -124,7 +124,7 @@ contract SwapRouter is
                 amountIn,
                 hasPools ? address(this) : params.recipient, // for intermediate swaps, this contract custodies
                 SwapData({
-                    path: params.path.getFirstPool(), // only the first pair in the path is necessary
+                    path: params.path.getFirstPool(), // only the first pool in the path is necessary
                     payer: params.hasPaid ? address(this) : msg.sender // lying just costs the caller gas
                 })
             );

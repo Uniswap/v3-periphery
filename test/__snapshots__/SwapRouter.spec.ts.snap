@@ -10,9 +10,9 @@ exports[`SwapRouter swaps #exactInput ETH output WETH9 gas 1`] = `170914`;
 
 exports[`SwapRouter swaps #exactInput ETH output WETH10 gas 1`] = `161428`;
 
-exports[`SwapRouter swaps #exactInput multi-pair gas 1`] = `247112`;
+exports[`SwapRouter swaps #exactInput multi-pool gas 1`] = `247112`;
 
-exports[`SwapRouter swaps #exactInput single-pair gas 1`] = `144020`;
+exports[`SwapRouter swaps #exactInput single-pool gas 1`] = `144020`;
 
 exports[`SwapRouter swaps #exactOutput ETH input WETH9 gas 1`] = `137764`;
 
@@ -22,6 +22,6 @@ exports[`SwapRouter swaps #exactOutput ETH output WETH9 gas 1`] = `172013`;
 
 exports[`SwapRouter swaps #exactOutput ETH output WETH10 gas 1`] = `162527`;
 
-exports[`SwapRouter swaps #exactOutput multi-pair gas 1`] = `242487`;
+exports[`SwapRouter swaps #exactOutput multi-pool gas 1`] = `242487`;
 
-exports[`SwapRouter swaps #exactOutput single-pair gas 1`] = `148409`;
+exports[`SwapRouter swaps #exactOutput single-pool gas 1`] = `148409`;
