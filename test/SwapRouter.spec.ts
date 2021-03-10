@@ -1,22 +1,21 @@
-import { BigNumber, constants, Contract, ContractTransaction } from 'ethers'
-import { waffle, ethers } from 'hardhat'
-
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeNonfungiblePositionManager, MockTimeSwapRouter, IWETH9, IWETH10, TestERC20 } from '../typechain'
+import { BigNumber, constants, Contract, ContractTransaction } from 'ethers'
+import { waffle } from 'hardhat'
+import { IWETH10, IWETH9, MockTimeNonfungiblePositionManager, MockTimeSwapRouter, TestERC20 } from '../typechain'
+import completeFixture from './shared/completeFixture'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
-import { expect } from './shared/expect'
-import { v3RouterFixture } from './shared/fixtures'
-import { getMaxTick, getMinTick } from './shared/ticks'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
+import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import snapshotGasCost from './shared/snapshotGasCost'
+import { getMaxTick, getMinTick } from './shared/ticks'
 
 describe('SwapRouter', () => {
   const wallets = waffle.provider.getWallets()
   const [wallet, trader] = wallets
 
-  const routerFixture: Fixture<{
+  const swapRouterFixture: Fixture<{
     weth9: IWETH9
     weth10: IWETH10
     factory: Contract
@@ -24,25 +23,7 @@ describe('SwapRouter', () => {
     nft: MockTimeNonfungiblePositionManager
     tokens: [TestERC20, TestERC20, TestERC20]
   }> = async (wallets, provider) => {
-    const { weth9, weth10, factory, router } = await v3RouterFixture(wallets, provider)
-
-    const tokenFactory = await ethers.getContractFactory('TestERC20')
-    const tokens = (await Promise.all([
-      tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu256 to avoid overflowing
-      tokenFactory.deploy(constants.MaxUint256.div(2)),
-      tokenFactory.deploy(constants.MaxUint256.div(2)),
-    ])) as [TestERC20, TestERC20, TestERC20]
-
-    const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor')
-    const positionDescriptor = await positionDescriptorFactory.deploy()
-
-    const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')
-    const nft = (await positionManagerFactory.deploy(
-      factory.address,
-      weth9.address,
-      weth10.address,
-      positionDescriptor.address
-    )) as MockTimeNonfungiblePositionManager
+    const { weth9, weth10, factory, router, tokens, nft } = await completeFixture(wallets, provider)
 
     // approve & fund wallets
     for (const token of tokens) {
@@ -53,8 +34,6 @@ describe('SwapRouter', () => {
         token.transfer(trader.address, expandTo18Decimals(1_000_000)),
       ])
     }
-
-    tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
     return {
       weth9,
@@ -90,7 +69,7 @@ describe('SwapRouter', () => {
 
   // helper for getting weth and token balances
   beforeEach('load fixture', async () => {
-    ;({ router, weth9, weth10, factory, tokens, nft } = await loadFixture(routerFixture))
+    ;({ router, weth9, weth10, factory, tokens, nft } = await loadFixture(swapRouterFixture))
 
     getBalances = async (who: string) => {
       const balances = await Promise.all([
