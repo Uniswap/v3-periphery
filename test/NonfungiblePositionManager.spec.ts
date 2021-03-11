@@ -2,7 +2,14 @@ import { BigNumberish, constants, Contract } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { TestPositionNFTOwner, MockTimeNonfungiblePositionManager, TestERC20, IWETH10, IWETH9 } from '../typechain'
+import {
+  TestPositionNFTOwner,
+  MockTimeNonfungiblePositionManager,
+  TestERC20,
+  IWETH10,
+  IWETH9,
+  IUniswapV3Factory,
+} from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { computePoolAddress } from './shared/computePoolAddress'
 import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
@@ -21,7 +28,7 @@ describe('NonfungiblePositionManager', () => {
 
   const nftFixture: Fixture<{
     nft: MockTimeNonfungiblePositionManager
-    factory: Contract
+    factory: IUniswapV3Factory
     tokens: [TestERC20, TestERC20, TestERC20]
     weth9: IWETH9
     weth10: IWETH10
@@ -44,7 +51,7 @@ describe('NonfungiblePositionManager', () => {
     }
   }
 
-  let factory: Contract
+  let factory: IUniswapV3Factory
   let nft: MockTimeNonfungiblePositionManager
   let tokens: [TestERC20, TestERC20, TestERC20]
   let weth9: IWETH9
@@ -86,6 +93,28 @@ describe('NonfungiblePositionManager', () => {
       })
       const codeAfter = await wallet.provider.getCode(expectedAddress)
       expect(codeAfter).to.not.eq('0x')
+    })
+
+    it('works if pool is created but not initialized', async () => {
+      const expectedAddress = computePoolAddress(
+        factory.address,
+        [tokens[0].address, tokens[1].address],
+        FeeAmount.MEDIUM
+      )
+      await factory.createPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+      const code = await wallet.provider.getCode(expectedAddress)
+      expect(code).to.not.eq('0x')
+      await nft.firstMint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        sqrtPriceX96: encodePriceSqrt(2, 1),
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: wallet.address,
+        amount: 10,
+        deadline: 1,
+        fee: FeeAmount.MEDIUM,
+      })
     })
 
     it('creates a token', async () => {
@@ -404,6 +433,36 @@ describe('NonfungiblePositionManager', () => {
       await nft.increaseLiquidity(tokenId, 150, constants.MaxUint256, constants.MaxUint256, 1)
       const { liquidity } = await nft.positions(tokenId)
       expect(liquidity).to.eq(250)
+    })
+
+    it('can be paid with ETH', async () => {
+      const [token0, token1] = sortedTokens(tokens[0], weth9)
+
+      const tokenId = 2
+      const firstMintData = nft.interface.encodeFunctionData('firstMint', [
+        {
+          token0: token0.address,
+          token1: token1.address,
+          sqrtPriceX96: encodePriceSqrt(1, 1),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          recipient: other.address,
+          amount: 100,
+          deadline: 1,
+          fee: FeeAmount.MEDIUM,
+        },
+      ])
+      const refundETHData = nft.interface.encodeFunctionData('unwrapWETH9', [0, other.address])
+      await nft.multicall([firstMintData, refundETHData], { value: expandTo18Decimals(1) })
+
+      const increaseLiquidityData = nft.interface.encodeFunctionData('increaseLiquidity', [
+        tokenId,
+        150,
+        constants.MaxUint256,
+        constants.MaxUint256,
+        1,
+      ])
+      await nft.multicall([increaseLiquidityData, refundETHData], { value: expandTo18Decimals(1) })
     })
 
     it('gas', async () => {

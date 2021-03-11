@@ -1,13 +1,20 @@
 import { Fixture } from 'ethereum-waffle'
 import { ethers } from 'hardhat'
 import { v3RouterFixture } from './externalFixtures'
-import { constants, Contract } from 'ethers'
-import { IWETH10, IWETH9, MockTimeNonfungiblePositionManager, MockTimeSwapRouter, TestERC20 } from '../../typechain'
+import { constants } from 'ethers'
+import {
+  IWETH10,
+  IWETH9,
+  MockTimeNonfungiblePositionManager,
+  MockTimeSwapRouter,
+  TestERC20,
+  IUniswapV3Factory,
+} from '../../typechain'
 
 const completeFixture: Fixture<{
   weth9: IWETH9
   weth10: IWETH10
-  factory: Contract
+  factory: IUniswapV3Factory
   router: MockTimeSwapRouter
   nft: MockTimeNonfungiblePositionManager
   tokens: [TestERC20, TestERC20, TestERC20]
