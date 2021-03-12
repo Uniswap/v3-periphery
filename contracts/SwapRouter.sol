@@ -161,14 +161,7 @@ contract SwapRouter is
         uint256 amountOut,
         uint256 amountInMaximum
     ) external payable override checkDeadline(params.deadline) returns (uint256 amountIn) {
-        exactOutputSingle(
-            amountOut,
-            params.recipient,
-            SwapData({
-                path: params.path,
-                payer: msg.sender
-            })
-        );
+        exactOutputSingle(amountOut, params.recipient, SwapData({path: params.path, payer: msg.sender}));
 
         amountIn = amountInCached;
         delete amountInCached;
