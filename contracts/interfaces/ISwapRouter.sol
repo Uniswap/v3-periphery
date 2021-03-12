@@ -11,7 +11,6 @@ interface ISwapRouter is IUniswapV3SwapCallback {
         bytes path;
         address recipient;
         uint256 deadline;
-        bool hasPaid;
     }
 
     /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path

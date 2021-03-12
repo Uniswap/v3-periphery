@@ -1,19 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`SwapRouter bytecode size 1`] = `9386`;
+exports[`SwapRouter bytecode size 1`] = `9239`;
 
-exports[`SwapRouter swaps #exactInput ETH input WETH9 gas 1`] = `126620`;
+exports[`SwapRouter swaps #exactInput ETH input WETH9 gas 1`] = `126347`;
 
-exports[`SwapRouter swaps #exactInput ETH output WETH9 gas 1`] = `170766`;
+exports[`SwapRouter swaps #exactInput ETH output WETH9 gas 1`] = `170466`;
 
-exports[`SwapRouter swaps #exactInput multi-pool gas 1`] = `246916`;
+exports[`SwapRouter swaps #exactInput multi-pool gas 1`] = `278281`;
 
-exports[`SwapRouter swaps #exactInput single-pool gas 1`] = `143910`;
+exports[`SwapRouter swaps #exactInput single-pool gas 1`] = `143639`;
 
-exports[`SwapRouter swaps #exactOutput ETH input WETH9 gas 1`] = `137699`;
+exports[`SwapRouter swaps #exactOutput ETH input WETH9 gas 1`] = `137355`;
 
-exports[`SwapRouter swaps #exactOutput ETH output WETH9 gas 1`] = `171873`;
+exports[`SwapRouter swaps #exactOutput ETH output WETH9 gas 1`] = `171531`;
 
-exports[`SwapRouter swaps #exactOutput multi-pool gas 1`] = `242357`;
+exports[`SwapRouter swaps #exactOutput multi-pool gas 1`] = `242016`;
 
-exports[`SwapRouter swaps #exactOutput single-pool gas 1`] = `148307`;
+exports[`SwapRouter swaps #exactOutput single-pool gas 1`] = `147966`;

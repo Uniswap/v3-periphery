@@ -134,7 +134,6 @@ describe('SwapRouter', () => {
           path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
           recipient: outputIsWETH9 ? router.address : trader.address,
           deadline: 1,
-          hasPaid: inputIsWETH,
         }
 
         const data = [router.interface.encodeFunctionData('exactInput', [params, amountIn, amountOutMinimum])]
@@ -346,7 +345,6 @@ describe('SwapRouter', () => {
           path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
           recipient: outputIsWETH9 ? router.address : trader.address,
           deadline: 1,
-          hasPaid: inputIsWETH9,
         }
 
         const data = [router.interface.encodeFunctionData('exactOutput', [params, amountOut, amountInMaximum])]

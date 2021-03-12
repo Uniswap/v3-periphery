@@ -120,14 +120,13 @@ contract SwapRouter is
                 hasPools ? address(this) : params.recipient, // for intermediate swaps, this contract custodies
                 SwapData({
                     path: params.path.getFirstPool(), // only the first pool in the path is necessary
-                    payer: params.hasPaid ? address(this) : msg.sender // lying just costs the caller gas
+                    payer: msg.sender
                 })
             );
 
             // decide whether to continue or terminate
             if (hasPools) {
                 params.path = params.path.skipToken();
-                params.hasPaid = true;
             } else {
                 amountOut = amountIn;
                 break;
@@ -167,7 +166,7 @@ contract SwapRouter is
             params.recipient,
             SwapData({
                 path: params.path,
-                payer: params.hasPaid ? address(this) : msg.sender // lying just costs the caller gas
+                payer: msg.sender
             })
         );
 
