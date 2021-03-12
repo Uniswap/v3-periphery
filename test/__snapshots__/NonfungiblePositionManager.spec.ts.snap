@@ -12,7 +12,7 @@ exports[`NonfungiblePositionManager #decreaseLiquidity gas complete decrease 1`]
 
 exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] = `161451`;
 
-exports[`NonfungiblePositionManager #firstMint gas 1`] = `5041101`;
+exports[`NonfungiblePositionManager #firstMint gas 1`] = `5046934`;
 
 exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `183723`;
 
