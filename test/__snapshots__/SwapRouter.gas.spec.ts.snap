@@ -4,6 +4,8 @@ exports[`SwapRouter gas tests #exactInput 0 -> 1 -> 2 1`] = `213875`;
 
 exports[`SwapRouter gas tests #exactInput 0 -> 1 1`] = `111436`;
 
+exports[`SwapRouter gas tests #exactInput 0 -> 1 minimal 1`] = `105152`;
+
 exports[`SwapRouter gas tests #exactInput 0 -> WETH9 1`] = `138263`;
 
 exports[`SwapRouter gas tests #exactInput WETH9 -> 0 1`] = `111342`;

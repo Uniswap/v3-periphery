@@ -74,9 +74,11 @@ describe('SwapRouter gas tests', () => {
       factory.getPool(weth9.address, tokens[0].address, FeeAmount.MEDIUM),
     ])
 
-    const pools = poolAddresses.map(
-      (poolAddress) => new ethers.Contract(poolAddress, IUniswapV3PoolABI, waffle.provider)
-    ) as [IUniswapV3Pool, IUniswapV3Pool, IUniswapV3Pool]
+    const pools = poolAddresses.map((poolAddress) => new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallet)) as [
+      IUniswapV3Pool,
+      IUniswapV3Pool,
+      IUniswapV3Pool
+    ]
 
     return {
       weth9,
@@ -193,6 +195,14 @@ describe('SwapRouter gas tests', () => {
   describe('#exactInput', () => {
     it('0 -> 1', async () => {
       await snapshotGasCost(exactInput(tokens.slice(0, 2).map((token) => token.address)))
+    })
+
+    it('0 -> 1 minimal', async () => {
+      const calleeFactory = await ethers.getContractFactory('TestUniswapV3Callee')
+      const callee = await calleeFactory.deploy()
+
+      await tokens[0].connect(trader).approve(callee.address, constants.MaxUint256)
+      await snapshotGasCost(callee.connect(trader).swapExact0For1(pools[0].address, 2, trader.address, '4295128740'))
     })
 
     it('0 -> 1 -> 2', async () => {
