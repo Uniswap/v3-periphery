@@ -6,7 +6,6 @@ import {
   TestPositionNFTOwner,
   MockTimeNonfungiblePositionManager,
   TestERC20,
-  IWETH10,
   IWETH9,
   IUniswapV3Factory,
 } from '../typechain'
@@ -31,9 +30,8 @@ describe('NonfungiblePositionManager', () => {
     factory: IUniswapV3Factory
     tokens: [TestERC20, TestERC20, TestERC20]
     weth9: IWETH9
-    weth10: IWETH10
   }> = async (wallets, provider) => {
-    const { weth9, weth10, factory, tokens, nft } = await completeFixture(wallets, provider)
+    const { weth9, factory, tokens, nft } = await completeFixture(wallets, provider)
 
     // approve & fund wallets
     for (const token of tokens) {
@@ -47,7 +45,6 @@ describe('NonfungiblePositionManager', () => {
       factory,
       tokens,
       weth9,
-      weth10,
     }
   }
 
@@ -55,7 +52,6 @@ describe('NonfungiblePositionManager', () => {
   let nft: MockTimeNonfungiblePositionManager
   let tokens: [TestERC20, TestERC20, TestERC20]
   let weth9: IWETH9
-  let weth10: IWETH10
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
@@ -64,7 +60,7 @@ describe('NonfungiblePositionManager', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ nft, factory, tokens, weth9, weth10 } = await loadFixture(nftFixture))
+    ;({ nft, factory, tokens, weth9 } = await loadFixture(nftFixture))
   })
 
   it('bytecode size', async () => {

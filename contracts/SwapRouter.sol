@@ -15,7 +15,6 @@ import './libraries/Path.sol';
 import './libraries/PoolAddress.sol';
 import './libraries/CallbackValidation.sol';
 import './interfaces/external/IWETH9.sol';
-import './interfaces/external/IWETH10.sol';
 
 /// @title Uniswap V3 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V3
@@ -37,11 +36,7 @@ contract SwapRouter is
 
     uint256 private amountInCached; // used for exact output swaps
 
-    constructor(
-        address _factory,
-        address _WETH9,
-        address _WETH10
-    ) PeripheryImmutableState(_factory, _WETH9, _WETH10) {}
+    constructor(address _factory, address _WETH9) PeripheryImmutableState(_factory, _WETH9) {}
 
     function getPool(
         address tokenA,

@@ -3,7 +3,6 @@ import { ethers } from 'hardhat'
 import { v3RouterFixture } from './externalFixtures'
 import { constants } from 'ethers'
 import {
-  IWETH10,
   IWETH9,
   MockTimeNonfungiblePositionManager,
   MockTimeSwapRouter,
@@ -13,13 +12,12 @@ import {
 
 const completeFixture: Fixture<{
   weth9: IWETH9
-  weth10: IWETH10
   factory: IUniswapV3Factory
   router: MockTimeSwapRouter
   nft: MockTimeNonfungiblePositionManager
   tokens: [TestERC20, TestERC20, TestERC20]
 }> = async (wallets, provider) => {
-  const { weth9, weth10, factory, router } = await v3RouterFixture(wallets, provider)
+  const { weth9, factory, router } = await v3RouterFixture(wallets, provider)
 
   const tokenFactory = await ethers.getContractFactory('TestERC20')
   const tokens = (await Promise.all([
@@ -35,7 +33,6 @@ const completeFixture: Fixture<{
   const nft = (await positionManagerFactory.deploy(
     factory.address,
     weth9.address,
-    weth10.address,
     positionDescriptor.address
   )) as MockTimeNonfungiblePositionManager
 
@@ -43,7 +40,6 @@ const completeFixture: Fixture<{
 
   return {
     weth9,
-    weth10,
     factory,
     router,
     tokens,

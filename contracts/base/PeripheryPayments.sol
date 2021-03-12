@@ -3,7 +3,6 @@ pragma solidity >=0.7.5;
 
 import '../interfaces/IPeripheryPayments.sol';
 import '../interfaces/external/IWETH9.sol';
-import '../interfaces/external/IWETH10.sol';
 
 import '../libraries/TransferHelper.sol';
 
@@ -11,7 +10,7 @@ import './PeripheryImmutableState.sol';
 
 abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableState {
     receive() external payable {
-        require(msg.sender == WETH9 || msg.sender == WETH10, 'Not WETH9 or WETH10');
+        require(msg.sender == WETH9, 'Not WETH9');
     }
 
     /// @inheritdoc IPeripheryPayments
@@ -23,14 +22,6 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
             IWETH9(WETH9).withdraw(balanceWETH9);
             TransferHelper.safeTransferETH(recipient, balanceWETH9);
         }
-    }
-
-    /// @inheritdoc IPeripheryPayments
-    function unwrapWETH10(uint256 amountMinimum, address payable recipient) external payable override {
-        uint256 balanceWETH10 = IWETH10(WETH10).balanceOf(address(this));
-        if (amountMinimum > 0) require(balanceWETH10 >= amountMinimum, 'Insufficient WETH10');
-
-        if (balanceWETH10 > 0) IWETH10(WETH10).withdrawTo(recipient, balanceWETH10);
     }
 
     /// @inheritdoc IPeripheryPayments
@@ -60,10 +51,6 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
             // pay with WETH9 generated from ETH
             IWETH9(WETH9).deposit{value: selfBalance}(); // wrap whole balance
             IWETH9(WETH9).transfer(recipient, value);
-        } else if (token == WETH10 && (selfBalance = address(this).balance) >= value) {
-            // pay with WETH10 generated from ETH
-            IWETH10(WETH10).depositTo{value: value}(recipient);
-            if (selfBalance > value) IWETH10(WETH10).deposit{value: selfBalance - value}(); // wrap whole balance
         } else if (payer == address(this)) {
             // pay with tokens already in the contract
             if (recipient != address(this)) TransferHelper.safeTransfer(token, recipient, value);
