@@ -152,10 +152,6 @@ describe('SwapRouter', () => {
       }
 
       describe('single-pool', () => {
-        it('gas', async () => {
-          await snapshotGasCost(exactInput(tokens.slice(0, 2).map((token) => token.address)))
-        })
-
         it('0 -> 1', async () => {
           const pool = await factory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
 
@@ -201,16 +197,6 @@ describe('SwapRouter', () => {
       })
 
       describe('multi-pool', () => {
-        it('gas', async () => {
-          await snapshotGasCost(
-            exactInput(
-              tokens.map((token) => token.address),
-              5,
-              1
-            )
-          )
-        })
-
         it('0 -> 1 -> 2', async () => {
           const traderBefore = await getBalances(trader.address)
 
@@ -242,10 +228,6 @@ describe('SwapRouter', () => {
         describe('WETH9', () => {
           beforeEach(async () => {
             await createPoolWETH9(tokens[0].address)
-          })
-
-          it('gas', async () => {
-            await snapshotGasCost(exactInput([weth9.address, tokens[0].address]))
           })
 
           it('WETH9 -> 0', async () => {
@@ -287,10 +269,6 @@ describe('SwapRouter', () => {
           beforeEach(async () => {
             await createPoolWETH9(tokens[0].address)
             await createPoolWETH9(tokens[1].address)
-          })
-
-          it('gas', async () => {
-            await snapshotGasCost(exactInput([tokens[0].address, weth9.address]))
           })
 
           it('0 -> WETH9', async () => {
@@ -360,10 +338,6 @@ describe('SwapRouter', () => {
       }
 
       describe('single-pool', () => {
-        it('gas', async () => {
-          await snapshotGasCost(exactOutput(tokens.slice(0, 2).map((token) => token.address)))
-        })
-
         it('0 -> 1', async () => {
           const pool = await factory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
 
@@ -409,16 +383,6 @@ describe('SwapRouter', () => {
       })
 
       describe('multi-pool', () => {
-        it('gas', async () => {
-          await snapshotGasCost(
-            exactOutput(
-              tokens.map((token) => token.address),
-              1,
-              5
-            )
-          )
-        })
-
         it('0 -> 1 -> 2', async () => {
           const traderBefore = await getBalances(trader.address)
 
@@ -450,10 +414,6 @@ describe('SwapRouter', () => {
         describe('WETH9', () => {
           beforeEach(async () => {
             await createPoolWETH9(tokens[0].address)
-          })
-
-          it('gas', async () => {
-            await snapshotGasCost(exactOutput([weth9.address, tokens[0].address]))
           })
 
           it('WETH9 -> 0', async () => {
@@ -495,10 +455,6 @@ describe('SwapRouter', () => {
           beforeEach(async () => {
             await createPoolWETH9(tokens[0].address)
             await createPoolWETH9(tokens[1].address)
-          })
-
-          it('gas', async () => {
-            await snapshotGasCost(exactOutput([tokens[0].address, weth9.address]))
           })
 
           it('0 -> WETH9', async () => {
