@@ -14,7 +14,7 @@ describe('Multicall', async () => {
     multicall = (await multicallTestFactory.deploy()) as TestMulticall
   })
 
-  it.skip('revert messages are returned', async () => {
+  it('revert messages are returned', async () => {
     await expect(
       multicall.multicall([multicall.interface.encodeFunctionData('functionThatRevertsWithError', ['abcdef'])])
     ).to.be.revertedWith('abcdef')
