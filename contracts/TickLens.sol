@@ -15,11 +15,11 @@ contract TickLens {
         uint128 liquidityGross;
     }
 
-    function getPopulatedTicks(address pool, int24 tickLower, int24 tickUpper)
-        external
-        view
-        returns (TickInfo[] memory ticks)
-    {
+    function getPopulatedTicks(
+        address pool,
+        int24 tickLower,
+        int24 tickUpper
+    ) external view returns (TickInfo[] memory ticks) {
         require(tickLower < tickUpper);
 
         int24 tickSpacing = IUniswapV3Pool(pool).tickSpacing();
