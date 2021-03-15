@@ -20,14 +20,14 @@ exports[`NonfungiblePositionManager #mint gas first mint for ticks 1`] = `448567
 
 exports[`NonfungiblePositionManager #mint gas ticks already used 1`] = `383152`;
 
-exports[`NonfungiblePositionManager #permit owned by eoa gas 1`] = `60045`;
+exports[`NonfungiblePositionManager #permit owned by eoa gas 1`] = `60021`;
 
-exports[`NonfungiblePositionManager #permit owned by verifying contract gas 1`] = `63780`;
+exports[`NonfungiblePositionManager #permit owned by verifying contract gas 1`] = `63756`;
 
 exports[`NonfungiblePositionManager #transferFrom gas 1`] = `84209`;
 
 exports[`NonfungiblePositionManager #transferFrom gas comes from approved 1`] = `75409`;
 
-exports[`NonfungiblePositionManager bytecode size 1`] = `23118`;
+exports[`NonfungiblePositionManager bytecode size 1`] = `23105`;
 
 exports[`NonfungiblePositionManager multicall exit gas 1`] = `175687`;
