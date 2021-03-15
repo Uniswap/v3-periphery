@@ -33,7 +33,7 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
         uint256 balanceToken = IERC20(token).balanceOf(address(this));
         if (amountMinimum > 0) require(balanceToken >= amountMinimum, 'Insufficient token');
 
-        if (balanceToken > 0) IERC20(token).transfer(recipient, balanceToken);
+        if (balanceToken > 0) TransferHelper.safeTransfer(token, recipient, balanceToken);
     }
 
     /// @param token The token to pay
@@ -52,10 +52,10 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
             IWETH9(WETH9).deposit{value: selfBalance}(); // wrap whole balance
             IWETH9(WETH9).transfer(recipient, value);
         } else if (payer == address(this)) {
-            // pay with tokens already in the contract
-            if (recipient != address(this)) TransferHelper.safeTransfer(token, recipient, value);
+            // pay with tokens already in the contract (for the exact input multihop case)
+            TransferHelper.safeTransfer(token, recipient, value);
         } else {
-            // pull payment from the payer
+            // pull payment
             TransferHelper.safeTransferFrom(token, payer, recipient, value);
         }
     }
