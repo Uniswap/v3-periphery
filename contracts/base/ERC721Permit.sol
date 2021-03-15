@@ -62,7 +62,7 @@ abstract contract ERC721Permit is BlockTimestamp, ERC721, IERC721Permit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external override {
+    ) external payable override {
         require(_blockTimestamp() <= deadline, 'Permit expired');
 
         bytes32 digest =

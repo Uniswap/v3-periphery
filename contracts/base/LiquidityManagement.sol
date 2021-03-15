@@ -102,7 +102,7 @@ abstract contract LiquidityManagement is IUniswapV3MintCallback, PeripheryImmuta
         uint128 amount,
         uint256 amount0Max,
         uint256 amount1Max
-    ) internal returns (uint256 amount0, uint256 amount1) {
+    ) private returns (uint256 amount0, uint256 amount1) {
         require(poolKey.token0 < poolKey.token1, 'Token order');
         MintCallbackData memory callbackData =
             MintCallbackData({payer: msg.sender, poolKey: poolKey, amount0Max: amount0Max, amount1Max: amount1Max});
