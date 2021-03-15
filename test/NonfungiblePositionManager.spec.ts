@@ -1,4 +1,4 @@
-import { BigNumberish, constants, Contract } from 'ethers'
+import { BigNumberish, constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
