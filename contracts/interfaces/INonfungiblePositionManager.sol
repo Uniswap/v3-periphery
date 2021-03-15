@@ -105,7 +105,7 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
         uint256 amount0Min,
         uint256 amount1Min,
         uint256 deadline
-    ) external returns (uint256 amount0, uint256 amount1);
+    ) external payable returns (uint256 amount0, uint256 amount1);
 
     /// @notice Collects up to a maximum amount of fees owed to a specific position to the recipient
     /// @param tokenId The ID of the NFT for which tokens are being collected
@@ -117,10 +117,10 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
         address recipient,
         uint128 amount0Max,
         uint128 amount1Max
-    ) external returns (uint256 amount0, uint256 amount1);
+    ) external payable returns (uint256 amount0, uint256 amount1);
 
     /// @notice Burns a token ID, which deletes it from the NFT contract. The token must have 0 liquidity and all tokens
     /// must be collected first.
     /// @param tokenId The ID of the token that is being burned
-    function burn(uint256 tokenId) external;
+    function burn(uint256 tokenId) external payable;
 }
