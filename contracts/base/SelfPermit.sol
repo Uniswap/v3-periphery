@@ -17,7 +17,7 @@ abstract contract SelfPermit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public {
+    ) public payable {
         IERC20Permit(token).permit(msg.sender, address(this), value, deadline, v, r, s);
     }
 
@@ -32,7 +32,7 @@ abstract contract SelfPermit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external {
+    ) external payable {
         if (IERC20(token).allowance(msg.sender, address(this)) < value) selfPermit(token, value, deadline, v, r, s);
     }
 }
