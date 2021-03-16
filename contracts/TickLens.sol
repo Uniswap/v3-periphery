@@ -9,7 +9,15 @@ contract TickLens {
     int24 private constant MIN_TICK = -887272;
     int24 private constant MAX_TICK = -MIN_TICK;
 
-    function getStaticData(address pool) external view returns (uint160 sqrtPriceX96, int24 tick, uint128 liquidity) {
+    function getStaticData(address pool)
+        external
+        view
+        returns (
+            uint160 sqrtPriceX96,
+            int24 tick,
+            uint128 liquidity
+        )
+    {
         (sqrtPriceX96, tick, , , , , ) = IUniswapV3Pool(pool).slot0();
         liquidity = IUniswapV3Pool(pool).liquidity();
     }
