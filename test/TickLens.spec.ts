@@ -47,7 +47,7 @@ describe('Tick Lens', () => {
   })
 
   describe('#getPopulatedTicks', () => {
-    const liquidity = 1000000
+    const fullRangeLiquidity = 1000000
     async function createPool(tokenAddressA: string, tokenAddressB: string) {
       if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
         [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
@@ -60,7 +60,7 @@ describe('Tick Lens', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: wallets[0].address,
-        amount: liquidity,
+        amount: fullRangeLiquidity,
         deadline: 1,
       }
 
@@ -103,6 +103,14 @@ describe('Tick Lens', () => {
       tickLens = (await lensFactory.deploy()) as TickLens
     })
 
+    beforeEach(async () => {
+      const { sqrtPriceX96, tick, liquidity } = await tickLens.getStaticData(poolAddress)
+
+      expect(sqrtPriceX96).to.be.eq(encodePriceSqrt(1, 1))
+      expect(tick).to.be.eq(0)
+      expect(liquidity).to.be.eq(fullRangeLiquidity)
+    })
+
     it('works for min/max', async () => {
       const [max, min] = await tickLens.getPopulatedTicks(
         poolAddress,
@@ -111,11 +119,12 @@ describe('Tick Lens', () => {
       )
 
       expect(min.tick).to.be.eq(getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]))
-      expect(min.liquidityNet).to.be.eq(liquidity)
-      expect(min.liquidityGross).to.be.eq(liquidity)
+      expect(min.liquidityNet).to.be.eq(fullRangeLiquidity)
+      expect(min.liquidityGross).to.be.eq(fullRangeLiquidity)
+
       expect(max.tick).to.be.eq(getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]))
-      expect(max.liquidityNet).to.be.eq(liquidity * -1)
-      expect(min.liquidityGross).to.be.eq(liquidity)
+      expect(max.liquidityNet).to.be.eq(fullRangeLiquidity * -1)
+      expect(min.liquidityGross).to.be.eq(fullRangeLiquidity)
     })
 
     it('works for min/max and -1/0/1', async () => {
@@ -132,11 +141,9 @@ describe('Tick Lens', () => {
         getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       )
 
-      console.log([max, one, zero, negativeOne, min])
-
       expect(min.tick).to.be.eq(getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]))
-      expect(min.liquidityNet).to.be.eq(liquidity)
-      expect(min.liquidityGross).to.be.eq(liquidity)
+      expect(min.liquidityNet).to.be.eq(fullRangeLiquidity)
+      expect(min.liquidityGross).to.be.eq(fullRangeLiquidity)
 
       expect(negativeOne.tick).to.be.eq(minus)
       expect(negativeOne.liquidityNet).to.be.eq(3 + 1)
@@ -151,26 +158,27 @@ describe('Tick Lens', () => {
       expect(one.liquidityGross).to.be.eq(8)
 
       expect(max.tick).to.be.eq(getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]))
-      expect(max.liquidityNet).to.be.eq(liquidity * -1)
-      expect(max.liquidityGross).to.be.eq(liquidity)
+      expect(max.liquidityNet).to.be.eq(fullRangeLiquidity * -1)
+      expect(max.liquidityGross).to.be.eq(fullRangeLiquidity)
     })
 
     it.skip('works for every 50th tick', async () => {
       const max = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       const interval = 50
       for (let tick = TICK_SPACINGS[FeeAmount.MEDIUM]; tick < max; tick += TICK_SPACINGS[FeeAmount.MEDIUM] * interval) {
-        console.log(`${((tick / max) * 100).toPrecision(4)}%`)
+        console.log(`${((tick / max) * 100).toFixed(1)}%`)
         await mint(tokens[0].address, tokens[1].address, -tick, tick, 1)
       }
 
-      const ticks = await tickLens.getPopulatedTicks(
+      const populatedTicks = await tickLens.getPopulatedTicks(
         poolAddress,
         getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       )
-      for (let i = 0; i < ticks.length; i++) {
-        if (i > 0) expect(ticks[i].tick).to.be.lt(ticks[i - 1].tick)
-        expect(ticks[i].liquidityGross).to.be.gt(0)
+
+      for (let i = 0; i < populatedTicks.length; i++) {
+        if (i > 0) expect(populatedTicks[i].tick).to.be.lt(populatedTicks[i - 1].tick)
+        expect(populatedTicks[i].liquidityGross).to.be.gt(0)
       }
     }).timeout(60000 * 5)
   })
