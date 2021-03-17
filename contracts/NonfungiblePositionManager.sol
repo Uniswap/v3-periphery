@@ -67,11 +67,12 @@ contract NonfungiblePositionManager is
     }
 
     /// @notice Either creates a new pool and initializes it, or initializes an existing, uninitialized pool
-    function createAndInitializePoolIfNecessary(address tokenA, address tokenB, uint24 fee, uint160 sqrtPriceX96)
-        external
-        payable
-        returns (address pool)
-    {
+    function createAndInitializePoolIfNecessary(
+        address tokenA,
+        address tokenB,
+        uint24 fee,
+        uint160 sqrtPriceX96
+    ) external payable returns (address pool) {
         pool = IUniswapV3Factory(factory).getPool(tokenA, tokenB, fee);
 
         if (pool == address(0)) {

@@ -47,7 +47,11 @@ abstract contract LiquidityManagement is IUniswapV3MintCallback, PeripheryImmuta
     /// @notice Add liquidity to an initialized pool
     function addLiquidity(AddLiquidityParams memory params)
         internal
-        returns (uint256 amount0, uint256 amount1, IUniswapV3Pool pool)
+        returns (
+            uint256 amount0,
+            uint256 amount1,
+            IUniswapV3Pool pool
+        )
     {
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
