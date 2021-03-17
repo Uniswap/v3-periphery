@@ -32,29 +32,6 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
             uint128 tokensOwed1
         );
 
-    struct FirstMintParams {
-        address token0;
-        address token1;
-        uint24 fee;
-        uint160 sqrtPriceX96;
-        int24 tickLower;
-        int24 tickUpper;
-        uint128 amount;
-        address recipient;
-        uint256 deadline;
-    }
-
-    /// @notice Creates a new position wrapped in a NFT for the first time for a given token0/token1/fee
-    /// @dev Call this when the pool does not exist to create it and initialize the pool before minting
-    function firstMint(FirstMintParams calldata params)
-        external
-        payable
-        returns (
-            uint256 tokenId,
-            uint256 amount0,
-            uint256 amount1
-        );
-
     struct MintParams {
         address token0;
         address token1;
