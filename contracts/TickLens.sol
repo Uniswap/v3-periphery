@@ -3,15 +3,17 @@ pragma solidity >=0.5.0;
 pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import './interfaces/ITickLens.sol';
 
 /// @title Tick Lens contract
-contract TickLens {
+contract TickLens is ITickLens {
     int24 private constant MIN_TICK = -887272;
     int24 private constant MAX_TICK = -MIN_TICK;
 
     function getStaticData(address pool)
         external
         view
+        override
         returns (
             uint160 sqrtPriceX96,
             int24 tick,
@@ -22,17 +24,11 @@ contract TickLens {
         liquidity = IUniswapV3Pool(pool).liquidity();
     }
 
-    struct PopulatedTick {
-        int24 tick;
-        int128 liquidityNet;
-        uint128 liquidityGross;
-    }
-
     function getPopulatedTicks(
         address pool,
         int24 tickLower,
         int24 tickUpper
-    ) external view returns (PopulatedTick[] memory populatedTicks) {
+    ) external view override returns (PopulatedTick[] memory populatedTicks) {
         require(tickLower < tickUpper);
 
         int24 tickSpacing = IUniswapV3Pool(pool).tickSpacing();
