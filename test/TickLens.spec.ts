@@ -169,12 +169,15 @@ describe('Tick Lens', () => {
         console.log(`${((tick / max) * 100).toFixed(1)}%`)
         await mint(tokens[0].address, tokens[1].address, -tick, tick, 1)
       }
+      console.log('100%')
 
       const populatedTicks = await tickLens.getPopulatedTicks(
         poolAddress,
         getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       )
+
+      console.log(`Fetching ${populatedTicks.length} populated ticks`)
 
       for (let i = 0; i < populatedTicks.length; i++) {
         if (i > 0) expect(populatedTicks[i].tick).to.be.lt(populatedTicks[i - 1].tick)
