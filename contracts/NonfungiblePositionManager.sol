@@ -66,47 +66,24 @@ contract NonfungiblePositionManager is
         tokenDescriptor = _tokenDescriptor;
     }
 
-    /// @inheritdoc INonfungiblePositionManager
-    function firstMint(FirstMintParams calldata params)
-        external
-        payable
-        override
-        checkDeadline(params.deadline)
-        returns (
-            uint256 tokenId,
-            uint256 amount0,
-            uint256 amount1
-        )
-    {
-        (amount0, amount1) = createPoolAndAddLiquidity(
-            CreatePoolAndAddLiquidityParams({
-                token0: params.token0,
-                token1: params.token1,
-                fee: params.fee,
-                sqrtPriceX96: params.sqrtPriceX96,
-                tickLower: params.tickLower,
-                tickUpper: params.tickUpper,
-                amount: params.amount,
-                recipient: address(this)
-            })
-        );
+    /// @notice Either creates a new pool and initializes it, or initializes an existing, uninitialized pool
+    function createAndInitializePoolIfNecessary(
+        address tokenA,
+        address tokenB,
+        uint24 fee,
+        uint160 sqrtPriceX96
+    ) external payable returns (address pool) {
+        pool = IUniswapV3Factory(factory).getPool(tokenA, tokenB, fee);
 
-        _mint(params.recipient, (tokenId = _nextId++));
-
-        positions[tokenId] = Position({
-            nonce: 0,
-            operator: address(0),
-            token0: params.token0,
-            token1: params.token1,
-            fee: params.fee,
-            tickLower: params.tickLower,
-            tickUpper: params.tickUpper,
-            liquidity: params.amount,
-            feeGrowthInside0LastX128: 0,
-            feeGrowthInside1LastX128: 0,
-            tokensOwed0: 0,
-            tokensOwed1: 0
-        });
+        if (pool == address(0)) {
+            pool = IUniswapV3Factory(factory).createPool(tokenA, tokenB, fee);
+            IUniswapV3Pool(pool).initialize(sqrtPriceX96);
+        } else {
+            (uint160 sqrtPriceX96Existing, , , , , , ) = IUniswapV3Pool(pool).slot0();
+            if (sqrtPriceX96Existing == 0) {
+                IUniswapV3Pool(pool).initialize(sqrtPriceX96);
+            }
+        }
     }
 
     /// @inheritdoc INonfungiblePositionManager
@@ -121,33 +98,28 @@ contract NonfungiblePositionManager is
             uint256 amount1
         )
     {
-        (amount0, amount1) = addLiquidity(
+        IUniswapV3Pool pool;
+        (amount0, amount1, pool) = addLiquidity(
             AddLiquidityParams({
                 token0: params.token0,
                 token1: params.token1,
                 fee: params.fee,
+                recipient: address(this),
                 tickLower: params.tickLower,
                 tickUpper: params.tickUpper,
                 amount: params.amount,
                 amount0Max: params.amount0Max,
-                amount1Max: params.amount1Max,
-                recipient: address(this)
+                amount1Max: params.amount1Max
             })
         );
 
         _mint(params.recipient, (tokenId = _nextId++));
 
-        PoolAddress.PoolKey memory poolKey =
-            PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
-
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
-
         bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);
-
         (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
 
         positions[tokenId] = Position({
-            nonce: 1,
+            nonce: 0,
             operator: address(0),
             token0: params.token0,
             token1: params.token1,
@@ -183,10 +155,8 @@ contract NonfungiblePositionManager is
         require(amount > 0);
         Position storage position = positions[tokenId];
 
-        PoolAddress.PoolKey memory poolKey =
-            PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee});
-
-        (amount0, amount1) = addLiquidity(
+        IUniswapV3Pool pool;
+        (amount0, amount1, pool) = addLiquidity(
             AddLiquidityParams({
                 token0: position.token0,
                 token1: position.token1,
@@ -201,8 +171,6 @@ contract NonfungiblePositionManager is
         );
 
         bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
-
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
 
         // this is now updated to the current transaction
         (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);

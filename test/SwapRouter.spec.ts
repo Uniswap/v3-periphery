@@ -93,19 +93,27 @@ describe('SwapRouter', () => {
       if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
         [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
 
+      await nft.createAndInitializePoolIfNecessary(
+        tokenAddressA,
+        tokenAddressB,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
       const liquidityParams = {
         token0: tokenAddressA,
         token1: tokenAddressB,
         fee: FeeAmount.MEDIUM,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: wallet.address,
         amount: liquidity,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
         deadline: 1,
       }
 
-      return nft.firstMint(liquidityParams)
+      return nft.mint(liquidityParams)
     }
 
     async function createPoolWETH9(tokenAddress: string) {

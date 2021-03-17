@@ -21,6 +21,8 @@ import { getMaxTick, getMinTick } from './shared/ticks'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { sortedTokens } from './shared/tokenSort'
 
+import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
+
 describe('NonfungiblePositionManager', () => {
   const wallets = waffle.provider.getWallets()
   const [wallet, other] = wallets
@@ -67,7 +69,7 @@ describe('NonfungiblePositionManager', () => {
     expect(((await nft.provider.getCode(nft.address)).length - 2) / 2).to.matchSnapshot()
   })
 
-  describe('#firstMint', () => {
+  describe('#createAndInitializePoolIfNecessary', () => {
     it('creates the pool at the expected address', async () => {
       const expectedAddress = computePoolAddress(
         factory.address,
@@ -76,17 +78,12 @@ describe('NonfungiblePositionManager', () => {
       )
       const code = await wallet.provider.getCode(expectedAddress)
       expect(code).to.eq('0x')
-      await nft.firstMint({
-        token0: tokens[0].address,
-        token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: wallet.address,
-        amount: 10,
-        deadline: 1,
-        fee: FeeAmount.MEDIUM,
-      })
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
       const codeAfter = await wallet.provider.getCode(expectedAddress)
       expect(codeAfter).to.not.eq('0x')
     })
@@ -100,143 +97,53 @@ describe('NonfungiblePositionManager', () => {
       await factory.createPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
       const code = await wallet.provider.getCode(expectedAddress)
       expect(code).to.not.eq('0x')
-      await nft.firstMint({
-        token0: tokens[0].address,
-        token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(2, 1),
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: wallet.address,
-        amount: 10,
-        deadline: 1,
-        fee: FeeAmount.MEDIUM,
-      })
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(2, 1)
+      )
     })
 
-    it('creates a token', async () => {
-      await nft.firstMint({
-        token0: tokens[0].address,
-        token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: other.address,
-        amount: 10,
-        deadline: 1,
-        fee: FeeAmount.MEDIUM,
-      })
-      expect(await nft.balanceOf(other.address)).to.eq(1)
-      expect(await nft.tokenOfOwnerByIndex(other.address, 0)).to.eq(1)
-      const {
-        fee,
-        token0,
-        token1,
-        tickLower,
-        tickUpper,
-        liquidity,
-        tokensOwed0,
-        tokensOwed1,
-        feeGrowthInside0LastX128,
-        feeGrowthInside1LastX128,
-      } = await nft.positions(1)
-      expect(token0).to.eq(tokens[0].address)
-      expect(token1).to.eq(tokens[1].address)
-      expect(fee).to.eq(FeeAmount.MEDIUM)
-      expect(tickLower).to.eq(getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]))
-      expect(tickUpper).to.eq(getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]))
-      expect(liquidity).to.eq(10)
-      expect(tokensOwed0).to.eq(0)
-      expect(tokensOwed1).to.eq(0)
-      expect(feeGrowthInside0LastX128).to.eq(0)
-      expect(feeGrowthInside1LastX128).to.eq(0)
+    it('works if pool is created and initialized', async () => {
+      const expectedAddress = computePoolAddress(
+        factory.address,
+        [tokens[0].address, tokens[1].address],
+        FeeAmount.MEDIUM
+      )
+      await factory.createPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+      const pool = new ethers.Contract(expectedAddress, IUniswapV3PoolABI, wallet)
+
+      await pool.initialize(encodePriceSqrt(3, 1))
+      const code = await wallet.provider.getCode(expectedAddress)
+      expect(code).to.not.eq('0x')
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(4, 1)
+      )
     })
 
-    it('can use eth via multicall', async () => {
+    it('could theoretically use eth via multicall', async () => {
       const [token0, token1] = sortedTokens(weth9, tokens[0])
 
-      const firstMintData = nft.interface.encodeFunctionData('firstMint', [
-        {
-          token0: token0.address,
-          token1: token1.address,
-          sqrtPriceX96: encodePriceSqrt(1, 1),
-          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          recipient: other.address,
-          amount: 10,
-          deadline: 1,
-          fee: FeeAmount.MEDIUM,
-        },
-      ])
+      const createAndInitializePoolIfNecessaryData = nft.interface.encodeFunctionData(
+        'createAndInitializePoolIfNecessary',
+        [token0.address, token1.address, FeeAmount.MEDIUM, encodePriceSqrt(1, 1)]
+      )
 
-      const unwrapWETH9Data = nft.interface.encodeFunctionData('unwrapWETH9', [0, other.address])
-
-      await nft.multicall([firstMintData, unwrapWETH9Data], { value: expandTo18Decimals(1) })
-    })
-
-    it('fails if past deadline', async () => {
-      await nft.setTime(2)
-      await expect(
-        nft.firstMint({
-          token0: tokens[0].address,
-          token1: tokens[1].address,
-          sqrtPriceX96: encodePriceSqrt(1, 1),
-          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          recipient: other.address,
-          amount: 10,
-          deadline: 1,
-          fee: FeeAmount.MEDIUM,
-        })
-      ).to.be.revertedWith('Transaction too old')
-    })
-
-    it('fails if pool already exists', async () => {
-      const params = {
-        token0: tokens[0].address,
-        token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: wallet.address,
-        amount: 10,
-        deadline: 1,
-        fee: FeeAmount.MEDIUM,
-      }
-      await nft.firstMint(params)
-
-      await expect(nft.firstMint(params)).to.be.reverted
-    })
-
-    it('fails if cannot transfer', async () => {
-      await tokens[0].approve(nft.address, 0)
-      await expect(
-        nft.firstMint({
-          token0: tokens[0].address,
-          token1: tokens[1].address,
-          sqrtPriceX96: encodePriceSqrt(1, 1),
-          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          recipient: wallet.address,
-          amount: 10,
-          deadline: 1,
-          fee: FeeAmount.MEDIUM,
-        })
-      ).to.be.revertedWith('STF')
+      await nft.multicall([createAndInitializePoolIfNecessaryData], { value: expandTo18Decimals(1) })
     })
 
     it('gas', async () => {
       await snapshotGasCost(
-        nft.firstMint({
-          token0: tokens[0].address,
-          token1: tokens[1].address,
-          sqrtPriceX96: encodePriceSqrt(1, 1),
-          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          recipient: wallet.address,
-          amount: 10,
-          deadline: 1,
-          fee: FeeAmount.MEDIUM,
-        })
+        nft.createAndInitializePoolIfNecessary(
+          tokens[0].address,
+          tokens[1].address,
+          FeeAmount.MEDIUM,
+          encodePriceSqrt(1, 1)
+        )
       )
     })
   })
@@ -259,33 +166,52 @@ describe('NonfungiblePositionManager', () => {
       ).to.be.reverted
     })
 
+    it('fails if cannot transfer', async () => {
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+      await tokens[0].approve(nft.address, 0)
+      await expect(
+        nft.mint({
+          token0: tokens[0].address,
+          token1: tokens[1].address,
+          fee: FeeAmount.MEDIUM,
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
+          recipient: wallet.address,
+          amount: 10,
+          deadline: 1,
+        })
+      ).to.be.revertedWith('STF')
+    })
+
     it('creates a token', async () => {
-      await nft.firstMint({
-        token0: tokens[0].address,
-        token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: other.address,
-        amount: 10,
-        deadline: 1,
-        fee: FeeAmount.MEDIUM,
-      })
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
 
       await nft.mint({
         token0: tokens[0].address,
         token1: tokens[1].address,
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
         recipient: other.address,
         amount0Max: constants.MaxUint256,
         amount1Max: constants.MaxUint256,
         amount: 15,
         deadline: 10,
-        fee: FeeAmount.MEDIUM,
       })
-      expect(await nft.balanceOf(other.address)).to.eq(2)
-      expect(await nft.tokenOfOwnerByIndex(other.address, 1)).to.eq(2)
+      expect(await nft.balanceOf(other.address)).to.eq(1)
+      expect(await nft.tokenOfOwnerByIndex(other.address, 0)).to.eq(1)
       const {
         fee,
         token0,
@@ -297,7 +223,7 @@ describe('NonfungiblePositionManager', () => {
         tokensOwed1,
         feeGrowthInside0LastX128,
         feeGrowthInside1LastX128,
-      } = await nft.positions(2)
+      } = await nft.positions(1)
       expect(token0).to.eq(tokens[0].address)
       expect(token1).to.eq(tokens[1].address)
       expect(fee).to.eq(FeeAmount.MEDIUM)
@@ -316,17 +242,12 @@ describe('NonfungiblePositionManager', () => {
       await weth9.deposit({ value: expandTo18Decimals(1) })
       await weth9.approve(nft.address, constants.MaxUint256)
 
-      await nft.firstMint({
-        token0: token0.address,
-        token1: token1.address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: other.address,
-        amount: 10,
-        deadline: 1,
-        fee: FeeAmount.MEDIUM,
-      })
+      await nft.createAndInitializePoolIfNecessary(
+        token0.address,
+        token1.address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
 
       await weth9.approve(nft.address, 0)
 
@@ -336,10 +257,10 @@ describe('NonfungiblePositionManager', () => {
           token1: token1.address,
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          fee: FeeAmount.MEDIUM,
           recipient: other.address,
           amount: 10,
           deadline: 1,
-          fee: FeeAmount.MEDIUM,
           amount0Max: constants.MaxUint256,
           amount1Max: constants.MaxUint256,
         },
@@ -351,17 +272,12 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('gas ticks already used', async () => {
-      await nft.firstMint({
-        token0: tokens[0].address,
-        token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: other.address,
-        amount: 10,
-        deadline: 1,
-        fee: FeeAmount.MEDIUM,
-      })
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
 
       await snapshotGasCost(
         nft.mint({
@@ -369,28 +285,23 @@ describe('NonfungiblePositionManager', () => {
           token1: tokens[1].address,
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          fee: FeeAmount.MEDIUM,
           recipient: other.address,
           amount0Max: constants.MaxUint256,
           amount1Max: constants.MaxUint256,
           amount: 15,
           deadline: 10,
-          fee: FeeAmount.MEDIUM,
         })
       )
     })
 
     it('gas first mint for ticks', async () => {
-      await nft.firstMint({
-        token0: tokens[0].address,
-        token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: other.address,
-        amount: 10,
-        deadline: 1,
-        fee: FeeAmount.MEDIUM,
-      })
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
 
       await snapshotGasCost(
         nft.mint({
@@ -398,12 +309,12 @@ describe('NonfungiblePositionManager', () => {
           token1: tokens[1].address,
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]) + TICK_SPACINGS[FeeAmount.MEDIUM],
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]) - TICK_SPACINGS[FeeAmount.MEDIUM],
+          fee: FeeAmount.MEDIUM,
           recipient: other.address,
           amount0Max: constants.MaxUint256,
           amount1Max: constants.MaxUint256,
           amount: 15,
           deadline: 10,
-          fee: FeeAmount.MEDIUM,
         })
       )
     })
@@ -412,16 +323,24 @@ describe('NonfungiblePositionManager', () => {
   describe('#increaseLiquidity', () => {
     const tokenId = 1
     beforeEach('create a position', async () => {
-      await nft.firstMint({
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await nft.mint({
         token0: tokens[0].address,
         token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
         recipient: other.address,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
         amount: 100,
         deadline: 1,
-        fee: FeeAmount.MEDIUM,
       })
     })
 
@@ -434,22 +353,31 @@ describe('NonfungiblePositionManager', () => {
     it('can be paid with ETH', async () => {
       const [token0, token1] = sortedTokens(tokens[0], weth9)
 
-      const tokenId = 2
-      const firstMintData = nft.interface.encodeFunctionData('firstMint', [
+      const tokenId = 1
+
+      await nft.createAndInitializePoolIfNecessary(
+        token0.address,
+        token1.address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      const mintData = nft.interface.encodeFunctionData('mint', [
         {
           token0: token0.address,
           token1: token1.address,
-          sqrtPriceX96: encodePriceSqrt(1, 1),
+          fee: FeeAmount.MEDIUM,
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           recipient: other.address,
           amount: 100,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
           deadline: 1,
-          fee: FeeAmount.MEDIUM,
         },
       ])
       const refundETHData = nft.interface.encodeFunctionData('unwrapWETH9', [0, other.address])
-      await nft.multicall([firstMintData, refundETHData], { value: expandTo18Decimals(1) })
+      await nft.multicall([mintData, refundETHData], { value: expandTo18Decimals(1) })
 
       const increaseLiquidityData = nft.interface.encodeFunctionData('increaseLiquidity', [
         tokenId,
@@ -469,16 +397,24 @@ describe('NonfungiblePositionManager', () => {
   describe('#decreaseLiquidity', () => {
     const tokenId = 1
     beforeEach('create a position', async () => {
-      await nft.firstMint({
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await nft.mint({
         token0: tokens[0].address,
         token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
         recipient: other.address,
         amount: 100,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
         deadline: 1,
-        fee: FeeAmount.MEDIUM,
       })
     })
 
@@ -516,16 +452,24 @@ describe('NonfungiblePositionManager', () => {
   describe('#collect', () => {
     const tokenId = 1
     beforeEach('create a position', async () => {
-      await nft.firstMint({
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await nft.mint({
         token0: tokens[0].address,
         token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
+        fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
         amount: 100,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
         deadline: 1,
-        fee: FeeAmount.MEDIUM,
       })
     })
 
@@ -572,16 +516,24 @@ describe('NonfungiblePositionManager', () => {
   describe('#burn', () => {
     const tokenId = 1
     beforeEach('create a position', async () => {
-      await nft.firstMint({
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await nft.mint({
         token0: tokens[0].address,
         token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
+        fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
         amount: 100,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
         deadline: 1,
-        fee: FeeAmount.MEDIUM,
       })
     })
 
@@ -626,16 +578,24 @@ describe('NonfungiblePositionManager', () => {
   describe('#transferFrom', () => {
     const tokenId = 1
     beforeEach('create a position', async () => {
-      await nft.firstMint({
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await nft.mint({
         token0: tokens[0].address,
         token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
+        fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
         amount: 100,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
         deadline: 1,
-        fee: FeeAmount.MEDIUM,
       })
     })
 
@@ -671,16 +631,24 @@ describe('NonfungiblePositionManager', () => {
     describe('owned by eoa', () => {
       const tokenId = 1
       beforeEach('create a position', async () => {
-        await nft.firstMint({
+        await nft.createAndInitializePoolIfNecessary(
+          tokens[0].address,
+          tokens[1].address,
+          FeeAmount.MEDIUM,
+          encodePriceSqrt(1, 1)
+        )
+
+        await nft.mint({
           token0: tokens[0].address,
           token1: tokens[1].address,
-          sqrtPriceX96: encodePriceSqrt(1, 1),
+          fee: FeeAmount.MEDIUM,
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           recipient: other.address,
           amount: 100,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
           deadline: 1,
-          fee: FeeAmount.MEDIUM,
         })
       })
 
@@ -722,16 +690,24 @@ describe('NonfungiblePositionManager', () => {
           await ethers.getContractFactory('TestPositionNFTOwner')
         ).deploy()) as TestPositionNFTOwner
 
-        await nft.firstMint({
+        await nft.createAndInitializePoolIfNecessary(
+          tokens[0].address,
+          tokens[1].address,
+          FeeAmount.MEDIUM,
+          encodePriceSqrt(1, 1)
+        )
+
+        await nft.mint({
           token0: tokens[0].address,
           token1: tokens[1].address,
-          sqrtPriceX96: encodePriceSqrt(1, 1),
+          fee: FeeAmount.MEDIUM,
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           recipient: testPositionNFTOwner.address,
           amount: 100,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
           deadline: 1,
-          fee: FeeAmount.MEDIUM,
         })
       })
 
@@ -773,16 +749,24 @@ describe('NonfungiblePositionManager', () => {
   describe('multicall exit', () => {
     const tokenId = 1
     beforeEach('create a position', async () => {
-      await nft.firstMint({
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await nft.mint({
         token0: tokens[0].address,
         token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
+        fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
         amount: 100,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
         deadline: 1,
-        fee: FeeAmount.MEDIUM,
       })
     })
 
@@ -850,16 +834,24 @@ describe('NonfungiblePositionManager', () => {
   describe('#tokenURI', async () => {
     const tokenId = 1
     beforeEach('create a position', async () => {
-      await nft.firstMint({
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await nft.mint({
         token0: tokens[0].address,
         token1: tokens[1].address,
-        sqrtPriceX96: encodePriceSqrt(1, 1),
+        fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
         amount: 100,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
         deadline: 1,
-        fee: FeeAmount.MEDIUM,
       })
     })
 
