@@ -88,6 +88,16 @@ describe('NonfungiblePositionManager', () => {
       expect(codeAfter).to.not.eq('0x')
     })
 
+    it('is payable', async () => {
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1),
+        { value: 1 }
+      )
+    })
+
     it('works if pool is created but not initialized', async () => {
       const expectedAddress = computePoolAddress(
         factory.address,
@@ -431,6 +441,10 @@ describe('NonfungiblePositionManager', () => {
       await nft.connect(other).decreaseLiquidity(tokenId, 25, 0, 0, 1)
       const { liquidity } = await nft.positions(tokenId)
       expect(liquidity).to.eq(75)
+    })
+
+    it('is payable', async () => {
+      await nft.connect(other).decreaseLiquidity(tokenId, 25, 0, 0, 1, { value: 1 })
     })
 
     it('accounts for tokens owed', async () => {

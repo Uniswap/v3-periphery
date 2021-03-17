@@ -14,11 +14,13 @@ abstract contract ERC721Permit is BlockTimestamp, ERC721, IERC721Permit {
     /// @dev Gets the current nonce for a token ID and then increments it, returning the original value
     function _getAndIncrementNonce(uint256 tokenId) internal virtual returns (uint256);
 
-    /// @dev The hash of the name used in the signature verification
-    bytes32 public immutable nameHash;
-    /// @dev The hash of the version string used in the signature verification
-    bytes32 public immutable versionHash;
+    /// @dev The hash of the name used in the permit signature verification
+    bytes32 private immutable nameHash;
 
+    /// @dev The hash of the version string used in the permit signature verification
+    bytes32 private immutable versionHash;
+
+    /// @notice Computes the nameHash and versionHash
     constructor(
         string memory name_,
         string memory symbol_,
@@ -39,9 +41,7 @@ abstract contract ERC721Permit is BlockTimestamp, ERC721, IERC721Permit {
                 abi.encode(
                     // keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')
                     0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f,
-                    // keccak256(bytes(name))
                     nameHash,
-                    // keccak256(bytes(version))
                     versionHash,
                     chainId,
                     address(this)

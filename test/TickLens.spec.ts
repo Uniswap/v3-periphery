@@ -9,7 +9,7 @@ import { expect } from './shared/expect'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { computePoolAddress } from './shared/computePoolAddress'
 
-describe('Tick Lens', () => {
+describe('TickLens', () => {
   const wallets = waffle.provider.getWallets()
 
   const nftFixture: Fixture<{
