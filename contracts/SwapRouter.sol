@@ -34,8 +34,7 @@ contract SwapRouter is
     /// @dev The maximum value that can be returned from #getSqrtRatioAtTick, minus 1
     uint160 private constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342 - 1;
 
-    uint256 private constant DEFAULT_CACHE = 1;
-    uint256 private amountInCached = DEFAULT_CACHE; // used for exact output swaps
+    uint256 private amountInCached; // used for exact output swaps
 
     constructor(address _factory, address _WETH9) PeripheryImmutableState(_factory, _WETH9) {}
 
@@ -165,7 +164,7 @@ contract SwapRouter is
         exactOutputSingle(amountOut, params.recipient, SwapData({path: params.path, payer: msg.sender}));
 
         amountIn = amountInCached;
-        amountInCached = DEFAULT_CACHE;
+        delete amountInCached;
 
         require(amountIn <= amountInMaximum, 'Too much requested');
     }
