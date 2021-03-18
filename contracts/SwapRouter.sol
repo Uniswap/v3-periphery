@@ -66,18 +66,15 @@ contract SwapRouter is
                 ? (tokenIn < tokenOut, uint256(amount0Delta))
                 : (tokenOut < tokenIn, uint256(amount1Delta));
         if (isExactInput) {
-            // exact input
             pay(tokenIn, data.payer, msg.sender, amountToPay);
         } else {
-            // exact output
-            (tokenIn, tokenOut) = (tokenOut, tokenIn);
-
             // either initiate the next swap or pay
             if (data.path.hasPools()) {
                 data.path = data.path.skipToken();
                 exactOutputSingle(amountToPay, msg.sender, data);
             } else {
                 amountInCached = amountToPay;
+                tokenIn = tokenOut; // swap in/out because exact output swaps are reversed
                 pay(tokenIn, data.payer, msg.sender, amountToPay);
             }
         }
@@ -106,17 +103,19 @@ contract SwapRouter is
     }
 
     /// @inheritdoc ISwapRouter
-    function exactInput(
-        SwapParams memory params,
-        uint256 amountIn,
-        uint256 amountOutMinimum
-    ) external payable override checkDeadline(params.deadline) returns (uint256 amountOut) {
+    function exactInput(ExactInputParams memory params)
+        external
+        payable
+        override
+        checkDeadline(params.deadline)
+        returns (uint256 amountOut)
+    {
         while (true) {
             bool hasPools = params.path.hasPools();
 
             // the outputs of prior swaps become the inputs to subsequent ones
-            amountIn = exactInputSingle(
-                amountIn,
+            params.amountIn = exactInputSingle(
+                params.amountIn,
                 hasPools ? address(this) : params.recipient, // for intermediate swaps, this contract custodies
                 SwapData({
                     path: params.path.getFirstPool(), // only the first pool in the path is necessary
@@ -128,12 +127,12 @@ contract SwapRouter is
             if (hasPools) {
                 params.path = params.path.skipToken();
             } else {
-                amountOut = amountIn;
+                amountOut = params.amountIn;
                 break;
             }
         }
 
-        require(amountOut >= amountOutMinimum, 'Too little received');
+        require(amountOut >= params.amountOutMinimum, 'Too little received');
     }
 
     /// @dev Performs a single exact output swap
@@ -156,16 +155,17 @@ contract SwapRouter is
     }
 
     /// @inheritdoc ISwapRouter
-    function exactOutput(
-        SwapParams calldata params,
-        uint256 amountOut,
-        uint256 amountInMaximum
-    ) external payable override checkDeadline(params.deadline) returns (uint256 amountIn) {
-        exactOutputSingle(amountOut, params.recipient, SwapData({path: params.path, payer: msg.sender}));
+    function exactOutput(ExactOutputParams calldata params)
+        external
+        payable
+        override
+        checkDeadline(params.deadline)
+        returns (uint256 amountIn)
+    {
+        exactOutputSingle(params.amountOut, params.recipient, SwapData({path: params.path, payer: msg.sender}));
 
         amountIn = amountInCached;
         delete amountInCached;
-
-        require(amountIn <= amountInMaximum, 'Too much requested');
+        require(amountIn <= params.amountInMaximum, 'Too much requested');
     }
 }

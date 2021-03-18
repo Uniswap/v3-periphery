@@ -123,19 +123,21 @@ describe('SwapRouter gas tests', () => {
       path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
       recipient: outputIsWETH9 ? router.address : trader.address,
       deadline: 1,
+      amountIn,
+      amountOutMinimum,
     }
 
-    const data = [router.interface.encodeFunctionData('exactInput', [params, amountIn, amountOutMinimum])]
+    const data = [router.interface.encodeFunctionData('exactInput', [params])]
     if (outputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [amountOutMinimum, trader.address]))
 
     // ensure that the swap fails if the limit is any tighter
-    await expect(
-      router.connect(trader).exactInput(params, amountIn, amountOutMinimum + 1, { value })
-    ).to.be.revertedWith('Too little received')
+    params.amountOutMinimum += 1
+    await expect(router.connect(trader).exactInput(params, { value })).to.be.revertedWith('Too little received')
+    params.amountOutMinimum -= 1
 
     // optimized for the gas test
     return data.length === 1
-      ? router.connect(trader).exactInput(params, amountIn, amountOutMinimum, { value })
+      ? router.connect(trader).exactInput(params, { value })
       : router.connect(trader).multicall(data, { value })
   }
 
@@ -152,9 +154,11 @@ describe('SwapRouter gas tests', () => {
       path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
       recipient: outputIsWETH9 ? router.address : trader.address,
       deadline: 1,
+      amountOut,
+      amountInMaximum,
     }
 
-    const data = [router.interface.encodeFunctionData('exactOutput', [params, amountOut, amountInMaximum])]
+    const data = [router.interface.encodeFunctionData('exactOutput', [params])]
     if (inputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [0, trader.address]))
     if (outputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [amountOut, trader.address]))
 
