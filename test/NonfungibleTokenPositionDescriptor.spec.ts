@@ -16,7 +16,7 @@ describe('NonfungiblePositionManager', () => {
   const [wallet, other] = wallets
 
   const nftDescriptorFixture: Fixture<{
-    tokens: [TestERC20, TestERC20],
+    tokens: [TestERC20, TestERC20]
     nftDescriptor: NFTDescriptorTest
   }> = async (wallets, provider) => {
     const tokenFactory = await ethers.getContractFactory('TestERC20')
@@ -43,81 +43,70 @@ describe('NonfungiblePositionManager', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ({ nftDescriptor, tokens } = await loadFixture(nftDescriptorFixture))
+    ;({ nftDescriptor, tokens } = await loadFixture(nftDescriptorFixture))
   })
 
   describe('fixedPointToDecimalString', () => {
     describe('returns the correct string for', () => {
       it('the highest possible price', async () => {
-        let ratio = encodePriceSqrt(33849, 1/10**34)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('338480000000000000000000000000000000000')
+        let ratio = encodePriceSqrt(33849, 1 / 10 ** 34)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('338480000000000000000000000000000000000')
       })
 
       it('large numbers', async () => {
-        let ratio = encodePriceSqrt(25811, 1/10**11)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('2581000000000000')
-        ratio = encodePriceSqrt(17662, 1/10**5)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('1766100000')
+        let ratio = encodePriceSqrt(25811, 1 / 10 ** 11)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('2581000000000000')
+        ratio = encodePriceSqrt(17662, 1 / 10 ** 5)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('1766100000')
       })
 
       it('exactly 5 sigfig whole number', async () => {
         let ratio = encodePriceSqrt(42026, 1)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('42025')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('42025')
       })
 
       it('when the decimal is at index 4', async () => {
-        let ratio = encodePriceSqrt(12087,10)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('1208.6')
+        let ratio = encodePriceSqrt(12087, 10)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('1208.6')
       })
 
       it('when the decimal is at index 3', async () => {
-        let ratio = encodePriceSqrt(12087,100)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('120.86')
+        let ratio = encodePriceSqrt(12087, 100)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('120.86')
       })
 
       it('when the decimal is at index 2', async () => {
-        let ratio = encodePriceSqrt(12087,1000)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('12.086')
+        let ratio = encodePriceSqrt(12087, 1000)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('12.086')
       })
 
       it('when the decimal is at index 1', async () => {
-        let ratio = encodePriceSqrt(12345,10000)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('1.2344')
+        let ratio = encodePriceSqrt(12345, 10000)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('1.2344')
       })
 
       it('when sigfigs have trailing 0s after the decimal', async () => {
-        let ratio = encodePriceSqrt(1,1)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('1.0000')
+        let ratio = encodePriceSqrt(1, 1)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('1.0000')
       })
 
       it('when there are exactly 5 numbers after the decimal', async () => {
-        let ratio = encodePriceSqrt(12345,100000)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('0.12344')
+        let ratio = encodePriceSqrt(12345, 100000)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('0.12344')
       })
 
       it('very small numbers', async () => {
-        let ratio = encodePriceSqrt(38741, 10**20)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('0.00000000000000038740')
-        ratio = encodePriceSqrt(88498, 10**35)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('0.00000000000000000000000000000088497')
+        let ratio = encodePriceSqrt(38741, 10 ** 20)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('0.00000000000000038740')
+        ratio = encodePriceSqrt(88498, 10 ** 35)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq('0.00000000000000000000000000000088497')
       })
 
       it('smallest number', async () => {
-        let ratio = encodePriceSqrt(39000, 10**43)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio))
-          .to.eq('0.0000000000000000000000000000000000000029387')
+        let ratio = encodePriceSqrt(39000, 10 ** 43)
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio)).to.eq(
+          '0.0000000000000000000000000000000000000029387'
+        )
       })
     })
   })
