@@ -10,10 +10,10 @@ exports[`SwapRouter gas tests #exactInput 0 -> WETH9 1`] = `138469`;
 
 exports[`SwapRouter gas tests #exactInput WETH9 -> 0 1`] = `111458`;
 
-exports[`SwapRouter gas tests #exactOutput 0 -> 1 -> 2 1`] = `178188`;
+exports[`SwapRouter gas tests #exactOutput 0 -> 1 -> 2 1`] = `178194`;
 
-exports[`SwapRouter gas tests #exactOutput 0 -> 1 1`] = `116083`;
+exports[`SwapRouter gas tests #exactOutput 0 -> 1 1`] = `116089`;
 
-exports[`SwapRouter gas tests #exactOutput 0 -> WETH9 1`] = `139699`;
+exports[`SwapRouter gas tests #exactOutput 0 -> WETH9 1`] = `139705`;
 
-exports[`SwapRouter gas tests #exactOutput WETH9 -> 0 1`] = `143781`;
+exports[`SwapRouter gas tests #exactOutput WETH9 -> 0 1`] = `143787`;
