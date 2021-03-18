@@ -259,7 +259,36 @@ contract NonfungiblePositionManager is
         require(amount0Max > 0 || amount1Max > 0);
         Position storage position = positions[tokenId];
 
+        PoolAddress.PoolKey memory poolKey =
+            PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee});
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
+
         (uint128 tokensOwed0, uint128 tokensOwed1) = (position.tokensOwed0, position.tokensOwed1);
+
+        // trigger an update of the position fees owed and fee growth snapshots if it has any liquidity
+        if (position.liquidity > 0) {
+            pool.burn(position.tickLower, position.tickUpper, 0);
+            (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) =
+                pool.positions(PositionKey.compute(address(this), position.tickLower, position.tickUpper));
+
+            tokensOwed0 += uint128(
+                FullMath.mulDiv(
+                    feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,
+                    position.liquidity,
+                    FixedPoint128.Q128
+                )
+            );
+            tokensOwed1 += uint128(
+                FullMath.mulDiv(
+                    feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,
+                    position.liquidity,
+                    FixedPoint128.Q128
+                )
+            );
+
+            position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
+            position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
+        }
 
         // adjust amount0Max, amount1Max to the max for the position
         (amount0Max, amount1Max) = (
@@ -267,9 +296,6 @@ contract NonfungiblePositionManager is
             amount1Max > tokensOwed1 ? tokensOwed1 : amount1Max
         );
 
-        PoolAddress.PoolKey memory poolKey =
-            PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee});
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
         (amount0, amount1) = pool.collect(recipient, position.tickLower, position.tickUpper, amount0Max, amount1Max);
 
         // sometimes there will be a few less wei than expected due to rounding down in core, but we just subtract the full amount expected

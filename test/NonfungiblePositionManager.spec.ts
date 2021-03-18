@@ -1,4 +1,4 @@
-import { BigNumberish, constants } from 'ethers'
+import { BigNumber, BigNumberish, constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
@@ -8,6 +8,7 @@ import {
   TestERC20,
   IWETH9,
   IUniswapV3Factory,
+  SwapRouter,
 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { computePoolAddress } from './shared/computePoolAddress'
@@ -15,6 +16,7 @@ import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expect } from './shared/expect'
 import getPermitNFTSignature from './shared/getPermitNFTSignature'
+import { encodePath } from './shared/path'
 import poolAtAddress from './shared/poolAtAddress'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
@@ -32,8 +34,9 @@ describe('NonfungiblePositionManager', () => {
     factory: IUniswapV3Factory
     tokens: [TestERC20, TestERC20, TestERC20]
     weth9: IWETH9
+    router: SwapRouter
   }> = async (wallets, provider) => {
-    const { weth9, factory, tokens, nft } = await completeFixture(wallets, provider)
+    const { weth9, factory, tokens, nft, router } = await completeFixture(wallets, provider)
 
     // approve & fund wallets
     for (const token of tokens) {
@@ -47,6 +50,7 @@ describe('NonfungiblePositionManager', () => {
       factory,
       tokens,
       weth9,
+      router,
     }
   }
 
@@ -54,6 +58,7 @@ describe('NonfungiblePositionManager', () => {
   let nft: MockTimeNonfungiblePositionManager
   let tokens: [TestERC20, TestERC20, TestERC20]
   let weth9: IWETH9
+  let router: SwapRouter
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
@@ -62,7 +67,7 @@ describe('NonfungiblePositionManager', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ nft, factory, tokens, weth9 } = await loadFixture(nftFixture))
+    ;({ nft, factory, tokens, weth9, router } = await loadFixture(nftFixture))
   })
 
   it('bytecode size', async () => {
@@ -881,6 +886,92 @@ describe('NonfungiblePositionManager', () => {
       const content = JSON.parse((await nft.tokenURI(tokenId)).substr('data:application/json,'.length))
       expect(content).to.haveOwnProperty('name').is.a('string')
       expect(content).to.haveOwnProperty('description').is.a('string')
+    })
+  })
+
+  describe('fees accounting', () => {
+    beforeEach('create two positions', async () => {
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+      // nft 1 earns 25% of fees
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        fee: FeeAmount.MEDIUM,
+        tickLower: getMinTick(FeeAmount.MEDIUM),
+        tickUpper: getMaxTick(FeeAmount.MEDIUM),
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
+        amount: 10,
+        deadline: 1,
+        recipient: wallet.address,
+      })
+      // nft 2 earns 75% of fees
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        fee: FeeAmount.MEDIUM,
+        tickLower: getMinTick(FeeAmount.MEDIUM),
+        tickUpper: getMaxTick(FeeAmount.MEDIUM),
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
+        amount: 30,
+        deadline: 1,
+        recipient: wallet.address,
+      })
+    })
+
+    describe('10k of token0 fees collect', () => {
+      beforeEach('swap for ~10k of fees', async () => {
+        const swapAmount = 3_333_333
+        await tokens[0].approve(router.address, swapAmount)
+        await router.exactInput({
+          recipient: wallet.address,
+          deadline: 1,
+          path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+          amountIn: swapAmount,
+          amountOutMinimum: 0,
+        })
+      })
+      it('expected amounts', async () => {
+        const { amount0: nft1Amount0, amount1: nft1Amount1 } = await nft.callStatic.collect(
+          1,
+          wallet.address,
+          MaxUint128,
+          MaxUint128
+        )
+        const { amount0: nft2Amount0, amount1: nft2Amount1 } = await nft.callStatic.collect(
+          2,
+          wallet.address,
+          MaxUint128,
+          MaxUint128
+        )
+        expect(nft1Amount0).to.eq(2501)
+        expect(nft1Amount1).to.eq(0)
+        expect(nft2Amount0).to.eq(7505)
+        expect(nft2Amount1).to.eq(0)
+      })
+
+      it('actually collected', async () => {
+        const poolAddress = computePoolAddress(
+          factory.address,
+          [tokens[0].address, tokens[1].address],
+          FeeAmount.MEDIUM
+        )
+
+        await expect(nft.collect(1, wallet.address, MaxUint128, MaxUint128))
+          .to.emit(tokens[0], 'Transfer')
+          .withArgs(poolAddress, wallet.address, 2501)
+          .to.not.emit(tokens[1], 'Transfer')
+        await expect(nft.collect(2, wallet.address, MaxUint128, MaxUint128))
+          .to.emit(tokens[0], 'Transfer')
+          .withArgs(poolAddress, wallet.address, 7505)
+          .to.not.emit(tokens[1], 'Transfer')
+      })
     })
   })
 })
