@@ -16,4 +16,8 @@ contract NFTDescriptorTest {
     function fixedPointToDecimalString(uint160 sqrtRatioX96) public pure returns (string memory) {
         return NFTDescriptor.fixedPointToDecimalString(sqrtRatioX96);
     }
+
+    function feeToPercentString(uint24 fee) public pure returns (string memory) {
+        return NFTDescriptor.feeToPercentString(fee);
+    }
 }

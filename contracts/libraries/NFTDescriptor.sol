@@ -118,4 +118,16 @@ library NFTDescriptor {
         }
         return string(buffer);
     }
+
+    function feeToPercentString(uint24 fee) internal pure returns (string memory feeString) {
+        if (fee == 500) {
+            feeString = '0.05%';
+        } else if (fee == 3000) {
+            feeString = '0.3%';
+        } else if (fee == 10000) {
+            feeString = '1%';
+        } else {
+            revert('invalid fee');
+        }
+    }
 }
