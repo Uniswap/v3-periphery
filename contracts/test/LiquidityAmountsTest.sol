@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.7.6;
 
-import '../libraries/LiquidityAmounts.sol';
+import '../examples/libraries/LiquidityAmounts.sol';
 
 contract LiquidityAmountsTest {
     function getLiquidityForAmount0(

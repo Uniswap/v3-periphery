@@ -55,16 +55,15 @@ abstract contract LiquidityManagement is IUniswapV3MintCallback, PeripheryImmuta
     {
         PoolAddress.PoolKey memory poolKey =
             PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
-        pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
 
-        MintCallbackData memory callbackData = MintCallbackData({poolKey: poolKey, payer: msg.sender});
+        pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
 
         (amount0, amount1) = pool.mint(
             params.recipient,
             params.tickLower,
             params.tickUpper,
             params.amount,
-            abi.encode(callbackData)
+            abi.encode(MintCallbackData({poolKey: poolKey, payer: msg.sender}))
         );
 
         require(amount0 <= params.amount0Max);
