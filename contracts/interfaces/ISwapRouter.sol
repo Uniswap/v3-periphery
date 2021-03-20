@@ -7,23 +7,25 @@ import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.so
 /// @title Router token swapping functionality
 /// @notice Functions for swapping tokens via Uniswap V3
 interface ISwapRouter is IUniswapV3SwapCallback {
-    struct SwapParams {
+    struct ExactInputParams {
         bytes path;
         address recipient;
         uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+    }
+
+    struct ExactOutputParams {
+        bytes path;
+        address recipient;
+        uint256 deadline;
+        uint256 amountOut;
+        uint256 amountInMaximum;
     }
 
     /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path
-    function exactInput(
-        SwapParams calldata params,
-        uint256 amountIn,
-        uint256 amountOutMinimum
-    ) external payable returns (uint256 amountOut);
+    function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut);
 
     /// @notice Swaps as little as possible of one token for `amountOut` of another along the specified path (reversed)
-    function exactOutput(
-        SwapParams calldata params,
-        uint256 amountOut,
-        uint256 amountInMaximum
-    ) external payable returns (uint256 amountIn);
+    function exactOutput(ExactOutputParams calldata params) external payable returns (uint256 amountIn);
 }

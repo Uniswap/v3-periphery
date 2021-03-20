@@ -17,10 +17,8 @@ library PoolAddress {
         address tokenB,
         uint24 fee
     ) internal pure returns (PoolKey memory) {
-        return
-            tokenA < tokenB
-                ? PoolKey({token0: tokenA, token1: tokenB, fee: fee})
-                : PoolKey({token0: tokenB, token1: tokenA, fee: fee});
+        if (tokenA > tokenB) (tokenA, tokenB) = (tokenB, tokenA);
+        return PoolKey({token0: tokenA, token1: tokenB, fee: fee});
     }
 
     function computeAddress(address factory, PoolKey memory key) internal pure returns (address pool) {
