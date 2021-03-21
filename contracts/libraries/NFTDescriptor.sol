@@ -7,12 +7,14 @@ import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
 import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/math/SignedSafeMath.sol';
 
 library NFTDescriptor {
     using TickMath for int24;
     using Strings for uint256;
     using SafeMath for uint256;
     using SafeMath for uint8;
+    using SignedSafeMath for int256;
 
     struct ConstructTokenURIParams {
         address token1;
@@ -50,7 +52,8 @@ library NFTDescriptor {
             string(abi.encodePacked('data:application/json,{"name":"', name, '", "description":"', description, '"}'));
     }
 
-    // Returns string that includes first 5 significant figures of a decimal number
+    // @notice Returns string that includes first 5 significant figures of a decimal number
+    // @param sqrtRatioX96 a sqrt price
     // Based on https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Strings.sol#L14
     // TODO: consider token decimals
     function fixedPointToDecimalString(uint160 sqrtRatioX96) internal pure returns (string memory) {
@@ -84,8 +87,8 @@ library NFTDescriptor {
             buffer = new bytes(uint256(7).add(uint256(43).sub(digits)));
             zerosCursor = 2;
             zerosEnd = uint8(uint256(43).sub(digits).add(2));
-            buffer[0] = bytes1(uint8(48)); // "0"
-            buffer[1] = bytes1(uint8(46)); // "."
+            buffer[0] = "0";
+            buffer[1] = ".";
             sigfigIndex = buffer.length.sub(1);
         } else if (digits >= 9) {
             // no decimal in price string
@@ -111,7 +114,7 @@ library NFTDescriptor {
         while (temp != 0) {
             if (decimalIndex > 0 && sigfigIndex == decimalIndex) {
                 // add decimal
-                buffer[sigfigIndex--] = bytes1(uint8(46));
+                buffer[sigfigIndex--] = ".";
             }
             buffer[sigfigIndex--] = bytes1(uint8(uint256(48).add(temp % 10)));
             temp /= 10;
@@ -119,15 +122,38 @@ library NFTDescriptor {
         return string(buffer);
     }
 
-    function feeToPercentString(uint24 fee) internal pure returns (string memory feeString) {
-        if (fee == 500) {
-            feeString = '0.05%';
-        } else if (fee == 3000) {
-            feeString = '0.3%';
-        } else if (fee == 10000) {
-            feeString = '1%';
-        } else {
-            revert('invalid fee');
-        }
+    // @notice Returns string as decimal percentage of fee amount. Only includes first sigfig of fee.
+    // @param fee fee amount
+    function feeToPercentString(uint24 fee) internal pure returns(string memory) {
+      uint24 temp = fee;
+      uint8 digits;
+      while (temp != 0) {
+          digits++;
+          temp /= 10;
+      }
+      uint256 decimalIndex = digits >= 5 ? 0 : 1;
+      uint256 nZeros = abs(int256(5).sub(int256(digits)));
+      bytes memory buffer = new bytes(nZeros.add(2).add(decimalIndex));
+      uint256 sigfig = uint256(fee).div(10**(digits-1));
+      uint256 index;
+
+      buffer[buffer.length - 1] = "%";
+      if (digits > 4) {
+        buffer[index++] = bytes1(uint8(uint256(48).add(sigfig % 10)));
+      } else {
+        buffer[buffer.length - 2] = bytes1(uint8(uint256(48).add(sigfig % 10)));
+        buffer[index++] = "0";
+        buffer[index++] = ".";
+      }
+      while (index <= nZeros) {
+        buffer[index++] = "0";
+      }
+
+      return string(buffer);
+    }
+
+    function abs(int x) private pure returns (uint256) {
+        int absoluteValue = x >= 0 ? x : -x;
+        return uint256(absoluteValue);
     }
 }

@@ -112,6 +112,14 @@ describe('NonfungiblePositionManager', () => {
   })
 
   describe('feeToPercentString', () => {
+    it('returns the correct fee for 30', async () => {
+      expect(await nftDescriptor.feeToPercentString(1)).to.eq('0.0001%')
+    })
+
+    it('returns the correct fee for 30', async () => {
+      expect(await nftDescriptor.feeToPercentString(30)).to.eq('0.003%')
+    })
+
     it('returns the correct fee for 500', async () => {
       expect(await nftDescriptor.feeToPercentString(500)).to.eq('0.05%')
     })
@@ -124,8 +132,12 @@ describe('NonfungiblePositionManager', () => {
       expect(await nftDescriptor.feeToPercentString(10000)).to.eq('1%')
     })
 
-    it('reverts with nonexistent fee', async () => {
-      expect(nftDescriptor.feeToPercentString(321)).to.be.revertedWith('invalid fee')
+    it('returns the correct fee for 100000', async () => {
+      expect(await nftDescriptor.feeToPercentString(400000)).to.eq('40%')
+    })
+
+    it('returns the correct fee for 1000000', async () => {
+      expect(await nftDescriptor.feeToPercentString(10000000)).to.eq('1000%')
     })
   })
 })
