@@ -145,7 +145,7 @@ contract NonfungiblePositionManager is
     }
 
     // save bytecode by removing implementation of unused method
-    function baseURI() public pure override returns (string memory) { }
+    function baseURI() public pure override returns (string memory) {}
 
     /// @inheritdoc INonfungiblePositionManager
     function increaseLiquidity(
