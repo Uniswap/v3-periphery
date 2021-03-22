@@ -40,7 +40,9 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                     tickUpper: tickUpper,
                     token0Symbol: IERC20Metadata(token0).symbol(),
                     token1Symbol: IERC20Metadata(token1).symbol(),
-                    liquidity: liquidity
+                    fee: fee,
+                    liquidity: liquidity,
+                    poolAddress: address(pool)
                 })
             );
     }

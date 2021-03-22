@@ -8,6 +8,7 @@ import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/math/SignedSafeMath.sol';
+import './HexStrings.sol';
 
 library NFTDescriptor {
     using TickMath for int24;
@@ -15,6 +16,7 @@ library NFTDescriptor {
     using SafeMath for uint256;
     using SafeMath for uint8;
     using SignedSafeMath for int256;
+    using HexStrings for uint256;
 
     struct ConstructTokenURIParams {
         address token1;
@@ -23,18 +25,22 @@ library NFTDescriptor {
         int24 tickUpper;
         string token0Symbol;
         string token1Symbol;
+        uint24 fee;
         uint256 liquidity;
+        address poolAddress;
     }
 
     function constructTokenURI(ConstructTokenURIParams memory params) internal view returns (string memory) {
         string memory name =
             string(
                 abi.encodePacked(
-                    'Uniswap V3 ',
+                    'Uniswap V3 - ',
+                    feeToPercentString(params.fee),
+                    ' - ',
                     params.token0Symbol,
                     '/',
                     params.token1Symbol,
-                    ' ',
+                    ' - ',
                     fixedPointToDecimalString(TickMath.getSqrtRatioAtTick(params.tickLower)),
                     '<>',
                     fixedPointToDecimalString(TickMath.getSqrtRatioAtTick(params.tickUpper))
@@ -43,13 +49,25 @@ library NFTDescriptor {
         string memory description =
             string(
                 abi.encodePacked(
-                    'Represents a position in Uniswap V3 with liquidity: ',
-                    uint256(params.liquidity).toString()
+                    'Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.',
+                    '\\nliquidity: ',
+                    uint256(params.liquidity).toString(),
+                    '\\npoolAddress: ',
+                    addressToString(params.poolAddress),
+                    '\\ntoken0Address: ',
+                    addressToString(params.token0),
+                    '\\ntoken1Address: ',
+                    addressToString(params.token1)
                 )
             );
 
         return
             string(abi.encodePacked('data:application/json,{"name":"', name, '", "description":"', description, '"}'));
+    }
+
+    function addressToString(address addr) internal pure returns (string memory) {
+        uint256 _uint = (uint256(addr));
+        return _uint.toHexString(20);
     }
 
     // @notice Returns string that includes first 5 significant figures of a decimal number
@@ -87,8 +105,8 @@ library NFTDescriptor {
             buffer = new bytes(uint256(7).add(uint256(43).sub(digits)));
             zerosCursor = 2;
             zerosEnd = uint8(uint256(43).sub(digits).add(2));
-            buffer[0] = "0";
-            buffer[1] = ".";
+            buffer[0] = '0';
+            buffer[1] = '.';
             sigfigIndex = buffer.length.sub(1);
         } else if (digits >= 9) {
             // no decimal in price string
@@ -114,7 +132,7 @@ library NFTDescriptor {
         while (temp != 0) {
             if (decimalIndex > 0 && sigfigIndex == decimalIndex) {
                 // add decimal
-                buffer[sigfigIndex--] = ".";
+                buffer[sigfigIndex--] = '.';
             }
             buffer[sigfigIndex--] = bytes1(uint8(uint256(48).add(temp % 10)));
             temp /= 10;
@@ -124,36 +142,36 @@ library NFTDescriptor {
 
     // @notice Returns string as decimal percentage of fee amount. Only includes first sigfig of fee.
     // @param fee fee amount
-    function feeToPercentString(uint24 fee) internal pure returns(string memory) {
-      uint24 temp = fee;
-      uint8 digits;
-      while (temp != 0) {
-          digits++;
-          temp /= 10;
-      }
-      uint256 decimalIndex = digits >= 5 ? 0 : 1;
-      uint256 nZeros = abs(int256(5).sub(int256(digits)));
-      bytes memory buffer = new bytes(nZeros.add(2).add(decimalIndex));
-      uint256 sigfig = uint256(fee).div(10**(digits-1));
-      uint256 index;
+    function feeToPercentString(uint24 fee) internal pure returns (string memory) {
+        uint24 temp = fee;
+        uint8 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        uint256 decimalIndex = digits >= 5 ? 0 : 1;
+        uint256 nZeros = abs(int256(5).sub(int256(digits)));
+        bytes memory buffer = new bytes(nZeros.add(2).add(decimalIndex));
+        uint256 sigfig = uint256(fee).div(10**(digits - 1));
+        uint256 index;
 
-      buffer[buffer.length - 1] = "%";
-      if (digits > 4) {
-        buffer[index++] = bytes1(uint8(uint256(48).add(sigfig % 10)));
-      } else {
-        buffer[buffer.length - 2] = bytes1(uint8(uint256(48).add(sigfig % 10)));
-        buffer[index++] = "0";
-        buffer[index++] = ".";
-      }
-      while (index <= nZeros) {
-        buffer[index++] = "0";
-      }
+        buffer[buffer.length - 1] = '%';
+        if (digits > 4) {
+            buffer[index++] = bytes1(uint8(uint256(48).add(sigfig % 10)));
+        } else {
+            buffer[buffer.length - 2] = bytes1(uint8(uint256(48).add(sigfig % 10)));
+            buffer[index++] = '0';
+            buffer[index++] = '.';
+        }
+        while (index <= nZeros) {
+            buffer[index++] = '0';
+        }
 
-      return string(buffer);
+        return string(buffer);
     }
 
-    function abs(int x) private pure returns (uint256) {
-        int absoluteValue = x >= 0 ? x : -x;
+    function abs(int256 x) private pure returns (uint256) {
+        int256 absoluteValue = x >= 0 ? x : -x;
         return uint256(absoluteValue);
     }
 }

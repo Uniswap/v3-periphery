@@ -46,6 +46,77 @@ describe('NonfungiblePositionManager', () => {
     ;({ nftDescriptor, tokens } = await loadFixture(nftDescriptorFixture))
   })
 
+  describe('constructTokenURI', () => {
+    it('returns the valid JSON string with min and max ticks', async () => {
+      let token0 = tokens[0].address
+      let token1 = tokens[1].address
+      let tickLower = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
+      let tickUpper = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
+      let token0Symbol = await tokens[0].symbol()
+      let token1Symbol = await tokens[1].symbol()
+      let fee = 3000
+      let liquidity = 123456
+      let poolAddress = `0x${"b".repeat(40)}`
+
+      let uri = await nftDescriptor.constructTokenURI({
+        token0,
+        token1,
+        tickLower,
+        tickUpper,
+        token0Symbol,
+        token1Symbol,
+        fee,
+        liquidity,
+        poolAddress
+      })
+      expect(uri).to.equal(
+        `data:application/json,{\
+"name":"Uniswap V3 - 0.3% - ${token0Symbol}/${token1Symbol} - 0.0000000000000000000000000000000000000029387<>338490000000000000000000000000000000000", \
+"description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
+\\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}"}`
+      )
+    })
+
+    it('returns the valid JSON string with mid ticks', async () => {
+      let token0 = tokens[0].address
+      let token1 = tokens[1].address
+      let tickLower = -10
+      let tickUpper = 10
+      let token0Symbol = await tokens[0].symbol()
+      let token1Symbol = await tokens[1].symbol()
+      let fee = 3000
+      let liquidity = 123456789
+      let poolAddress = `0x${"b".repeat(40)}`
+
+      let uri = await nftDescriptor.constructTokenURI({
+        token0,
+        token1,
+        tickLower,
+        tickUpper,
+        token0Symbol,
+        token1Symbol,
+        fee,
+        liquidity,
+        poolAddress
+      })
+      expect(uri).to.equal(
+        `data:application/json,{\
+"name":"Uniswap V3 - 0.3% - ${token0Symbol}/${token1Symbol} - 0.99900<>1.0010", \
+"description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
+\\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}"}`
+      )
+    })
+  })
+
+  describe('addressToString', () => {
+    it('returns the correct string for a given address', async () => {
+      let addressStr = await nftDescriptor.addressToString(`0x${"1234abcdef".repeat(4)}`)
+      expect(addressStr).to.eq('0x1234abcdef1234abcdef1234abcdef1234abcdef')
+      addressStr = await nftDescriptor.addressToString(`0x${"1".repeat(40)}`)
+      expect(addressStr).to.eq(`0x${"1".repeat(40)}`)
+    })
+  })
+
   describe('fixedPointToDecimalString', () => {
     describe('returns the correct string for', () => {
       it('the highest possible price', async () => {
