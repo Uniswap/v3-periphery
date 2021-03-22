@@ -20,9 +20,7 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
         returns (
             uint96 nonce,
             address operator,
-            address token0,
-            address token1,
-            uint24 fee,
+            address pool,
             int24 tickLower,
             int24 tickUpper,
             uint128 liquidity,

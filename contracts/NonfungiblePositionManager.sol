@@ -9,6 +9,7 @@ import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 import './interfaces/INonfungiblePositionManager.sol';
 import './interfaces/INonfungibleTokenPositionDescriptor.sol';
 import './libraries/PositionKey.sol';
+import './libraries/PoolAddress.sol';
 import './base/LiquidityManagement.sol';
 import './base/PeripheryImmutableState.sol';
 import './base/Multicall.sol';
@@ -33,10 +34,8 @@ contract NonfungiblePositionManager is
         uint96 nonce;
         // the address that is approved for spending this token
         address operator;
-        // the immutable pool key of the position
-        address token0;
-        address token1;
-        uint24 fee;
+        // the address of the Uniswap V3 Pool with which this position is connected
+        address pool;
         // the tick range of the position
         int24 tickLower;
         int24 tickUpper;
@@ -49,6 +48,9 @@ contract NonfungiblePositionManager is
         uint128 tokensOwed0;
         uint128 tokensOwed1;
     }
+
+    /// @dev Cached pool keys, to save on SSTOREs for position data
+    mapping(address => PoolAddress.PoolKey) private cachedPoolKeys;
 
     /// @inheritdoc INonfungiblePositionManager
     mapping(uint256 => Position) public override positions;
@@ -121,9 +123,7 @@ contract NonfungiblePositionManager is
         positions[tokenId] = Position({
             nonce: 0,
             operator: address(0),
-            token0: params.token0,
-            token1: params.token1,
-            fee: params.fee,
+            pool: address(pool),
             tickLower: params.tickLower,
             tickUpper: params.tickUpper,
             liquidity: params.amount,
@@ -131,6 +131,13 @@ contract NonfungiblePositionManager is
             feeGrowthInside1LastX128: feeGrowthInside1LastX128,
             tokensOwed0: 0,
             tokensOwed1: 0
+        });
+
+        // idempotent set
+        cachedPoolKeys[address(pool)] = PoolAddress.PoolKey({
+            token0: params.token0,
+            token1: params.token1,
+            fee: params.fee
         });
     }
 
@@ -158,12 +165,14 @@ contract NonfungiblePositionManager is
         require(amount > 0);
         Position storage position = positions[tokenId];
 
+        PoolAddress.PoolKey memory poolKey = cachedPoolKeys[position.pool];
+
         IUniswapV3Pool pool;
         (amount0, amount1, pool) = addLiquidity(
             AddLiquidityParams({
-                token0: position.token0,
-                token1: position.token1,
-                fee: position.fee,
+                token0: poolKey.token0,
+                token1: poolKey.token1,
+                fee: poolKey.fee,
                 tickLower: position.tickLower,
                 tickUpper: position.tickUpper,
                 amount: amount,
@@ -216,8 +225,7 @@ contract NonfungiblePositionManager is
         require(amount > 0);
         Position storage position = positions[tokenId];
 
-        PoolAddress.PoolKey memory poolKey =
-            PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee});
+        PoolAddress.PoolKey memory poolKey = cachedPoolKeys[position.pool];
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
         (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, amount);
 
@@ -262,8 +270,8 @@ contract NonfungiblePositionManager is
         require(amount0Max > 0 || amount1Max > 0);
         Position storage position = positions[tokenId];
 
-        PoolAddress.PoolKey memory poolKey =
-            PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee});
+        PoolAddress.PoolKey memory poolKey = cachedPoolKeys[position.pool];
+
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
 
         (uint128 tokensOwed0, uint128 tokensOwed1) = (position.tokensOwed0, position.tokensOwed1);
