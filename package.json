@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
-    "@uniswap/v3-core": "^1.0.0-beta.10"
+    "@uniswap/v3-core": "^1.0.0-rc.0"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
