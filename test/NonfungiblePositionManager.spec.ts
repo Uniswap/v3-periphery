@@ -286,7 +286,31 @@ describe('NonfungiblePositionManager', () => {
       await nft.multicall([mintData, unwrapWETH9Data], { value: expandTo18Decimals(1) })
     })
 
-    it('gas ticks already used', async () => {
+    it('gas first mint for pool', async () => {
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await snapshotGasCost(
+        nft.mint({
+          token0: tokens[0].address,
+          token1: tokens[1].address,
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          fee: FeeAmount.MEDIUM,
+          recipient: wallet.address,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
+          amount: 15,
+          deadline: 10,
+        })
+      )
+    })
+
+    it('gas mint on same ticks', async () => {
       await nft.createAndInitializePoolIfNecessary(
         tokens[0].address,
         tokens[1].address,
@@ -314,7 +338,7 @@ describe('NonfungiblePositionManager', () => {
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           fee: FeeAmount.MEDIUM,
-          recipient: other.address,
+          recipient: wallet.address,
           amount0Max: constants.MaxUint256,
           amount1Max: constants.MaxUint256,
           amount: 15,
@@ -323,7 +347,7 @@ describe('NonfungiblePositionManager', () => {
       )
     })
 
-    it('gas first mint for ticks', async () => {
+    it('gas mint for same pool, different ticks', async () => {
       await nft.createAndInitializePoolIfNecessary(
         tokens[0].address,
         tokens[1].address,
@@ -331,14 +355,27 @@ describe('NonfungiblePositionManager', () => {
         encodePriceSqrt(1, 1)
       )
 
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
+        recipient: other.address,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
+        amount: 15,
+        deadline: 10,
+      })
+
       await snapshotGasCost(
         nft.mint({
           token0: tokens[0].address,
           token1: tokens[1].address,
-          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]) + TICK_SPACINGS[FeeAmount.MEDIUM],
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]) - TICK_SPACINGS[FeeAmount.MEDIUM],
           fee: FeeAmount.MEDIUM,
-          recipient: other.address,
+          recipient: wallet.address,
           amount0Max: constants.MaxUint256,
           amount1Max: constants.MaxUint256,
           amount: 15,

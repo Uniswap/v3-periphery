@@ -16,9 +16,11 @@ exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] 
 
 exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `181827`;
 
-exports[`NonfungiblePositionManager #mint gas first mint for ticks 1`] = `547157`;
+exports[`NonfungiblePositionManager #mint gas first mint for pool 1`] = `547157`;
 
-exports[`NonfungiblePositionManager #mint gas ticks already used 1`] = `361742`;
+exports[`NonfungiblePositionManager #mint gas mint for same pool, different ticks 1`] = `442157`;
+
+exports[`NonfungiblePositionManager #mint gas mint on same ticks 1`] = `376742`;
 
 exports[`NonfungiblePositionManager #permit owned by eoa gas 1`] = `60124`;
 
