@@ -34,8 +34,8 @@ contract NonfungiblePositionManager is
         uint96 nonce;
         // the address that is approved for spending this token
         address operator;
-        // the address of the Uniswap V3 Pool with which this position is connected
-        address pool;
+        // the ID of the pool with which this token is connected
+        uint80 poolId;
         // the tick range of the position
         int24 tickLower;
         int24 tickUpper;
@@ -49,14 +49,20 @@ contract NonfungiblePositionManager is
         uint128 tokensOwed1;
     }
 
-    /// @dev Cached pool keys, to save on SSTOREs for position data
-    mapping(address => PoolAddress.PoolKey) private cachedPoolKeys;
+    /// @dev IDs of pools assigned by this contract
+    mapping(address => uint80) private poolIds;
+
+    /// @dev Pool keys by pool ID, to save on SSTOREs for position data
+    /// @inheritdoc INonfungiblePositionManager
+    mapping(uint80 => PoolAddress.PoolKey) public override poolIdToPoolKey;
 
     /// @inheritdoc INonfungiblePositionManager
     mapping(uint256 => Position) public override positions;
 
     /// @dev The ID of the next token that will be minted. Skips 0
-    uint256 private _nextId = 1;
+    uint176 private _nextId = 1;
+    /// @dev The ID of the next pool that is used for the first time. Skips 0
+    uint80 private _nextPoolId = 1;
 
     address public immutable tokenDescriptor;
 
@@ -85,6 +91,15 @@ contract NonfungiblePositionManager is
             if (sqrtPriceX96Existing == 0) {
                 IUniswapV3Pool(pool).initialize(sqrtPriceX96);
             }
+        }
+    }
+
+    /// @dev Caches a pool key
+    function cachePoolKey(address pool, PoolAddress.PoolKey memory poolKey) private returns (uint80 poolId) {
+        poolId = poolIds[pool];
+        if (poolId == 0) {
+            poolIds[pool] = (poolId = _nextPoolId++);
+            poolIdToPoolKey[poolId] = poolKey;
         }
     }
 
@@ -120,10 +135,17 @@ contract NonfungiblePositionManager is
         bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);
         (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
 
+        // idempotent set
+        uint80 poolId =
+            cachePoolKey(
+                address(pool),
+                PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee})
+            );
+
         positions[tokenId] = Position({
             nonce: 0,
             operator: address(0),
-            pool: address(pool),
+            poolId: poolId,
             tickLower: params.tickLower,
             tickUpper: params.tickUpper,
             liquidity: params.amount,
@@ -131,13 +153,6 @@ contract NonfungiblePositionManager is
             feeGrowthInside1LastX128: feeGrowthInside1LastX128,
             tokensOwed0: 0,
             tokensOwed1: 0
-        });
-
-        // idempotent set
-        cachedPoolKeys[address(pool)] = PoolAddress.PoolKey({
-            token0: params.token0,
-            token1: params.token1,
-            fee: params.fee
         });
     }
 
@@ -165,7 +180,7 @@ contract NonfungiblePositionManager is
         require(amount > 0);
         Position storage position = positions[tokenId];
 
-        PoolAddress.PoolKey memory poolKey = cachedPoolKeys[position.pool];
+        PoolAddress.PoolKey memory poolKey = poolIdToPoolKey[position.poolId];
 
         IUniswapV3Pool pool;
         (amount0, amount1, pool) = addLiquidity(
@@ -225,7 +240,7 @@ contract NonfungiblePositionManager is
         require(amount > 0);
         Position storage position = positions[tokenId];
 
-        PoolAddress.PoolKey memory poolKey = cachedPoolKeys[position.pool];
+        PoolAddress.PoolKey memory poolKey = poolIdToPoolKey[position.poolId];
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
         (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, amount);
 
@@ -270,7 +285,7 @@ contract NonfungiblePositionManager is
         require(amount0Max > 0 || amount1Max > 0);
         Position storage position = positions[tokenId];
 
-        PoolAddress.PoolKey memory poolKey = cachedPoolKeys[position.pool];
+        PoolAddress.PoolKey memory poolKey = poolIdToPoolKey[position.poolId];
 
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
 

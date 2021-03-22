@@ -7,6 +7,7 @@ import '@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol';
 
 import './IERC721Permit.sol';
 import './IPeripheryImmutableState.sol';
+import '../libraries/PoolAddress.sol';
 
 /// @title Non-fungible token for positions
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
@@ -20,7 +21,7 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
         returns (
             uint96 nonce,
             address operator,
-            address pool,
+            uint80 poolId,
             int24 tickLower,
             int24 tickUpper,
             uint128 liquidity,
@@ -28,6 +29,16 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
             uint256 feeGrowthInside1LastX128,
             uint128 tokensOwed0,
             uint128 tokensOwed1
+        );
+
+    /// @notice Returns the pool key corresponding to a given pool ID
+    function poolIdToPoolKey(uint80 poolId)
+        external
+        view
+        returns (
+            address token0,
+            address token1,
+            uint24 fee
         );
 
     struct MintParams {

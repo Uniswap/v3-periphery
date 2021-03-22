@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.5.0;
+pragma solidity =0.7.6;
+pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
@@ -17,9 +18,18 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         override
         returns (string memory)
     {
-        (, , address poolAddress, , , , , , , ) = positionManager.positions(tokenId);
+        (, , uint80 poolId, , , , , , , ) = positionManager.positions(tokenId);
 
-        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        require(poolId != 0, 'Invalid token ID');
+
+        (address token0, address token1, uint24 fee) = positionManager.poolIdToPoolKey(poolId);
+
+        address factory = positionManager.factory();
+
+        IUniswapV3Pool pool =
+            IUniswapV3Pool(
+                PoolAddress.computeAddress(factory, PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee}))
+            );
 
         // todo: compute name and description from details about the position and the pool
         string memory name = 'Uniswap V3 Position';
