@@ -18,7 +18,7 @@ exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `181827`;
 
 exports[`NonfungiblePositionManager #mint gas first mint for ticks 1`] = `547157`;
 
-exports[`NonfungiblePositionManager #mint gas ticks already used 1`] = `547157`;
+exports[`NonfungiblePositionManager #mint gas ticks already used 1`] = `361742`;
 
 exports[`NonfungiblePositionManager #permit owned by eoa gas 1`] = `60124`;
 

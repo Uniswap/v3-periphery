@@ -294,6 +294,19 @@ describe('NonfungiblePositionManager', () => {
         encodePriceSqrt(1, 1)
       )
 
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
+        recipient: other.address,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
+        amount: 15,
+        deadline: 10,
+      })
+
       await snapshotGasCost(
         nft.mint({
           token0: tokens[0].address,
@@ -322,8 +335,8 @@ describe('NonfungiblePositionManager', () => {
         nft.mint({
           token0: tokens[0].address,
           token1: tokens[1].address,
-          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]) + TICK_SPACINGS[FeeAmount.MEDIUM],
-          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]) - TICK_SPACINGS[FeeAmount.MEDIUM],
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           fee: FeeAmount.MEDIUM,
           recipient: other.address,
           amount0Max: constants.MaxUint256,
