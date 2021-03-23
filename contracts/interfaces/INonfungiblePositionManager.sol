@@ -15,13 +15,16 @@ import '../libraries/PoolAddress.sol';
 interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metadata, IERC721Enumerable, IERC721Permit {
     /// @notice Returns the position information associated with a given token ID.
     /// @param tokenId The ID of the token that represents the position
+    /// @dev Throws if the token ID is not valid.
     function positions(uint256 tokenId)
         external
         view
         returns (
             uint96 nonce,
             address operator,
-            uint80 poolId,
+            address token0,
+            address token1,
+            uint24 fee,
             int24 tickLower,
             int24 tickUpper,
             uint128 liquidity,
@@ -29,16 +32,6 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
             uint256 feeGrowthInside1LastX128,
             uint128 tokensOwed0,
             uint128 tokensOwed1
-        );
-
-    /// @notice Returns the pool key corresponding to a given pool ID
-    function poolIdToPoolKey(uint80 poolId)
-        external
-        view
-        returns (
-            address token0,
-            address token1,
-            uint24 fee
         );
 
     struct MintParams {

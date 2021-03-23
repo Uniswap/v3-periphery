@@ -228,7 +228,9 @@ describe('NonfungiblePositionManager', () => {
       expect(await nft.balanceOf(other.address)).to.eq(1)
       expect(await nft.tokenOfOwnerByIndex(other.address, 0)).to.eq(1)
       const {
-        poolId,
+        token0,
+        token1,
+        fee,
         tickLower,
         tickUpper,
         liquidity,
@@ -237,8 +239,6 @@ describe('NonfungiblePositionManager', () => {
         feeGrowthInside0LastX128,
         feeGrowthInside1LastX128,
       } = await nft.positions(1)
-      expect(poolId).to.eq(1)
-      const { token0, token1, fee } = await nft.poolIdToPoolKey(1)
       expect(token0).to.eq(tokens[0].address)
       expect(token1).to.eq(tokens[1].address)
       expect(fee).to.eq(FeeAmount.MEDIUM)
@@ -628,11 +628,7 @@ describe('NonfungiblePositionManager', () => {
       await nft.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
       await nft.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128)
       await nft.connect(other).burn(tokenId)
-      const { liquidity, poolId, tokensOwed0, tokensOwed1 } = await nft.positions(tokenId)
-      expect(poolId).to.eq(0)
-      expect(liquidity).to.eq(0)
-      expect(tokensOwed0).to.eq(0)
-      expect(tokensOwed1).to.eq(0)
+      await expect(nft.positions(tokenId)).to.be.revertedWith('Invalid token ID')
     })
 
     it('gas', async () => {

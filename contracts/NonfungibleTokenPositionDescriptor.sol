@@ -18,17 +18,14 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         override
         returns (string memory)
     {
-        (, , uint80 poolId, , , , , , , ) = positionManager.positions(tokenId);
-
-        require(poolId != 0, 'Invalid token ID');
-
-        (address token0, address token1, uint24 fee) = positionManager.poolIdToPoolKey(poolId);
-
-        address factory = positionManager.factory();
+        (, , address token0, address token1, uint24 fee, , , , , , , ) = positionManager.positions(tokenId);
 
         IUniswapV3Pool pool =
             IUniswapV3Pool(
-                PoolAddress.computeAddress(factory, PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee}))
+                PoolAddress.computeAddress(
+                    positionManager.factory(),
+                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
+                )
             );
 
         // todo: compute name and description from details about the position and the pool
