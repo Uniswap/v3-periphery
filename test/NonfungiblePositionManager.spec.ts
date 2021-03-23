@@ -228,9 +228,9 @@ describe('NonfungiblePositionManager', () => {
       expect(await nft.balanceOf(other.address)).to.eq(1)
       expect(await nft.tokenOfOwnerByIndex(other.address, 0)).to.eq(1)
       const {
+        fee,
         token0,
         token1,
-        fee,
         tickLower,
         tickUpper,
         liquidity,
