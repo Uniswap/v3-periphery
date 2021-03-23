@@ -42,14 +42,14 @@ abstract contract SelfPermit {
     /// @dev The `owner` is always msg.sender and the `spender` is always address(this)
     function selfPermitAllowed(
         address token,
-        uint256 value,
-        uint256 deadline,
+        uint256 nonce,
+        uint256 expiry,
         bool allowed,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) public payable {
-        IERC20PermitAllowed(token).permit(msg.sender, address(this), value, deadline, allowed, v, r, s);
+        IERC20PermitAllowed(token).permit(msg.sender, address(this), nonce, expiry, allowed, v, r, s);
     }
 
     /// @notice Permits this contract to spend the sender's tokens for permit signatures that have the `allowed` parameter
@@ -57,14 +57,14 @@ abstract contract SelfPermit {
     /// Can be used instead of #selfPermitAllowed to prevent calls from failing due to a frontrun of a call to #selfPermitAllowed
     function selfPermitAllowedIfNecessary(
         address token,
-        uint256 value,
-        uint256 deadline,
+        uint256 nonce,
+        uint256 expiry,
         bool allowed,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) external payable {
-        if (IERC20(token).allowance(msg.sender, address(this)) < value)
-            IERC20PermitAllowed(token).permit(msg.sender, address(this), value, deadline, allowed, v, r, s);
+        if (IERC20(token).allowance(msg.sender, address(this)) < type(uint256).max)
+            selfPermitAllowed(token, nonce, expiry, allowed, v, r, s);
     }
 }
