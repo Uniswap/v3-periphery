@@ -38,6 +38,7 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                     token1: token1,
                     tickLower: tickLower,
                     tickUpper: tickUpper,
+                    tickSpacing: pool.tickSpacing(),
                     token0Symbol: IERC20Metadata(token0).symbol(),
                     token1Symbol: IERC20Metadata(token1).symbol(),
                     fee: fee,

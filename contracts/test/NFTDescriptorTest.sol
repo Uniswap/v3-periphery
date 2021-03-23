@@ -13,6 +13,10 @@ contract NFTDescriptorTest {
         return NFTDescriptor.constructTokenURI(params);
     }
 
+    function tickToDecimalString(int24 tick, int24 tickSpacing) public pure returns (string memory) {
+        return NFTDescriptor.tickToDecimalString(tick, tickSpacing);
+    }
+
     function fixedPointToDecimalString(uint160 sqrtRatioX96) public pure returns (string memory) {
         return NFTDescriptor.fixedPointToDecimalString(sqrtRatioX96);
     }

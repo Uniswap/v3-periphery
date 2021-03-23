@@ -23,6 +23,7 @@ library NFTDescriptor {
         address token0;
         int24 tickLower;
         int24 tickUpper;
+        int24 tickSpacing;
         string token0Symbol;
         string token1Symbol;
         uint24 fee;
@@ -41,9 +42,9 @@ library NFTDescriptor {
                     '/',
                     params.token1Symbol,
                     ' - ',
-                    fixedPointToDecimalString(TickMath.getSqrtRatioAtTick(params.tickLower)),
+                    tickToDecimalString(params.tickLower, params.tickSpacing),
                     '<>',
-                    fixedPointToDecimalString(TickMath.getSqrtRatioAtTick(params.tickUpper))
+                    tickToDecimalString(params.tickUpper, params.tickSpacing)
                 )
             );
         string memory description =
@@ -70,9 +71,18 @@ library NFTDescriptor {
         return _uint.toHexString(20);
     }
 
+    function tickToDecimalString(int24 tick, int24 tickSpacing) internal pure returns (string memory) {
+      if (tick == (TickMath.MIN_TICK / tickSpacing) * tickSpacing) {
+        return 'MIN';
+      } else if (tick == (TickMath.MAX_TICK / tickSpacing) * tickSpacing) {
+        return 'MAX';
+      } else {
+        return fixedPointToDecimalString(TickMath.getSqrtRatioAtTick(tick));
+      }
+    }
+
     // @notice Returns string that includes first 5 significant figures of a decimal number
     // @param sqrtRatioX96 a sqrt price
-    // Based on https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Strings.sol#L14
     // TODO: consider token decimals
     function fixedPointToDecimalString(uint160 sqrtRatioX96) internal pure returns (string memory) {
         uint256 value = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
