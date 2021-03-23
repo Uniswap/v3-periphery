@@ -7,6 +7,7 @@ import '@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol';
 
 import './IERC721Permit.sol';
 import './IPeripheryImmutableState.sol';
+import '../libraries/PoolAddress.sol';
 
 /// @title Non-fungible token for positions
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
@@ -14,6 +15,7 @@ import './IPeripheryImmutableState.sol';
 interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metadata, IERC721Enumerable, IERC721Permit {
     /// @notice Returns the position information associated with a given token ID.
     /// @param tokenId The ID of the token that represents the position
+    /// @dev Throws if the token ID is not valid.
     function positions(uint256 tokenId)
         external
         view

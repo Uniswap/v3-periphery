@@ -628,13 +628,7 @@ describe('NonfungiblePositionManager', () => {
       await nft.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
       await nft.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128)
       await nft.connect(other).burn(tokenId)
-      const { liquidity, token0, token1, fee, tokensOwed0, tokensOwed1 } = await nft.positions(tokenId)
-      expect(token0).to.eq(constants.AddressZero)
-      expect(token1).to.eq(constants.AddressZero)
-      expect(fee).to.eq(fee)
-      expect(liquidity).to.eq(0)
-      expect(tokensOwed0).to.eq(0)
-      expect(tokensOwed1).to.eq(0)
+      await expect(nft.positions(tokenId)).to.be.revertedWith('Invalid token ID')
     })
 
     it('gas', async () => {
