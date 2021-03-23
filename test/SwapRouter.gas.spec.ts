@@ -1,5 +1,5 @@
 import { Fixture } from 'ethereum-waffle'
-import { constants, Contract, ContractTransaction } from 'ethers'
+import { constants, ContractTransaction } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { IUniswapV3Pool, IWETH9, MockTimeSwapRouter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
