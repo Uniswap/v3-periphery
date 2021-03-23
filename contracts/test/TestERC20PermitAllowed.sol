@@ -18,7 +18,7 @@ contract TestERC20PermitAllowed is TestERC20, IERC20PermitAllowed {
         bytes32 r,
         bytes32 s
     ) external override {
-        require(this.nonces(holder) == nonce, 'wrong nonce');
+        require(this.nonces(holder) == nonce, 'TestERC20PermitAllowed::permit: wrong nonce');
         permit(holder, spender, allowed ? type(uint256).max : 0, expiry, v, r, s);
     }
 }

@@ -124,10 +124,31 @@ describe('SelfPermit', () => {
       const { v, r, s } = await getPermitSignature(wallet, token, router.address, constants.MaxUint256)
 
       expect(await token.allowance(wallet.address, router.address)).to.be.eq(0)
-      await expect(router.selfPermitAllowed(token.address, 0, constants.MaxUint256, true, v, r, s))
+      await expect(router.selfPermitAllowed(token.address, 0, constants.MaxUint256, v, r, s))
         .to.emit(token, 'Approval')
         .withArgs(wallet.address, router.address, constants.MaxUint256)
       expect(await token.allowance(wallet.address, router.address)).to.be.eq(constants.MaxUint256)
+    })
+
+    it('fails if permit is submitted externally', async () => {
+      const { v, r, s } = await getPermitSignature(wallet, token, router.address, constants.MaxUint256)
+
+      expect(await token.allowance(wallet.address, router.address)).to.be.eq(0)
+      await token['permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32)'](
+        wallet.address,
+        router.address,
+        0,
+        constants.MaxUint256,
+        true,
+        v,
+        r,
+        s
+      )
+      expect(await token.allowance(wallet.address, router.address)).to.be.eq(constants.MaxUint256)
+
+      await expect(router.selfPermitAllowed(token.address, 0, constants.MaxUint256, v, r, s)).to.be.revertedWith(
+        'TestERC20PermitAllowed::permit: wrong nonce'
+      )
     })
   })
 
@@ -136,7 +157,7 @@ describe('SelfPermit', () => {
       const { v, r, s } = await getPermitSignature(wallet, token, router.address, constants.MaxUint256)
 
       expect(await token.allowance(wallet.address, router.address)).to.eq(0)
-      await expect(router.selfPermitAllowedIfNecessary(token.address, 0, constants.MaxUint256, true, v, r, s))
+      await expect(router.selfPermitAllowedIfNecessary(token.address, 0, constants.MaxUint256, v, r, s))
         .to.emit(token, 'Approval')
         .withArgs(wallet.address, router.address, constants.MaxUint256)
       expect(await token.allowance(wallet.address, router.address)).to.eq(constants.MaxUint256)
@@ -147,10 +168,30 @@ describe('SelfPermit', () => {
 
       expect(await token.allowance(wallet.address, router.address)).to.be.eq(0)
       await token.approve(router.address, constants.MaxUint256)
-      await expect(
-        router.selfPermitAllowedIfNecessary(token.address, 0, constants.MaxUint256, true, v, r, s)
-      ).to.not.emit(token, 'Approval')
+      await expect(router.selfPermitAllowedIfNecessary(token.address, 0, constants.MaxUint256, v, r, s)).to.not.emit(
+        token,
+        'Approval'
+      )
       expect(await token.allowance(wallet.address, router.address)).to.eq(constants.MaxUint256)
+    })
+
+    it('does not fail if permit is submitted externally', async () => {
+      const { v, r, s } = await getPermitSignature(wallet, token, router.address, constants.MaxUint256)
+
+      expect(await token.allowance(wallet.address, router.address)).to.be.eq(0)
+      await token['permit(address,address,uint256,uint256,bool,uint8,bytes32,bytes32)'](
+        wallet.address,
+        router.address,
+        0,
+        constants.MaxUint256,
+        true,
+        v,
+        r,
+        s
+      )
+      expect(await token.allowance(wallet.address, router.address)).to.be.eq(constants.MaxUint256)
+
+      await router.selfPermitAllowedIfNecessary(token.address, 0, constants.MaxUint256, v, r, s)
     })
   })
 })
