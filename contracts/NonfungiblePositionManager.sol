@@ -63,14 +63,15 @@ contract NonfungiblePositionManager is
     /// @dev The ID of the next pool that is used for the first time. Skips 0
     uint80 private _nextPoolId = 1;
 
-    address public immutable tokenDescriptor;
+    /// @dev The address of the token descriptor contract, which handles generating token URIs for position tokens
+    address private immutable _tokenDescriptor;
 
     constructor(
         address _factory,
         address _WETH9,
-        address _tokenDescriptor
+        address _tokenDescriptor_
     ) ERC721Permit('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS', '1') PeripheryImmutableState(_factory, _WETH9) {
-        tokenDescriptor = _tokenDescriptor;
+        _tokenDescriptor = _tokenDescriptor_;
     }
 
     /// @inheritdoc INonfungiblePositionManager
@@ -201,7 +202,7 @@ contract NonfungiblePositionManager is
 
     function tokenURI(uint256 tokenId) public view override(ERC721, IERC721Metadata) returns (string memory) {
         require(_exists(tokenId));
-        return INonfungibleTokenPositionDescriptor(tokenDescriptor).tokenURI(this, tokenId);
+        return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId);
     }
 
     // save bytecode by removing implementation of unused method

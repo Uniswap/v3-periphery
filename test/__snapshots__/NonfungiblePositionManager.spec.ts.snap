@@ -22,14 +22,14 @@ exports[`NonfungiblePositionManager #mint gas mint for same pool, different tick
 
 exports[`NonfungiblePositionManager #mint gas mint on same ticks 1`] = `336105`;
 
-exports[`NonfungiblePositionManager #permit owned by eoa gas 1`] = `60124`;
+exports[`NonfungiblePositionManager #permit owned by eoa gas 1`] = `60147`;
 
-exports[`NonfungiblePositionManager #permit owned by verifying contract gas 1`] = `63824`;
+exports[`NonfungiblePositionManager #permit owned by verifying contract gas 1`] = `63847`;
 
 exports[`NonfungiblePositionManager #transferFrom gas 1`] = `84209`;
 
 exports[`NonfungiblePositionManager #transferFrom gas comes from approved 1`] = `75409`;
 
-exports[`NonfungiblePositionManager bytecode size 1`] = `23200`;
+exports[`NonfungiblePositionManager bytecode size 1`] = `23116`;
 
-exports[`NonfungiblePositionManager multicall exit gas 1`] = `170871`;
+exports[`NonfungiblePositionManager multicall exit gas 1`] = `170848`;

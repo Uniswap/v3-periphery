@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, constants } from 'ethers'
+import { BigNumberish, constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
@@ -726,6 +726,11 @@ describe('NonfungiblePositionManager', () => {
         const { v, r, s } = await getPermitNFTSignature(other, nft, wallet.address, tokenId, 1)
         await nft.permit(wallet.address, tokenId, 1, v, r, s)
         await expect(nft.permit(wallet.address, tokenId, 1, v, r, s)).to.be.reverted
+      })
+
+      it('fails with invalid signature', async () => {
+        const { v, r, s } = await getPermitNFTSignature(wallet, nft, wallet.address, tokenId, 1)
+        await expect(nft.permit(wallet.address, tokenId, 1, v + 3, r, s)).to.be.revertedWith('Invalid signature')
       })
 
       it('fails with signature not from owner', async () => {
