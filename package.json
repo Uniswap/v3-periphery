@@ -3,7 +3,7 @@
   "description": "🎚 Peripheral smart contracts for interacting with Uniswap V3",
   "license": "GPL-2.0-or-later",
   "publishConfig": {
-    "access": "restricted"
+    "access": "public"
   },
   "version": "1.0.0-beta.10",
   "homepage": "https://uniswap.org",
