@@ -64,7 +64,7 @@ abstract contract SelfPermit {
         bytes32 r,
         bytes32 s
     ) external payable {
-        if (IERC20(token).allowance(msg.sender, address(this)) < type(uint256).max)
+        if (allowed && IERC20(token).allowance(msg.sender, address(this)) < type(uint256).max)
             selfPermitAllowed(token, nonce, expiry, allowed, v, r, s);
     }
 }
