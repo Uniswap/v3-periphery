@@ -2,7 +2,7 @@ import { constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
-import { MockTimeSwapRouter, TestERC20 } from '../typechain'
+import { MockTimeSwapRouter, TestERC20PermitAllowed } from '../typechain'
 import { expect } from 'chai'
 import { getPermitSignature } from './shared/permit'
 import { v3RouterFixture } from './shared/externalFixtures'
@@ -12,11 +12,11 @@ describe('SelfPermit', () => {
   const [wallet, other] = wallets
 
   const fixture: Fixture<{
-    token: TestERC20
+    token: TestERC20PermitAllowed
     router: MockTimeSwapRouter
   }> = async (wallets, provider) => {
-    const factory = await ethers.getContractFactory('TestERC20')
-    const token = (await factory.deploy(0)) as TestERC20
+    const tokenFactory = await ethers.getContractFactory('TestERC20PermitAllowed')
+    const token = (await tokenFactory.deploy(0)) as TestERC20PermitAllowed
 
     const { router } = await v3RouterFixture(wallets, provider)
 
@@ -26,7 +26,7 @@ describe('SelfPermit', () => {
     }
   }
 
-  let token: TestERC20
+  let token: TestERC20PermitAllowed
   let router: MockTimeSwapRouter
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
@@ -45,7 +45,15 @@ describe('SelfPermit', () => {
     const { v, r, s } = await getPermitSignature(wallet, token, other.address, value)
 
     expect(await token.allowance(wallet.address, other.address)).to.be.eq(0)
-    await token.permit(wallet.address, other.address, value, constants.MaxUint256, v, r, s)
+    await token['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
+      wallet.address,
+      other.address,
+      value,
+      constants.MaxUint256,
+      v,
+      r,
+      s
+    )
     expect(await token.allowance(wallet.address, other.address)).to.be.eq(value)
   })
 
@@ -64,7 +72,15 @@ describe('SelfPermit', () => {
       const { v, r, s } = await getPermitSignature(wallet, token, router.address, value)
 
       expect(await token.allowance(wallet.address, router.address)).to.be.eq(0)
-      await token.permit(wallet.address, router.address, value, constants.MaxUint256, v, r, s)
+      await token['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
+        wallet.address,
+        router.address,
+        value,
+        constants.MaxUint256,
+        v,
+        r,
+        s
+      )
       expect(await token.allowance(wallet.address, router.address)).to.be.eq(value)
 
       await expect(router.selfPermit(token.address, value, constants.MaxUint256, v, r, s)).to.be.revertedWith(
@@ -88,10 +104,53 @@ describe('SelfPermit', () => {
       const { v, r, s } = await getPermitSignature(wallet, token, router.address, value)
 
       expect(await token.allowance(wallet.address, router.address)).to.be.eq(0)
-      await token.permit(wallet.address, router.address, value, constants.MaxUint256, v, r, s)
+      await token['permit(address,address,uint256,uint256,uint8,bytes32,bytes32)'](
+        wallet.address,
+        router.address,
+        value,
+        constants.MaxUint256,
+        v,
+        r,
+        s
+      )
       expect(await token.allowance(wallet.address, router.address)).to.be.eq(value)
 
       await router.selfPermitIfNecessary(token.address, value, constants.MaxUint256, v, r, s)
+    })
+  })
+
+  describe('#selfPermitAllowed', () => {
+    it('works', async () => {
+      const { v, r, s } = await getPermitSignature(wallet, token, router.address, constants.MaxUint256)
+
+      expect(await token.allowance(wallet.address, router.address)).to.be.eq(0)
+      await expect(router.selfPermitAllowed(token.address, 0, constants.MaxUint256, true, v, r, s))
+        .to.emit(token, 'Approval')
+        .withArgs(wallet.address, router.address, constants.MaxUint256)
+      expect(await token.allowance(wallet.address, router.address)).to.be.eq(constants.MaxUint256)
+    })
+  })
+
+  describe('#selfPermitAllowedIfNecessary', () => {
+    it('works', async () => {
+      const { v, r, s } = await getPermitSignature(wallet, token, router.address, constants.MaxUint256)
+
+      expect(await token.allowance(wallet.address, router.address)).to.eq(0)
+      await expect(router.selfPermitAllowedIfNecessary(token.address, 0, constants.MaxUint256, true, v, r, s))
+        .to.emit(token, 'Approval')
+        .withArgs(wallet.address, router.address, constants.MaxUint256)
+      expect(await token.allowance(wallet.address, router.address)).to.eq(constants.MaxUint256)
+    })
+
+    it('skips if already max approved', async () => {
+      const { v, r, s } = await getPermitSignature(wallet, token, router.address, constants.MaxUint256)
+
+      expect(await token.allowance(wallet.address, router.address)).to.be.eq(0)
+      await token.approve(router.address, constants.MaxUint256)
+      await expect(
+        router.selfPermitAllowedIfNecessary(token.address, 0, constants.MaxUint256, true, v, r, s)
+      ).to.not.emit(token, 'Approval')
+      expect(await token.allowance(wallet.address, router.address)).to.eq(constants.MaxUint256)
     })
   })
 })
