@@ -15,7 +15,7 @@ interface IV3Migrator is IMulticall, ISelfPermit {
         uint160 sqrtPriceX96
     ) external;
 
-      struct MigrateParams {
+    struct MigrateParams {
         address pair; // the Uniswap v2-compatible pair
         uint256 liquidityV2;
         uint24 fee;

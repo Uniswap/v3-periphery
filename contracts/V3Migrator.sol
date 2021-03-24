@@ -17,11 +17,7 @@ import './base/Multicall.sol';
 import './base/SelfPermit.sol';
 
 /// @title Uniswap V3 Migrator
-contract V3Migrator is
-    IV3Migrator,
-    Multicall,
-    SelfPermit
-{
+contract V3Migrator is IV3Migrator, Multicall, SelfPermit {
     address public immutable factory;
     address public immutable nonfungiblePositionManager;
 
@@ -55,22 +51,24 @@ contract V3Migrator is
         address token1 = IUniswapV2Pair(params.pair).token1();
 
         // calculate the uniswap v3 pool address
-        IUniswapV3Pool pool = IUniswapV3Pool(
-            PoolAddress.computeAddress(
-                factory,
-                PoolAddress.PoolKey({token0: token0, token1: token1, fee: params.fee})
-            )
-        );
+        IUniswapV3Pool pool =
+            IUniswapV3Pool(
+                PoolAddress.computeAddress(
+                    factory,
+                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: params.fee})
+                )
+            );
 
         // calculate the maximum amount of v3 liquidity that can be added
         (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
-        uint128 liquidityV3 = LiquidityAmounts.getLiquidityForAmounts(
-            sqrtRatioX96,
-            TickMath.getSqrtRatioAtTick(params.tickLower),
-            TickMath.getSqrtRatioAtTick(params.tickUpper),
-            amount0V2,
-            amount1V2
-        );
+        uint128 liquidityV3 =
+            LiquidityAmounts.getLiquidityForAmounts(
+                sqrtRatioX96,
+                TickMath.getSqrtRatioAtTick(params.tickLower),
+                TickMath.getSqrtRatioAtTick(params.tickUpper),
+                amount0V2,
+                amount1V2
+            );
 
         // approve the position manager up to the maximum token amounts
         IERC20(token0).approve(nonfungiblePositionManager, amount0V2);
@@ -78,20 +76,21 @@ contract V3Migrator is
 
         // mint v3 position
         // TODO should we support increaseLiquidity here?
-        (, uint256 amount0V3, uint256 amount1V3) = INonfungiblePositionManager(nonfungiblePositionManager).mint(
-            INonfungiblePositionManager.MintParams({
-                token0: token0,
-                token1: token1,
-                fee: params.fee,
-                tickLower: params.tickLower,
-                tickUpper: params.tickUpper,
-                amount: liquidityV3,
-                amount0Max: params.amount0Max,
-                amount1Max: params.amount1Max,
-                recipient: params.recipient,
-                deadline: params.deadline
-            })
-        );
+        (, uint256 amount0V3, uint256 amount1V3) =
+            INonfungiblePositionManager(nonfungiblePositionManager).mint(
+                INonfungiblePositionManager.MintParams({
+                    token0: token0,
+                    token1: token1,
+                    fee: params.fee,
+                    tickLower: params.tickLower,
+                    tickUpper: params.tickUpper,
+                    amount: liquidityV3,
+                    amount0Max: params.amount0Max,
+                    amount1Max: params.amount1Max,
+                    recipient: params.recipient,
+                    deadline: params.deadline
+                })
+            );
 
         // if necessary, refund dust and clear allowance
         if (amount0V3 < amount0V2) {
