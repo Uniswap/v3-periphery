@@ -24,10 +24,12 @@ contract TickLens is ITickLens {
         liquidity = IUniswapV3Pool(pool).liquidity();
     }
 
-    function getPopulatedTicksInWord(
-        address pool,
-        int16 tickBitmapIndex
-    ) public view override returns (PopulatedTick[] memory populatedTicks) {
+    function getPopulatedTicksInWord(address pool, int16 tickBitmapIndex)
+        public
+        view
+        override
+        returns (PopulatedTick[] memory populatedTicks)
+    {
         // fetch bitmap
         uint256 bitmap = IUniswapV3Pool(pool).tickBitmap(tickBitmapIndex);
 
