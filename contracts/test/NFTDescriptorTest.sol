@@ -7,18 +7,27 @@ import '../libraries/NFTDescriptor.sol';
 contract NFTDescriptorTest {
     function constructTokenURI(NFTDescriptor.ConstructTokenURIParams calldata params)
         public
-        view
+        pure
         returns (string memory)
     {
         return NFTDescriptor.constructTokenURI(params);
     }
 
-    function tickToDecimalString(int24 tick, int24 tickSpacing) public pure returns (string memory) {
-        return NFTDescriptor.tickToDecimalString(tick, tickSpacing);
+    function tickToDecimalString(
+        int24 tick,
+        int24 tickSpacing,
+        uint8 token0Decimals,
+        uint8 token1Decimals
+    ) public pure returns (string memory) {
+        return NFTDescriptor.tickToDecimalString(tick, tickSpacing, token0Decimals, token1Decimals);
     }
 
-    function fixedPointToDecimalString(uint160 sqrtRatioX96) public pure returns (string memory) {
-        return NFTDescriptor.fixedPointToDecimalString(sqrtRatioX96);
+    function fixedPointToDecimalString(
+        uint160 sqrtRatioX96,
+        uint8 token0Decimals,
+        uint8 token1Decimals
+    ) public pure returns (string memory) {
+        return NFTDescriptor.fixedPointToDecimalString(sqrtRatioX96, token0Decimals, token1Decimals);
     }
 
     function feeToPercentString(uint24 fee) public pure returns (string memory) {

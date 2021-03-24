@@ -36,11 +36,13 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                 NFTDescriptor.ConstructTokenURIParams({
                     token0: token0,
                     token1: token1,
+                    token0Symbol: IERC20Metadata(token0).symbol(),
+                    token1Symbol: IERC20Metadata(token1).symbol(),
+                    token0Decimals: IERC20Metadata(token0).decimals(),
+                    token1Decimals: IERC20Metadata(token1).decimals(),
                     tickLower: tickLower,
                     tickUpper: tickUpper,
                     tickSpacing: pool.tickSpacing(),
-                    token0Symbol: IERC20Metadata(token0).symbol(),
-                    token1Symbol: IERC20Metadata(token1).symbol(),
                     fee: fee,
                     liquidity: liquidity,
                     poolAddress: address(pool)

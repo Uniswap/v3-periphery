@@ -14,6 +14,7 @@ library NFTDescriptor {
     using TickMath for int24;
     using Strings for uint256;
     using SafeMath for uint256;
+    using SafeMath for uint160;
     using SafeMath for uint8;
     using SignedSafeMath for int256;
     using HexStrings for uint256;
@@ -21,17 +22,19 @@ library NFTDescriptor {
     struct ConstructTokenURIParams {
         address token1;
         address token0;
+        string token0Symbol;
+        string token1Symbol;
+        uint8 token0Decimals;
+        uint8 token1Decimals;
         int24 tickLower;
         int24 tickUpper;
         int24 tickSpacing;
-        string token0Symbol;
-        string token1Symbol;
         uint24 fee;
         uint256 liquidity;
         address poolAddress;
     }
 
-    function constructTokenURI(ConstructTokenURIParams memory params) internal view returns (string memory) {
+    function constructTokenURI(ConstructTokenURIParams memory params) internal pure returns (string memory) {
         string memory name =
             string(
                 abi.encodePacked(
@@ -42,9 +45,19 @@ library NFTDescriptor {
                     '/',
                     params.token1Symbol,
                     ' - ',
-                    tickToDecimalString(params.tickLower, params.tickSpacing),
+                    tickToDecimalString(
+                        params.tickLower,
+                        params.tickSpacing,
+                        params.token0Decimals,
+                        params.token1Decimals
+                    ),
                     '<>',
-                    tickToDecimalString(params.tickUpper, params.tickSpacing)
+                    tickToDecimalString(
+                        params.tickUpper,
+                        params.tickSpacing,
+                        params.token0Decimals,
+                        params.token1Decimals
+                    )
                 )
             );
         string memory description =
@@ -71,20 +84,29 @@ library NFTDescriptor {
         return _uint.toHexString(20);
     }
 
-    function tickToDecimalString(int24 tick, int24 tickSpacing) internal pure returns (string memory) {
-      if (tick == (TickMath.MIN_TICK / tickSpacing) * tickSpacing) {
-        return 'MIN';
-      } else if (tick == (TickMath.MAX_TICK / tickSpacing) * tickSpacing) {
-        return 'MAX';
-      } else {
-        return fixedPointToDecimalString(TickMath.getSqrtRatioAtTick(tick));
-      }
+    function tickToDecimalString(
+        int24 tick,
+        int24 tickSpacing,
+        uint8 token0Decimals,
+        uint8 token1Decimals
+    ) internal pure returns (string memory) {
+        if (tick == (TickMath.MIN_TICK / tickSpacing) * tickSpacing) {
+            return 'MIN';
+        } else if (tick == (TickMath.MAX_TICK / tickSpacing) * tickSpacing) {
+            return 'MAX';
+        } else {
+            return fixedPointToDecimalString(TickMath.getSqrtRatioAtTick(tick), token0Decimals, token1Decimals);
+        }
     }
 
     // @notice Returns string that includes first 5 significant figures of a decimal number
     // @param sqrtRatioX96 a sqrt price
-    // TODO: consider token decimals
-    function fixedPointToDecimalString(uint160 sqrtRatioX96) internal pure returns (string memory) {
+    function fixedPointToDecimalString(
+        uint160 sqrtRatioX96,
+        uint8 token0Decimals,
+        uint8 token1Decimals
+    ) internal pure returns (string memory) {
+        sqrtRatioX96 = adjustForDecimalPrecision(sqrtRatioX96, token0Decimals, token1Decimals);
         uint256 value = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
 
         bool priceBelow1;
@@ -178,6 +200,33 @@ library NFTDescriptor {
         }
 
         return string(buffer);
+    }
+
+    function adjustForDecimalPrecision(
+        uint160 sqrtRatioX96,
+        uint8 token0Decimals,
+        uint8 token1Decimals
+    ) private pure returns (uint160) {
+        uint256 sqrt10X128 = 1076067327063303206878105757264492625226;
+        uint256 difference = decimalDifference(token0Decimals, token1Decimals);
+        if (difference > 0 && difference <= 18) {
+            if (token0Decimals > token1Decimals) {
+                sqrtRatioX96 = uint160(sqrtRatioX96.mul(10**(difference.div(2))));
+                if (difference % 2 == 1) {
+                    sqrtRatioX96 = uint160(FullMath.mulDiv(sqrtRatioX96, sqrt10X128, 1 << 128));
+                }
+            } else {
+                sqrtRatioX96 = uint160(sqrtRatioX96.div(10**(difference.div(2))));
+                if (difference % 2 == 1) {
+                    sqrtRatioX96 = uint160(FullMath.mulDiv(sqrtRatioX96, sqrt10X128, 1 << 128));
+                }
+            }
+        }
+        return sqrtRatioX96;
+    }
+
+    function decimalDifference(uint8 token0Decimals, uint8 token1Decimals) private pure returns (uint256) {
+        return abs(int256(token0Decimals).sub(int256(token1Decimals)));
     }
 
     function abs(int256 x) private pure returns (uint256) {
