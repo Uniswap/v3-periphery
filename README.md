@@ -19,7 +19,7 @@ For example:
 import {
   abi as SWAP_ROUTER_ABI,
   bytecode as SWAP_ROUTER_BYTECODE,
-} from '@uniswap/v3-core/artifacts/contracts/SwapRouter.sol/SwapRouter.json'
+} from '@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json'
 
 // deploy the bytecode
 ```
