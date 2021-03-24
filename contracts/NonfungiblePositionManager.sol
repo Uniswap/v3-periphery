@@ -113,7 +113,7 @@ contract NonfungiblePositionManager is
         );
     }
 
-    /// @notice Either creates a new pool and initializes it, or initializes an existing, uninitialized pool
+    /// @inheritdoc INonfungiblePositionManager
     function createAndInitializePoolIfNecessary(
         address tokenA,
         address tokenB,

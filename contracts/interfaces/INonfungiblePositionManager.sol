@@ -34,6 +34,8 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
             uint128 tokensOwed1
         );
 
+    /// @notice Creates a new pool if it does not exist, then initializes if not initialized
+    /// @dev This method can be bundled with mint for the first mint of a pool to create, initialize a pool and mint at the same time
     function createAndInitializePoolIfNecessary(
         address tokenA,
         address tokenB,

@@ -5,7 +5,7 @@ import '../interfaces/IPeripheryImmutableState.sol';
 
 /// @title Router immutable state
 /// @notice Immutable state that the router needs
-contract PeripheryImmutableState is IPeripheryImmutableState {
+abstract contract PeripheryImmutableState is IPeripheryImmutableState {
     /// @inheritdoc IPeripheryImmutableState
     address public immutable override factory;
     /// @inheritdoc IPeripheryImmutableState
