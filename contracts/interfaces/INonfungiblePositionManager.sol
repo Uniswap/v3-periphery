@@ -34,6 +34,13 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
             uint128 tokensOwed1
         );
 
+    function createAndInitializePoolIfNecessary(
+        address tokenA,
+        address tokenB,
+        uint24 fee,
+        uint160 sqrtPriceX96
+    ) external payable returns (address pool);
+
     struct MintParams {
         address token0;
         address token1;
