@@ -24,49 +24,31 @@ contract TickLens is ITickLens {
         liquidity = IUniswapV3Pool(pool).liquidity();
     }
 
-    function getPopulatedTicks(
+    function getPopulatedTicksInWord(
         address pool,
-        int24 tickLower,
-        int24 tickUpper
-    ) external view override returns (PopulatedTick[] memory populatedTicks) {
-        require(tickLower < tickUpper);
-
-        int24 tickSpacing = IUniswapV3Pool(pool).tickSpacing();
-
-        int16 indexLower = int16((tickLower / tickSpacing) >> 8);
-        int16 indexUpper = int16((tickUpper / tickSpacing) >> 8);
-
-        uint256 numberOfBitmaps = uint256(int256(indexUpper) - indexLower + 1);
-        uint256[] memory bitmaps = new uint256[](numberOfBitmaps);
-
-        // fetch all bitmaps
-        for (int256 i = indexLower; i <= indexUpper; i++) {
-            bitmaps[uint256(i - indexLower)] = IUniswapV3Pool(pool).tickBitmap(int16(i));
-        }
+        int16 tickBitmapIndex
+    ) public view override returns (PopulatedTick[] memory populatedTicks) {
+        // fetch bitmap
+        uint256 bitmap = IUniswapV3Pool(pool).tickBitmap(tickBitmapIndex);
 
         // calculate the number of populated ticks
         uint256 numberOfPopulatedTicks;
-        for (uint256 i = 0; i < numberOfBitmaps; i++) {
-            uint256 bitmap = bitmaps[i];
-            for (uint256 j = 0; j < 256; j++) {
-                if (bitmap & (1 << j) > 0) numberOfPopulatedTicks++;
-            }
+        for (uint256 i = 0; i < 256; i++) {
+            if (bitmap & (1 << i) > 0) numberOfPopulatedTicks++;
         }
 
         // fetch populated tick data
+        int24 tickSpacing = IUniswapV3Pool(pool).tickSpacing();
         populatedTicks = new PopulatedTick[](numberOfPopulatedTicks);
-        for (int256 i = indexLower; i <= indexUpper; i++) {
-            uint256 bitmap = bitmaps[uint256(i - indexLower)];
-            for (uint256 j = 0; j < 256; j++) {
-                if (bitmap & (1 << j) > 0) {
-                    int24 populatedTick = int24(((i << 8) + int256(j)) * tickSpacing);
-                    (uint128 liquidityGross, int128 liquidityNet, , ) = IUniswapV3Pool(pool).ticks(populatedTick);
-                    populatedTicks[--numberOfPopulatedTicks] = PopulatedTick({
-                        tick: populatedTick,
-                        liquidityNet: liquidityNet,
-                        liquidityGross: liquidityGross
-                    });
-                }
+        for (uint256 i = 0; i < 256; i++) {
+            if (bitmap & (1 << i) > 0) {
+                int24 populatedTick = int24(((tickBitmapIndex << 8) + int256(i)) * tickSpacing);
+                (uint128 liquidityGross, int128 liquidityNet, , ) = IUniswapV3Pool(pool).ticks(populatedTick);
+                populatedTicks[--numberOfPopulatedTicks] = PopulatedTick({
+                    tick: populatedTick,
+                    liquidityNet: liquidityNet,
+                    liquidityGross: liquidityGross
+                });
             }
         }
     }
