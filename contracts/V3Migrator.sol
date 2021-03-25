@@ -71,8 +71,8 @@ contract V3Migrator is IV3Migrator, Multicall, SelfPermit {
             );
 
         // approve the position manager up to the maximum token amounts
-        IERC20(token0).approve(nonfungiblePositionManager, amount0V2);
-        IERC20(token1).approve(nonfungiblePositionManager, amount1V2);
+        TransferHelper.safeApprove(token0, nonfungiblePositionManager, amount0V2);
+        TransferHelper.safeApprove(token1, nonfungiblePositionManager, amount1V2);
 
         // mint v3 position
         // TODO should we support increaseLiquidity here?

@@ -15,6 +15,7 @@ import { abi as PAIR_V2_ABI } from '@uniswap/v2-core/build/UniswapV2Pair.json'
 import { expect } from 'chai'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
+import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('V3Migrator', () => {
   const wallets = waffle.provider.getWallets()
@@ -129,6 +130,30 @@ describe('V3Migrator', () => {
       const poolAddress = await factoryV3.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
       expect(await tokens[0].balanceOf(poolAddress)).to.be.eq(9000)
       expect(await tokens[1].balanceOf(poolAddress)).to.be.eq(9000)
+    })
+
+    it('gas', async () => {
+      await migrator.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await pair.approve(migrator.address, expectedLiquidity)
+      await snapshotGasCost(
+        migrator.migrate({
+          pair: pair.address,
+          liquidityV2: expectedLiquidity,
+          fee: FeeAmount.MEDIUM,
+          tickLower: -TICK_SPACINGS[FeeAmount.MEDIUM],
+          tickUpper: TICK_SPACINGS[FeeAmount.MEDIUM],
+          amount0Max: expectedLiquidity,
+          amount1Max: expectedLiquidity,
+          recipient: wallet.address,
+          deadline: 1,
+        })
+      )
     })
   })
 })
