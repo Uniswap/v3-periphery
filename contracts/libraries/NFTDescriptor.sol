@@ -111,12 +111,12 @@ library NFTDescriptor {
 
         bool priceBelow1;
         if (sqrtRatioX96 < 2**96) {
-            // 10 ** 43 is precision needed to retreive 5 sigfigs of smallest possible price
-            value = FullMath.mulDiv(value, 10**43, 1 << 128);
+            // 10 ** 43 is precision needed to retreive 5 sigfigs of smallest possible price + 1 for rounding
+            value = FullMath.mulDiv(value, 10**44, 1 << 128);
             priceBelow1 = true;
         } else {
-            // leave precision for 4 decimal places
-            value = FullMath.mulDiv(value, 10**4, 1 << 128);
+            // leave precision for 4 decimal places + 1 place for rounding
+            value = FullMath.mulDiv(value, 10**5, 1 << 128);
         }
 
         // get digit count
@@ -126,15 +126,26 @@ library NFTDescriptor {
             digits++;
             temp /= 10;
         }
+        // don't count extra digit for rounding
+        digits = digits - 1;
+
+        // address rounding
+        (uint256 sigfigs, bool extraDigit) = sigfigsRounded(value, digits);
+        if (extraDigit) {
+            digits++;
+        }
 
         bytes memory buffer;
         uint256 sigfigIndex;
         uint256 decimalIndex;
         uint8 zerosCursor;
         uint8 zerosEnd;
+        uint8 ommittedZeros;
         if (priceBelow1) {
+            ommittedZeros = countOmmittedZeros(sigfigs);
+            sigfigs = sigfigs.div(10**ommittedZeros);
             // 7 bytes ( "0." and 5 sigfigs) + leading 0's bytes
-            buffer = new bytes(uint256(7).add(uint256(43).sub(digits)));
+            buffer = new bytes(uint256(7).add(uint256(43).sub(digits)).sub(ommittedZeros));
             zerosCursor = 2;
             zerosEnd = uint8(uint256(43).sub(digits).add(2));
             buffer[0] = '0';
@@ -158,48 +169,46 @@ library NFTDescriptor {
             buffer[zerosCursor] = bytes1(uint8(48));
         }
 
-        // reduce value to sigfigs only
-        temp = value.div((10**digits).div(10**5));
         // add sigfigs
-        while (temp != 0) {
+        while (sigfigs != 0) {
             if (decimalIndex > 0 && sigfigIndex == decimalIndex) {
                 // add decimal
                 buffer[sigfigIndex--] = '.';
             }
-            buffer[sigfigIndex--] = bytes1(uint8(uint256(48).add(temp % 10)));
-            temp /= 10;
+            buffer[sigfigIndex--] = bytes1(uint8(uint256(48).add(sigfigs % 10)));
+            sigfigs /= 10;
         }
         return string(buffer);
     }
 
-    // @notice Returns string as decimal percentage of fee amount. Only includes first sigfig of fee.
-    // @param fee fee amount
-    function feeToPercentString(uint24 fee) internal pure returns (string memory) {
-        uint24 temp = fee;
-        uint8 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
+    function sigfigsRounded(uint256 value, uint8 digits) private pure returns (uint256, bool) {
+        bool extraDigit;
+        if (digits > 5) {
+            value = value.div((10**(digits - 5)));
         }
-        uint256 decimalIndex = digits >= 5 ? 0 : 1;
-        uint256 nZeros = abs(int256(5).sub(int256(digits)));
-        bytes memory buffer = new bytes(nZeros.add(2).add(decimalIndex));
-        uint256 sigfig = uint256(fee).div(10**(digits - 1));
-        uint256 index;
+        bool roundUp = value % 10 > 4;
+        value = value.div(10);
+        if (roundUp) {
+            value = value + 1;
+        }
+        // 99999 -> 100000 gives an extra sigfig
+        if (value == 100000) {
+            value /= 10;
+            extraDigit = true;
+        }
+        return (value, extraDigit);
+    }
 
-        buffer[buffer.length - 1] = '%';
-        if (digits > 4) {
-            buffer[index++] = bytes1(uint8(uint256(48).add(sigfig % 10)));
-        } else {
-            buffer[buffer.length - 2] = bytes1(uint8(uint256(48).add(sigfig % 10)));
-            buffer[index++] = '0';
-            buffer[index++] = '.';
+    function countOmmittedZeros(uint256 sigfigs) private pure returns (uint8) {
+        uint8 count;
+        while (sigfigs > 0) {
+            if (sigfigs % 10 == 0) {
+                count++;
+                sigfigs /= 10;
+            } else {
+                return count;
+            }
         }
-        while (index <= nZeros) {
-            buffer[index++] = '0';
-        }
-
-        return string(buffer);
     }
 
     function adjustForDecimalPrecision(
@@ -232,5 +241,35 @@ library NFTDescriptor {
     function abs(int256 x) private pure returns (uint256) {
         int256 absoluteValue = x >= 0 ? x : -x;
         return uint256(absoluteValue);
+    }
+
+    // @notice Returns string as decimal percentage of fee amount. Only includes first sigfig of fee.
+    // @param fee fee amount
+    function feeToPercentString(uint24 fee) internal pure returns (string memory) {
+        uint24 temp = fee;
+        uint8 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        uint256 decimalIndex = digits >= 5 ? 0 : 1;
+        uint256 nZeros = abs(int256(5).sub(int256(digits)));
+        bytes memory buffer = new bytes(nZeros.add(2).add(decimalIndex));
+        uint256 sigfig = uint256(fee).div(10**(digits - 1));
+        uint256 index;
+
+        buffer[buffer.length - 1] = '%';
+        if (digits > 4) {
+            buffer[index++] = bytes1(uint8(uint256(48).add(sigfig % 10)));
+        } else {
+            buffer[buffer.length - 2] = bytes1(uint8(uint256(48).add(sigfig % 10)));
+            buffer[index++] = '0';
+            buffer[index++] = '.';
+        }
+        while (index <= nZeros) {
+            buffer[index++] = '0';
+        }
+
+        return string(buffer);
     }
 }

@@ -113,7 +113,7 @@ describe('NonfungiblePositionManager', () => {
       })
       expect(uri).to.equal(
         `data:application/json,{\
-"name":"Uniswap V3 - 0.3% - ${token0Symbol}/${token1Symbol} - 0.99900<>1.0010", \
+"name":"Uniswap V3 - 0.3% - ${token0Symbol}/${token1Symbol} - 0.999<>1.0010", \
 "description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
 \\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}"}`
       )
@@ -176,7 +176,7 @@ describe('NonfungiblePositionManager', () => {
       })
 
       it('returns the correct decimal string when the tick is in range', async () => {
-        expect(await nftDescriptor.tickToDecimalString(-1, tickSpacing, 18, 18)).to.equal('0.99990')
+        expect(await nftDescriptor.tickToDecimalString(-1, tickSpacing, 18, 18)).to.equal('0.9999')
       })
 
       it('returns the correct decimal string when tick is mintick for different tickspace', async () => {
@@ -217,39 +217,40 @@ describe('NonfungiblePositionManager', () => {
     describe('returns the correct string for', () => {
       it('the highest possible price', async () => {
         let ratio = encodePriceSqrt(33849, 1 / 10 ** 34)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('338480000000000000000000000000000000000')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('338490000000000000000000000000000000000')
       })
 
       it('large numbers', async () => {
         let ratio = encodePriceSqrt(25811, 1 / 10 ** 11)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('2581000000000000')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('2581100000000000')
         ratio = encodePriceSqrt(17662, 1 / 10 ** 5)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('1766100000')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('1766200000')
       })
 
       it('exactly 5 sigfig whole number', async () => {
         let ratio = encodePriceSqrt(42026, 1)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('42025')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('42026')
       })
 
       it('when the decimal is at index 4', async () => {
         let ratio = encodePriceSqrt(12087, 10)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('1208.6')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('1208.7')
       })
 
       it('when the decimal is at index 3', async () => {
         let ratio = encodePriceSqrt(12087, 100)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('120.86')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('120.87')
       })
 
       it('when the decimal is at index 2', async () => {
         let ratio = encodePriceSqrt(12087, 1000)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('12.086')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('12.087')
       })
 
       it('when the decimal is at index 1', async () => {
         let ratio = encodePriceSqrt(12345, 10000)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('1.2344')
+        let bla = await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)
+        expect((await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18))).to.eq('1.2345')
       })
 
       it('when sigfigs have trailing 0s after the decimal', async () => {
@@ -259,14 +260,14 @@ describe('NonfungiblePositionManager', () => {
 
       it('when there are exactly 5 numbers after the decimal', async () => {
         let ratio = encodePriceSqrt(12345, 100000)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('0.12344')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('0.12345')
       })
 
       it('very small numbers', async () => {
         let ratio = encodePriceSqrt(38741, 10 ** 20)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('0.00000000000000038740')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('0.00000000000000038741')
         ratio = encodePriceSqrt(88498, 10 ** 35)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('0.00000000000000000000000000000088497')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('0.00000000000000000000000000000088498')
       })
 
       it('smallest number', async () => {
@@ -285,11 +286,12 @@ describe('NonfungiblePositionManager', () => {
 
       describe('when token0 has more precision decimals than token1', () => {
         it('returns the correct string when the decimal difference is even', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 6)).to.eq((1e12).toString())
+          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 16)).to.eq('100.00')
         })
 
         it('returns the correct string when the decimal difference is odd', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 7)).to.eq('99999000000')
+          let tenRatio = encodePriceSqrt(10, 1)
+          expect(await nftDescriptor.fixedPointToDecimalString(tenRatio, 18, 17)).to.eq('100.00')
         })
 
         it('does not account for higher token0 precision if difference is more than 18', async () => {
@@ -299,11 +301,11 @@ describe('NonfungiblePositionManager', () => {
 
       describe('when token1 has more precision decimals than token0', () => {
         it('returns the correct string when the decimal difference is even', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 10, 18)).to.eq('0.0000000099999')
+          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 10, 18)).to.eq('0.00000001')
         })
 
         it('returns the correct string when the decimal difference is odd', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 7, 18)).to.eq('0.00000000099999')
+          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 7, 18)).to.eq('0.000000001')
         })
 
         it('does not account for higher token1 precision if difference is more than 18', async () => {
