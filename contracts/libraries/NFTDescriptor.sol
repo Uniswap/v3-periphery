@@ -134,6 +134,56 @@ library NFTDescriptor {
         }
     }
 
+    function sigfigsRounded(uint256 value, uint8 digits) private pure returns (uint256, bool) {
+        bool extraDigit;
+        if (digits > 5) {
+            value = value.div((10**(digits - 5)));
+        }
+        bool roundUp = value % 10 > 4;
+        value = value.div(10);
+        if (roundUp) {
+            value = value + 1;
+        }
+        // 99999 -> 100000 gives an extra sigfig
+        if (value == 100000) {
+            value /= 10;
+            extraDigit = true;
+        }
+        return (value, extraDigit);
+    }
+
+    function adjustForDecimalPrecision(
+        uint160 sqrtRatioX96,
+        uint8 token0Decimals,
+        uint8 token1Decimals
+    ) private pure returns (uint160) {
+        uint256 sqrt10X128 = 1076067327063303206878105757264492625226;
+        uint256 difference = decimalDifference(token0Decimals, token1Decimals);
+        if (difference > 0 && difference <= 18) {
+            if (token0Decimals > token1Decimals) {
+                sqrtRatioX96 = uint160(sqrtRatioX96.mul(10**(difference.div(2))));
+                if (difference % 2 == 1) {
+                    sqrtRatioX96 = uint160(FullMath.mulDiv(sqrtRatioX96, sqrt10X128, 1 << 128));
+                }
+            } else {
+                sqrtRatioX96 = uint160(sqrtRatioX96.div(10**(difference.div(2))));
+                if (difference % 2 == 1) {
+                    sqrtRatioX96 = uint160(FullMath.mulDiv(sqrtRatioX96, sqrt10X128, 1 << 128));
+                }
+            }
+        }
+        return sqrtRatioX96;
+    }
+
+    function decimalDifference(uint8 token0Decimals, uint8 token1Decimals) private pure returns (uint256) {
+        return abs(int256(token0Decimals).sub(int256(token1Decimals)));
+    }
+
+    function abs(int256 x) private pure returns (uint256) {
+        int256 absoluteValue = x >= 0 ? x : -x;
+        return uint256(absoluteValue);
+    }
+
     // @notice Returns string that includes first 5 significant figures of a decimal number
     // @param sqrtRatioX96 a sqrt price
     function fixedPointToDecimalString(
@@ -194,56 +244,6 @@ library NFTDescriptor {
         params.isPercent = false;
 
         return generateDecimalString(params);
-    }
-
-    function sigfigsRounded(uint256 value, uint8 digits) private pure returns (uint256, bool) {
-        bool extraDigit;
-        if (digits > 5) {
-            value = value.div((10**(digits - 5)));
-        }
-        bool roundUp = value % 10 > 4;
-        value = value.div(10);
-        if (roundUp) {
-            value = value + 1;
-        }
-        // 99999 -> 100000 gives an extra sigfig
-        if (value == 100000) {
-            value /= 10;
-            extraDigit = true;
-        }
-        return (value, extraDigit);
-    }
-
-    function adjustForDecimalPrecision(
-        uint160 sqrtRatioX96,
-        uint8 token0Decimals,
-        uint8 token1Decimals
-    ) private pure returns (uint160) {
-        uint256 sqrt10X128 = 1076067327063303206878105757264492625226;
-        uint256 difference = decimalDifference(token0Decimals, token1Decimals);
-        if (difference > 0 && difference <= 18) {
-            if (token0Decimals > token1Decimals) {
-                sqrtRatioX96 = uint160(sqrtRatioX96.mul(10**(difference.div(2))));
-                if (difference % 2 == 1) {
-                    sqrtRatioX96 = uint160(FullMath.mulDiv(sqrtRatioX96, sqrt10X128, 1 << 128));
-                }
-            } else {
-                sqrtRatioX96 = uint160(sqrtRatioX96.div(10**(difference.div(2))));
-                if (difference % 2 == 1) {
-                    sqrtRatioX96 = uint160(FullMath.mulDiv(sqrtRatioX96, sqrt10X128, 1 << 128));
-                }
-            }
-        }
-        return sqrtRatioX96;
-    }
-
-    function decimalDifference(uint8 token0Decimals, uint8 token1Decimals) private pure returns (uint256) {
-        return abs(int256(token0Decimals).sub(int256(token1Decimals)));
-    }
-
-    function abs(int256 x) private pure returns (uint256) {
-        int256 absoluteValue = x >= 0 ? x : -x;
-        return uint256(absoluteValue);
     }
 
     // @notice Returns string as decimal percentage of fee amount. Only includes first sigfig of fee.
