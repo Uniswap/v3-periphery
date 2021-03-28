@@ -79,6 +79,41 @@ library NFTDescriptor {
             string(abi.encodePacked('data:application/json,{"name":"', name, '", "description":"', description, '"}'));
     }
 
+    struct DecimalStringParams {
+        uint256 sigfigs;
+        uint8 bufferLength;
+        uint8 sigfigIndex;
+        uint8 decimalIndex;
+        uint8 zerosCursor;
+        uint8 zerosEnd;
+        bool isLessThanOne;
+        bool isPercent;
+    }
+
+    function generateDecimalString(DecimalStringParams memory params) private pure returns (string memory) {
+        bytes memory buffer = new bytes(params.bufferLength);
+        if (params.isPercent) {
+            buffer[buffer.length - 1] = '%';
+        }
+        if (params.isLessThanOne) {
+            buffer[0] = '0';
+            buffer[1] = '.';
+        }
+
+        // add leading/trailing 0's
+        for (uint256 zerosCursor = params.zerosCursor; zerosCursor < params.zerosEnd; zerosCursor++) {
+            buffer[zerosCursor] = bytes1(uint8(48));
+        }
+        while (params.sigfigs > 0) {
+            if (params.decimalIndex > 0 && params.sigfigIndex == params.decimalIndex) {
+                buffer[params.sigfigIndex--] = '.';
+            }
+            buffer[params.sigfigIndex--] = bytes1(uint8(uint256(48).add(params.sigfigs % 10)));
+            params.sigfigs /= 10;
+        }
+        return string(buffer);
+    }
+
     function addressToString(address addr) internal pure returns (string memory) {
         uint256 _uint = (uint256(addr));
         return _uint.toHexString(20);
@@ -135,47 +170,30 @@ library NFTDescriptor {
             digits++;
         }
 
-        bytes memory buffer;
-        uint256 sigfigIndex;
-        uint256 decimalIndex;
-        uint8 zerosCursor;
-        uint8 zerosEnd;
+        DecimalStringParams memory params;
         if (priceBelow1) {
             // 7 bytes ( "0." and 5 sigfigs) + leading 0's bytes
-            buffer = new bytes(uint256(7).add(uint256(43).sub(digits)));
-            zerosCursor = 2;
-            zerosEnd = uint8(uint256(43).sub(digits).add(2));
-            buffer[0] = '0';
-            buffer[1] = '.';
-            sigfigIndex = buffer.length.sub(1);
+            params.bufferLength = uint8(uint8(7).add(uint8(43).sub(digits)));
+            params.zerosCursor = 2;
+            params.zerosEnd = uint8(uint256(43).sub(digits).add(2));
+            params.sigfigIndex = uint8(params.bufferLength.sub(1));
         } else if (digits >= 9) {
             // no decimal in price string
-            buffer = new bytes(digits.sub(4));
-            zerosCursor = 5;
-            zerosEnd = uint8(buffer.length);
-            sigfigIndex = 4;
+            params.bufferLength = uint8(digits.sub(4));
+            params.zerosCursor = 5;
+            params.zerosEnd = uint8(params.bufferLength);
+            params.sigfigIndex = 4;
         } else {
             // 5 sigfigs surround decimal
-            buffer = new bytes(6);
-            sigfigIndex = 5;
-            decimalIndex = digits.sub(5).add(1);
+            params.bufferLength = 6;
+            params.sigfigIndex = 5;
+            params.decimalIndex = uint8(digits.sub(5).add(1));
         }
+        params.sigfigs = sigfigs;
+        params.isLessThanOne = priceBelow1;
+        params.isPercent = false;
 
-        // add trailing/leading 0's for very large or very small numbers
-        for (zerosCursor; zerosCursor < zerosEnd; zerosCursor++) {
-            buffer[zerosCursor] = bytes1(uint8(48));
-        }
-
-        // add sigfigs
-        while (sigfigs != 0) {
-            if (decimalIndex > 0 && sigfigIndex == decimalIndex) {
-                // add decimal
-                buffer[sigfigIndex--] = '.';
-            }
-            buffer[sigfigIndex--] = bytes1(uint8(uint256(48).add(sigfigs % 10)));
-            sigfigs /= 10;
-        }
-        return string(buffer);
+        return generateDecimalString(params);
     }
 
     function sigfigsRounded(uint256 value, uint8 digits) private pure returns (uint256, bool) {
@@ -233,56 +251,41 @@ library NFTDescriptor {
     function feeToPercentString(uint24 fee) internal pure returns (string memory) {
         uint24 temp = fee;
         uint256 digits;
-        uint256 numSigfigs;
+        uint8 numSigfigs;
         while (temp != 0) {
             if (numSigfigs > 0) {
-              // count all digits preceding digits
-              numSigfigs++;
+                // count all digits preceding digits
+                numSigfigs++;
             } else if (temp % 10 != 0) {
-              numSigfigs++;
+                numSigfigs++;
             }
             digits++;
             temp /= 10;
         }
 
-
-        uint256 decimalPlace = (digits >= 5 && digits.sub(numSigfigs) >= 4 ) ? 0 : 1;
-        uint256 sigfigs = uint256(fee).div(10**(digits.sub(numSigfigs)));
-        bytes memory buffer;
-        uint256 sigfigIndex;
+        DecimalStringParams memory params;
         uint256 nZeros;
-        uint256 zerosCursor;
-        uint256 zerosEnd;
         if (digits >= 5) {
             // > 1
+            uint256 decimalPlace = digits.sub(numSigfigs) >= 4 ? 0 : 1;
             nZeros = digits.sub(5) < (numSigfigs - 1) ? 0 : digits.sub(5).sub(numSigfigs - 1);
-            zerosCursor = numSigfigs;
-            buffer = new bytes(nZeros.add(numSigfigs + 1).add(decimalPlace));
-            zerosEnd = zerosCursor.add(nZeros);
-            sigfigIndex = zerosCursor.sub(1).add(decimalPlace);
+            params.zerosCursor = numSigfigs;
+            params.zerosEnd = uint8(params.zerosCursor.add(nZeros));
+            params.sigfigIndex = uint8(params.zerosCursor.sub(1).add(decimalPlace));
+            params.bufferLength = uint8(nZeros.add(numSigfigs + 1).add(decimalPlace));
         } else {
             // < 1
             nZeros = uint256(5).sub(digits);
-            zerosCursor = 2;
-            zerosEnd = nZeros.add(zerosCursor);
-            buffer = new bytes(nZeros.add(numSigfigs + 1).add(decimalPlace));
-            sigfigIndex = (buffer.length).sub(2);
-            buffer[0] = '0';
-            buffer[1] = '.';
+            params.zerosCursor = 2;
+            params.zerosEnd = uint8(nZeros.add(params.zerosCursor));
+            params.bufferLength = uint8(nZeros.add(numSigfigs + 2));
+            params.sigfigIndex = uint8((params.bufferLength).sub(2));
+            params.isLessThanOne = true;
         }
-        buffer[buffer.length - 1] = '%';
+        params.sigfigs = uint256(fee).div(10**(digits.sub(numSigfigs)));
+        params.isPercent = true;
+        params.decimalIndex = digits > 4 ? uint8(digits.sub(4)) : 0;
 
-        // add leading/trailing 0's
-        for (zerosCursor; zerosCursor < zerosEnd; zerosCursor++) {
-            buffer[zerosCursor] = bytes1(uint8(48));
-        }
-        while (sigfigs > 0) {
-          if (digits > 4 && sigfigIndex == digits.sub(4)) {
-            buffer[sigfigIndex--] = ".";
-          }
-          buffer[sigfigIndex--] = bytes1(uint8(uint256(48).add(sigfigs % 10)));
-          sigfigs /= 10;
-        }
-        return string(buffer);
+        return generateDecimalString(params);
     }
 }
