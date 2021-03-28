@@ -7,6 +7,7 @@ import '@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol';
 
 import './IERC721Permit.sol';
 import './IPeripheryImmutableState.sol';
+import '../libraries/PoolAddress.sol';
 
 /// @title Non-fungible token for positions
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
@@ -14,6 +15,7 @@ import './IPeripheryImmutableState.sol';
 interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metadata, IERC721Enumerable, IERC721Permit {
     /// @notice Returns the position information associated with a given token ID.
     /// @param tokenId The ID of the token that represents the position
+    /// @dev Throws if the token ID is not valid.
     function positions(uint256 tokenId)
         external
         view
@@ -31,6 +33,15 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
             uint128 tokensOwed0,
             uint128 tokensOwed1
         );
+
+    /// @notice Creates a new pool if it does not exist, then initializes if not initialized
+    /// @dev This method can be bundled with mint for the first mint of a pool to create, initialize a pool and mint at the same time
+    function createAndInitializePoolIfNecessary(
+        address tokenA,
+        address tokenB,
+        uint24 fee,
+        uint160 sqrtPriceX96
+    ) external payable returns (address pool);
 
     struct MintParams {
         address token0;

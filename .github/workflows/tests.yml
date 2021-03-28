@@ -16,7 +16,6 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12.x
-          always-auth: true
           registry-url: https://registry.npmjs.org
 
       - id: yarn-cache
@@ -31,8 +30,6 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # This is required separately from yarn test because it generates the typechain definitions
       - name: Compile

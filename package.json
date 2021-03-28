@@ -3,9 +3,9 @@
   "description": "🎚 Peripheral smart contracts for interacting with Uniswap V3",
   "license": "GPL-2.0-or-later",
   "publishConfig": {
-    "access": "restricted"
+    "access": "public"
   },
-  "version": "1.0.0-beta.8",
+  "version": "1.0.0-beta.11",
   "homepage": "https://uniswap.org",
   "keywords": [
     "uniswap",
@@ -29,7 +29,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
-    "@uniswap/v3-core": "^1.0.0-beta.10"
+    "@uniswap/v2-core": "^1.0.1",
+    "@uniswap/v3-core": "^1.0.0-rc.0"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",

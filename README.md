@@ -1,5 +1,3 @@
-# ⚠️ STRICTLY CONFIDENTIAL RESEARCH ⚠️
-
 # Uniswap V3 Periphery
 
 [![Tests](https://github.com/Uniswap/uniswap-v3-periphery/workflows/Tests/badge.svg)](https://github.com/Uniswap/uniswap-v3-periphery/actions?query=workflow%3ATests)
@@ -21,7 +19,7 @@ For example:
 import {
   abi as SWAP_ROUTER_ABI,
   bytecode as SWAP_ROUTER_BYTECODE,
-} from '@uniswap/v3-core/artifacts/contracts/SwapRouter.sol/SwapRouter.json'
+} from '@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json'
 
 // deploy the bytecode
 ```

@@ -19,9 +19,8 @@ interface ITickLens {
         uint128 liquidityGross;
     }
 
-    function getPopulatedTicks(
-        address pool,
-        int24 tickLower,
-        int24 tickUpper
-    ) external view returns (PopulatedTick[] memory populatedTicks);
+    function getPopulatedTicksInWord(address pool, int16 tickBitmapIndex)
+        external
+        view
+        returns (PopulatedTick[] memory populatedTicks);
 }

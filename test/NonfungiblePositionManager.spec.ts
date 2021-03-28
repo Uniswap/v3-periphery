@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish, constants } from 'ethers'
+import { BigNumberish, constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
@@ -286,7 +286,7 @@ describe('NonfungiblePositionManager', () => {
       await nft.multicall([mintData, unwrapWETH9Data], { value: expandTo18Decimals(1) })
     })
 
-    it('gas ticks already used', async () => {
+    it('gas first mint for pool', async () => {
       await nft.createAndInitializePoolIfNecessary(
         tokens[0].address,
         tokens[1].address,
@@ -301,7 +301,7 @@ describe('NonfungiblePositionManager', () => {
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           fee: FeeAmount.MEDIUM,
-          recipient: other.address,
+          recipient: wallet.address,
           amount0Max: constants.MaxUint256,
           amount1Max: constants.MaxUint256,
           amount: 15,
@@ -310,13 +310,63 @@ describe('NonfungiblePositionManager', () => {
       )
     })
 
-    it('gas first mint for ticks', async () => {
+    it('gas mint on same ticks', async () => {
       await nft.createAndInitializePoolIfNecessary(
         tokens[0].address,
         tokens[1].address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(1, 1)
       )
+
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
+        recipient: other.address,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
+        amount: 15,
+        deadline: 10,
+      })
+
+      await snapshotGasCost(
+        nft.mint({
+          token0: tokens[0].address,
+          token1: tokens[1].address,
+          tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+          fee: FeeAmount.MEDIUM,
+          recipient: wallet.address,
+          amount0Max: constants.MaxUint256,
+          amount1Max: constants.MaxUint256,
+          amount: 15,
+          deadline: 10,
+        })
+      )
+    })
+
+    it('gas mint for same pool, different ticks', async () => {
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
+        recipient: other.address,
+        amount0Max: constants.MaxUint256,
+        amount1Max: constants.MaxUint256,
+        amount: 15,
+        deadline: 10,
+      })
 
       await snapshotGasCost(
         nft.mint({
@@ -325,7 +375,7 @@ describe('NonfungiblePositionManager', () => {
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]) + TICK_SPACINGS[FeeAmount.MEDIUM],
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]) - TICK_SPACINGS[FeeAmount.MEDIUM],
           fee: FeeAmount.MEDIUM,
-          recipient: other.address,
+          recipient: wallet.address,
           amount0Max: constants.MaxUint256,
           amount1Max: constants.MaxUint256,
           amount: 15,
@@ -578,13 +628,7 @@ describe('NonfungiblePositionManager', () => {
       await nft.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
       await nft.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128)
       await nft.connect(other).burn(tokenId)
-      const { liquidity, token0, token1, fee, tokensOwed0, tokensOwed1 } = await nft.positions(tokenId)
-      expect(token0).to.eq(constants.AddressZero)
-      expect(token1).to.eq(constants.AddressZero)
-      expect(fee).to.eq(fee)
-      expect(liquidity).to.eq(0)
-      expect(tokensOwed0).to.eq(0)
-      expect(tokensOwed1).to.eq(0)
+      await expect(nft.positions(tokenId)).to.be.revertedWith('Invalid token ID')
     })
 
     it('gas', async () => {
@@ -684,9 +728,14 @@ describe('NonfungiblePositionManager', () => {
         await expect(nft.permit(wallet.address, tokenId, 1, v, r, s)).to.be.reverted
       })
 
+      it('fails with invalid signature', async () => {
+        const { v, r, s } = await getPermitNFTSignature(wallet, nft, wallet.address, tokenId, 1)
+        await expect(nft.permit(wallet.address, tokenId, 1, v + 3, r, s)).to.be.revertedWith('Invalid signature')
+      })
+
       it('fails with signature not from owner', async () => {
         const { v, r, s } = await getPermitNFTSignature(wallet, nft, wallet.address, tokenId, 1)
-        await expect(nft.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith('Invalid signature')
+        await expect(nft.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith('Unauthorized')
       })
 
       it('fails with expired signature', async () => {
@@ -741,13 +790,13 @@ describe('NonfungiblePositionManager', () => {
       it('fails if owner contract is owned by different address', async () => {
         const { v, r, s } = await getPermitNFTSignature(other, nft, wallet.address, tokenId, 1)
         await testPositionNFTOwner.setOwner(wallet.address)
-        await expect(nft.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith('Invalid signature')
+        await expect(nft.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith('Unauthorized')
       })
 
       it('fails with signature not from owner', async () => {
         const { v, r, s } = await getPermitNFTSignature(wallet, nft, wallet.address, tokenId, 1)
         await testPositionNFTOwner.setOwner(other.address)
-        await expect(nft.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith('Invalid signature')
+        await expect(nft.permit(wallet.address, tokenId, 1, v, r, s)).to.be.revertedWith('Unauthorized')
       })
 
       it('fails with expired signature', async () => {
