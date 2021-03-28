@@ -316,7 +316,7 @@ describe('NonfungiblePositionManager', () => {
   })
 
   describe('feeToPercentString', () => {
-    it('returns the correct fee for 30', async () => {
+    it('returns the correct fee for 1', async () => {
       expect(await nftDescriptor.feeToPercentString(1)).to.eq('0.0001%')
     })
 
@@ -324,8 +324,16 @@ describe('NonfungiblePositionManager', () => {
       expect(await nftDescriptor.feeToPercentString(30)).to.eq('0.003%')
     })
 
+    it('returns the correct fee for 33', async () => {
+      expect(await nftDescriptor.feeToPercentString(33)).to.eq('0.0033%')
+    })
+
     it('returns the correct fee for 500', async () => {
       expect(await nftDescriptor.feeToPercentString(500)).to.eq('0.05%')
+    })
+
+    it('returns the correct fee for 2500', async () => {
+      expect(await nftDescriptor.feeToPercentString(2500)).to.eq('0.25%')
     })
 
     it('returns the correct fee for 3000', async () => {
@@ -336,11 +344,31 @@ describe('NonfungiblePositionManager', () => {
       expect(await nftDescriptor.feeToPercentString(10000)).to.eq('1%')
     })
 
-    it('returns the correct fee for 100000', async () => {
-      expect(await nftDescriptor.feeToPercentString(400000)).to.eq('40%')
+    it('returns the correct fee for 17000', async () => {
+      expect(await nftDescriptor.feeToPercentString(17000)).to.eq('1.7%')
     })
 
-    it('returns the correct fee for 1000000', async () => {
+    it('returns the correct fee for 100000', async () => {
+      expect(await nftDescriptor.feeToPercentString(100000)).to.eq('10%')
+    })
+
+    it('returns the correct fee for 150000', async () => {
+      expect(await nftDescriptor.feeToPercentString(150000)).to.eq('15%')
+    })
+
+    it('returns the correct fee for 102000', async () => {
+      expect(await nftDescriptor.feeToPercentString(102000)).to.eq('10.2%')
+    })
+
+    it('returns the correct fee for 10000000', async () => {
+      expect(await nftDescriptor.feeToPercentString(1000000)).to.eq('100%')
+    })
+
+    it('returns the correct fee for 10000000', async () => {
+      expect(await nftDescriptor.feeToPercentString(1005000)).to.eq('100.5%')
+    })
+
+    it('returns the correct fee for 10000000', async () => {
       expect(await nftDescriptor.feeToPercentString(10000000)).to.eq('1000%')
     })
   })

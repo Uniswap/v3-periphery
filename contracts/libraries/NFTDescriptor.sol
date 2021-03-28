@@ -232,29 +232,57 @@ library NFTDescriptor {
     // @param fee fee amount
     function feeToPercentString(uint24 fee) internal pure returns (string memory) {
         uint24 temp = fee;
-        uint8 digits;
+        uint256 digits;
+        uint256 numSigfigs;
         while (temp != 0) {
+            if (numSigfigs > 0) {
+              // count all digits preceding digits
+              numSigfigs++;
+            } else if (temp % 10 != 0) {
+              numSigfigs++;
+            }
             digits++;
             temp /= 10;
         }
-        uint256 decimalIndex = digits >= 5 ? 0 : 1;
-        uint256 nZeros = abs(int256(5).sub(int256(digits)));
-        bytes memory buffer = new bytes(nZeros.add(2).add(decimalIndex));
-        uint256 sigfig = uint256(fee).div(10**(digits - 1));
-        uint256 index;
 
-        buffer[buffer.length - 1] = '%';
-        if (digits > 4) {
-            buffer[index++] = bytes1(uint8(uint256(48).add(sigfig % 10)));
+
+        uint256 decimalPlace = (digits >= 5 && digits.sub(numSigfigs) >= 4 ) ? 0 : 1;
+        uint256 sigfigs = uint256(fee).div(10**(digits.sub(numSigfigs)));
+        bytes memory buffer;
+        uint256 sigfigIndex;
+        uint256 nZeros;
+        uint256 zerosCursor;
+        uint256 zerosEnd;
+        if (digits >= 5) {
+            // > 1
+            nZeros = digits.sub(5) < (numSigfigs - 1) ? 0 : digits.sub(5).sub(numSigfigs - 1);
+            zerosCursor = numSigfigs;
+            buffer = new bytes(nZeros.add(numSigfigs + 1).add(decimalPlace));
+            zerosEnd = zerosCursor.add(nZeros);
+            sigfigIndex = zerosCursor.sub(1).add(decimalPlace);
         } else {
-            buffer[buffer.length - 2] = bytes1(uint8(uint256(48).add(sigfig % 10)));
-            buffer[index++] = '0';
-            buffer[index++] = '.';
+            // < 1
+            nZeros = uint256(5).sub(digits);
+            zerosCursor = 2;
+            zerosEnd = nZeros.add(zerosCursor);
+            buffer = new bytes(nZeros.add(numSigfigs + 1).add(decimalPlace));
+            sigfigIndex = (buffer.length).sub(2);
+            buffer[0] = '0';
+            buffer[1] = '.';
         }
-        while (index <= nZeros) {
-            buffer[index++] = '0';
-        }
+        buffer[buffer.length - 1] = '%';
 
+        // add leading/trailing 0's
+        for (zerosCursor; zerosCursor < zerosEnd; zerosCursor++) {
+            buffer[zerosCursor] = bytes1(uint8(48));
+        }
+        while (sigfigs > 0) {
+          if (digits > 4 && sigfigIndex == digits.sub(4)) {
+            buffer[sigfigIndex--] = ".";
+          }
+          buffer[sigfigIndex--] = bytes1(uint8(uint256(48).add(sigfigs % 10)));
+          sigfigs /= 10;
+        }
         return string(buffer);
     }
 }
