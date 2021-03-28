@@ -59,7 +59,7 @@ describe('NonfungiblePositionManager', () => {
       let tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
       let fee = 3000
       let liquidity = 123456
-      let poolAddress = `0x${"b".repeat(40)}`
+      let poolAddress = `0x${'b'.repeat(40)}`
 
       let uri = await nftDescriptor.constructTokenURI({
         token0,
@@ -73,7 +73,7 @@ describe('NonfungiblePositionManager', () => {
         tickSpacing,
         fee,
         liquidity,
-        poolAddress
+        poolAddress,
       })
       expect(uri).to.equal(
         `data:application/json,{\
@@ -95,7 +95,7 @@ describe('NonfungiblePositionManager', () => {
       let tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
       let fee = 3000
       let liquidity = 123456789
-      let poolAddress = `0x${"b".repeat(40)}`
+      let poolAddress = `0x${'b'.repeat(40)}`
 
       let uri = await nftDescriptor.constructTokenURI({
         token0,
@@ -109,7 +109,7 @@ describe('NonfungiblePositionManager', () => {
         tickSpacing,
         fee,
         liquidity,
-        poolAddress
+        poolAddress,
       })
       expect(uri).to.equal(
         `data:application/json,{\
@@ -122,10 +122,10 @@ describe('NonfungiblePositionManager', () => {
 
   describe('addressToString', () => {
     it('returns the correct string for a given address', async () => {
-      let addressStr = await nftDescriptor.addressToString(`0x${"1234abcdef".repeat(4)}`)
+      let addressStr = await nftDescriptor.addressToString(`0x${'1234abcdef'.repeat(4)}`)
       expect(addressStr).to.eq('0x1234abcdef1234abcdef1234abcdef1234abcdef')
-      addressStr = await nftDescriptor.addressToString(`0x${"1".repeat(40)}`)
-      expect(addressStr).to.eq(`0x${"1".repeat(40)}`)
+      addressStr = await nftDescriptor.addressToString(`0x${'1'.repeat(40)}`)
+      expect(addressStr).to.eq(`0x${'1'.repeat(40)}`)
     })
   })
 
@@ -136,9 +136,9 @@ describe('NonfungiblePositionManager', () => {
 
     describe('when tickspacing is 10', () => {
       before(() => {
-          tickSpacing = TICK_SPACINGS[FeeAmount.LOW]
-          minTick = getMinTick(tickSpacing)
-          maxTick = getMaxTick(tickSpacing)
+        tickSpacing = TICK_SPACINGS[FeeAmount.LOW]
+        minTick = getMinTick(tickSpacing)
+        maxTick = getMaxTick(tickSpacing)
       })
 
       it('returns MIN on lowest tick', async () => {
@@ -155,16 +155,17 @@ describe('NonfungiblePositionManager', () => {
 
       it('returns the correct decimal string when tick is mintick for different tickspace', async () => {
         let otherMinTick = getMinTick(TICK_SPACINGS[FeeAmount.HIGH])
-        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18))
-          .to.equal('0.0000000000000000000000000000000000000029387')
+        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18)).to.equal(
+          '0.0000000000000000000000000000000000000029387'
+        )
       })
     })
 
     describe('when tickspacing is 60', () => {
       before(() => {
-          tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
-          minTick = getMinTick(tickSpacing)
-          maxTick = getMaxTick(tickSpacing)
+        tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
+        minTick = getMinTick(tickSpacing)
+        maxTick = getMaxTick(tickSpacing)
       })
 
       it('returns MIN on lowest tick', async () => {
@@ -181,16 +182,17 @@ describe('NonfungiblePositionManager', () => {
 
       it('returns the correct decimal string when tick is mintick for different tickspace', async () => {
         let otherMinTick = getMinTick(TICK_SPACINGS[FeeAmount.HIGH])
-        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18))
-          .to.equal('0.0000000000000000000000000000000000000029387')
+        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18)).to.equal(
+          '0.0000000000000000000000000000000000000029387'
+        )
       })
     })
 
     describe('when tickspacing is 200', () => {
       before(() => {
-          tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
-          minTick = getMinTick(tickSpacing)
-          maxTick = getMaxTick(tickSpacing)
+        tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        minTick = getMinTick(tickSpacing)
+        maxTick = getMaxTick(tickSpacing)
       })
 
       it('returns MIN on lowest tick', async () => {
@@ -207,8 +209,9 @@ describe('NonfungiblePositionManager', () => {
 
       it('returns the correct decimal string when tick is mintick for different tickspace', async () => {
         let otherMinTick = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
-        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18))
-          .to.equal('0.0000000000000000000000000000000000000029387')
+        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18)).to.equal(
+          '0.0000000000000000000000000000000000000029387'
+        )
       })
     })
   })
@@ -217,7 +220,9 @@ describe('NonfungiblePositionManager', () => {
     describe('returns the correct string for', () => {
       it('the highest possible price', async () => {
         let ratio = encodePriceSqrt(33849, 1 / 10 ** 34)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('338490000000000000000000000000000000000')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq(
+          '338490000000000000000000000000000000000'
+        )
       })
 
       it('large numbers', async () => {
@@ -250,7 +255,7 @@ describe('NonfungiblePositionManager', () => {
       it('when the decimal is at index 1', async () => {
         let ratio = encodePriceSqrt(12345, 10000)
         let bla = await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)
-        expect((await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18))).to.eq('1.2345')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('1.2345')
       })
 
       it('when sigfigs have trailing 0s after the decimal', async () => {
@@ -267,7 +272,9 @@ describe('NonfungiblePositionManager', () => {
         let ratio = encodePriceSqrt(38741, 10 ** 20)
         expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('0.00000000000000038741')
         ratio = encodePriceSqrt(88498, 10 ** 35)
-        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq('0.00000000000000000000000000000088498')
+        expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 18)).to.eq(
+          '0.00000000000000000000000000000088498'
+        )
       })
 
       it('smallest number', async () => {
