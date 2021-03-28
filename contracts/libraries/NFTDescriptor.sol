@@ -140,12 +140,9 @@ library NFTDescriptor {
         uint256 decimalIndex;
         uint8 zerosCursor;
         uint8 zerosEnd;
-        uint8 ommittedZeros;
         if (priceBelow1) {
-            ommittedZeros = countOmmittedZeros(sigfigs);
-            sigfigs = sigfigs.div(10**ommittedZeros);
             // 7 bytes ( "0." and 5 sigfigs) + leading 0's bytes
-            buffer = new bytes(uint256(7).add(uint256(43).sub(digits)).sub(ommittedZeros));
+            buffer = new bytes(uint256(7).add(uint256(43).sub(digits)));
             zerosCursor = 2;
             zerosEnd = uint8(uint256(43).sub(digits).add(2));
             buffer[0] = '0';
@@ -197,18 +194,6 @@ library NFTDescriptor {
             extraDigit = true;
         }
         return (value, extraDigit);
-    }
-
-    function countOmmittedZeros(uint256 sigfigs) private pure returns (uint8) {
-        uint8 count;
-        while (sigfigs > 0) {
-            if (sigfigs % 10 == 0) {
-                count++;
-                sigfigs /= 10;
-            } else {
-                return count;
-            }
-        }
     }
 
     function adjustForDecimalPrecision(

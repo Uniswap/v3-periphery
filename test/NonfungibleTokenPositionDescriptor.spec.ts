@@ -113,7 +113,7 @@ describe('NonfungiblePositionManager', () => {
       })
       expect(uri).to.equal(
         `data:application/json,{\
-"name":"Uniswap V3 - 0.3% - ${token0Symbol}/${token1Symbol} - 0.999<>1.0010", \
+"name":"Uniswap V3 - 0.3% - ${token0Symbol}/${token1Symbol} - 0.99900<>1.0010", \
 "description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
 \\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}"}`
       )
@@ -176,7 +176,7 @@ describe('NonfungiblePositionManager', () => {
       })
 
       it('returns the correct decimal string when the tick is in range', async () => {
-        expect(await nftDescriptor.tickToDecimalString(-1, tickSpacing, 18, 18)).to.equal('0.9999')
+        expect(await nftDescriptor.tickToDecimalString(-1, tickSpacing, 18, 18)).to.equal('0.99990')
       })
 
       it('returns the correct decimal string when tick is mintick for different tickspace', async () => {
@@ -301,11 +301,11 @@ describe('NonfungiblePositionManager', () => {
 
       describe('when token1 has more precision decimals than token0', () => {
         it('returns the correct string when the decimal difference is even', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 10, 18)).to.eq('0.00000001')
+          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 10, 18)).to.eq('0.000000010000')
         })
 
         it('returns the correct string when the decimal difference is odd', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 7, 18)).to.eq('0.000000001')
+          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 7, 18)).to.eq('0.0000000010000')
         })
 
         it('does not account for higher token1 precision if difference is more than 18', async () => {
