@@ -37,6 +37,14 @@ describe('Multicall', async () => {
       expect(await multicall.paid()).to.eq(3)
     })
 
+    it('msg.value used twice', async () => {
+      await multicall.multicall(
+        [multicall.interface.encodeFunctionData('pays'), multicall.interface.encodeFunctionData('pays')],
+        { value: 3 }
+      )
+      expect(await multicall.paid()).to.eq(6)
+    })
+
     it('msg.sender', async () => {
       expect(await multicall.returnSender()).to.eq(wallets[0].address)
     })
