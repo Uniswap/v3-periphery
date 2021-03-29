@@ -257,7 +257,7 @@ library NFTDescriptor {
         return generateDecimalString(params);
     }
 
-    // @notice Returns string as decimal percentage of fee amount. Only includes first sigfig of fee.
+    // @notice Returns string as decimal percentage of fee amount.
     // @param fee fee amount
     function feeToPercentString(uint24 fee) internal pure returns (string memory) {
         if (fee == 0) {
