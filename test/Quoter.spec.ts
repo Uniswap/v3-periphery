@@ -90,9 +90,9 @@ describe('Quoter', () => {
       await createPool(tokens[1].address, tokens[2].address)
     })
 
-    describe('#exactInput', () => {
+    describe('#quoteExactInput', () => {
       it('0 -> 1', async () => {
-        const quote = await quoter.callStatic.exactInput(
+        const quote = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
           3
         )
@@ -101,7 +101,7 @@ describe('Quoter', () => {
       })
 
       it('1 -> 0', async () => {
-        const quote = await quoter.callStatic.exactInput(
+        const quote = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
           3
         )
@@ -110,7 +110,7 @@ describe('Quoter', () => {
       })
 
       it('0 -> 1 -> 2', async () => {
-        const quote = await quoter.callStatic.exactInput(
+        const quote = await quoter.callStatic.quoteExactInput(
           encodePath(
             tokens.map((token) => token.address),
             [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
@@ -122,7 +122,7 @@ describe('Quoter', () => {
       })
 
       it('2 -> 1 -> 0', async () => {
-        const quote = await quoter.callStatic.exactInput(
+        const quote = await quoter.callStatic.quoteExactInput(
           encodePath(tokens.map((token) => token.address).reverse(), [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
           5
         )
@@ -131,9 +131,9 @@ describe('Quoter', () => {
       })
     })
 
-    describe('#exactOutput', () => {
+    describe('#quoteExactOutput', () => {
       it('0 -> 1', async () => {
-        const quote = await quoter.callStatic.exactOutput(
+        const quote = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
           1
         )
@@ -142,7 +142,7 @@ describe('Quoter', () => {
       })
 
       it('1 -> 0', async () => {
-        const quote = await quoter.callStatic.exactOutput(
+        const quote = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
           1
         )
@@ -151,7 +151,7 @@ describe('Quoter', () => {
       })
 
       it('0 -> 1 -> 2', async () => {
-        const quote = await quoter.callStatic.exactOutput(
+        const quote = await quoter.callStatic.quoteExactOutput(
           encodePath(tokens.map((token) => token.address).reverse(), [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
           1
         )
@@ -160,7 +160,7 @@ describe('Quoter', () => {
       })
 
       it('2 -> 1 -> 0', async () => {
-        const quote = await quoter.callStatic.exactOutput(
+        const quote = await quoter.callStatic.quoteExactOutput(
           encodePath(
             tokens.map((token) => token.address),
             [FeeAmount.MEDIUM, FeeAmount.MEDIUM]

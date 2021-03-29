@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 /// @title Quoter
 interface IQuoter {
-    function exactInput(bytes memory path, uint256 amountIn) external returns (uint256 amountOut);
+    function quoteExactInput(bytes memory path, uint256 amountIn) external returns (uint256 amountOut);
 
-    function exactOutput(bytes memory path, uint256 amountOut) external returns (uint256 amountIn);
+    function quoteExactOutput(bytes memory path, uint256 amountOut) external returns (uint256 amountIn);
 }
