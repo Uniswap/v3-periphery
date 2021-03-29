@@ -63,21 +63,20 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
     }
 
     /// @dev Performs a single exact input swap
-    function exactInputSingle(
-        uint256 amountIn,
-        bytes memory path
-    ) private returns (uint256 amountOut) {
+    function exactInputSingle(uint256 amountIn, bytes memory path) private returns (uint256 amountOut) {
         (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
 
-        try getPool(tokenIn, tokenOut, fee).swap(
-            address(this), // address(0) might cause issues with some tokens
-            zeroForOne,
-            amountIn.toInt256(),
-            zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
-            path
-        ) {} catch (bytes memory reason) {
+        try
+            getPool(tokenIn, tokenOut, fee).swap(
+                address(this), // address(0) might cause issues with some tokens
+                zeroForOne,
+                amountIn.toInt256(),
+                zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
+                path
+            )
+        {} catch (bytes memory reason) {
             if (reason.length != 32) {
                 revert('Unexpected error');
             }
@@ -105,21 +104,20 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
     }
 
     /// @dev Performs a single exact output swap
-    function exactOutputSingle(
-        uint256 amountOut,
-        bytes memory path
-    ) private returns (uint256 amountIn) {
+    function exactOutputSingle(uint256 amountOut, bytes memory path) private returns (uint256 amountIn) {
         (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
 
-        try getPool(tokenIn, tokenOut, fee).swap(
-            address(this), // address(0) might cause issues with some tokens
-            zeroForOne,
-            -amountOut.toInt256(),
-            zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
-            path
-        ) {} catch (bytes memory reason) {
+        try
+            getPool(tokenIn, tokenOut, fee).swap(
+                address(this), // address(0) might cause issues with some tokens
+                zeroForOne,
+                -amountOut.toInt256(),
+                zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
+                path
+            )
+        {} catch (bytes memory reason) {
             if (reason.length != 32) {
                 revert('Unexpected error');
             }
