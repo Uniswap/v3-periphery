@@ -34,6 +34,7 @@ library NFTDescriptor {
         address poolAddress;
     }
 
+    // TODO: use SafeERC20Namer, submit final draft of description text
     function constructTokenURI(ConstructTokenURIParams memory params) internal pure returns (string memory) {
         string memory name =
             string(
@@ -195,6 +196,7 @@ library NFTDescriptor {
 
     // @notice Returns string that includes first 5 significant figures of a decimal number
     // @param sqrtRatioX96 a sqrt price
+    // TODO: return price in terms of token/ETH for ETH pairs
     function fixedPointToDecimalString(
         uint160 sqrtRatioX96,
         uint8 token0Decimals,
