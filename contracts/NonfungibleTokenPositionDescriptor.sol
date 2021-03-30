@@ -2,6 +2,7 @@
 pragma solidity =0.7.6;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import '@uniswap/lib/contracts/libraries/SafeERC20Namer.sol';
 import './interfaces/INonfungiblePositionManager.sol';
 import './interfaces/INonfungibleTokenPositionDescriptor.sol';
 import './interfaces/IERC20Metadata.sol';
@@ -34,8 +35,8 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                 NFTDescriptor.ConstructTokenURIParams({
                     token0: token0,
                     token1: token1,
-                    token0Symbol: IERC20Metadata(token0).symbol(),
-                    token1Symbol: IERC20Metadata(token1).symbol(),
+                    token0Symbol: SafeERC20Namer.tokenSymbol(token0),
+                    token1Symbol: SafeERC20Namer.tokenSymbol(token1),
                     token0Decimals: IERC20Metadata(token0).decimals(),
                     token1Decimals: IERC20Metadata(token1).decimals(),
                     tickLower: tickLower,

@@ -19,6 +19,8 @@ library NFTDescriptor {
     using SignedSafeMath for int256;
     using HexStrings for uint256;
 
+    uint256 constant sqrt10X128 = 1076067327063303206878105757264492625226;
+
     struct ConstructTokenURIParams {
         address token1;
         address token0;
@@ -34,7 +36,7 @@ library NFTDescriptor {
         address poolAddress;
     }
 
-    // TODO: use SafeERC20Namer, submit final draft of description text
+    // TODO: submit final draft of description text
     function constructTokenURI(ConstructTokenURIParams memory params) internal pure returns (string memory) {
         string memory name =
             string(
@@ -85,13 +87,13 @@ library NFTDescriptor {
         uint256 sigfigs;
         // length of decimal string
         uint8 bufferLength;
-        // ending index (inclusive) for significant figures (funtion works backwards copying sigfigs)
+        // ending index for significant figures (funtion works backwards when copying sigfigs)
         uint8 sigfigIndex;
         // index of decimal place (0 if no decimal)
         uint8 decimalIndex;
-        // start index (inclusive) for trailing/leading 0's for very small/large numbers
+        // start index for trailing/leading 0's for very small/large numbers
         uint8 zerosStartIndex;
-        // end index for (exclusive) trailing/leading 0's for very small/large numbers
+        // end index for trailing/leading 0's for very small/large numbers
         uint8 zerosEndIndex;
         // true if decimal number is less than one
         bool isLessThanOne;
@@ -110,7 +112,7 @@ library NFTDescriptor {
         }
 
         // add leading/trailing 0's
-        for (uint256 zerosCursor = params.zerosStartIndex; zerosCursor < params.zerosEndIndex; zerosCursor++) {
+        for (uint256 zerosCursor = params.zerosStartIndex; zerosCursor < params.zerosEndIndex.add(1); zerosCursor++) {
             buffer[zerosCursor] = bytes1(uint8(48));
         }
         // add sigfigs
@@ -122,11 +124,6 @@ library NFTDescriptor {
             params.sigfigs /= 10;
         }
         return string(buffer);
-    }
-
-    function addressToString(address addr) internal pure returns (string memory) {
-        uint256 _uint = (uint256(addr));
-        return _uint.toHexString(20);
     }
 
     function tickToDecimalString(
@@ -167,26 +164,18 @@ library NFTDescriptor {
         uint8 token0Decimals,
         uint8 token1Decimals
     ) private pure returns (uint160) {
-        uint256 sqrt10X128 = 1076067327063303206878105757264492625226;
-        uint256 difference = decimalDifference(token0Decimals, token1Decimals);
+        uint256 difference = abs(int256(token0Decimals).sub(int256(token1Decimals)));
         if (difference > 0 && difference <= 18) {
             if (token0Decimals > token1Decimals) {
                 sqrtRatioX96 = uint160(sqrtRatioX96.mul(10**(difference.div(2))));
-                if (difference % 2 == 1) {
-                    sqrtRatioX96 = uint160(FullMath.mulDiv(sqrtRatioX96, sqrt10X128, 1 << 128));
-                }
             } else {
                 sqrtRatioX96 = uint160(sqrtRatioX96.div(10**(difference.div(2))));
-                if (difference % 2 == 1) {
-                    sqrtRatioX96 = uint160(FullMath.mulDiv(sqrtRatioX96, sqrt10X128, 1 << 128));
-                }
+            }
+            if (difference % 2 == 1) {
+                sqrtRatioX96 = uint160(FullMath.mulDiv(sqrtRatioX96, sqrt10X128, 1 << 128));
             }
         }
         return sqrtRatioX96;
-    }
-
-    function decimalDifference(uint8 token0Decimals, uint8 token1Decimals) private pure returns (uint256) {
-        return abs(int256(token0Decimals).sub(int256(token1Decimals)));
     }
 
     function abs(int256 x) private pure returns (uint256) {
@@ -205,11 +194,10 @@ library NFTDescriptor {
         sqrtRatioX96 = adjustForDecimalPrecision(sqrtRatioX96, token0Decimals, token1Decimals);
         uint256 value = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
 
-        bool priceBelow1;
-        if (sqrtRatioX96 < 2**96) {
+        bool priceBelow1 = sqrtRatioX96 < 2**96;
+        if (priceBelow1) {
             // 10 ** 43 is precision needed to retreive 5 sigfigs of smallest possible price + 1 for rounding
             value = FullMath.mulDiv(value, 10**44, 1 << 128);
-            priceBelow1 = true;
         } else {
             // leave precision for 4 decimal places + 1 place for rounding
             value = FullMath.mulDiv(value, 10**5, 1 << 128);
@@ -236,13 +224,13 @@ library NFTDescriptor {
             // 7 bytes ( "0." and 5 sigfigs) + leading 0's bytes
             params.bufferLength = uint8(uint8(7).add(uint8(43).sub(digits)));
             params.zerosStartIndex = 2;
-            params.zerosEndIndex = uint8(uint256(43).sub(digits).add(2));
+            params.zerosEndIndex = uint8(uint256(43).sub(digits).add(1));
             params.sigfigIndex = uint8(params.bufferLength.sub(1));
         } else if (digits >= 9) {
             // no decimal in price string
             params.bufferLength = uint8(digits.sub(4));
             params.zerosStartIndex = 5;
-            params.zerosEndIndex = uint8(params.bufferLength);
+            params.zerosEndIndex = uint8(params.bufferLength.sub(1));
             params.sigfigIndex = 4;
         } else {
             // 5 sigfigs surround decimal
@@ -284,14 +272,14 @@ library NFTDescriptor {
             uint256 decimalPlace = digits.sub(numSigfigs) >= 4 ? 0 : 1;
             nZeros = digits.sub(5) < (numSigfigs.sub(1)) ? 0 : digits.sub(5).sub(numSigfigs.sub(1));
             params.zerosStartIndex = numSigfigs;
-            params.zerosEndIndex = uint8(params.zerosStartIndex.add(nZeros));
+            params.zerosEndIndex = uint8(params.zerosStartIndex.add(nZeros).sub(1));
             params.sigfigIndex = uint8(params.zerosStartIndex.sub(1).add(decimalPlace));
             params.bufferLength = uint8(nZeros.add(numSigfigs.add(1)).add(decimalPlace));
         } else {
             // else if decimal < 1
             nZeros = uint256(5).sub(digits);
             params.zerosStartIndex = 2;
-            params.zerosEndIndex = uint8(nZeros.add(params.zerosStartIndex));
+            params.zerosEndIndex = uint8(nZeros.add(params.zerosStartIndex).sub(1));
             params.bufferLength = uint8(nZeros.add(numSigfigs.add(2)));
             params.sigfigIndex = uint8((params.bufferLength).sub(2));
             params.isLessThanOne = true;
@@ -301,5 +289,9 @@ library NFTDescriptor {
         params.decimalIndex = digits > 4 ? uint8(digits.sub(4)) : 0;
 
         return generateDecimalString(params);
+    }
+
+    function addressToString(address addr) internal pure returns (string memory) {
+        return (uint256(addr)).toHexString(20);
     }
 }
