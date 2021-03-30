@@ -163,24 +163,24 @@ library NFTDescriptor {
         uint160 sqrtRatioX96,
         uint8 token0Decimals,
         uint8 token1Decimals
-    ) private pure returns (uint160) {
+    ) private pure returns (uint256 adjustedSqrtRatioX96) {
         uint256 difference = abs(int256(token0Decimals).sub(int256(token1Decimals)));
         if (difference > 0 && difference <= 18) {
             if (token0Decimals > token1Decimals) {
-                sqrtRatioX96 = uint160(sqrtRatioX96.mul(10**(difference.div(2))));
+                adjustedSqrtRatioX96 = sqrtRatioX96.mul(10**(difference.div(2)));
             } else {
-                sqrtRatioX96 = uint160(sqrtRatioX96.div(10**(difference.div(2))));
+                adjustedSqrtRatioX96 = sqrtRatioX96.div(10**(difference.div(2)));
             }
             if (difference % 2 == 1) {
-                sqrtRatioX96 = uint160(FullMath.mulDiv(sqrtRatioX96, sqrt10X128, 1 << 128));
+                adjustedSqrtRatioX96 = FullMath.mulDiv(adjustedSqrtRatioX96, sqrt10X128, 1 << 128);
             }
+        } else {
+            adjustedSqrtRatioX96 = uint256(sqrtRatioX96);
         }
-        return sqrtRatioX96;
     }
 
     function abs(int256 x) private pure returns (uint256) {
-        int256 absoluteValue = x >= 0 ? x : -x;
-        return uint256(absoluteValue);
+        return uint256(x >= 0 ? x : -x);
     }
 
     // @notice Returns string that includes first 5 significant figures of a decimal number
@@ -191,10 +191,10 @@ library NFTDescriptor {
         uint8 token0Decimals,
         uint8 token1Decimals
     ) internal pure returns (string memory) {
-        sqrtRatioX96 = adjustForDecimalPrecision(sqrtRatioX96, token0Decimals, token1Decimals);
-        uint256 value = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
+        uint256 adjustedSqrtRatioX96 = adjustForDecimalPrecision(sqrtRatioX96, token0Decimals, token1Decimals);
+        uint256 value = FullMath.mulDiv(adjustedSqrtRatioX96, adjustedSqrtRatioX96, 1 << 64);
 
-        bool priceBelow1 = sqrtRatioX96 < 2**96;
+        bool priceBelow1 = adjustedSqrtRatioX96 < 2**96;
         if (priceBelow1) {
             // 10 ** 43 is precision needed to retreive 5 sigfigs of smallest possible price + 1 for rounding
             value = FullMath.mulDiv(value, 10**44, 1 << 128);
