@@ -318,8 +318,9 @@ describe('NonfungiblePositionManager', () => {
         // TODO: provide compatibility token prices that breach minimum price due to token decimal differences
         it.skip('returns the correct string when the decimal difference brings ratio below the minimum', async () => {
           let lowRatio = encodePriceSqrt(88498, 10 ** 35)
-          expect(await nftDescriptor.fixedPointToDecimalString(lowRatio, 10, 20))
-            .to.eq('0.000000000000000000000000000000000000000088498')
+          expect(await nftDescriptor.fixedPointToDecimalString(lowRatio, 10, 20)).to.eq(
+            '0.000000000000000000000000000000000000000088498'
+          )
         })
 
         it('does not account for higher token1 precision if difference is more than 18', async () => {
