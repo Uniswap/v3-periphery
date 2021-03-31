@@ -45,9 +45,9 @@ library NFTDescriptor {
                     'Uniswap V3 - ',
                     feeToPercentString(params.fee),
                     ' - ',
-                    params.token0Symbol,
+                    params.hasToken0RatioNumerator ? params.token0Symbol : params.token1Symbol,
                     '/',
-                    params.token1Symbol,
+                    params.hasToken0RatioNumerator ? params.token1Symbol : params.token0Symbol,
                     ' - ',
                     tickToDecimalString(
                         params.tickLower,
