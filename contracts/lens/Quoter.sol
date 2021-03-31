@@ -6,7 +6,7 @@ import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
 
-import './interfaces/IQuoter.sol';
+import '../interfaces/IQuoter.sol';
 import '../base/PeripheryImmutableState.sol';
 import '../base/PeripheryValidation.sol';
 import '../libraries/Path.sol';

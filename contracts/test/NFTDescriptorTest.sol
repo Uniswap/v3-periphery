@@ -13,6 +13,16 @@ contract NFTDescriptorTest {
         return NFTDescriptor.constructTokenURI(params);
     }
 
+    function getGasCostOfConstructTokenURI(NFTDescriptor.ConstructTokenURIParams calldata params)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 gasBefore = gasleft();
+        NFTDescriptor.constructTokenURI(params);
+        return gasBefore - gasleft();
+    }
+
     function tickToDecimalString(
         int24 tick,
         int24 tickSpacing,
