@@ -3,6 +3,7 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
+import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import './interfaces/ISwapRouter.sol';
@@ -28,11 +29,6 @@ contract SwapRouter is
 {
     using Path for bytes;
     using SafeCast for uint256;
-
-    /// @dev The minimum value that can be returned from #getSqrtRatioAtTick, plus 1
-    uint160 private constant MIN_SQRT_RATIO = 4295128739 + 1;
-    /// @dev The maximum value that can be returned from #getSqrtRatioAtTick, minus 1
-    uint160 private constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342 - 1;
 
     uint256 private constant DEFAULT_AMOUNT_IN_CACHED = type(uint256).max;
     uint256 private amountInCached = DEFAULT_AMOUNT_IN_CACHED; // used for exact output swaps
@@ -96,7 +92,7 @@ contract SwapRouter is
                 recipient,
                 zeroForOne,
                 amountIn.toInt256(),
-                zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
+                zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1,
                 abi.encode(data)
             );
 
@@ -150,7 +146,7 @@ contract SwapRouter is
             recipient,
             zeroForOne,
             -amountOut.toInt256(),
-            zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
+            zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1,
             abi.encode(data)
         );
     }
