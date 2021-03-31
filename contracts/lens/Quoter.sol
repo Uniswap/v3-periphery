@@ -70,12 +70,12 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
         return abi.decode(reason, (uint256));
     }
 
-    /// @dev Quotes a single exact input swap
+    /// @inheritdoc IQuoter
     function quoteExactInputSingle(
         uint256 amountIn,
         bytes memory path,
         uint160 sqrtPriceLimitX96
-    ) public returns (uint256 amountOut) {
+    ) public override returns (uint256 amountOut) {
         (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
@@ -116,12 +116,12 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
         }
     }
 
-    /// @dev Quotes a single exact output swap
+    /// @inheritdoc IQuoter
     function quoteExactOutputSingle(
         uint256 amountOut,
         bytes memory path,
         uint160 sqrtPriceLimitX96
-    ) public returns (uint256 amountIn) {
+    ) public override returns (uint256 amountIn) {
         (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
