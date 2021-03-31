@@ -273,6 +273,16 @@ describe('NFTDescriptor', () => {
         expect(await nftDescriptor.tickToDecimalString(-387272, tickSpacing, 18, 18, true))
           .to.eq('65791000000000000')
       })
+
+      it('returns the correct string with differing token decimals', async () => {
+        const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 18, 18, true))
+          .to.eq('0.90484')
+        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 10, 18, true))
+          .to.eq('90484000')
+        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 18, 10, true))
+          .to.eq('0.0000000090484')
+      })
     })
   })
 
