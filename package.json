@@ -30,8 +30,12 @@
   "dependencies": {
     "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
     "@uniswap/lib": "^4.0.1-alpha",
-    "@uniswap/v2-core": "^1.0.1",
-    "@uniswap/v3-core": "^1.0.0-rc.0"
+    "@uniswap/v2-core": "1.0.1",
+    "@uniswap/v3-core": "1.0.0-rc.1"
+  },
+  "peerDependencies": {
+    "@uniswap/v2-core": "1.0.1",
+    "@uniswap/v3-core": "1.0.0-rc.1"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
