@@ -7,7 +7,6 @@ import '@uniswap/v3-core/contracts/libraries/FixedPoint96.sol';
 /// @title Liquidity amount functions
 /// @notice Provides functions for computing liquidity amounts from token amounts and prices
 library LiquidityAmounts {
-
     /// @notice Downcasts uint256 to uint128
     /// @param x The uint258 to be downcasted
     /// @return y The passed value, downcasted to uint128
