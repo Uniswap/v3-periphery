@@ -3,28 +3,13 @@ pragma solidity >=0.5.0;
 pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 
 import '../interfaces/ITickLens.sol';
 
 /// @title Tick Lens contract
 contract TickLens is ITickLens {
-    int24 private constant MIN_TICK = -887272;
-    int24 private constant MAX_TICK = -MIN_TICK;
-
-    function getStaticData(address pool)
-        external
-        view
-        override
-        returns (
-            uint160 sqrtPriceX96,
-            int24 tick,
-            uint128 liquidity
-        )
-    {
-        (sqrtPriceX96, tick, , , , , ) = IUniswapV3Pool(pool).slot0();
-        liquidity = IUniswapV3Pool(pool).liquidity();
-    }
-
+    /// @inheritdoc ITickLens
     function getPopulatedTicksInWord(address pool, int16 tickBitmapIndex)
         public
         view

@@ -112,14 +112,6 @@ describe('TickLens', () => {
       tickLens = (await lensFactory.deploy()) as TickLensTest
     })
 
-    beforeEach(async () => {
-      const { sqrtPriceX96, tick, liquidity } = await tickLens.getStaticData(poolAddress)
-
-      expect(sqrtPriceX96).to.be.eq(encodePriceSqrt(1, 1))
-      expect(tick).to.be.eq(0)
-      expect(liquidity).to.be.eq(fullRangeLiquidity)
-    })
-
     function getTickBitmapIndex(tick: BigNumberish, tickSpacing: number): BigNumber {
       const intermediate = BigNumber.from(tick).div(tickSpacing)
       // see https://docs.soliditylang.org/en/v0.7.6/types.html#shifts

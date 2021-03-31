@@ -84,6 +84,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
         }
     }
 
+    /// @inheritdoc IQuoter
     function quoteExactInput(bytes memory path, uint256 amountIn) external override returns (uint256 amountOut) {
         while (true) {
             bool hasPools = path.hasPools();
@@ -125,6 +126,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
         }
     }
 
+    /// @inheritdoc IQuoter
     function quoteExactOutput(bytes memory path, uint256 amountOut) external override returns (uint256 amountIn) {
         while (true) {
             bool hasPools = path.hasPools();

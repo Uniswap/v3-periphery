@@ -3,22 +3,17 @@ pragma solidity >=0.7.5;
 pragma abicoder v2;
 
 /// @title Tick Lens
+/// @notice Provides functions for fetching chunks of tick data for a pool
+/// @dev This avoids the waterfall of fetching the tick bitmap, parsing the bitmap to know which ticks to fetch, and
+/// then sending additional multicalls to fetch the tick data
 interface ITickLens {
-    function getStaticData(address pool)
-        external
-        view
-        returns (
-            uint160 sqrtPriceX96,
-            int24 tick,
-            uint128 liquidity
-        );
-
     struct PopulatedTick {
         int24 tick;
         int128 liquidityNet;
         uint128 liquidityGross;
     }
 
+    /// @notice Get all the tick data for the populated ticks from a word of the tick bitmap of a pool
     function getPopulatedTicksInWord(address pool, int16 tickBitmapIndex)
         external
         view
