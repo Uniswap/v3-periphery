@@ -28,6 +28,7 @@ library NFTDescriptor {
         string token1Symbol;
         uint8 token0Decimals;
         uint8 token1Decimals;
+        bool hasToken0RatioNumerator;
         int24 tickLower;
         int24 tickUpper;
         int24 tickSpacing;
@@ -52,14 +53,16 @@ library NFTDescriptor {
                         params.tickLower,
                         params.tickSpacing,
                         params.token0Decimals,
-                        params.token1Decimals
+                        params.token1Decimals,
+                        params.hasToken0RatioNumerator
                     ),
                     '<>',
                     tickToDecimalString(
                         params.tickUpper,
                         params.tickSpacing,
                         params.token0Decimals,
-                        params.token1Decimals
+                        params.token1Decimals,
+                        params.hasToken0RatioNumerator
                     )
                 )
             );
@@ -130,14 +133,20 @@ library NFTDescriptor {
         int24 tick,
         int24 tickSpacing,
         uint8 token0Decimals,
-        uint8 token1Decimals
+        uint8 token1Decimals,
+        bool hasToken0RatioNumerator
     ) internal pure returns (string memory) {
         if (tick == (TickMath.MIN_TICK / tickSpacing) * tickSpacing) {
             return 'MIN';
         } else if (tick == (TickMath.MAX_TICK / tickSpacing) * tickSpacing) {
             return 'MAX';
         } else {
-            return fixedPointToDecimalString(TickMath.getSqrtRatioAtTick(tick), token0Decimals, token1Decimals);
+            uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
+            if (hasToken0RatioNumerator) {
+                sqrtRatioX96 = uint160(uint256(1 << 192).div(sqrtRatioX96));
+                return fixedPointToDecimalString(sqrtRatioX96, token1Decimals, token0Decimals);
+            }
+            return fixedPointToDecimalString(sqrtRatioX96, token0Decimals, token1Decimals);
         }
     }
 
