@@ -72,8 +72,8 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
 
     /// @inheritdoc IQuoter
     function quoteExactInputSingle(
-        uint256 amountIn,
         bytes memory path,
+        uint256 amountIn,
         uint160 sqrtPriceLimitX96
     ) public override returns (uint256 amountOut) {
         (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
@@ -102,8 +102,8 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
 
             // the outputs of prior swaps become the inputs to subsequent ones
             amountIn = quoteExactInputSingle(
-                amountIn,
                 path.getFirstPool(),
+                amountIn,
                 tokenA < tokenB ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1
             );
 
@@ -118,8 +118,8 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
 
     /// @inheritdoc IQuoter
     function quoteExactOutputSingle(
-        uint256 amountOut,
         bytes memory path,
+        uint256 amountOut,
         uint160 sqrtPriceLimitX96
     ) public override returns (uint256 amountIn) {
         (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
@@ -148,8 +148,8 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
 
             // the inputs of prior swaps become the outputs of subsequent ones
             amountOut = quoteExactOutputSingle(
-                amountOut,
                 path.getFirstPool(), // only the first pool in the path is necessary
+                amountOut,
                 tokenA < tokenB ? TickMath.MAX_SQRT_RATIO - 1 : TickMath.MIN_SQRT_RATIO + 1
             );
 
