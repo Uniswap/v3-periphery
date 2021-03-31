@@ -3,7 +3,6 @@ pragma solidity >=0.5.0;
 pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 
 import '../interfaces/ITickLens.sol';
 
