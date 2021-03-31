@@ -5,7 +5,6 @@ pragma solidity >=0.5.0;
 /// @notice Interface that verifies provided signature for the data
 /// @dev Interface defined by EIP-1271
 interface IERC1271 {
-   
     /// @notice Returns whether the provided signature is valid for the provided data
     /// @dev MUST return the bytes4 magic value 0x1626ba7e when function passes.
     /// MUST NOT modify state (using STATICCALL for solc < 0.5, view modifier for solc > 0.5).
