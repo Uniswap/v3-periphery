@@ -4,8 +4,8 @@ pragma solidity =0.7.6;
 import '../libraries/Path.sol';
 
 contract PathTest {
-    function hasPools(bytes memory path) public pure returns (bool) {
-        return Path.hasPools(path);
+    function hasMultiplePools(bytes memory path) public pure returns (bool) {
+        return Path.hasMultiplePools(path);
     }
 
     function decodeFirstPool(bytes memory path)

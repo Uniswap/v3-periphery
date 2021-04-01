@@ -18,6 +18,9 @@ describe('#formatSqrtRatioX96', () => {
   it('is correct for 1_000_000/3', () => {
     expect(formatSqrtRatioX96(encodePriceSqrt(1_000_000, 3))).to.eq('333330')
   })
+  it('1e-18 still prints 5 sig figs', () => {
+    expect(formatSqrtRatioX96(encodePriceSqrt(1, 1e18), 18, 18)).to.eq('0.0000000000000000010000')
+  })
   it('accounts for decimal differences', () => {
     expect(formatSqrtRatioX96(encodePriceSqrt(1e6, 1e18), 18, 6)).to.eq('1.0000')
   })

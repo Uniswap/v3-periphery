@@ -71,7 +71,7 @@ contract SwapRouter is
             pay(tokenIn, data.payer, msg.sender, amountToPay);
         } else {
             // either initiate the next swap or pay
-            if (data.path.hasPools()) {
+            if (data.path.hasMultiplePools()) {
                 data.path = data.path.skipToken();
                 exactOutputSingle(amountToPay, msg.sender, data);
             } else {
@@ -113,12 +113,12 @@ contract SwapRouter is
         returns (uint256 amountOut)
     {
         while (true) {
-            bool hasPools = params.path.hasPools();
+            bool hasMultiplePools = params.path.hasMultiplePools();
 
             // the outputs of prior swaps become the inputs to subsequent ones
             params.amountIn = exactInputSingle(
                 params.amountIn,
-                hasPools ? address(this) : params.recipient, // for intermediate swaps, this contract custodies
+                hasMultiplePools ? address(this) : params.recipient, // for intermediate swaps, this contract custodies
                 SwapData({
                     path: params.path.getFirstPool(), // only the first pool in the path is necessary
                     payer: msg.sender
@@ -126,7 +126,7 @@ contract SwapRouter is
             );
 
             // decide whether to continue or terminate
-            if (hasPools) {
+            if (hasMultiplePools) {
                 params.path = params.path.skipToken();
             } else {
                 amountOut = params.amountIn;

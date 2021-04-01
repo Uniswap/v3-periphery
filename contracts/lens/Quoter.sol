@@ -95,7 +95,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
     /// @inheritdoc IQuoter
     function quoteExactInput(bytes memory path, uint256 amountIn) external override returns (uint256 amountOut) {
         while (true) {
-            bool hasPools = path.hasPools();
+            bool hasMultiplePools = path.hasMultiplePools();
 
             (address tokenA, address tokenB, ) = path.decodeFirstPool();
 
@@ -107,7 +107,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
             );
 
             // decide whether to continue or terminate
-            if (hasPools) {
+            if (hasMultiplePools) {
                 path = path.skipToken();
             } else {
                 return amountIn;
@@ -141,7 +141,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
     /// @inheritdoc IQuoter
     function quoteExactOutput(bytes memory path, uint256 amountOut) external override returns (uint256 amountIn) {
         while (true) {
-            bool hasPools = path.hasPools();
+            bool hasMultiplePools = path.hasMultiplePools();
 
             (address tokenA, address tokenB, ) = path.decodeFirstPool();
 
@@ -153,7 +153,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
             );
 
             // decide whether to continue or terminate
-            if (hasPools) {
+            if (hasMultiplePools) {
                 path = path.skipToken();
             } else {
                 return amountOut;
