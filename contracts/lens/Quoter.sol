@@ -13,8 +13,10 @@ import '../libraries/Path.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
 
-/// @title Uniswap V3 Swap Router
-/// @notice Router for stateless execution of swaps against Uniswap V3
+/// @title Provides quotes for swaps
+/// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
+/// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
+/// the swap and check the amounts in the callback.
 contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
     using Path for bytes;
     using SafeCast for uint256;
@@ -71,12 +73,12 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
 
     /// @inheritdoc IQuoter
     function quoteExactInputSingle(
-        bytes memory path,
+        address tokenIn,
+        address tokenOut,
+        uint24 fee,
         uint256 amountIn,
         uint160 sqrtPriceLimitX96
     ) public override returns (uint256 amountOut) {
-        (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
-
         bool zeroForOne = tokenIn < tokenOut;
 
         try
@@ -85,7 +87,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
                 zeroForOne,
                 amountIn.toInt256(),
                 sqrtPriceLimitX96,
-                path
+                abi.encodePacked(tokenIn, fee, tokenOut)
             )
         {} catch (bytes memory reason) {
             return parseRevertReason(reason);
@@ -97,13 +99,15 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
 
-            (address tokenA, address tokenB, ) = path.decodeFirstPool();
+            (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
             // the outputs of prior swaps become the inputs to subsequent ones
             amountIn = quoteExactInputSingle(
-                path.getFirstPool(),
+                tokenIn,
+                tokenOut,
+                fee,
                 amountIn,
-                tokenA < tokenB ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1
+                tokenIn < tokenOut ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1
             );
 
             // decide whether to continue or terminate
@@ -117,12 +121,12 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
 
     /// @inheritdoc IQuoter
     function quoteExactOutputSingle(
-        bytes memory path,
+        address tokenIn,
+        address tokenOut,
+        uint24 fee,
         uint256 amountOut,
         uint160 sqrtPriceLimitX96
     ) public override returns (uint256 amountIn) {
-        (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
-
         bool zeroForOne = tokenIn < tokenOut;
 
         try
@@ -131,7 +135,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
                 zeroForOne,
                 -amountOut.toInt256(),
                 sqrtPriceLimitX96,
-                path
+                abi.encodePacked(tokenOut, fee, tokenIn)
             )
         {} catch (bytes memory reason) {
             return parseRevertReason(reason);
@@ -143,13 +147,15 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
 
-            (address tokenA, address tokenB, ) = path.decodeFirstPool();
+            (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
 
             // the inputs of prior swaps become the outputs of subsequent ones
             amountOut = quoteExactOutputSingle(
-                path.getFirstPool(), // only the first pool in the path is necessary
+                tokenIn,
+                tokenOut,
+                fee,
                 amountOut,
-                tokenA < tokenB ? TickMath.MAX_SQRT_RATIO - 1 : TickMath.MIN_SQRT_RATIO + 1
+                tokenIn < tokenOut ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1
             );
 
             // decide whether to continue or terminate

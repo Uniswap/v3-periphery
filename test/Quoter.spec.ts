@@ -134,7 +134,9 @@ describe('Quoter', () => {
     describe('#quoteExactInputSingle', () => {
       it('0 -> 1', async () => {
         const quote = await quoter.callStatic.quoteExactInputSingle(
-          encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+          tokens[0].address,
+          tokens[1].address,
+          FeeAmount.MEDIUM,
           MaxUint128,
           // -2%
           encodePriceSqrt(100, 102)
@@ -145,7 +147,9 @@ describe('Quoter', () => {
 
       it('1 -> 0', async () => {
         const quote = await quoter.callStatic.quoteExactInputSingle(
-          encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
+          tokens[1].address,
+          tokens[0].address,
+          FeeAmount.MEDIUM,
           MaxUint128,
           // +2%
           encodePriceSqrt(102, 100)
@@ -199,7 +203,9 @@ describe('Quoter', () => {
     describe('#quoteExactOutputSingle', () => {
       it('0 -> 1', async () => {
         const quote = await quoter.callStatic.quoteExactOutputSingle(
-          encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
+          tokens[0].address,
+          tokens[1].address,
+          FeeAmount.MEDIUM,
           MaxUint128,
           encodePriceSqrt(100, 102)
         )
@@ -209,7 +215,9 @@ describe('Quoter', () => {
 
       it('1 -> 0', async () => {
         const quote = await quoter.callStatic.quoteExactOutputSingle(
-          encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+          tokens[1].address,
+          tokens[0].address,
+          FeeAmount.MEDIUM,
           MaxUint128,
           encodePriceSqrt(102, 100)
         )
