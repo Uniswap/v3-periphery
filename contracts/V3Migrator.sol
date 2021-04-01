@@ -5,7 +5,6 @@ pragma abicoder v2;
 import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './interfaces/INonfungiblePositionManager.sol';
 
 import './libraries/PoolAddress.sol';
@@ -102,7 +101,7 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
 
         // if necessary, clear allowance and refund dust
         if (amount0V3 < amount0V2) {
-            IERC20(token0).approve(nonfungiblePositionManager, 0);
+            TransferHelper.safeApprove(token0, nonfungiblePositionManager, 0);
 
             uint256 refund0 = amount0V2 - amount0V3;
             if (params.refundAsETH && token0 == WETH9) {
@@ -113,7 +112,7 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
             }
         }
         if (amount1V3 < amount1V2) {
-            IERC20(token1).approve(nonfungiblePositionManager, 0);
+            TransferHelper.safeApprove(token1, nonfungiblePositionManager, 0);
 
             uint256 refund1 = amount1V2 - amount1V3;
             if (params.refundAsETH && token1 == WETH9) {
