@@ -11,7 +11,7 @@ library PoolAddress {
         address token1;
         uint24 fee;
     }
-    
+
     /// @notice Returns PoolKey: the ordered tokens with the matched fee levels
     /// @param tokenA The first token of a pool, unsorted
     /// @param tokenB The second token of a pool, unsorted
