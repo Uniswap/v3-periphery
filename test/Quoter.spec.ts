@@ -3,7 +3,7 @@ import { constants } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { MockTimeNonfungiblePositionManager, Quoter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
-import { FeeAmount, TICK_SPACINGS } from './shared/constants'
+import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
@@ -97,7 +97,7 @@ describe('Quoter', () => {
           3
         )
 
-        expect(quote).to.be.eq(1)
+        expect(quote).to.eq(1)
       })
 
       it('1 -> 0', async () => {
@@ -106,7 +106,7 @@ describe('Quoter', () => {
           3
         )
 
-        expect(quote).to.be.eq(1)
+        expect(quote).to.eq(1)
       })
 
       it('0 -> 1 -> 2', async () => {
@@ -118,7 +118,7 @@ describe('Quoter', () => {
           5
         )
 
-        expect(quote).to.be.eq(1)
+        expect(quote).to.eq(1)
       })
 
       it('2 -> 1 -> 0', async () => {
@@ -127,7 +127,31 @@ describe('Quoter', () => {
           5
         )
 
-        expect(quote).to.be.eq(1)
+        expect(quote).to.eq(1)
+      })
+    })
+
+    describe('#quoteExactInputSingle', () => {
+      it('0 -> 1', async () => {
+        const quote = await quoter.callStatic.quoteExactInputSingle(
+          encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+          MaxUint128,
+          // -2%
+          encodePriceSqrt(100, 102)
+        )
+
+        expect(quote).to.eq(9852)
+      })
+
+      it('1 -> 0', async () => {
+        const quote = await quoter.callStatic.quoteExactInputSingle(
+          encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
+          MaxUint128,
+          // +2%
+          encodePriceSqrt(102, 100)
+        )
+
+        expect(quote).to.eq(9852)
       })
     })
 
@@ -138,7 +162,7 @@ describe('Quoter', () => {
           1
         )
 
-        expect(quote).to.be.eq(3)
+        expect(quote).to.eq(3)
       })
 
       it('1 -> 0', async () => {
@@ -147,7 +171,7 @@ describe('Quoter', () => {
           1
         )
 
-        expect(quote).to.be.eq(3)
+        expect(quote).to.eq(3)
       })
 
       it('0 -> 1 -> 2', async () => {
@@ -156,7 +180,7 @@ describe('Quoter', () => {
           1
         )
 
-        expect(quote).to.be.eq(5)
+        expect(quote).to.eq(5)
       })
 
       it('2 -> 1 -> 0', async () => {
@@ -168,7 +192,29 @@ describe('Quoter', () => {
           1
         )
 
-        expect(quote).to.be.eq(5)
+        expect(quote).to.eq(5)
+      })
+    })
+
+    describe('#quoteExactOutputSingle', () => {
+      it('0 -> 1', async () => {
+        const quote = await quoter.callStatic.quoteExactOutputSingle(
+          encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
+          MaxUint128,
+          encodePriceSqrt(100, 102)
+        )
+
+        expect(quote).to.eq(9981)
+      })
+
+      it('1 -> 0', async () => {
+        const quote = await quoter.callStatic.quoteExactOutputSingle(
+          encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+          MaxUint128,
+          encodePriceSqrt(102, 100)
+        )
+
+        expect(quote).to.eq(9981)
       })
     })
   })

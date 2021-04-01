@@ -3,7 +3,7 @@ pragma solidity >=0.5.0;
 pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import '../examples/TickLens.sol';
+import '../lens/TickLens.sol';
 
 /// @title Tick Lens contract
 contract TickLensTest is TickLens {
