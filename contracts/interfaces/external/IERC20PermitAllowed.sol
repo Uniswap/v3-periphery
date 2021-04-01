@@ -10,7 +10,7 @@ interface IERC20PermitAllowed {
     /// @param spender The address of the token spender
     /// @param nonce The holder's nonce, increases at each call to permit
     /// @param expiry The timestamp at which the permit is no longer valid
-    /// @param allowed Boolean that sets approval, either 0 or unit(-1)
+    /// @param allowed Boolean that sets approval amount, true for type(uint256).max and false for 0
     /// @param v Must produce valid secp256k1 signature from the holder along with `r` and `s`
     /// @param r Must produce valid secp256k1 signature from the holder along with `v` and `s`
     /// @param s Must produce valid secp256k1 signature from the holder along with `r` and `v`
