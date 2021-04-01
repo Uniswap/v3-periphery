@@ -30,11 +30,16 @@ contract SwapRouter is
     using Path for bytes;
     using SafeCast for uint256;
 
+    /// @dev Used as the placeholder value for amountInCached, because the computed amount in for an exact output swap
+    /// can never actually be this value
     uint256 private constant DEFAULT_AMOUNT_IN_CACHED = type(uint256).max;
-    uint256 private amountInCached = DEFAULT_AMOUNT_IN_CACHED; // used for exact output swaps
+
+    /// @dev Transient storage variable used for returning the computed amount in for an exact output swap.
+    uint256 private amountInCached = DEFAULT_AMOUNT_IN_CACHED;
 
     constructor(address _factory, address _WETH9) PeripheryImmutableState(_factory, _WETH9) {}
 
+    /// @dev Returns the pool for the given token pair and fee. The pool contract may or may not exist.
     function getPool(
         address tokenA,
         address tokenB,
