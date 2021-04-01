@@ -73,7 +73,7 @@ contract SwapRouter is
             // either initiate the next swap or pay
             if (data.path.hasMultiplePools()) {
                 data.path = data.path.skipToken();
-                exactOutputInternal(amountToPay, msg.sender, data);
+                exactOutputInternal(amountToPay, msg.sender, 0, data);
             } else {
                 amountInCached = amountToPay;
                 tokenIn = tokenOut; // swap in/out because exact output swaps are reversed
@@ -107,7 +107,7 @@ contract SwapRouter is
         return uint256(-(zeroForOne ? amount1 : amount0));
     }
 
-    /// @notice Swaps `amountIn` of one token for as much as possible of another token
+    /// @inheritdoc ISwapRouter
     function exactInputSingle(ExactInputSingleParams calldata params)
         external
         payable
@@ -162,19 +162,50 @@ contract SwapRouter is
     function exactOutputInternal(
         uint256 amountOut,
         address recipient,
+        uint160 sqrtPriceLimitX96,
         SwapCallbackData memory data
-    ) private {
+    ) private returns (int256 amount0Delta, int256 amount1Delta) {
         (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
 
-        getPool(tokenIn, tokenOut, fee).swap(
-            recipient,
-            zeroForOne,
-            -amountOut.toInt256(),
-            zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1,
-            abi.encode(data)
-        );
+        return
+            getPool(tokenIn, tokenOut, fee).swap(
+                recipient,
+                zeroForOne,
+                -amountOut.toInt256(),
+                sqrtPriceLimitX96 == 0
+                    ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+                    : sqrtPriceLimitX96,
+                abi.encode(data)
+            );
+    }
+
+    /// @inheritdoc ISwapRouter
+    function exactOutputSingle(ExactOutputSingleParams calldata params)
+        external
+        payable
+        override
+        checkDeadline(params.deadline)
+        returns (uint256 amountIn)
+    {
+        (int256 amount0Delta, int256 amount1Delta) =
+            exactOutputInternal(
+                params.amountOut,
+                params.recipient,
+                params.sqrtPriceLimitX96,
+                SwapCallbackData({
+                    path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn),
+                    payer: msg.sender
+                })
+            );
+
+        // avoid an SLOAD by using the swap return data
+        amountIn = uint256(params.tokenIn < params.tokenOut ? amount0Delta : amount1Delta);
+
+        // has to be reset even though we don't use it in the single hop case
+        amountInCached = DEFAULT_AMOUNT_IN_CACHED;
+        require(amountIn <= params.amountInMaximum, 'Too much requested');
     }
 
     /// @inheritdoc ISwapRouter
@@ -188,6 +219,7 @@ contract SwapRouter is
         exactOutputInternal(
             params.amountOut,
             params.recipient,
+            0,
             SwapCallbackData({path: params.path, payer: msg.sender})
         );
 

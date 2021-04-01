@@ -195,6 +195,39 @@ describe('SwapRouter gas tests', () => {
     return router.connect(trader).multicall(data, { value })
   }
 
+  async function exactOutputSingle(
+    tokenIn: string,
+    tokenOut: string,
+    amountOut: number = 1,
+    amountInMaximum: number = 3,
+    sqrtPriceLimitX96?: BigNumber
+  ): Promise<ContractTransaction> {
+    const inputIsWETH9 = tokenIn === weth9.address
+    const outputIsWETH9 = tokenOut === weth9.address
+
+    const value = inputIsWETH9 ? amountInMaximum : 0
+
+    const params = {
+      tokenIn,
+      tokenOut,
+      fee: FeeAmount.MEDIUM,
+      recipient: outputIsWETH9 ? router.address : trader.address,
+      deadline: 1,
+      amountOut,
+      amountInMaximum,
+      sqrtPriceLimitX96:
+        sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
+          ? BigNumber.from('4295128740')
+          : BigNumber.from('1461446703485210103287273052203988822378723970341'),
+    }
+
+    const data = [router.interface.encodeFunctionData('exactOutputSingle', [params])]
+    if (inputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [0, trader.address]))
+    if (outputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [amountOut, trader.address]))
+
+    return router.connect(trader).multicall(data, { value })
+  }
+
   // TODO should really throw this in the fixture
   beforeEach('intialize feeGrowthGlobals', async () => {
     await exactInput([tokens[0].address, tokens[1].address], 1, 0)
@@ -314,6 +347,20 @@ describe('SwapRouter gas tests', () => {
 
     it('0 -> WETH9', async () => {
       await snapshotGasCost(exactOutput([tokens[0].address, weth9.address]))
+    })
+  })
+
+  describe('#exactOutputSingle', () => {
+    it('0 -> 1', async () => {
+      await snapshotGasCost(exactOutputSingle(tokens[0].address, tokens[1].address))
+    })
+
+    it('WETH9 -> 0', async () => {
+      await snapshotGasCost(exactOutputSingle(weth9.address, tokens[0].address))
+    })
+
+    it('0 -> WETH9', async () => {
+      await snapshotGasCost(exactOutputSingle(tokens[0].address, weth9.address))
     })
   })
 })
