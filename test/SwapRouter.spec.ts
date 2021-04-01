@@ -132,7 +132,7 @@ describe('SwapRouter', () => {
         amountIn: number = 3,
         amountOutMinimum: number = 1
       ): Promise<ContractTransaction> {
-        const inputIsWETH = [weth9.address].includes(tokens[0])
+        const inputIsWETH = weth9.address === tokens[0]
         const outputIsWETH9 = tokens[tokens.length - 1] === weth9.address
 
         const value = inputIsWETH ? amountIn : 0
@@ -325,7 +325,7 @@ describe('SwapRouter', () => {
         amountOutMinimum: number = 1,
         sqrtPriceLimitX96?: BigNumber
       ): Promise<ContractTransaction> {
-        const inputIsWETH = [weth9.address].includes(tokenIn)
+        const inputIsWETH = weth9.address === tokenIn
         const outputIsWETH9 = tokenOut === weth9.address
 
         const value = inputIsWETH ? amountIn : 0

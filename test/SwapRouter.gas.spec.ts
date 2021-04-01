@@ -1,5 +1,5 @@
 import { Fixture } from 'ethereum-waffle'
-import { constants, ContractTransaction } from 'ethers'
+import { BigNumber, constants, ContractTransaction } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { IUniswapV3Pool, IWETH9, MockTimeSwapRouter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
@@ -114,7 +114,7 @@ describe('SwapRouter gas tests', () => {
     amountIn: number = 2,
     amountOutMinimum: number = 1
   ): Promise<ContractTransaction> {
-    const inputIsWETH = [weth9.address].includes(tokens[0])
+    const inputIsWETH = weth9.address === tokens[0]
     const outputIsWETH9 = tokens[tokens.length - 1] === weth9.address
 
     const value = inputIsWETH ? amountIn : 0
@@ -133,6 +133,41 @@ describe('SwapRouter gas tests', () => {
     // optimized for the gas test
     return data.length === 1
       ? router.connect(trader).exactInput(params, { value })
+      : router.connect(trader).multicall(data, { value })
+  }
+
+  async function exactInputSingle(
+    tokenIn: string,
+    tokenOut: string,
+    amountIn: number = 3,
+    amountOutMinimum: number = 1,
+    sqrtPriceLimitX96?: BigNumber
+  ): Promise<ContractTransaction> {
+    const inputIsWETH = weth9.address === tokenIn
+    const outputIsWETH9 = tokenOut === weth9.address
+
+    const value = inputIsWETH ? amountIn : 0
+
+    const params = {
+      tokenIn,
+      tokenOut,
+      fee: FeeAmount.MEDIUM,
+      sqrtPriceLimitX96:
+        sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
+          ? BigNumber.from('4295128740')
+          : BigNumber.from('1461446703485210103287273052203988822378723970341'),
+      recipient: outputIsWETH9 ? router.address : trader.address,
+      deadline: 1,
+      amountIn,
+      amountOutMinimum,
+    }
+
+    const data = [router.interface.encodeFunctionData('exactInputSingle', [params])]
+    if (outputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [amountOutMinimum, trader.address]))
+
+    // optimized for the gas test
+    return data.length === 1
+      ? router.connect(trader).exactInputSingle(params, { value })
       : router.connect(trader).multicall(data, { value })
   }
 
@@ -232,6 +267,32 @@ describe('SwapRouter gas tests', () => {
       await snapshotGasCost(
         exactInput(
           [tokens[0].address, weth9.address],
+          tokens[0].address.toLowerCase() < weth9.address.toLowerCase() ? 2 : 3
+        )
+      )
+    })
+  })
+
+  describe('#exactInputSingle', () => {
+    it('0 -> 1', async () => {
+      await snapshotGasCost(exactInputSingle(tokens[0].address, tokens[1].address))
+    })
+
+    it('WETH9 -> 0', async () => {
+      await snapshotGasCost(
+        exactInputSingle(
+          weth9.address,
+          tokens[0].address,
+          weth9.address.toLowerCase() < tokens[0].address.toLowerCase() ? 2 : 3
+        )
+      )
+    })
+
+    it('0 -> WETH9', async () => {
+      await snapshotGasCost(
+        exactInputSingle(
+          tokens[0].address,
+          weth9.address,
           tokens[0].address.toLowerCase() < weth9.address.toLowerCase() ? 2 : 3
         )
       )
