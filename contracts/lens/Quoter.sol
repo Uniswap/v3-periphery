@@ -9,14 +9,13 @@ import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.so
 
 import '../interfaces/IQuoter.sol';
 import '../base/PeripheryImmutableState.sol';
-import '../base/PeripheryValidation.sol';
 import '../libraries/Path.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
 
 /// @title Uniswap V3 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V3
-contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, PeripheryValidation {
+contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
     using Path for bytes;
     using SafeCast for uint256;
 
