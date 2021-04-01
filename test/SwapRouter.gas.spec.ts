@@ -130,11 +130,6 @@ describe('SwapRouter gas tests', () => {
     const data = [router.interface.encodeFunctionData('exactInput', [params])]
     if (outputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [amountOutMinimum, trader.address]))
 
-    // ensure that the swap fails if the limit is any tighter
-    params.amountOutMinimum += 1
-    await expect(router.connect(trader).exactInput(params, { value })).to.be.revertedWith('Too little received')
-    params.amountOutMinimum -= 1
-
     // optimized for the gas test
     return data.length === 1
       ? router.connect(trader).exactInput(params, { value })
