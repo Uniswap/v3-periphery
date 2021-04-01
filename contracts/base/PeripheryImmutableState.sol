@@ -3,8 +3,8 @@ pragma solidity =0.7.6;
 
 import '../interfaces/IPeripheryImmutableState.sol';
 
-/// @title Router immutable state
-/// @notice Immutable state that the router needs
+/// @title Immutable state
+/// @notice Immutable state used by periphery contracts
 abstract contract PeripheryImmutableState is IPeripheryImmutableState {
     /// @inheritdoc IPeripheryImmutableState
     address public immutable override factory;

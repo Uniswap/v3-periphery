@@ -55,11 +55,11 @@ describe('Path', () => {
     expect(decodedFees).to.deep.eq(fees)
   })
 
-  describe('#hasPools / #decodeFirstPool / #skipToken / #getFirstPool', () => {
+  describe('#hasMultiplePools / #decodeFirstPool / #skipToken / #getFirstPool', () => {
     const encodedPath = encodePath(tokenAddresses, fees)
 
     it('works on first pool', async () => {
-      expect(await path.hasPools(encodedPath)).to.be.true
+      expect(await path.hasMultiplePools(encodedPath)).to.be.true
 
       const firstPool = await path.decodeFirstPool(encodedPath)
       expect(firstPool.tokenA).to.be.eq(tokenAddresses[0])
@@ -75,7 +75,7 @@ describe('Path', () => {
       const skipped = await path.skipToken(encodedPath)
       expect(skipped).to.be.eq('0x' + encodedPath.slice(2 + offset * 2))
 
-      expect(await path.hasPools(skipped)).to.be.false
+      expect(await path.hasMultiplePools(skipped)).to.be.false
 
       const { tokenA, tokenB, fee: decodedFee } = await path.decodeFirstPool(skipped)
       expect(tokenA).to.be.eq(tokenAddresses[1])

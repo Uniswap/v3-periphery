@@ -19,7 +19,7 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         int256 priority;
     }
 
-    // tokens that take priority order in price ratio higher integers get numerator prioriy
+    // tokens that take priority order in price ratio - higher integers get numerator prioriy
     mapping(address => int256) public tokenRatioPriority;
 
     function initialize(TokenRatioOrderPriority[] memory tokens) public initializer() {

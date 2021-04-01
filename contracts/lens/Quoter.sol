@@ -3,26 +3,23 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
+import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
 
 import '../interfaces/IQuoter.sol';
 import '../base/PeripheryImmutableState.sol';
-import '../base/PeripheryValidation.sol';
 import '../libraries/Path.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
 
-/// @title Uniswap V3 Swap Router
-/// @notice Router for stateless execution of swaps against Uniswap V3
-contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, PeripheryValidation {
+/// @title Provides quotes for swaps
+/// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
+/// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
+/// the swap and check the amounts in the callback.
+contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
     using Path for bytes;
     using SafeCast for uint256;
-
-    /// @dev The minimum value that can be returned from #getSqrtRatioAtTick, plus 1
-    uint160 private constant MIN_SQRT_RATIO = 4295128739 + 1;
-    /// @dev The maximum value that can be returned from #getSqrtRatioAtTick, minus 1
-    uint160 private constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342 - 1;
 
     constructor(address _factory, address _WETH9) PeripheryImmutableState(_factory, _WETH9) {}
 
@@ -62,10 +59,26 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
         }
     }
 
-    /// @dev Performs a single exact input swap
-    function exactInputSingle(uint256 amountIn, bytes memory path) private returns (uint256 amountOut) {
-        (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
+    /// @dev Parses a revert reason that should contain the numeric quote
+    function parseRevertReason(bytes memory reason) private pure returns (uint256) {
+        if (reason.length != 32) {
+            if (reason.length < 68) revert('Unexpected error');
+            assembly {
+                reason := add(reason, 0x04)
+            }
+            revert(abi.decode(reason, (string)));
+        }
+        return abi.decode(reason, (uint256));
+    }
 
+    /// @inheritdoc IQuoter
+    function quoteExactInputSingle(
+        address tokenIn,
+        address tokenOut,
+        uint24 fee,
+        uint256 amountIn,
+        uint160 sqrtPriceLimitX96
+    ) public override returns (uint256 amountOut) {
         bool zeroForOne = tokenIn < tokenOut;
 
         try
@@ -73,30 +86,32 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
                 address(this), // address(0) might cause issues with some tokens
                 zeroForOne,
                 amountIn.toInt256(),
-                zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
-                path
+                sqrtPriceLimitX96,
+                abi.encodePacked(tokenIn, fee, tokenOut)
             )
         {} catch (bytes memory reason) {
-            if (reason.length != 32) {
-                revert('Unexpected error');
-            }
-            return abi.decode(reason, (uint256));
+            return parseRevertReason(reason);
         }
     }
 
     /// @inheritdoc IQuoter
     function quoteExactInput(bytes memory path, uint256 amountIn) external override returns (uint256 amountOut) {
         while (true) {
-            bool hasPools = path.hasPools();
+            bool hasMultiplePools = path.hasMultiplePools();
+
+            (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
             // the outputs of prior swaps become the inputs to subsequent ones
-            amountIn = exactInputSingle(
+            amountIn = quoteExactInputSingle(
+                tokenIn,
+                tokenOut,
+                fee,
                 amountIn,
-                path.getFirstPool() // only the first pool in the path is necessary
+                tokenIn < tokenOut ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1
             );
 
             // decide whether to continue or terminate
-            if (hasPools) {
+            if (hasMultiplePools) {
                 path = path.skipToken();
             } else {
                 return amountIn;
@@ -104,10 +119,14 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
         }
     }
 
-    /// @dev Performs a single exact output swap
-    function exactOutputSingle(uint256 amountOut, bytes memory path) private returns (uint256 amountIn) {
-        (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
-
+    /// @inheritdoc IQuoter
+    function quoteExactOutputSingle(
+        address tokenIn,
+        address tokenOut,
+        uint24 fee,
+        uint256 amountOut,
+        uint160 sqrtPriceLimitX96
+    ) public override returns (uint256 amountIn) {
         bool zeroForOne = tokenIn < tokenOut;
 
         try
@@ -115,30 +134,32 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState, Per
                 address(this), // address(0) might cause issues with some tokens
                 zeroForOne,
                 -amountOut.toInt256(),
-                zeroForOne ? MIN_SQRT_RATIO : MAX_SQRT_RATIO,
-                path
+                sqrtPriceLimitX96,
+                abi.encodePacked(tokenOut, fee, tokenIn)
             )
         {} catch (bytes memory reason) {
-            if (reason.length != 32) {
-                revert('Unexpected error');
-            }
-            return abi.decode(reason, (uint256));
+            return parseRevertReason(reason);
         }
     }
 
     /// @inheritdoc IQuoter
     function quoteExactOutput(bytes memory path, uint256 amountOut) external override returns (uint256 amountIn) {
         while (true) {
-            bool hasPools = path.hasPools();
+            bool hasMultiplePools = path.hasMultiplePools();
+
+            (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
 
             // the inputs of prior swaps become the outputs of subsequent ones
-            amountOut = exactOutputSingle(
+            amountOut = quoteExactOutputSingle(
+                tokenIn,
+                tokenOut,
+                fee,
                 amountOut,
-                path.getFirstPool() // only the first pool in the path is necessary
+                tokenIn < tokenOut ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1
             );
 
             // decide whether to continue or terminate
-            if (hasPools) {
+            if (hasMultiplePools) {
                 path = path.skipToken();
             } else {
                 return amountOut;
