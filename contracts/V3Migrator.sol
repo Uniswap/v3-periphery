@@ -22,9 +22,11 @@ import './interfaces/external/IWETH9.sol';
 contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPermit {
     address public immutable nonfungiblePositionManager;
 
-    constructor(address _factory, address _WETH9, address _nonfungiblePositionManager)
-        PeripheryImmutableState(_factory, _WETH9)
-    {
+    constructor(
+        address _factory,
+        address _WETH9,
+        address _nonfungiblePositionManager
+    ) PeripheryImmutableState(_factory, _WETH9) {
         nonfungiblePositionManager = _nonfungiblePositionManager;
     }
 
