@@ -57,10 +57,10 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     ])
   })
 
-  describe.only('hasToken0RatioNumerator', () => {
-    it('returns false if neither token has priority ordering', async () => {
-      expect(await nftPositionDescriptor.hasToken0RatioNumerator(tokens[2].address, tokens[2].address)).to.eq(false)
-    })
+	describe('hasToken0RatioNumerator', () => {
+		it('returns false if neither token has priority ordering', async () => {
+				expect(await nftPositionDescriptor.hasToken0RatioNumerator(tokens[2].address, tokens[2].address)).to.eq(false)
+		})
 
     it('returns true if both tokens are numerators but token0 has a higher priority ordering', async () => {
       expect(await nftPositionDescriptor.hasToken0RatioNumerator(tokens[4].address, tokens[3].address)).to.eq(true)
