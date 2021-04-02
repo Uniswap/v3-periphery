@@ -24,7 +24,7 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
 
     function initialize(TokenRatioOrderPriority[] calldata tokens) public initializer() {
         for (uint256 i = 0; i < tokens.length; i++) {
-            addTokenRatioPriority(tokens[i]);
+            updateTokenRatioPriority(tokens[i]);
         }
     }
 
@@ -70,8 +70,8 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         return tokenRatioPriority[token0] > tokenRatioPriority[token1];
     }
 
-    function addTokenRatioPriority(TokenRatioOrderPriority calldata token) private {
+    function updateTokenRatioPriority(TokenRatioOrderPriority calldata token) private {
         tokenRatioPriority[token.token] = token.priority;
-        emit AddTokenRatioPriority(token.token, token.priority);
+        emit UpdateTokenRatioPriority(token.token, token.priority);
     }
 }
