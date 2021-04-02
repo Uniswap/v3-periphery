@@ -27,9 +27,10 @@ contract NFTDescriptorTest {
         int24 tick,
         int24 tickSpacing,
         uint8 token0Decimals,
-        uint8 token1Decimals
+        uint8 token1Decimals,
+        bool flipRatio
     ) public pure returns (string memory) {
-        return NFTDescriptor.tickToDecimalString(tick, tickSpacing, token0Decimals, token1Decimals);
+        return NFTDescriptor.tickToDecimalString(tick, tickSpacing, token0Decimals, token1Decimals, flipRatio);
     }
 
     function fixedPointToDecimalString(

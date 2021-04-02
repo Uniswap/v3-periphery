@@ -50,6 +50,7 @@ describe('NFTDescriptor', () => {
       const token1Symbol = await tokens[1].symbol()
       const token0Decimals = await tokens[0].decimals()
       const token1Decimals = await tokens[1].decimals()
+      const flipRatio = false
       const tickLower = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       const tickUpper = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
@@ -64,6 +65,7 @@ describe('NFTDescriptor', () => {
         token1Symbol,
         token0Decimals,
         token1Decimals,
+        flipRatio,
         tickLower,
         tickUpper,
         tickSpacing,
@@ -86,6 +88,7 @@ describe('NFTDescriptor', () => {
       const token1Symbol = await tokens[1].symbol()
       const token0Decimals = await tokens[0].decimals()
       const token1Decimals = await tokens[1].decimals()
+      const flipRatio = false
       const tickLower = -10
       const tickUpper = 10
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
@@ -100,6 +103,7 @@ describe('NFTDescriptor', () => {
         token1Symbol,
         token0Decimals,
         token1Decimals,
+        flipRatio,
         tickLower,
         tickUpper,
         tickSpacing,
@@ -122,6 +126,7 @@ describe('NFTDescriptor', () => {
       const token1Symbol = await tokens[1].symbol()
       const token0Decimals = await tokens[0].decimals()
       const token1Decimals = await tokens[1].decimals()
+      const flipRatio = false
       const tickLower = -10
       const tickUpper = 10
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
@@ -137,6 +142,7 @@ describe('NFTDescriptor', () => {
           token1Symbol,
           token0Decimals,
           token1Decimals,
+          flipRatio,
           tickLower,
           tickUpper,
           tickSpacing,
@@ -170,20 +176,20 @@ describe('NFTDescriptor', () => {
       })
 
       it('returns MIN on lowest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18)).to.equal('MIN')
+        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18, false)).to.equal('MIN')
       })
 
       it('returns MAX on the highest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18)).to.equal('MAX')
+        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18, false)).to.equal('MAX')
       })
 
       it('returns the correct decimal string when the tick is in range', async () => {
-        expect(await nftDescriptor.tickToDecimalString(1, tickSpacing, 18, 18)).to.equal('1.0001')
+        expect(await nftDescriptor.tickToDecimalString(1, tickSpacing, 18, 18, false)).to.equal('1.0001')
       })
 
       it('returns the correct decimal string when tick is mintick for different tickspace', async () => {
         const otherMinTick = getMinTick(TICK_SPACINGS[FeeAmount.HIGH])
-        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18)).to.equal(
+        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18, false)).to.equal(
           '0.0000000000000000000000000000000000000029387'
         )
       })
@@ -197,20 +203,20 @@ describe('NFTDescriptor', () => {
       })
 
       it('returns MIN on lowest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18)).to.equal('MIN')
+        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18, false)).to.equal('MIN')
       })
 
       it('returns MAX on the highest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18)).to.equal('MAX')
+        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18, false)).to.equal('MAX')
       })
 
       it('returns the correct decimal string when the tick is in range', async () => {
-        expect(await nftDescriptor.tickToDecimalString(-1, tickSpacing, 18, 18)).to.equal('0.99990')
+        expect(await nftDescriptor.tickToDecimalString(-1, tickSpacing, 18, 18, false)).to.equal('0.99990')
       })
 
       it('returns the correct decimal string when tick is mintick for different tickspace', async () => {
         const otherMinTick = getMinTick(TICK_SPACINGS[FeeAmount.HIGH])
-        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18)).to.equal(
+        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18, false)).to.equal(
           '0.0000000000000000000000000000000000000029387'
         )
       })
@@ -224,22 +230,55 @@ describe('NFTDescriptor', () => {
       })
 
       it('returns MIN on lowest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18)).to.equal('MIN')
+        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18, false)).to.equal('MIN')
       })
 
       it('returns MAX on the highest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18)).to.equal('MAX')
+        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18, false)).to.equal('MAX')
       })
 
       it('returns the correct decimal string when the tick is in range', async () => {
-        expect(await nftDescriptor.tickToDecimalString(0, tickSpacing, 18, 18)).to.equal('1.0000')
+        expect(await nftDescriptor.tickToDecimalString(0, tickSpacing, 18, 18, false)).to.equal('1.0000')
       })
 
       it('returns the correct decimal string when tick is mintick for different tickspace', async () => {
         const otherMinTick = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
-        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18)).to.equal(
+        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18, false)).to.equal(
           '0.0000000000000000000000000000000000000029387'
         )
+      })
+    })
+
+    describe('when token0 should be the ratio numerator', () => {
+      it('returns the inverse of default ratio for medium sized numbers', async () => {
+        const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        expect(await nftDescriptor.tickToDecimalString(10, tickSpacing, 18, 18, false)).to.eq('1.0010')
+        expect(await nftDescriptor.tickToDecimalString(10, tickSpacing, 18, 18, true)).to.eq('0.99900')
+      })
+
+      it('returns the inverse of default ratio for large numbers', async () => {
+        const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        expect(await nftDescriptor.tickToDecimalString(487272, tickSpacing, 18, 18, false)).to.eq(
+          '1448400000000000000000'
+        )
+        expect(await nftDescriptor.tickToDecimalString(487272, tickSpacing, 18, 18, true)).to.eq(
+          '0.00000000000000000000069041'
+        )
+      })
+
+      it('returns the inverse of default ratio for small numbers', async () => {
+        const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        expect(await nftDescriptor.tickToDecimalString(-387272, tickSpacing, 18, 18, false)).to.eq(
+          '0.000000000000000015200'
+        )
+        expect(await nftDescriptor.tickToDecimalString(-387272, tickSpacing, 18, 18, true)).to.eq('65791000000000000')
+      })
+
+      it('returns the correct string with differing token decimals', async () => {
+        const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 18, 18, true)).to.eq('0.90484')
+        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 10, 18, true)).to.eq('90484000')
+        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 18, 10, true)).to.eq('0.0000000090484')
       })
     })
   })
