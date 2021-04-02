@@ -19,16 +19,13 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
     }
 
     /// @inheritdoc IPeripheryPayments
-    function unwrapWETH9(
-        uint256 amountMinimum, 
-        address recipient
-    ) external payable override {
+    function unwrapWETH9(uint256 amountMinimum, address recipient) external payable override {
         unwrapWETH9WithFee(amountMinimum, recipient, 0, address(0));
     }
 
     /// @inheritdoc IPeripheryPayments
     function unwrapWETH9WithFee(
-        uint256 amountMinimum, 
+        uint256 amountMinimum,
         address recipient,
         uint256 feePercentage,
         address feeRecipient
