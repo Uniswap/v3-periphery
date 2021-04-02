@@ -95,7 +95,13 @@ describe('V3Migrator', () => {
   })
 
   describe('#migrate', () => {
+    let tokenLower: boolean
+
     const expectedLiquidity = 10000 - 1000
+
+    beforeEach(() => {
+      tokenLower = token.address.toLowerCase() < weth9.address.toLowerCase()
+    })
 
     beforeEach('add V2 liquidity', async () => {
       await factoryV2.createPair(token.address, weth9.address)
@@ -118,6 +124,8 @@ describe('V3Migrator', () => {
         migrator.migrate({
           pair: pair.address,
           liquidityToMigrate: expectedLiquidity,
+          token0: tokenLower ? token.address : weth9.address,
+          token1: tokenLower ? weth9.address : token.address,
           fee: FeeAmount.MEDIUM,
           tickLower: -1,
           tickUpper: 1,
@@ -141,6 +149,8 @@ describe('V3Migrator', () => {
       await migrator.migrate({
         pair: pair.address,
         liquidityToMigrate: expectedLiquidity,
+        token0: tokenLower ? token.address : weth9.address,
+        token1: tokenLower ? weth9.address : token.address,
         fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(FeeAmount.MEDIUM),
         tickUpper: getMaxTick(FeeAmount.MEDIUM),
@@ -173,6 +183,8 @@ describe('V3Migrator', () => {
       await migrator.migrate({
         pair: pair.address,
         liquidityToMigrate: expectedLiquidity,
+        token0: tokenLower ? token.address : weth9.address,
+        token1: tokenLower ? weth9.address : token.address,
         fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(FeeAmount.MEDIUM),
         tickUpper: getMaxTick(FeeAmount.MEDIUM),
@@ -217,6 +229,8 @@ describe('V3Migrator', () => {
       await migrator.migrate({
         pair: pair.address,
         liquidityToMigrate: expectedLiquidity,
+        token0: tokenLower ? token.address : weth9.address,
+        token1: tokenLower ? weth9.address : token.address,
         fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(FeeAmount.MEDIUM),
         tickUpper: getMaxTick(FeeAmount.MEDIUM),
@@ -256,13 +270,13 @@ describe('V3Migrator', () => {
 
       const tokenBalanceBefore = await token.balanceOf(wallet.address)
 
-      const tokenLower = token.address.toLowerCase() < weth9.address.toLowerCase()
-
       await pair.approve(migrator.address, expectedLiquidity)
       await expect(
         migrator.migrate({
           pair: pair.address,
           liquidityToMigrate: expectedLiquidity,
+          token0: tokenLower ? token.address : weth9.address,
+          token1: tokenLower ? weth9.address : token.address,
           fee: FeeAmount.MEDIUM,
           tickLower: getMinTick(FeeAmount.MEDIUM),
           tickUpper: getMaxTick(FeeAmount.MEDIUM),
@@ -302,13 +316,13 @@ describe('V3Migrator', () => {
 
       const tokenBalanceBefore = await token.balanceOf(wallet.address)
 
-      const tokenLower = token.address.toLowerCase() < weth9.address.toLowerCase()
-
       await pair.approve(migrator.address, expectedLiquidity)
       await expect(
         migrator.migrate({
           pair: pair.address,
           liquidityToMigrate: expectedLiquidity,
+          token0: tokenLower ? token.address : weth9.address,
+          token1: tokenLower ? weth9.address : token.address,
           fee: FeeAmount.MEDIUM,
           tickLower: getMinTick(FeeAmount.MEDIUM),
           tickUpper: getMaxTick(FeeAmount.MEDIUM),
@@ -351,6 +365,8 @@ describe('V3Migrator', () => {
         migrator.migrate({
           pair: pair.address,
           liquidityToMigrate: expectedLiquidity,
+          token0: tokenLower ? token.address : weth9.address,
+          token1: tokenLower ? weth9.address : token.address,
           fee: FeeAmount.MEDIUM,
           tickLower: getMinTick(FeeAmount.MEDIUM),
           tickUpper: getMaxTick(FeeAmount.MEDIUM),

@@ -53,16 +53,12 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
         IUniswapV2Pair(params.pair).transferFrom(msg.sender, params.pair, params.liquidityToMigrate);
         (uint256 amount0V2, uint256 amount1V2) = IUniswapV2Pair(params.pair).burn(address(this));
 
-        // get underlying tokens
-        address token0 = IUniswapV2Pair(params.pair).token0();
-        address token1 = IUniswapV2Pair(params.pair).token1();
-
         // calculate the uniswap v3 pool address
         IUniswapV3Pool pool =
             IUniswapV3Pool(
                 PoolAddress.computeAddress(
                     factory,
-                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: params.fee})
+                    PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee})
                 )
             );
 
@@ -79,15 +75,15 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
         require(liquidityV3 >= params.liquidityV3Min, 'Excessive price impact');
 
         // approve the position manager up to the maximum token amounts
-        TransferHelper.safeApprove(token0, nonfungiblePositionManager, amount0V2);
-        TransferHelper.safeApprove(token1, nonfungiblePositionManager, amount1V2);
+        TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, amount0V2);
+        TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, amount1V2);
 
         // mint v3 position
         (, uint256 amount0V3, uint256 amount1V3) =
             INonfungiblePositionManager(nonfungiblePositionManager).mint(
                 INonfungiblePositionManager.MintParams({
-                    token0: token0,
-                    token1: token1,
+                    token0: params.token0,
+                    token1: params.token1,
                     fee: params.fee,
                     tickLower: params.tickLower,
                     tickUpper: params.tickUpper,
@@ -101,25 +97,25 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
 
         // if necessary, clear allowance and refund dust
         if (amount0V3 < amount0V2) {
-            TransferHelper.safeApprove(token0, nonfungiblePositionManager, 0);
+            TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, 0);
 
             uint256 refund0 = amount0V2 - amount0V3;
-            if (params.refundAsETH && token0 == WETH9) {
+            if (params.refundAsETH && params.token0 == WETH9) {
                 IWETH9(WETH9).withdraw(refund0);
                 TransferHelper.safeTransferETH(msg.sender, refund0);
             } else {
-                TransferHelper.safeTransfer(token0, msg.sender, refund0);
+                TransferHelper.safeTransfer(params.token0, msg.sender, refund0);
             }
         }
         if (amount1V3 < amount1V2) {
-            TransferHelper.safeApprove(token1, nonfungiblePositionManager, 0);
+            TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, 0);
 
             uint256 refund1 = amount1V2 - amount1V3;
-            if (params.refundAsETH && token1 == WETH9) {
+            if (params.refundAsETH && params.token1 == WETH9) {
                 IWETH9(WETH9).withdraw(refund1);
                 TransferHelper.safeTransferETH(msg.sender, refund1);
             } else {
-                TransferHelper.safeTransfer(token1, msg.sender, refund1);
+                TransferHelper.safeTransfer(params.token1, msg.sender, refund1);
             }
         }
     }
