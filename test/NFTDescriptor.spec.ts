@@ -50,7 +50,7 @@ describe('NFTDescriptor', () => {
       const token1Symbol = await tokens[1].symbol()
       const token0Decimals = await tokens[0].decimals()
       const token1Decimals = await tokens[1].decimals()
-      const hasToken0RatioNumerator = false
+      const flipRatio = false
       const tickLower = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       const tickUpper = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
@@ -65,7 +65,7 @@ describe('NFTDescriptor', () => {
         token1Symbol,
         token0Decimals,
         token1Decimals,
-        hasToken0RatioNumerator,
+        flipRatio,
         tickLower,
         tickUpper,
         tickSpacing,
@@ -88,7 +88,7 @@ describe('NFTDescriptor', () => {
       const token1Symbol = await tokens[1].symbol()
       const token0Decimals = await tokens[0].decimals()
       const token1Decimals = await tokens[1].decimals()
-      const hasToken0RatioNumerator = false
+      const flipRatio = false
       const tickLower = -10
       const tickUpper = 10
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
@@ -103,7 +103,7 @@ describe('NFTDescriptor', () => {
         token1Symbol,
         token0Decimals,
         token1Decimals,
-        hasToken0RatioNumerator,
+        flipRatio,
         tickLower,
         tickUpper,
         tickSpacing,
@@ -126,7 +126,7 @@ describe('NFTDescriptor', () => {
       const token1Symbol = await tokens[1].symbol()
       const token0Decimals = await tokens[0].decimals()
       const token1Decimals = await tokens[1].decimals()
-      const hasToken0RatioNumerator = false
+      const flipRatio = false
       const tickLower = -10
       const tickUpper = 10
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
@@ -142,7 +142,7 @@ describe('NFTDescriptor', () => {
           token1Symbol,
           token0Decimals,
           token1Decimals,
-          hasToken0RatioNumerator,
+          flipRatio,
           tickLower,
           tickUpper,
           tickSpacing,

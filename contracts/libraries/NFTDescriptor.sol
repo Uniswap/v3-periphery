@@ -28,7 +28,7 @@ library NFTDescriptor {
         string token1Symbol;
         uint8 token0Decimals;
         uint8 token1Decimals;
-        bool hasToken0RatioNumerator;
+        bool flipRatio;
         int24 tickLower;
         int24 tickUpper;
         int24 tickSpacing;
@@ -45,16 +45,16 @@ library NFTDescriptor {
                     'Uniswap V3 - ',
                     feeToPercentString(params.fee),
                     ' - ',
-                    params.hasToken0RatioNumerator ? params.token0Symbol : params.token1Symbol,
+                    params.flipRatio ? params.token0Symbol : params.token1Symbol,
                     '/',
-                    params.hasToken0RatioNumerator ? params.token1Symbol : params.token0Symbol,
+                    params.flipRatio ? params.token1Symbol : params.token0Symbol,
                     ' - ',
                     tickToDecimalString(
                         params.tickLower,
                         params.tickSpacing,
                         params.token0Decimals,
                         params.token1Decimals,
-                        params.hasToken0RatioNumerator
+                        params.flipRatio
                     ),
                     '<>',
                     tickToDecimalString(
@@ -62,7 +62,7 @@ library NFTDescriptor {
                         params.tickSpacing,
                         params.token0Decimals,
                         params.token1Decimals,
-                        params.hasToken0RatioNumerator
+                        params.flipRatio
                     )
                 )
             );
@@ -134,7 +134,7 @@ library NFTDescriptor {
         int24 tickSpacing,
         uint8 token0Decimals,
         uint8 token1Decimals,
-        bool hasToken0RatioNumerator
+        bool flipRatio
     ) internal pure returns (string memory) {
         if (tick == (TickMath.MIN_TICK / tickSpacing) * tickSpacing) {
             return 'MIN';
@@ -142,7 +142,7 @@ library NFTDescriptor {
             return 'MAX';
         } else {
             uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
-            if (hasToken0RatioNumerator) {
+            if (flipRatio) {
                 sqrtRatioX96 = uint160(uint256(1 << 192).div(sqrtRatioX96));
                 return fixedPointToDecimalString(sqrtRatioX96, token1Decimals, token0Decimals);
             }

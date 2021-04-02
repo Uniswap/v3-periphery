@@ -22,9 +22,9 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
     // tokens that take priority order in price ratio - higher integers get numerator priority
     mapping(address => int256) public tokenRatioPriority;
 
-    function initialize(TokenRatioOrderPriority[] memory tokens) public initializer() {
+    function initialize(TokenRatioOrderPriority[] calldata tokens) public initializer() {
         for (uint256 i = 0; i < tokens.length; i++) {
-            tokenRatioPriority[tokens[i].token] = tokens[i].priority;
+            addTokenRatioPriority(tokens[i]);
         }
     }
 
@@ -55,7 +55,7 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                     token1Symbol: SafeERC20Namer.tokenSymbol(token1),
                     token0Decimals: IERC20Metadata(token0).decimals(),
                     token1Decimals: IERC20Metadata(token1).decimals(),
-                    hasToken0RatioNumerator: hasToken0RatioNumerator(token0, token1),
+                    flipRatio: flipRatio(token0, token1),
                     tickLower: tickLower,
                     tickUpper: tickUpper,
                     tickSpacing: pool.tickSpacing(),
@@ -66,7 +66,12 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
             );
     }
 
-    function hasToken0RatioNumerator(address token0, address token1) public view returns (bool) {
+    function flipRatio(address token0, address token1) public view returns (bool) {
         return tokenRatioPriority[token0] > tokenRatioPriority[token1];
+    }
+
+    function addTokenRatioPriority(TokenRatioOrderPriority calldata token) private {
+        tokenRatioPriority[token.token] = token.priority;
+        emit AddTokenRatioPriority(token.token, token.priority);
     }
 }
