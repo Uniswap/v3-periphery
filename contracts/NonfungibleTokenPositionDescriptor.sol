@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/lib/contracts/libraries/SafeERC20Namer.sol';
-import '@openzeppelin/contracts/proxy/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import './interfaces/INonfungiblePositionManager.sol';
 import './interfaces/INonfungibleTokenPositionDescriptor.sol';
 import './interfaces/IERC20Metadata.sol';
@@ -13,7 +13,7 @@ import './libraries/NFTDescriptor.sol';
 
 /// @title Describes NFT token positions
 /// @notice Produces a string containing the data URI for a JSON metadata string
-contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescriptor, Initializable {
+contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescriptor, OwnableUpgradeable {
     struct TokenRatioOrderPriority {
         address token;
         int256 priority;
@@ -22,7 +22,13 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
     // tokens that take priority order in price ratio - higher integers get numerator priority
     mapping(address => int256) public tokenRatioPriority;
 
-    function initialize(TokenRatioOrderPriority[] calldata tokens) public initializer() {
+    function initialize(address admin, TokenRatioOrderPriority[] calldata tokens) public initializer {
+        __Ownable_init();
+        setStorage(tokens);
+        transferOwnership(admin);
+    }
+
+    function setStorage(TokenRatioOrderPriority[] calldata tokens) public onlyOwner() {
         for (uint256 i = 0; i < tokens.length; i++) {
             updateTokenRatioPriority(tokens[i]);
         }
