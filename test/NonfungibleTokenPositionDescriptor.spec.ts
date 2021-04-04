@@ -28,9 +28,7 @@ describe('NonfungibleTokenPositionDescriptor', () => {
       'NonfungibleTokenPositionDescriptor'
     )
     const ProxyAdminFactory = await ethers.getContractFactory('ProxyAdmin')
-    const TransparentUpgradeableProxy = await ethers.getContractFactory(
-      'TransparentUpgradeableProxy'
-    )
+    const TransparentUpgradeableProxy = await ethers.getContractFactory('TransparentUpgradeableProxy')
 
     const tokens = (await Promise.all([
       tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu25e6 to avoid overflowing
@@ -63,7 +61,7 @@ describe('NonfungibleTokenPositionDescriptor', () => {
       newImplementation,
       tokens,
       proxy,
-      proxyAdmin
+      proxyAdmin,
     }
   }
 
@@ -80,12 +78,16 @@ describe('NonfungibleTokenPositionDescriptor', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ nftPositionDescriptor, newImplementation, tokens, proxy, proxyAdmin } = await loadFixture(nftPositionDescriptorCompleteFixture))
+    ;({ nftPositionDescriptor, newImplementation, tokens, proxy, proxyAdmin } = await loadFixture(
+      nftPositionDescriptorCompleteFixture
+    ))
     const NonfungibleTokenPositionDescriptorFactory = await ethers.getContractFactory(
       'NonfungibleTokenPositionDescriptor'
     )
     // call nftPositionDescriptor through proxy contract
-    nftPositionDescriptor = NonfungibleTokenPositionDescriptorFactory.attach(proxy.address) as NonfungibleTokenPositionDescriptor
+    nftPositionDescriptor = NonfungibleTokenPositionDescriptorFactory.attach(
+      proxy.address
+    ) as NonfungibleTokenPositionDescriptor
   })
 
   describe('upgradeability', () => {
@@ -108,7 +110,7 @@ describe('NonfungibleTokenPositionDescriptor', () => {
         nftPositionDescriptor.interface.encodeFunctionData('setStorage', [
           [
             { token: tokens[0].address, priority: 2 },
-            { token: tokens[1].address, priority: 0},
+            { token: tokens[1].address, priority: 0 },
             { token: tokens[2].address, priority: 1 },
           ],
         ])
@@ -122,13 +124,12 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     })
 
     it('cannot call setStorage from non proxyAdmin accounts', async () => {
-      expect(nftPositionDescriptor.connect(user).setStorage(
-        [
+      expect(
+        nftPositionDescriptor.connect(user).setStorage([
           { token: tokens[0].address, priority: 2 },
-          { token: tokens[1].address, priority: 0},
+          { token: tokens[1].address, priority: 0 },
           { token: tokens[2].address, priority: 1 },
-          ]
-        )
+        ])
       ).to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
