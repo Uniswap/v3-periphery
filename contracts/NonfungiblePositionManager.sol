@@ -288,6 +288,7 @@ contract NonfungiblePositionManager is
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
         (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, amount);
 
+        // TODO: revert reasons
         require(amount0 >= amount0Min);
         require(amount1 >= amount1Min);
 
