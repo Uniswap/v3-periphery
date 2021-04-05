@@ -62,24 +62,12 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
                 )
             );
 
-        // calculate the maximum amount of v3 liquidity that can be added
-        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
-        uint128 liquidityV3 =
-            LiquidityAmounts.getLiquidityForAmounts(
-                sqrtRatioX96,
-                TickMath.getSqrtRatioAtTick(params.tickLower),
-                TickMath.getSqrtRatioAtTick(params.tickUpper),
-                amount0V2,
-                amount1V2
-            );
-        require(liquidityV3 >= params.liquidityV3Min, 'Excessive price impact');
-
         // approve the position manager up to the maximum token amounts
         TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, amount0V2);
         TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, amount1V2);
 
         // mint v3 position
-        (, uint256 amount0V3, uint256 amount1V3) =
+        (, uint128 liquidityV3, uint256 amount0V3, uint256 amount1V3) =
             INonfungiblePositionManager(nonfungiblePositionManager).mint(
                 INonfungiblePositionManager.MintParams({
                     token0: params.token0,
@@ -95,6 +83,8 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
                     deadline: params.deadline
                 })
             );
+
+        require(liquidityV3 >= params.liquidityV3Min, 'Excessive price impact');
 
         // if necessary, clear allowance and refund dust
         if (amount0V3 < amount0V2) {

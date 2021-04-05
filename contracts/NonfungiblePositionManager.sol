@@ -150,12 +150,12 @@ contract NonfungiblePositionManager is
         checkDeadline(params.deadline)
         returns (
             uint256 tokenId,
+            uint128 liquidity,
             uint256 amount0,
             uint256 amount1
         )
     {
         IUniswapV3Pool pool;
-        uint128 liquidity;
         (liquidity, amount0, amount1, pool) = addLiquidity(
             AddLiquidityParams({
                 token0: params.token0,
@@ -218,14 +218,22 @@ contract NonfungiblePositionManager is
         uint256 amount0Min,
         uint256 amount1Min,
         uint256 deadline
-    ) external payable override checkDeadline(deadline) returns (uint256 amount0, uint256 amount1) {
+    )
+        external
+        payable
+        override
+        checkDeadline(deadline)
+        returns (
+            uint128 liquidity,
+            uint256 amount0,
+            uint256 amount1
+        )
+    {
         Position storage position = _positions[tokenId];
 
         PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
 
-        uint128 liquidity;
         IUniswapV3Pool pool;
-
         (liquidity, amount0, amount1, pool) = addLiquidity(
             AddLiquidityParams({
                 token0: poolKey.token0,

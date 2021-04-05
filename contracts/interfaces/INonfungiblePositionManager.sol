@@ -65,6 +65,7 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
         payable
         returns (
             uint256 tokenId,
+            uint128 liquidity,
             uint256 amount0,
             uint256 amount1
         );
@@ -83,7 +84,14 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
         uint256 amount0Min,
         uint256 amount1Min,
         uint256 deadline
-    ) external payable returns (uint256 amount0, uint256 amount1);
+    )
+        external
+        payable
+        returns (
+            uint128 liquidity,
+            uint256 amount0,
+            uint256 amount1
+        );
 
     /// @notice Decreases the amount of liquidity in a position and accounts it to the position
     /// @param tokenId The ID of the token for which liquidity is being decreased
