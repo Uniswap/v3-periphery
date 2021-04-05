@@ -53,15 +53,6 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
         IUniswapV2Pair(params.pair).transferFrom(msg.sender, params.pair, params.liquidityToMigrate);
         (uint256 amount0V2, uint256 amount1V2) = IUniswapV2Pair(params.pair).burn(address(this));
 
-        // calculate the uniswap v3 pool address
-        IUniswapV3Pool pool =
-            IUniswapV3Pool(
-                PoolAddress.computeAddress(
-                    factory,
-                    PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee})
-                )
-            );
-
         // approve the position manager up to the maximum token amounts
         TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, amount0V2);
         TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, amount1V2);
@@ -77,8 +68,8 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
                     tickUpper: params.tickUpper,
                     amount0Desired: amount0V2,
                     amount1Desired: amount1V2,
-                    amount0Min: 0, // already did slippage check
-                    amount1Min: 0, // already did slippage check
+                    amount0Min: 0, // slippage check is on liquidity
+                    amount1Min: 0, // slippage check is on liquidity
                     recipient: params.recipient,
                     deadline: params.deadline
                 })
