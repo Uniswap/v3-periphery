@@ -155,7 +155,8 @@ contract NonfungiblePositionManager is
         )
     {
         IUniswapV3Pool pool;
-        (amount0, amount1, pool) = addLiquidity(
+        uint128 liquidity;
+        (liquidity, amount0, amount1, pool) = addLiquidity(
             AddLiquidityParams({
                 token0: params.token0,
                 token1: params.token1,
@@ -163,9 +164,10 @@ contract NonfungiblePositionManager is
                 recipient: address(this),
                 tickLower: params.tickLower,
                 tickUpper: params.tickUpper,
-                amount: params.amount,
-                amount0Max: params.amount0Max,
-                amount1Max: params.amount1Max
+                amount0Desired: params.amount0Desired,
+                amount1Desired: params.amount1Desired,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min
             })
         );
 
@@ -187,7 +189,7 @@ contract NonfungiblePositionManager is
             poolId: poolId,
             tickLower: params.tickLower,
             tickUpper: params.tickUpper,
-            liquidity: params.amount,
+            liquidity: liquidity,
             feeGrowthInside0LastX128: feeGrowthInside0LastX128,
             feeGrowthInside1LastX128: feeGrowthInside1LastX128,
             tokensOwed0: 0,
@@ -211,27 +213,30 @@ contract NonfungiblePositionManager is
     /// @inheritdoc INonfungiblePositionManager
     function increaseLiquidity(
         uint256 tokenId,
-        uint128 amount,
-        uint256 amount0Max,
-        uint256 amount1Max,
+        uint256 amount0Desired,
+        uint256 amount1Desired,
+        uint256 amount0Min,
+        uint256 amount1Min,
         uint256 deadline
     ) external payable override checkDeadline(deadline) returns (uint256 amount0, uint256 amount1) {
-        require(amount > 0);
         Position storage position = _positions[tokenId];
 
         PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
 
+        uint128 liquidity;
         IUniswapV3Pool pool;
-        (amount0, amount1, pool) = addLiquidity(
+
+        (liquidity, amount0, amount1, pool) = addLiquidity(
             AddLiquidityParams({
                 token0: poolKey.token0,
                 token1: poolKey.token1,
                 fee: poolKey.fee,
                 tickLower: position.tickLower,
                 tickUpper: position.tickUpper,
-                amount: amount,
-                amount0Max: amount0Max,
-                amount1Max: amount1Max,
+                amount0Desired: amount0Desired,
+                amount1Desired: amount1Desired,
+                amount0Min: amount0Min,
+                amount1Min: amount1Min,
                 recipient: address(this)
             })
         );
@@ -258,7 +263,7 @@ contract NonfungiblePositionManager is
 
         position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
-        position.liquidity += amount;
+        position.liquidity += liquidity;
     }
 
     /// @inheritdoc INonfungiblePositionManager

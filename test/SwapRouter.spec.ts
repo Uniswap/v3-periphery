@@ -106,9 +106,10 @@ describe('SwapRouter', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: wallet.address,
-        amount: liquidity,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
+        amount0Desired: 1000000,
+        amount1Desired: 1000000,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
       }
 

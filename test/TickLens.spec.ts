@@ -67,9 +67,10 @@ describe('TickLens', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: wallets[0].address,
-        amount: fullRangeLiquidity,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
+        amount0Desired: 1000000,
+        amount1Desired: 1000000,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
       }
 
@@ -92,9 +93,10 @@ describe('TickLens', () => {
         fee: FeeAmount.MEDIUM,
         tickLower,
         tickUpper,
-        amount,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
+        amount0Desired: amount,
+        amount1Desired: amount,
+        amount0Min: 0,
+        amount1Min: 0,
         recipient: wallets[0].address,
         deadline: 1,
       }

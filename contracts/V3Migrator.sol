@@ -87,9 +87,10 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
                     fee: params.fee,
                     tickLower: params.tickLower,
                     tickUpper: params.tickUpper,
-                    amount: liquidityV3,
-                    amount0Max: type(uint256).max, // already did slippage check
-                    amount1Max: type(uint256).max, // already did slippage check
+                    amount0Desired: amount0V2,
+                    amount1Desired: amount1V2,
+                    amount0Min: 0, // already did slippage check
+                    amount1Min: 0, // already did slippage check
                     recipient: params.recipient,
                     deadline: params.deadline
                 })
