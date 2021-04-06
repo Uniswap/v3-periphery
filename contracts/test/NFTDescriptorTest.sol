@@ -6,7 +6,8 @@ import '../libraries/NFTDescriptor.sol';
 import '../libraries/HexStrings.sol';
 
 contract NFTDescriptorTest {
-  using HexStrings for uint256;
+    using HexStrings for uint256;
+
     function constructTokenURI(NFTDescriptor.ConstructTokenURIParams calldata params)
         public
         pure
@@ -56,6 +57,6 @@ contract NFTDescriptorTest {
     }
 
     function tokenToColorHex(address token) public pure returns (string memory) {
-        return NFTDescriptor.tokenToColorHex(uint(token));
+        return NFTDescriptor.tokenToColorHex(uint256(token));
     }
 }
