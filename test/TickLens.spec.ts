@@ -77,32 +77,25 @@ describe('TickLens', () => {
       return nft.mint(liquidityParams)
     }
 
-    async function mint(
-      tokenAddressA: string,
-      tokenAddressB: string,
-      tickLower: number,
-      tickUpper: number,
-      amount0Desired: BigNumberish,
-      amount1Desired: BigNumberish
-    ): Promise<ContractTransaction> {
-      if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
-        [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
-
-      const liquidityParams = {
-        token0: tokenAddressA,
-        token1: tokenAddressB,
+    async function mint(tickLower: number, tickUpper: number, amountBothDesired: BigNumberish): Promise<number> {
+      const mintParams = {
+        token0: tokens[0].address,
+        token1: tokens[1].address,
         fee: FeeAmount.MEDIUM,
         tickLower,
         tickUpper,
-        amount0Desired,
-        amount1Desired,
+        amount0Desired: amountBothDesired,
+        amount1Desired: amountBothDesired,
         amount0Min: 0,
         amount1Min: 0,
         recipient: wallets[0].address,
         deadline: 1,
       }
 
-      return nft.mint(liquidityParams)
+      const { liquidity } = await nft.callStatic.mint(mintParams)
+
+      await nft.mint(mintParams)
+      return liquidity.toNumber()
     }
 
     beforeEach(async () => {
@@ -145,12 +138,12 @@ describe('TickLens', () => {
       const minus = -TICK_SPACINGS[FeeAmount.MEDIUM]
       const plus = -minus
 
-      await mint(tokens[0].address, tokens[1].address, minus * 2, minus, 200, 200)
-      await mint(tokens[0].address, tokens[1].address, minus * 2, 0, 300, 300)
-      await mint(tokens[0].address, tokens[1].address, minus * 2, plus, 500, 500)
-      await mint(tokens[0].address, tokens[1].address, minus, 0, 700, 700)
-      await mint(tokens[0].address, tokens[1].address, minus, plus, 1100, 1100)
-      await mint(tokens[0].address, tokens[1].address, 0, plus, 1300, 1300)
+      const liquidity0 = await mint(minus * 2, minus, 2)
+      const liquidity1 = await mint(minus * 2, 0, 3)
+      const liquidity2 = await mint(minus * 2, plus, 5)
+      const liquidity3 = await mint(minus, 0, 7)
+      const liquidity4 = await mint(minus, plus, 11)
+      const liquidity5 = await mint(0, plus, 13)
 
       const [min] = await tickLens.getPopulatedTicksInWord(
         poolAddress,
@@ -177,20 +170,20 @@ describe('TickLens', () => {
       expect(min.liquidityGross).to.be.eq(fullRangeLiquidity)
 
       expect(negativeTwo.tick).to.be.eq(minus * 2)
-      expect(negativeTwo.liquidityNet).to.be.eq(2 + 3 + 5)
-      expect(negativeTwo.liquidityGross).to.be.eq(10)
+      expect(negativeTwo.liquidityNet).to.be.eq(liquidity0 + liquidity1 + liquidity2)
+      expect(negativeTwo.liquidityGross).to.be.eq(liquidity0 + liquidity1 + liquidity2)
 
       expect(negativeOne.tick).to.be.eq(minus)
-      expect(negativeOne.liquidityNet).to.be.eq(7 + 11 - 2)
-      expect(negativeOne.liquidityGross).to.be.eq(20)
+      expect(negativeOne.liquidityNet).to.be.eq(liquidity3 + liquidity4 - liquidity0)
+      expect(negativeOne.liquidityGross).to.be.eq(liquidity3 + liquidity4 + liquidity0)
 
       expect(zero.tick).to.be.eq(0)
-      expect(zero.liquidityNet).to.be.eq(13 - 3 - 7)
-      expect(zero.liquidityGross).to.be.eq(23)
+      expect(zero.liquidityNet).to.be.eq(liquidity5 - liquidity1 - liquidity3)
+      expect(zero.liquidityGross).to.be.eq(liquidity5 + liquidity1 + liquidity3)
 
       expect(one.tick).to.be.eq(plus)
-      expect(one.liquidityNet).to.be.eq(-5 - 11 - 13)
-      expect(one.liquidityGross).to.be.eq(29)
+      expect(one.liquidityNet).to.be.eq(-liquidity2 - liquidity4 - liquidity5)
+      expect(one.liquidityGross).to.be.eq(liquidity2 + liquidity4 + liquidity5)
 
       expect(max.tick).to.be.eq(getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]))
       expect(max.liquidityNet).to.be.eq(fullRangeLiquidity * -1)
@@ -211,16 +204,7 @@ describe('TickLens', () => {
       await Promise.all(
         new Array(128)
           .fill(0)
-          .map((_, i) =>
-            mint(
-              tokens[0].address,
-              tokens[1].address,
-              i * TICK_SPACINGS[FeeAmount.MEDIUM],
-              (255 - i) * TICK_SPACINGS[FeeAmount.MEDIUM],
-              100,
-              100
-            )
-          )
+          .map((_, i) => mint(i * TICK_SPACINGS[FeeAmount.MEDIUM], (255 - i) * TICK_SPACINGS[FeeAmount.MEDIUM], 100))
       )
 
       const ticks = await tickLens.getPopulatedTicksInWord(
