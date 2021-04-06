@@ -541,7 +541,6 @@ describe('NonfungiblePositionManager', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
-
         amount0Desired: 100,
         amount1Desired: 100,
         amount0Min: 0,
@@ -607,7 +606,6 @@ describe('NonfungiblePositionManager', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
-
         amount0Desired: 100,
         amount1Desired: 100,
         amount0Min: 0,
@@ -665,7 +663,6 @@ describe('NonfungiblePositionManager', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
-
         amount0Desired: 100,
         amount1Desired: 100,
         amount0Min: 0,
@@ -720,7 +717,6 @@ describe('NonfungiblePositionManager', () => {
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           recipient: other.address,
-
           amount0Desired: 100,
           amount1Desired: 100,
           amount0Min: 0,
@@ -786,7 +782,6 @@ describe('NonfungiblePositionManager', () => {
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           recipient: testPositionNFTOwner.address,
-
           amount0Desired: 100,
           amount1Desired: 100,
           amount0Min: 0,
@@ -847,7 +842,6 @@ describe('NonfungiblePositionManager', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
-
         amount0Desired: 100,
         amount1Desired: 100,
         amount0Min: 0,
@@ -934,7 +928,6 @@ describe('NonfungiblePositionManager', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
-
         amount0Desired: 100,
         amount1Desired: 100,
         amount0Min: 0,
@@ -973,7 +966,6 @@ describe('NonfungiblePositionManager', () => {
         fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(FeeAmount.MEDIUM),
         tickUpper: getMaxTick(FeeAmount.MEDIUM),
-
         amount0Desired: 100,
         amount1Desired: 100,
         amount0Min: 0,
