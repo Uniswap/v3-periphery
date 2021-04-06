@@ -67,24 +67,24 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
             return -100;
         }
         if (_chainid() == 1) {
-          if (token == 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48) {
-              // USDC
-              return 250;
-          } else if (token == 0xdAC17F958D2ee523a2206206994597C13D831ec7) {
-              // USDT
-              return 200;
-          } else if (token == 0x6B175474E89094C44Da98b954EedeAC495271d0F) {
-              // DAI
-              return 100;
-          } else if (token == 0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa) {
-              // TBTC
-              return -200;
-          } else if (token == 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599) {
-              // WBTC
-              return -250;
-          } else {
-            return 0;
-          }
+            if (token == 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48) {
+                // USDC
+                return 250;
+            } else if (token == 0xdAC17F958D2ee523a2206206994597C13D831ec7) {
+                // USDT
+                return 200;
+            } else if (token == 0x6B175474E89094C44Da98b954EedeAC495271d0F) {
+                // DAI
+                return 100;
+            } else if (token == 0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa) {
+                // TBTC
+                return -200;
+            } else if (token == 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599) {
+                // WBTC
+                return -250;
+            } else {
+                return 0;
+            }
         }
         return 0;
     }

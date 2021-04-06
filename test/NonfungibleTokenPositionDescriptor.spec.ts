@@ -45,8 +45,12 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     ])) as [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
-    const nftPositionDescriptor = (await NonfungibleTokenPositionDescriptorFactory.deploy(weth.address)) as MockNonfungibleTokenPositionDescriptor
-    const newImplementation = (await NonfungibleTokenPositionDescriptorFactory.deploy(weth.address)) as MockNonfungibleTokenPositionDescriptor
+    const nftPositionDescriptor = (await NonfungibleTokenPositionDescriptorFactory.deploy(
+      weth.address
+    )) as MockNonfungibleTokenPositionDescriptor
+    const newImplementation = (await NonfungibleTokenPositionDescriptorFactory.deploy(
+      weth.address
+    )) as MockNonfungibleTokenPositionDescriptor
     const proxyAdmin = (await ProxyAdminFactory.connect(admin).deploy()) as ProxyAdmin
     const proxy = (await TransparentUpgradeableProxy.connect(deployer).deploy(
       nftPositionDescriptor.address,
