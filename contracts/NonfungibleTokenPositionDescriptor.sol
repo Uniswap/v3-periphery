@@ -63,7 +63,11 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
             );
     }
 
-    function flipRatio(address token0, address token1, uint256 _chainid) public view returns (bool) {
+    function flipRatio(
+        address token0,
+        address token1,
+        uint256 _chainid
+    ) public view returns (bool) {
         return tokenRatioPriority(token0, _chainid) > tokenRatioPriority(token1, _chainid);
     }
 
