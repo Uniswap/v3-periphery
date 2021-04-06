@@ -19,8 +19,6 @@ abstract contract LiquidityManagement is IUniswapV3MintCallback, PeripheryImmuta
     struct MintCallbackData {
         PoolAddress.PoolKey poolKey;
         address payer;
-        uint256 amount0Min;
-        uint256 amount1Min;
     }
 
     /// @inheritdoc IUniswapV3MintCallback
@@ -31,8 +29,6 @@ abstract contract LiquidityManagement is IUniswapV3MintCallback, PeripheryImmuta
     ) external override {
         MintCallbackData memory decoded = abi.decode(data, (MintCallbackData));
         CallbackValidation.verifyCallback(factory, decoded.poolKey);
-
-        require(amount0Owed >= decoded.amount0Min && amount1Owed >= decoded.amount1Min, 'Price slippage check');
 
         if (amount0Owed > 0) pay(decoded.poolKey.token0, decoded.payer, msg.sender, amount0Owed);
         if (amount1Owed > 0) pay(decoded.poolKey.token1, decoded.payer, msg.sender, amount1Owed);
@@ -86,14 +82,9 @@ abstract contract LiquidityManagement is IUniswapV3MintCallback, PeripheryImmuta
             params.tickLower,
             params.tickUpper,
             liquidity,
-            abi.encode(
-                MintCallbackData({
-                    poolKey: poolKey,
-                    payer: msg.sender,
-                    amount0Min: params.amount0Min,
-                    amount1Min: params.amount1Min
-                })
-            )
+            abi.encode(MintCallbackData({poolKey: poolKey, payer: msg.sender}))
         );
+
+        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, 'Price slippage check');
     }
 }
