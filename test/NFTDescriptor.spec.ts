@@ -462,4 +462,13 @@ describe('NFTDescriptor', () => {
       expect(await nftDescriptor.feeToPercentString(12300000)).to.eq('1230%')
     })
   })
+
+  describe('#svgImage', () => {
+    it.only('returns the svgImage', async () => {
+      console.log(tokens[0].address)
+      console.log(await nftDescriptor.tokenToColorHex(tokens[0].address))
+      expect(await nftDescriptor.tokenToColorHex(tokens[0].address)).to.eq('9fE467')
+      // console.log(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address))
+    })
+  })
 })
