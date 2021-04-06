@@ -5,12 +5,10 @@ pragma solidity =0.7.6;
 /// @dev Base contract that is overridden for tests
 abstract contract ChainId {
     /// @dev Method that exists purely to be overridden for tests
-    /// @return The chainId
-    function _chainid() internal view virtual returns (uint256) {
-        uint256 chainID;
+    /// @return id The chainid
+    function _chainid() internal view virtual returns (uint256 id) {
         assembly {
-            chainID := chainid()
+            id := chainid()
         }
-        return chainID;
     }
 }
