@@ -10,6 +10,7 @@ import './interfaces/INonfungibleTokenPositionDescriptor.sol';
 import './interfaces/IERC20Metadata.sol';
 import './libraries/PoolAddress.sol';
 import './libraries/NFTDescriptor.sol';
+import './libraries/TokenRatioSortOrder.sol';
 
 /// @title Describes NFT token positions
 /// @notice Produces a string containing the data URI for a JSON metadata string
@@ -73,19 +74,19 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
 
     function tokenRatioPriority(address token, uint256 _chainid) public view returns (int256) {
         if (token == WETH9) {
-            return -100;
+            return TokenRatioSortOrder.DENOMINATOR;
         }
         if (_chainid == 1) {
             if (token == USDC) {
-                return 250;
+                return TokenRatioSortOrder.NUMERATOR_MOST;
             } else if (token == USDT) {
-                return 200;
+                return TokenRatioSortOrder.NUMERATOR_MORE;
             } else if (token == DAI) {
-                return 100;
+                return TokenRatioSortOrder.NUMERATOR;
             } else if (token == TBTC) {
-                return -200;
+                return TokenRatioSortOrder.DENOMINATOR_MORE;
             } else if (token == WBTC) {
-                return -250;
+                return TokenRatioSortOrder.DENOMINATOR_MOST;
             } else {
                 return 0;
             }
