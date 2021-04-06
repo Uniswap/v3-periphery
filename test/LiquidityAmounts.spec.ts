@@ -185,6 +185,34 @@ describe('LiquidityAmounts', async () => {
       expect(amount1).to.eq(199)
     })
 
+    it('amounts for price on lower boundary', async () => {
+      const sqrtPriceAX96 = encodePriceSqrt(100, 110)
+      const sqrtPriceX96 = sqrtPriceAX96
+      const sqrtPriceBX96 = encodePriceSqrt(110, 100)
+      const { amount0, amount1 } = await liquidityFromAmounts.getAmountsForLiquidity(
+        sqrtPriceX96,
+        sqrtPriceAX96,
+        sqrtPriceBX96,
+        1048
+      )
+      expect(amount0).to.eq(99)
+      expect(amount1).to.eq(0)
+    })
+
+    it('amounts for price on upper boundary', async () => {
+      const sqrtPriceAX96 = encodePriceSqrt(100, 110)
+      const sqrtPriceBX96 = encodePriceSqrt(110, 100)
+      const sqrtPriceX96 = sqrtPriceBX96
+      const { amount0, amount1 } = await liquidityFromAmounts.getAmountsForLiquidity(
+        sqrtPriceX96,
+        sqrtPriceAX96,
+        sqrtPriceBX96,
+        2097
+      )
+      expect(amount0).to.eq(0)
+      expect(amount1).to.eq(199)
+    })
+
     it('gas for price below', async () => {
       const sqrtPriceX96 = encodePriceSqrt(99, 110)
       const sqrtPriceAX96 = encodePriceSqrt(100, 110)

@@ -2,11 +2,11 @@
 
 exports[`LiquidityAmounts #getAmount0ForLiquidity gas 1`] = `412`;
 
-exports[`LiquidityAmounts #getAmountsForLiquidity gas for price above 1`] = `592`;
+exports[`LiquidityAmounts #getAmountsForLiquidity gas for price above 1`] = `589`;
 
-exports[`LiquidityAmounts #getAmountsForLiquidity gas for price below 1`] = `613`;
+exports[`LiquidityAmounts #getAmountsForLiquidity gas for price below 1`] = `610`;
 
-exports[`LiquidityAmounts #getAmountsForLiquidity gas for price inside 1`] = `1011`;
+exports[`LiquidityAmounts #getAmountsForLiquidity gas for price inside 1`] = `1008`;
 
 exports[`LiquidityAmounts #getLiquidityForAmount0 gas 1`] = `625`;
 
