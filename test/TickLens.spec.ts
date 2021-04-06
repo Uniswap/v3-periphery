@@ -219,6 +219,6 @@ describe('TickLens', () => {
           getTickBitmapIndex(0, TICK_SPACINGS[FeeAmount.MEDIUM])
         )
       )
-    })
+    }).timeout(300_000)
   })
 })
