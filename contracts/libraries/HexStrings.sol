@@ -20,7 +20,7 @@ library HexStrings {
 
     function toHexStringNoPrefix(uint256 value, uint256 length) internal pure returns (string memory) {
         bytes memory buffer = new bytes(2 * length);
-        for (uint256 i = 2 * length - 1; i >= 0; --i) {
+        for (uint256 i = 2 * length - 1; i > 0; --i) {
             buffer[i] = alphabet[value & 0xf];
             value >>= 4;
         }
