@@ -99,23 +99,23 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     })
 
     it('returns false if neither token has priority ordering', async () => {
-      expect(await nftPositionDescriptor.flipRatio(tokens[0].address, tokens[2].address)).to.eq(false)
+      expect(await nftPositionDescriptor.flipRatio(tokens[0].address, tokens[2].address, 1)).to.eq(false)
     })
 
     it('returns true if both tokens are numerators but token0 has a higher priority ordering', async () => {
-      expect(await nftPositionDescriptor.flipRatio(USDC, DAI)).to.eq(true)
+      expect(await nftPositionDescriptor.flipRatio(USDC, DAI, 1)).to.eq(true)
     })
 
     it('returns true if both tokens are denominators but token1 has lower priority ordering', async () => {
-      expect(await nftPositionDescriptor.flipRatio(weth.address, WBTC)).to.eq(true)
+      expect(await nftPositionDescriptor.flipRatio(weth.address, WBTC, 1)).to.eq(true)
     })
 
     it('returns true if token0 is a numerator and token1 is a denominator', async () => {
-      expect(await nftPositionDescriptor.flipRatio(DAI, WBTC)).to.eq(true)
+      expect(await nftPositionDescriptor.flipRatio(DAI, WBTC, 1)).to.eq(true)
     })
 
     it('returns false if token1 is a numerator and token0 is a denominator', async () => {
-      expect(await nftPositionDescriptor.flipRatio(WBTC, DAI)).to.eq(false)
+      expect(await nftPositionDescriptor.flipRatio(WBTC, DAI, 1)).to.eq(false)
     })
   })
 })

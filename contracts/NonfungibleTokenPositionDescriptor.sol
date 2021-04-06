@@ -52,7 +52,7 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                     token1Symbol: SafeERC20Namer.tokenSymbol(token1),
                     token0Decimals: IERC20Metadata(token0).decimals(),
                     token1Decimals: IERC20Metadata(token1).decimals(),
-                    flipRatio: flipRatio(token0, token1),
+                    flipRatio: flipRatio(token0, token1, _chainid()),
                     tickLower: tickLower,
                     tickUpper: tickUpper,
                     tickSpacing: pool.tickSpacing(),
@@ -63,8 +63,7 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
             );
     }
 
-    function flipRatio(address token0, address token1) public view returns (bool) {
-        uint256 _chainid = _chainid();
+    function flipRatio(address token0, address token1, uint256 _chainid) public view returns (bool) {
         return tokenRatioPriority(token0, _chainid) > tokenRatioPriority(token1, _chainid);
     }
 
