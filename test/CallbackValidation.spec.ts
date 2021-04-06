@@ -47,6 +47,7 @@ describe('CallbackValidation', () => {
     expect(
       callbackValidation
         .connect(nonpairAddr)
-        .verifyCallback(factory.address, tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)).to.be.reverted
+        .verifyCallback(factory.address, tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+    ).to.be.reverted
   })
 })
