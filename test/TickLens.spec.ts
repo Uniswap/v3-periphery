@@ -1,5 +1,5 @@
 import { Fixture } from 'ethereum-waffle'
-import { BigNumber, BigNumberish, constants, Contract } from 'ethers'
+import { BigNumber, BigNumberish, constants, Contract, ContractTransaction } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { MockTimeNonfungiblePositionManager, TestERC20, TickLensTest } from '../typechain'
 import completeFixture from './shared/completeFixture'
@@ -82,8 +82,9 @@ describe('TickLens', () => {
       tokenAddressB: string,
       tickLower: number,
       tickUpper: number,
-      amount: number
-    ) {
+      amount0Desired: BigNumberish,
+      amount1Desired: BigNumberish
+    ): Promise<ContractTransaction> {
       if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
         [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
 
@@ -93,8 +94,8 @@ describe('TickLens', () => {
         fee: FeeAmount.MEDIUM,
         tickLower,
         tickUpper,
-        amount0Desired: amount,
-        amount1Desired: amount,
+        amount0Desired,
+        amount1Desired,
         amount0Min: 0,
         amount1Min: 0,
         recipient: wallets[0].address,
@@ -144,12 +145,12 @@ describe('TickLens', () => {
       const minus = -TICK_SPACINGS[FeeAmount.MEDIUM]
       const plus = -minus
 
-      await mint(tokens[0].address, tokens[1].address, minus * 2, minus, 2)
-      await mint(tokens[0].address, tokens[1].address, minus * 2, 0, 3)
-      await mint(tokens[0].address, tokens[1].address, minus * 2, plus, 5)
-      await mint(tokens[0].address, tokens[1].address, minus, 0, 7)
-      await mint(tokens[0].address, tokens[1].address, minus, plus, 11)
-      await mint(tokens[0].address, tokens[1].address, 0, plus, 13)
+      await mint(tokens[0].address, tokens[1].address, minus * 2, minus, 200, 200)
+      await mint(tokens[0].address, tokens[1].address, minus * 2, 0, 300, 300)
+      await mint(tokens[0].address, tokens[1].address, minus * 2, plus, 500, 500)
+      await mint(tokens[0].address, tokens[1].address, minus, 0, 700, 700)
+      await mint(tokens[0].address, tokens[1].address, minus, plus, 1100, 1100)
+      await mint(tokens[0].address, tokens[1].address, 0, plus, 1300, 1300)
 
       const [min] = await tickLens.getPopulatedTicksInWord(
         poolAddress,
@@ -216,7 +217,8 @@ describe('TickLens', () => {
               tokens[1].address,
               i * TICK_SPACINGS[FeeAmount.MEDIUM],
               (255 - i) * TICK_SPACINGS[FeeAmount.MEDIUM],
-              1
+              100,
+              100
             )
           )
       )

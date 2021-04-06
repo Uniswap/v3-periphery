@@ -32,9 +32,7 @@ abstract contract LiquidityManagement is IUniswapV3MintCallback, PeripheryImmuta
         MintCallbackData memory decoded = abi.decode(data, (MintCallbackData));
         CallbackValidation.verifyCallback(factory, decoded.poolKey);
 
-        // TODO: needs revert reasons
-        require(amount0Owed >= decoded.amount0Min);
-        require(amount1Owed >= decoded.amount1Min);
+        require(amount0Owed >= decoded.amount0Min && amount1Owed >= decoded.amount1Min, 'Price slippage check');
 
         if (amount0Owed > 0) pay(decoded.poolKey.token0, decoded.payer, msg.sender, amount0Owed);
         if (amount1Owed > 0) pay(decoded.poolKey.token1, decoded.payer, msg.sender, amount1Owed);
