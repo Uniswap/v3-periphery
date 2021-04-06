@@ -13,6 +13,6 @@ interface IERC20Metadata is IERC20 {
     /// @return The symbol of the token
     function symbol() external view returns (string memory);
 
-    /// @return decimals The number of decimal places the token has
+    /// @return The number of decimal places the token has
     function decimals() external view returns (uint8);
 }
