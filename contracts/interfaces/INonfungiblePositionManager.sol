@@ -13,16 +13,8 @@ import '../libraries/PoolAddress.sol';
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
 interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metadata, IERC721Enumerable, IERC721Permit {
-    /// @notice Emitted when a new NFT position is minted.
-    /// @dev The ERC721 transfer event is also emitted with a from address of 0. To get the address of the owner
-    /// of a token, you should rely only on the ERC721 transfer events.
-    /// @param minter The address of the caller that minted the position NFT
-    /// @param tokenId The ID of the token that was minted
-    /// @param liquidity The amount of liquidity the NFT was minted with
-    /// @param amount0 The amount of token0 that was paid for the minted NFT
-    /// @param amount1 The amount of token1 that was paid for the minted NFT
-    event Mint(address minter, uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
     /// @notice Emitted when liquidity is increased for a position NFT
+    /// @dev Also emitted when a token is minted
     /// @param tokenId The ID of the token for which liquidity was increased
     /// @param liquidity The amount by which liquidity for the NFT position was increased
     /// @param amount0 The amount of token0 that was paid for the increase in liquidity

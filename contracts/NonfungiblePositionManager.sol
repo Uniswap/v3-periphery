@@ -196,7 +196,7 @@ contract NonfungiblePositionManager is
             tokensOwed1: 0
         });
 
-        emit Mint(msg.sender, tokenId, liquidity, amount0, amount1);
+        emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);
     }
 
     modifier isAuthorizedForToken(uint256 tokenId) {
