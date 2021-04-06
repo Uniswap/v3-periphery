@@ -2,7 +2,7 @@ import { constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 import { expect } from './shared/expect'
 import { Fixture } from 'ethereum-waffle'
-import { NonfungibleTokenPositionDescriptor, TestERC20 } from '../typechain'
+import { MockNonfungibleTokenPositionDescriptor, TestERC20 } from '../typechain'
 
 const DAI = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
@@ -11,7 +11,7 @@ const TBTC = '0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa'
 const WBTC = '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'
 
 describe('NonfungibleTokenPositionDescriptor', () => {
-  const [user, deployer, admin, weth, randomToken, ...wallets] = waffle.provider.getWallets()
+  const [weth, ...wallets] = waffle.provider.getWallets()
 
   const nftPositionDescriptorCompleteFixture: Fixture<{
     tokens: [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
@@ -30,7 +30,9 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     ])) as [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
-    const nftPositionDescriptor = (await NonfungibleTokenPositionDescriptorFactory.deploy(weth.address)) as MockNonfungibleTokenPositionDescriptor
+    const nftPositionDescriptor = (await NonfungibleTokenPositionDescriptorFactory.deploy(
+      weth.address
+    )) as MockNonfungibleTokenPositionDescriptor
 
     return {
       nftPositionDescriptor,
@@ -48,12 +50,7 @@ describe('NonfungibleTokenPositionDescriptor', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ nftPositionDescriptor, tokens } = await loadFixture(
-      nftPositionDescriptorCompleteFixture
-    ))
-    const NonfungibleTokenPositionDescriptorFactory = await ethers.getContractFactory(
-      'MockNonfungibleTokenPositionDescriptor'
-    )
+    ;({ nftPositionDescriptor, tokens } = await loadFixture(nftPositionDescriptorCompleteFixture))
   })
 
   describe('#tokenRatioPriority', () => {
