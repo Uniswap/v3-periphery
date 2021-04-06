@@ -1,16 +1,9 @@
-import { BigNumberish, constants } from 'ethers'
+import { constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { expect } from './shared/expect'
 import { Fixture } from 'ethereum-waffle'
-import {
-  MockTimeNonfungiblePositionManager,
-  NonfungibleTokenPositionDescriptor,
-  TestERC20,
-  IWETH9,
-  IUniswapV3Factory,
-  SwapRouter,
-} from '../typechain'
+import { NonfungibleTokenPositionDescriptor, TestERC20 } from '../typechain'
 
 describe('NonfungibleTokenPositionDescriptor', () => {
   const wallets = waffle.provider.getWallets()
