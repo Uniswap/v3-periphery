@@ -23,7 +23,8 @@ interface IV3Migrator is IMulticall, ISelfPermit {
         uint24 fee;
         int24 tickLower;
         int24 tickUpper;
-        uint256 liquidityV3Min;
+        uint256 amount0Min;
+        uint256 amount1Min;
         address recipient;
         uint256 deadline;
         bool refundAsETH;
