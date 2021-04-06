@@ -13,6 +13,27 @@ import '../libraries/PoolAddress.sol';
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
 interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metadata, IERC721Enumerable, IERC721Permit {
+    /// @notice Emitted when liquidity is increased for a position NFT
+    /// @dev Also emitted when a token is minted
+    /// @param tokenId The ID of the token for which liquidity was increased
+    /// @param liquidity The amount by which liquidity for the NFT position was increased
+    /// @param amount0 The amount of token0 that was paid for the increase in liquidity
+    /// @param amount1 The amount of token1 that was paid for the increase in liquidity
+    event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
+    /// @notice Emitted when liquidity is decreased for a position NFT
+    /// @param tokenId The ID of the token for which liquidity was decreased
+    /// @param liquidity The amount by which liquidity for the NFT position was decreased
+    /// @param amount0 The amount of token0 that was accounted for the decrease in liquidity
+    /// @param amount1 The amount of token1 that was accounted for the decrease in liquidity
+    event DecreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
+    /// @notice Emitted when tokens are collected for a position NFT
+    /// @dev The amounts reported may not be exactly equivalent to the amounts transferred, due to rounding behavior
+    /// @param tokenId The ID of the token for which underlying tokens were collected
+    /// @param recipient The address of the account that received the collected tokens
+    /// @param amount0 The amount of token0 owed to the position that was collected
+    /// @param amount1 The amount of token1 owed to the position that was collected
+    event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1);
+
     /// @notice Returns the position information associated with a given token ID.
     /// @param tokenId The ID of the token that represents the position
     /// @dev Throws if the token ID is not valid.
@@ -49,9 +70,10 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
         uint24 fee;
         int24 tickLower;
         int24 tickUpper;
-        uint128 amount;
-        uint256 amount0Max;
-        uint256 amount1Max;
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+        uint256 amount0Min;
+        uint256 amount1Min;
         address recipient;
         uint256 deadline;
     }
@@ -64,23 +86,33 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
         payable
         returns (
             uint256 tokenId,
+            uint128 liquidity,
             uint256 amount0,
             uint256 amount1
         );
 
     /// @notice Increases the amount of liquidity in a position, with tokens paid by the `msg.sender`
     /// @param tokenId The ID of the token for which liquidity is being increased
-    /// @param amount The amount by which liquidity will be increased
-    /// @param amount0Max The maximum amount of token0 that should be paid to
-    /// @param amount1Max The maximum amount of token1 that should be
+    /// @param amount0Desired The desired amount of token0 to be spent
+    /// @param amount1Desired The desired amount of token1 to be spent
+    /// @param amount0Min The minimum amount of token0 to spend, which serves as a slippage check
+    /// @param amount1Min The minimum amount of token1 to spend, which serves as a slippage check
     /// @param deadline The time by which the transaction must be included to effect the change
     function increaseLiquidity(
         uint256 tokenId,
-        uint128 amount,
-        uint256 amount0Max,
-        uint256 amount1Max,
+        uint256 amount0Desired,
+        uint256 amount1Desired,
+        uint256 amount0Min,
+        uint256 amount1Min,
         uint256 deadline
-    ) external payable returns (uint256 amount0, uint256 amount1);
+    )
+        external
+        payable
+        returns (
+            uint128 liquidity,
+            uint256 amount0,
+            uint256 amount1
+        );
 
     /// @notice Decreases the amount of liquidity in a position and accounts it to the position
     /// @param tokenId The ID of the token for which liquidity is being decreased

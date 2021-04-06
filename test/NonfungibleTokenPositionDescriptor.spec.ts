@@ -1,15 +1,8 @@
-import { ContractFactory, BigNumberish, constants } from 'ethers'
+import { constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 import { expect } from './shared/expect'
 import { Fixture } from 'ethereum-waffle'
-import {
-  MockTimeNonfungiblePositionManager,
-  MockNonfungibleTokenPositionDescriptor,
-  TestERC20,
-  IWETH9,
-  IUniswapV3Factory,
-  SwapRouter,
-} from '../typechain'
+import { NonfungibleTokenPositionDescriptor, TestERC20 } from '../typechain'
 
 const DAI = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
