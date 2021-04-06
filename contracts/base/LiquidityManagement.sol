@@ -95,5 +95,7 @@ abstract contract LiquidityManagement is IUniswapV3MintCallback, PeripheryImmuta
                 })
             )
         );
+
+        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, 'Price slippage check');
     }
 }
