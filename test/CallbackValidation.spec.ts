@@ -3,24 +3,24 @@ import { waffle, ethers } from 'hardhat'
 import { Fixture } from 'ethereum-waffle'
 import completeFixture from './shared/completeFixture'
 import { expect } from './shared/expect'
-import { TestERC20, TestCallbackValdidation } from '../typechain'
+import { TestERC20, TestCallbackValidation } from '../typechain'
 import { FeeAmount } from './shared/constants'
 
 describe('CallbackValidation', () => {
   const [nonpairAddr, ...wallets] = waffle.provider.getWallets()
   const callbackValidationFixture: Fixture<{
-    callbackValidation: TestCallbackValdidation
+    callbackValidation: TestCallbackValidation
     tokens: [TestERC20, TestERC20]
     factory: Contract
   }> = async (wallets, provider) => {
     const { factory } = await completeFixture(wallets, provider)
     const tokenFactory = await ethers.getContractFactory('TestERC20')
-    const callbackValidationFactory = await ethers.getContractFactory('TestCallbackValdidation')
+    const callbackValidationFactory = await ethers.getContractFactory('TestCallbackValidation')
     const tokens = (await Promise.all([
       tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu256 to avoid overflowing
       tokenFactory.deploy(constants.MaxUint256.div(2)),
     ])) as [TestERC20, TestERC20]
-    const callbackValidation = (await callbackValidationFactory.deploy()) as TestCallbackValdidation
+    const callbackValidation = (await callbackValidationFactory.deploy()) as TestCallbackValidation
 
     return {
       tokens,
@@ -29,7 +29,7 @@ describe('CallbackValidation', () => {
     }
   }
 
-  let callbackValidation: TestCallbackValdidation
+  let callbackValidation: TestCallbackValidation
   let tokens: [TestERC20, TestERC20]
   let factory: Contract
 
@@ -47,7 +47,6 @@ describe('CallbackValidation', () => {
     expect(
       callbackValidation
         .connect(nonpairAddr)
-        .verifyCallback(factory.address, tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
-    ).to.be.revertedWith('Callback not called from pool')
+        .verifyCallback(factory.address, tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)).to.be.reverted
   })
 })

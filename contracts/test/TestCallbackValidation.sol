@@ -3,7 +3,7 @@ pragma solidity =0.7.6;
 
 import '../libraries/CallbackValidation.sol';
 
-contract TestCallbackValdidation {
+contract TestCallbackValidation {
     function verifyCallback(
         address factory,
         address tokenA,
