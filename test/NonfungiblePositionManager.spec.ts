@@ -290,6 +290,8 @@ describe('NonfungiblePositionManager', () => {
       await nft.multicall([mintData, unwrapWETH9Data], { value: expandTo18Decimals(1) })
     })
 
+    it('emits an event')
+
     it('gas first mint for pool', async () => {
       await nft.createAndInitializePoolIfNecessary(
         tokens[0].address,
@@ -425,6 +427,8 @@ describe('NonfungiblePositionManager', () => {
       expect(liquidity).to.eq(1100)
     })
 
+    it('emits an event')
+
     it('can be paid with ETH', async () => {
       const [token0, token1] = sortedTokens(tokens[0], weth9)
 
@@ -489,6 +493,8 @@ describe('NonfungiblePositionManager', () => {
       })
     })
 
+    it('emits an event')
+
     it('fails if past deadline', async () => {
       await nft.setTime(2)
       await expect(nft.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)).to.be.revertedWith('Transaction too old')
@@ -548,6 +554,8 @@ describe('NonfungiblePositionManager', () => {
         deadline: 1,
       })
     })
+
+    it('emits an event')
 
     it('cannot be called by other addresses', async () => {
       await expect(nft.collect(tokenId, wallet.address, MaxUint128, MaxUint128)).to.be.revertedWith('Not approved')
@@ -613,6 +621,8 @@ describe('NonfungiblePositionManager', () => {
         deadline: 1,
       })
     })
+
+    it('emits an event')
 
     it('cannot be called by other addresses', async () => {
       await expect(nft.burn(tokenId)).to.be.revertedWith('Not approved')
@@ -700,6 +710,8 @@ describe('NonfungiblePositionManager', () => {
   })
 
   describe('#permit', () => {
+    it('emits an event')
+
     describe('owned by eoa', () => {
       const tokenId = 1
       beforeEach('create a position', async () => {

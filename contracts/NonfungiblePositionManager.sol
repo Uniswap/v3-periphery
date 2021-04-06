@@ -195,6 +195,8 @@ contract NonfungiblePositionManager is
             tokensOwed0: 0,
             tokensOwed1: 0
         });
+
+        emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);
     }
 
     modifier isAuthorizedForToken(uint256 tokenId) {
@@ -272,12 +274,14 @@ contract NonfungiblePositionManager is
         position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
         position.liquidity += liquidity;
+
+        emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);
     }
 
     /// @inheritdoc INonfungiblePositionManager
     function decreaseLiquidity(
         uint256 tokenId,
-        uint128 amount,
+        uint128 liquidity,
         uint256 amount0Min,
         uint256 amount1Min,
         uint256 deadline
@@ -289,12 +293,12 @@ contract NonfungiblePositionManager is
         checkDeadline(deadline)
         returns (uint256 amount0, uint256 amount1)
     {
-        require(amount > 0);
+        require(liquidity > 0);
         Position storage position = _positions[tokenId];
 
         PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
-        (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, amount);
+        (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, liquidity);
 
         require(amount0 >= amount0Min && amount1 >= amount1Min, 'Price slippage check');
 
@@ -323,7 +327,9 @@ contract NonfungiblePositionManager is
 
         position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
-        position.liquidity -= amount;
+        position.liquidity -= liquidity;
+
+        emit DecreaseLiquidity(tokenId, liquidity, amount0, amount1);
     }
 
     /// @inheritdoc INonfungiblePositionManager
@@ -378,6 +384,8 @@ contract NonfungiblePositionManager is
         // sometimes there will be a few less wei than expected due to rounding down in core, but we just subtract the full amount expected
         // instead of the actual amount so we can burn the token
         (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - amount0Max, tokensOwed1 - amount1Max);
+
+        emit Collect(tokenId, recipient, amount0Max, amount1Max);
     }
 
     /// @inheritdoc INonfungiblePositionManager
