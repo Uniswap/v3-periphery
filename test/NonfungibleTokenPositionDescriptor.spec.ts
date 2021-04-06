@@ -4,7 +4,7 @@ import { expect } from './shared/expect'
 import { Fixture } from 'ethereum-waffle'
 import {
   MockTimeNonfungiblePositionManager,
-  NonfungibleTokenPositionDescriptor,
+  MockNonfungibleTokenPositionDescriptor,
   TestERC20,
   IWETH9,
   IUniswapV3Factory,
@@ -13,19 +13,25 @@ import {
   ProxyAdmin,
 } from '../typechain'
 
+const DAI = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
+const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const TBTC = '0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa'
+const WBTC = '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'
+
 describe('NonfungibleTokenPositionDescriptor', () => {
-  const [user, deployer, admin, ...wallets] = waffle.provider.getWallets()
+  const [user, deployer, admin, weth, randomToken, ...wallets] = waffle.provider.getWallets()
 
   const nftPositionDescriptorCompleteFixture: Fixture<{
     tokens: [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
-    nftPositionDescriptor: NonfungibleTokenPositionDescriptor
-    newImplementation: NonfungibleTokenPositionDescriptor
+    nftPositionDescriptor: MockNonfungibleTokenPositionDescriptor
+    newImplementation: MockNonfungibleTokenPositionDescriptor
     proxyAdmin: ProxyAdmin
     proxy: TransparentUpgradeableProxy
   }> = async (wallets, provider) => {
     const tokenFactory = await ethers.getContractFactory('TestERC20')
     const NonfungibleTokenPositionDescriptorFactory = await ethers.getContractFactory(
-      'NonfungibleTokenPositionDescriptor'
+      'MockNonfungibleTokenPositionDescriptor'
     )
     const ProxyAdminFactory = await ethers.getContractFactory('ProxyAdmin')
     const TransparentUpgradeableProxy = await ethers.getContractFactory('TransparentUpgradeableProxy')
@@ -39,21 +45,13 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     ])) as [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
-    const nftPositionDescriptor = (await NonfungibleTokenPositionDescriptorFactory.deploy()) as NonfungibleTokenPositionDescriptor
-    const newImplementation = (await NonfungibleTokenPositionDescriptorFactory.deploy()) as NonfungibleTokenPositionDescriptor
+    const nftPositionDescriptor = (await NonfungibleTokenPositionDescriptorFactory.deploy(weth.address)) as MockNonfungibleTokenPositionDescriptor
+    const newImplementation = (await NonfungibleTokenPositionDescriptorFactory.deploy(weth.address)) as MockNonfungibleTokenPositionDescriptor
     const proxyAdmin = (await ProxyAdminFactory.connect(admin).deploy()) as ProxyAdmin
     const proxy = (await TransparentUpgradeableProxy.connect(deployer).deploy(
       nftPositionDescriptor.address,
       proxyAdmin.address,
-      nftPositionDescriptor.interface.encodeFunctionData('initialize', [
-        proxyAdmin.address,
-        [
-          { token: tokens[0].address, priority: -2 },
-          { token: tokens[1].address, priority: -1 },
-          { token: tokens[3].address, priority: 1 },
-          { token: tokens[4].address, priority: 2 },
-        ],
-      ])
+      '0x'
     )) as TransparentUpgradeableProxy
 
     return {
@@ -67,8 +65,8 @@ describe('NonfungibleTokenPositionDescriptor', () => {
 
   let proxy: TransparentUpgradeableProxy
   let proxyAdmin: ProxyAdmin
-  let nftPositionDescriptor: NonfungibleTokenPositionDescriptor
-  let newImplementation: NonfungibleTokenPositionDescriptor
+  let nftPositionDescriptor: MockNonfungibleTokenPositionDescriptor
+  let newImplementation: MockNonfungibleTokenPositionDescriptor
   let tokens: [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
@@ -82,77 +80,71 @@ describe('NonfungibleTokenPositionDescriptor', () => {
       nftPositionDescriptorCompleteFixture
     ))
     const NonfungibleTokenPositionDescriptorFactory = await ethers.getContractFactory(
-      'NonfungibleTokenPositionDescriptor'
+      'MockNonfungibleTokenPositionDescriptor'
     )
     // call nftPositionDescriptor through proxy contract
     nftPositionDescriptor = NonfungibleTokenPositionDescriptorFactory.attach(
       proxy.address
-    ) as NonfungibleTokenPositionDescriptor
+    ) as MockNonfungibleTokenPositionDescriptor
   })
 
-  describe('upgradeability', () => {
-    it('initalizes owner', async () => {
-      expect(await nftPositionDescriptor.owner()).to.eq(proxyAdmin.address)
+  describe('#tokenRatioPriority', () => {
+    beforeEach(async () => {
+      await nftPositionDescriptor.setChainid(1)
     })
 
-    it('initializes token priority storage', async () => {
-      expect(await nftPositionDescriptor.tokenRatioPriority(tokens[0].address)).to.eq(-2)
-      expect(await nftPositionDescriptor.tokenRatioPriority(tokens[1].address)).to.eq(-1)
-      expect(await nftPositionDescriptor.tokenRatioPriority(tokens[2].address)).to.eq(0)
-      expect(await nftPositionDescriptor.tokenRatioPriority(tokens[3].address)).to.eq(1)
-      expect(await nftPositionDescriptor.tokenRatioPriority(tokens[4].address)).to.eq(2)
+    it('returns -100 for WETH9', async () => {
+      expect(await nftPositionDescriptor.tokenRatioPriority(weth.address)).to.eq(-100)
     })
 
-    it('correctly updates token priority storage on implementation upgrade', async () => {
-      await proxyAdmin.connect(admin).upgradeAndCall(
-        proxy.address,
-        newImplementation.address,
-        nftPositionDescriptor.interface.encodeFunctionData('setStorage', [
-          [
-            { token: tokens[0].address, priority: 2 },
-            { token: tokens[1].address, priority: 0 },
-            { token: tokens[2].address, priority: 1 },
-          ],
-        ])
-      )
-      expect(await nftPositionDescriptor.tokenRatioPriority(tokens[0].address)).to.eq(2)
-      expect(await nftPositionDescriptor.tokenRatioPriority(tokens[1].address)).to.eq(0)
-      expect(await nftPositionDescriptor.tokenRatioPriority(tokens[2].address)).to.eq(1)
-      // unset storage remains the same
-      expect(await nftPositionDescriptor.tokenRatioPriority(tokens[3].address)).to.eq(1)
-      expect(await nftPositionDescriptor.tokenRatioPriority(tokens[4].address)).to.eq(2)
+    it('returns 200 for USDC', async () => {
+      expect(await nftPositionDescriptor.tokenRatioPriority(USDC)).to.eq(250)
     })
 
-    it('cannot call setStorage from non proxyAdmin accounts', async () => {
-      expect(
-        nftPositionDescriptor.connect(user).setStorage([
-          { token: tokens[0].address, priority: 2 },
-          { token: tokens[1].address, priority: 0 },
-          { token: tokens[2].address, priority: 1 },
-        ])
-      ).to.be.revertedWith('Ownable: caller is not the owner')
+    it('returns 100 for DAI', async () => {
+      expect(await nftPositionDescriptor.tokenRatioPriority(DAI)).to.eq(100)
+    })
+
+    it('returns  150 for USDT', async () => {
+      expect(await nftPositionDescriptor.tokenRatioPriority(USDT)).to.eq(200)
+    })
+
+    it('returns -200 for TBTC', async () => {
+      expect(await nftPositionDescriptor.tokenRatioPriority(TBTC)).to.eq(-200)
+    })
+
+    it('returns -250 for WBTC', async () => {
+      expect(await nftPositionDescriptor.tokenRatioPriority(WBTC)).to.eq(-250)
+    })
+
+    it('returns 0 for any non-ratioPriority token', async () => {
+      expect(await nftPositionDescriptor.tokenRatioPriority(tokens[0].address)).to.eq(0)
     })
   })
 
   describe('#flipRatio', () => {
+    beforeEach(async () => {
+      await nftPositionDescriptor.setChainid(1)
+    })
+
     it('returns false if neither token has priority ordering', async () => {
-      expect(await nftPositionDescriptor.flipRatio(tokens[2].address, tokens[2].address)).to.eq(false)
+      expect(await nftPositionDescriptor.flipRatio(tokens[0].address, tokens[2].address)).to.eq(false)
     })
 
     it('returns true if both tokens are numerators but token0 has a higher priority ordering', async () => {
-      expect(await nftPositionDescriptor.flipRatio(tokens[4].address, tokens[3].address)).to.eq(true)
+      expect(await nftPositionDescriptor.flipRatio(USDC, DAI)).to.eq(true)
     })
 
     it('returns true if both tokens are denominators but token1 has lower priority ordering', async () => {
-      expect(await nftPositionDescriptor.flipRatio(tokens[1].address, tokens[0].address)).to.eq(true)
+      expect(await nftPositionDescriptor.flipRatio(weth.address, WBTC)).to.eq(true)
     })
 
     it('returns true if token0 is a numerator and token1 is a denominator', async () => {
-      expect(await nftPositionDescriptor.flipRatio(tokens[3].address, tokens[1].address)).to.eq(true)
+      expect(await nftPositionDescriptor.flipRatio(DAI, WBTC)).to.eq(true)
     })
 
     it('returns false if token1 is a numerator and token0 is a denominator', async () => {
-      expect(await nftPositionDescriptor.flipRatio(tokens[1].address, tokens[3].address)).to.eq(false)
+      expect(await nftPositionDescriptor.flipRatio(WBTC, DAI)).to.eq(false)
     })
   })
 })
