@@ -2,19 +2,20 @@ import 'hardhat-typechain'
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
 
-const DEFAULT_COMPILER_SETTINGS = {
+const LOW_OPTIMIZER_COMPILER_SETTINGS = {
   version: '0.7.6',
   settings: {
     optimizer: {
       enabled: true,
-      runs: 1_000,
+      runs: 2_000,
     },
     metadata: {
       bytecodeHash: 'none',
     },
   },
 }
-const MAX_OPTIMIZER_COMPILER_SETTINGS = {
+
+const DEFAULT_COMPILER_SETTINGS = {
   version: '0.7.6',
   settings: {
     optimizer: {
@@ -36,8 +37,8 @@ export default {
   solidity: {
     compilers: [DEFAULT_COMPILER_SETTINGS],
     overrides: {
-      'contracts/SwapRouter.sol': MAX_OPTIMIZER_COMPILER_SETTINGS,
-      'contracts/test/MockTimeSwapRouter.sol': MAX_OPTIMIZER_COMPILER_SETTINGS,
+      'contracts/NonfungiblePositionManager.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
+      'contracts/test/MockTimeNonfungiblePositionManager.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
     },
   },
 }
