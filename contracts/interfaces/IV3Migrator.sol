@@ -35,6 +35,7 @@ interface IV3Migrator is IMulticall, ISelfPermit {
         uint256 deadline;
         bool refundAsETH;
     }
+
     /// @notice Migrates liquidity to v3 by burning v2 liquidity and minting a new position for v3
     /// @dev Throws require exception if the migrated liquidity is less than `params.liquidityV3Min`
     /// @param params The params necessary to migrate v2 liquidity, encoded as `MigrateParams` in calldata
