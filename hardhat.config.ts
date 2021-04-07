@@ -2,6 +2,31 @@ import 'hardhat-typechain'
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
 
+const DEFAULT_COMPILER_SETTINGS = {
+  version: '0.7.6',
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 1_000,
+    },
+    metadata: {
+      bytecodeHash: 'none',
+    },
+  },
+}
+const MAX_OPTIMIZER_COMPILER_SETTINGS = {
+  version: '0.7.6',
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 9_999_999,
+    },
+    metadata: {
+      bytecodeHash: 'none',
+    },
+  },
+}
+
 export default {
   networks: {
     hardhat: {
@@ -9,18 +34,10 @@ export default {
     },
   },
   solidity: {
-    version: '0.7.6',
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 1_000,
-      },
-      metadata: {
-        // do not include the metadata hash, since this is machine dependent
-        // and we want all generated code to be deterministic
-        // https://docs.soliditylang.org/en/v0.7.6/metadata.html
-        bytecodeHash: 'none',
-      },
+    compilers: [DEFAULT_COMPILER_SETTINGS],
+    overrides: {
+      'contracts/SwapRouter.sol': MAX_OPTIMIZER_COMPILER_SETTINGS,
+      'contracts/test/MockTimeSwapRouter.sol': MAX_OPTIMIZER_COMPILER_SETTINGS,
     },
   },
 }
