@@ -6,6 +6,7 @@ import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import './interfaces/INonfungiblePositionManager.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
 
 import './libraries/PoolAddress.sol';
 import './libraries/TransferHelper.sol';
@@ -19,6 +20,8 @@ import './interfaces/external/IWETH9.sol';
 
 /// @title Uniswap V3 Migrator
 contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPermit {
+    using SafeMath for uint256;
+
     address public immutable nonfungiblePositionManager;
 
     constructor(
@@ -49,13 +52,20 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
     }
 
     function migrate(MigrateParams calldata params) external override {
+        require(params.percentageToMigrate > 0, 'Percentage too small');
+        require(params.percentageToMigrate <= 100, 'Percentage too large');
+
         // burn v2 liquidity to this address
         IUniswapV2Pair(params.pair).transferFrom(msg.sender, params.pair, params.liquidityToMigrate);
         (uint256 amount0V2, uint256 amount1V2) = IUniswapV2Pair(params.pair).burn(address(this));
 
-        // approve the position manager up to the maximum token amounts
-        TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, amount0V2);
-        TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, amount1V2);
+        // calculate the amounts to migrate to v3
+        uint256 amount0V2ToMigrate = amount0V2.mul(params.percentageToMigrate).div(100);
+        uint256 amount1V2ToMigrate = amount1V2.mul(params.percentageToMigrate).div(100);
+
+        // approve the position manager up to the maximum token amounts 
+        TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, amount0V2ToMigrate);
+        TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, amount1V2ToMigrate);
 
         // mint v3 position
         (, , uint256 amount0V3, uint256 amount1V3) =
@@ -66,8 +76,8 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
                     fee: params.fee,
                     tickLower: params.tickLower,
                     tickUpper: params.tickUpper,
-                    amount0Desired: amount0V2,
-                    amount1Desired: amount1V2,
+                    amount0Desired: amount0V2ToMigrate,
+                    amount1Desired: amount1V2ToMigrate,
                     amount0Min: params.amount0Min,
                     amount1Min: params.amount1Min,
                     recipient: params.recipient,
@@ -77,7 +87,9 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
 
         // if necessary, clear allowance and refund dust
         if (amount0V3 < amount0V2) {
-            TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, 0);
+            if (amount0V3 < amount0V2ToMigrate) {
+                TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, 0);
+            }
 
             uint256 refund0 = amount0V2 - amount0V3;
             if (params.refundAsETH && params.token0 == WETH9) {
@@ -88,7 +100,9 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
             }
         }
         if (amount1V3 < amount1V2) {
-            TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, 0);
+            if (amount1V3 < amount1V2ToMigrate) {
+                TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, 0);
+            }
 
             uint256 refund1 = amount1V2 - amount1V3;
             if (params.refundAsETH && params.token1 == WETH9) {

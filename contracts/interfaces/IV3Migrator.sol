@@ -17,14 +17,15 @@ interface IV3Migrator is IMulticall, ISelfPermit {
 
     struct MigrateParams {
         address pair; // the Uniswap v2-compatible pair
-        uint256 liquidityToMigrate;
+        uint256 liquidityToMigrate; // expected to be balanceOf(msg.sender)
+        uint8 percentageToMigrate; // represented as a numerator over 100
         address token0;
         address token1;
         uint24 fee;
         int24 tickLower;
         int24 tickUpper;
-        uint256 amount0Min;
-        uint256 amount1Min;
+        uint256 amount0Min; // must be discounted by percentageToMigrate
+        uint256 amount1Min; // must be discounted by percentageToMigrate
         address recipient;
         uint256 deadline;
         bool refundAsETH;
