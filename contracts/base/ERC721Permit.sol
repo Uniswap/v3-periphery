@@ -4,6 +4,7 @@ pragma solidity =0.7.6;
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/utils/Address.sol';
 
+import '../libraries/ChainId.sol';
 import '../interfaces/external/IERC1271.sol';
 import '../interfaces/IERC721Permit.sol';
 import './BlockTimestamp.sol';
@@ -32,10 +33,6 @@ abstract contract ERC721Permit is BlockTimestamp, ERC721, IERC721Permit {
 
     /// @inheritdoc IERC721Permit
     function DOMAIN_SEPARATOR() public view override returns (bytes32) {
-        uint256 chainId;
-        assembly {
-            chainId := chainid()
-        }
         return
             keccak256(
                 abi.encode(
@@ -43,7 +40,7 @@ abstract contract ERC721Permit is BlockTimestamp, ERC721, IERC721Permit {
                     0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f,
                     nameHash,
                     versionHash,
-                    chainId,
+                    ChainId.get(),
                     address(this)
                 )
             );
