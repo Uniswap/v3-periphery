@@ -63,7 +63,7 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
         uint256 amount0V2ToMigrate = amount0V2.mul(params.percentageToMigrate).div(100);
         uint256 amount1V2ToMigrate = amount1V2.mul(params.percentageToMigrate).div(100);
 
-        // approve the position manager up to the maximum token amounts 
+        // approve the position manager up to the maximum token amounts
         TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, amount0V2ToMigrate);
         TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, amount1V2ToMigrate);
 
