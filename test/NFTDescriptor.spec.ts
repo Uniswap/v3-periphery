@@ -73,12 +73,7 @@ describe('NFTDescriptor', () => {
         liquidity,
         poolAddress,
       })
-      expect(uri).to.equal(
-        `data:application/json,{\
-"name":"Uniswap V3 - 0.3% - ${token0Symbol}/${token1Symbol} - MIN<>MAX", \
-"description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
-\\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}"}`
-      )
+      expect(uri).to.equal(tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', 'MIN<>MAX'))
     })
 
     it('returns the valid JSON string with mid ticks', async () => {
@@ -111,12 +106,7 @@ describe('NFTDescriptor', () => {
         liquidity,
         poolAddress,
       })
-      expect(uri).to.equal(
-        `data:application/json,{\
-"name":"Uniswap V3 - 0.3% - ${token0Symbol}/${token1Symbol} - 0.99900<>1.0010", \
-"description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
-\\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}"}`
-      )
+      expect(uri).to.equal(tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', '0.99900<>1.0010'))
     })
 
     it('gas', async () => {
@@ -463,12 +453,45 @@ describe('NFTDescriptor', () => {
     })
   })
 
-  describe('#svgImage', () => {
-    it.only('returns the svgImage', async () => {
-      console.log(tokens[0].address)
-      console.log(await nftDescriptor.tokenToColorHex(tokens[0].address))
-      expect(await nftDescriptor.tokenToColorHex(tokens[0].address)).to.eq('9fE467')
-      // console.log(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address))
+  describe('#tokenToColorHex', () => {
+    it('returns a string with a hash symbol and the first 3 bytes of the token', async () => {
+      expect(await nftDescriptor.tokenToColorHex(tokens[0].address)).to.eq(tokenToColorHex(tokens[0].address))
+      expect(await nftDescriptor.tokenToColorHex(tokens[1].address)).to.eq(tokenToColorHex(tokens[1].address))
     })
   })
+
+  describe('#svgImage', () => {
+    it('returns the svgImage', async () => {
+      expect(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address)).to.eq(svgImage(tokens[0].address, tokens[1].address))
+    })
+  })
+
+  function tokenToColorHex(tokenAddress: string): string {
+    return `#${tokenAddress.slice(2, 8).toLowerCase()}`
+  }
+
+  function svgImage(token0: string, token1: string): string {
+    return `<svg width=\\"24\\" height=\\"24\\" viewBox=\\"0 0 24 24\\" fill=\\"none\\" xmlns=\\"http://www.w3.org/2000/svg\\">\
+<circle cx=\\"12\\" cy=\\"12\\" r=\\"12\\" fill=${tokenToColorHex(token0)} stroke=\\"white\\"/><g clip-path=url(#beta-${tokenToColorHex(token0)})>\
+<circle cx=\\"12\\" cy=\\"12\\" r=\\"12\\" fill=${tokenToColorHex(token1)} stroke=\\"white\\"/></g><circle cx=\\"12\\" cy=\\"12\\" r=\\"4\\" style=mix-blend-mode:\
+overlay fill=\\"white\\" /><circle cx=\\"12\\" cy=\\"12\\" r=\\"8\\" style=mix-blend-mode:overlay fill=\\"white\\" />\<defs><clipPath id=\
+beta-${tokenToColorHex(token0)}><rect width=12 height=\\"24\\" fill=\\"white\\"/></clipPath></defs></svg>`
+  }
+
+  function tokenURI(
+    token0: string,
+    token1: string,
+    poolAddress: string,
+    token0Symbol: string,
+    token1Symbol: string,
+    liquidity: number,
+    fee: string,
+    prices: string,
+  ): string {
+    return `data:application/json,{\
+"name":"Uniswap V3 - ${fee} - ${token0Symbol}/${token1Symbol} - ${prices}", \
+"description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
+\\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}", \
+"image": "${svgImage(token0, token1)}"}`
+  }
 })

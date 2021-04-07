@@ -82,7 +82,17 @@ library NFTDescriptor {
             );
 
         return
-            string(abi.encodePacked('data:application/json,{"name":"', name, '", "description":"', description, '"}'));
+            string(
+                abi.encodePacked(
+                    'data:application/json,{"name":"',
+                    name,
+                    '", "description":"',
+                    description,
+                    '", "image": "',
+                    svgImage(params.token0, params.token1),
+                    '"}'
+                )
+            );
     }
 
     struct DecimalStringParams {
@@ -305,7 +315,7 @@ library NFTDescriptor {
     }
 
     function tokenToColorHex(uint256 token) internal pure returns (string memory str) {
-        return (token >> (34 * 4)).toHexStringNoPrefix(3);
+        return string(abi.encodePacked('#', (token >> (34 * 4)).toHexStringNoPrefix(3)));
     }
 
     function svgImage(address token0, address token1) internal pure returns (string memory svg) {
@@ -313,21 +323,21 @@ library NFTDescriptor {
         string memory token1Color = tokenToColorHex(uint256(token1));
         svg = string(
             abi.encodePacked(
-                '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">',
-                '<circle cx="12" cy="12" r="12" fill=',
+                '<svg width=\\"24\\" height=\\"24\\" viewBox=\\"0 0 24 24\\" fill=\\"none\\" xmlns=\\"http://www.w3.org/2000/svg\\">',
+                '<circle cx=\\"12\\" cy=\\"12\\" r=\\"12\\" fill=',
                 token0Color,
-                ' stroke="white"/>',
+                ' stroke=\\"white\\"/>',
                 '<g clip-path=url(#beta-',
                 token0Color,
                 ')>',
-                '<circle cx="12" cy="12" r="12" fill=',
+                '<circle cx=\\"12\\" cy=\\"12\\" r=\\"12\\" fill=',
                 token1Color,
-                ' stroke="white"/></g>',
-                '<circle cx="12" cy="12" r="4" style=mix-blend-mode:overlay fill="white" />',
-                '<circle cx="12" cy="12" r="8" style=mix-blend-mode:overlay fill="white" />',
+                ' stroke=\\"white\\"/></g>',
+                '<circle cx=\\"12\\" cy=\\"12\\" r=\\"4\\" style=mix-blend-mode:overlay fill=\\"white\\" />',
+                '<circle cx=\\"12\\" cy=\\"12\\" r=\\"8\\" style=mix-blend-mode:overlay fill=\\"white\\" />',
                 '<defs><clipPath id=beta-',
                 token0Color,
-                '><rect width=12 height="24" fill="white"/>',
+                '><rect width=12 height=\\"24\\" fill=\\"white\\"/>',
                 '</clipPath></defs></svg>'
             )
         );

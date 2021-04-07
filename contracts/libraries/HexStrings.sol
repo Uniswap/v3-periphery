@@ -20,11 +20,11 @@ library HexStrings {
 
     function toHexStringNoPrefix(uint256 value, uint256 length) internal pure returns (string memory) {
         bytes memory buffer = new bytes(2 * length);
-        for (uint256 i = 2 * length - 1; i > 0; --i) {
-            buffer[i] = alphabet[value & 0xf];
+        for (uint256 i = buffer.length; i > 0; i--) {
+            buffer[i - 1] = alphabet[value & 0xf];
             value >>= 4;
         }
-        /* require(value == 0, 'Strings: hex length insufficient'); */
+        require(value == 0, 'Strings: hex length insufficient');
         return string(buffer);
     }
 }
