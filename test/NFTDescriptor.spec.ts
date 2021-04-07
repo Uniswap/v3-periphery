@@ -73,7 +73,9 @@ describe('NFTDescriptor', () => {
         liquidity,
         poolAddress,
       })
-      expect(uri).to.equal(tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', 'MIN<>MAX'))
+      expect(uri).to.equal(
+        tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', 'MIN<>MAX')
+      )
     })
 
     it('returns the valid JSON string with mid ticks', async () => {
@@ -106,7 +108,9 @@ describe('NFTDescriptor', () => {
         liquidity,
         poolAddress,
       })
-      expect(uri).to.equal(tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', '0.99900<>1.0010'))
+      expect(uri).to.equal(
+        tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', '0.99900<>1.0010')
+      )
     })
 
     it('gas', async () => {
@@ -462,7 +466,9 @@ describe('NFTDescriptor', () => {
 
   describe('#svgImage', () => {
     it('returns the svgImage', async () => {
-      expect(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address)).to.eq(svgImage(tokens[0].address, tokens[1].address))
+      expect(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address)).to.eq(
+        svgImage(tokens[0].address, tokens[1].address)
+      )
     })
   })
 
@@ -472,8 +478,12 @@ describe('NFTDescriptor', () => {
 
   function svgImage(token0: string, token1: string): string {
     return `<svg width=\\"24\\" height=\\"24\\" viewBox=\\"0 0 24 24\\" fill=\\"none\\" xmlns=\\"http://www.w3.org/2000/svg\\">\
-<circle cx=\\"12\\" cy=\\"12\\" r=\\"12\\" fill=${tokenToColorHex(token0)} stroke=\\"white\\"/><g clip-path=url(#beta-${tokenToColorHex(token0)})>\
-<circle cx=\\"12\\" cy=\\"12\\" r=\\"12\\" fill=${tokenToColorHex(token1)} stroke=\\"white\\"/></g><circle cx=\\"12\\" cy=\\"12\\" r=\\"4\\" style=mix-blend-mode:\
+<circle cx=\\"12\\" cy=\\"12\\" r=\\"12\\" fill=${tokenToColorHex(
+      token0
+    )} stroke=\\"white\\"/><g clip-path=url(#beta-${tokenToColorHex(token0)})>\
+<circle cx=\\"12\\" cy=\\"12\\" r=\\"12\\" fill=${tokenToColorHex(
+      token1
+    )} stroke=\\"white\\"/></g><circle cx=\\"12\\" cy=\\"12\\" r=\\"4\\" style=mix-blend-mode:\
 overlay fill=\\"white\\" /><circle cx=\\"12\\" cy=\\"12\\" r=\\"8\\" style=mix-blend-mode:overlay fill=\\"white\\" />\<defs><clipPath id=\
 beta-${tokenToColorHex(token0)}><rect width=12 height=\\"24\\" fill=\\"white\\"/></clipPath></defs></svg>`
   }
@@ -486,7 +496,7 @@ beta-${tokenToColorHex(token0)}><rect width=12 height=\\"24\\" fill=\\"white\\"/
     token1Symbol: string,
     liquidity: number,
     fee: string,
-    prices: string,
+    prices: string
   ): string {
     return `data:application/json,{\
 "name":"Uniswap V3 - ${fee} - ${token0Symbol}/${token1Symbol} - ${prices}", \
