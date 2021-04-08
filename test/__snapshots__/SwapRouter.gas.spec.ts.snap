@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`SwapRouter gas tests #exactInput 0 -> 1 -> 2 1`] = `213321`;
+exports[`SwapRouter gas tests #exactInput 0 -> 1 -> 2 1`] = `213333`;
 
 exports[`SwapRouter gas tests #exactInput 0 -> 1 1`] = `111223`;
 
@@ -16,7 +16,7 @@ exports[`SwapRouter gas tests #exactInputSingle 0 -> WETH9 1`] = `137616`;
 
 exports[`SwapRouter gas tests #exactInputSingle WETH9 -> 0 1`] = `110878`;
 
-exports[`SwapRouter gas tests #exactOutput 0 -> 1 -> 2 1`] = `177425`;
+exports[`SwapRouter gas tests #exactOutput 0 -> 1 -> 2 1`] = `177437`;
 
 exports[`SwapRouter gas tests #exactOutput 0 -> 1 1`] = `115743`;
 
