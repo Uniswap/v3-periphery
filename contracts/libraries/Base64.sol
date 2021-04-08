@@ -24,13 +24,18 @@ library Base64 {
                 result[i] = '=';
             } else {
                 uint256 byteIndex = (bitStartIndex / 8);
-                uint16 bytesCombined =
-                    (uint16(uint8(data[byteIndex])) << 8) +
-                        (byteIndex == data.length - 1 ? 0 : uint16(uint8(data[byteIndex + 1])));
+                uint8 bsiMod8 = uint8(bitStartIndex % 8);
+                if (bsiMod8 < 3) {
+                    result[i] = TABLE[(uint8(data[byteIndex]) >> (2 - bsiMod8)) % 64];
+                } else {
+                    uint16 bytesCombined =
+                        (uint16(uint8(data[byteIndex])) << 8) +
+                            (byteIndex == data.length - 1 ? 0 : uint16(uint8(data[byteIndex + 1])));
 
-                uint8 c = uint8((bytesCombined >> uint8(10 - uint8(bitStartIndex % 8))) % 64);
+                    uint8 c = uint8((bytesCombined >> uint8(10 - bsiMod8)) % 64);
 
-                result[i] = TABLE[c];
+                    result[i] = TABLE[c];
+                }
             }
         }
 
