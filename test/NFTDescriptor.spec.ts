@@ -6,6 +6,7 @@ import { TestERC20, NFTDescriptorTest } from '../typechain'
 import { Fixture } from 'ethereum-waffle'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import snapshotGasCost from './shared/snapshotGasCost'
+import { base64Encode } from './shared/base64Encode'
 import { getMaxTick, getMinTick } from './shared/ticks'
 
 describe('NFTDescriptor', () => {
@@ -73,13 +74,9 @@ describe('NFTDescriptor', () => {
         liquidity,
         poolAddress,
       })
-<<<<<<< HEAD
       expect(uri).to.equal(
         tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', 'MIN<>MAX')
       )
-=======
-      expect(uri).to.equal(tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', 'MIN<>MAX'))
->>>>>>> add svg image to token json + tests + fix bug
     })
 
     it('returns the valid JSON string with mid ticks', async () => {
@@ -112,13 +109,9 @@ describe('NFTDescriptor', () => {
         liquidity,
         poolAddress,
       })
-<<<<<<< HEAD
       expect(uri).to.equal(
         tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', '0.99900<>1.0010')
       )
-=======
-      expect(uri).to.equal(tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', '0.99900<>1.0010'))
->>>>>>> add svg image to token json + tests + fix bug
     })
 
     it('gas', async () => {
@@ -485,11 +478,15 @@ describe('NFTDescriptor', () => {
   }
 
   function svgImage(token0: string, token1: string): string {
-    return `<svg width=\\"24\\" height=\\"24\\" viewBox=\\"0 0 24 24\\" fill=\\"none\\" xmlns=\\"http://www.w3.org/2000/svg\\">\
-<circle cx=\\"12\\" cy=\\"12\\" r=\\"12\\" fill=${tokenToColorHex(token0)} stroke=\\"white\\"/><g clip-path=url(#beta-${tokenToColorHex(token0)})>\
-<circle cx=\\"12\\" cy=\\"12\\" r=\\"12\\" fill=${tokenToColorHex(token1)} stroke=\\"white\\"/></g><circle cx=\\"12\\" cy=\\"12\\" r=\\"4\\" style=mix-blend-mode:\
-overlay fill=\\"white\\" /><circle cx=\\"12\\" cy=\\"12\\" r=\\"8\\" style=mix-blend-mode:overlay fill=\\"white\\" />\<defs><clipPath id=\
-beta-${tokenToColorHex(token0)}><rect width=12 height=\\"24\\" fill=\\"white\\"/></clipPath></defs></svg>`
+    return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\
+<circle cx="12" cy="12" r="12" fill=${tokenToColorHex(token0)} stroke="white"/><g clip-path=url(#beta-${tokenToColorHex(token0)})>\
+<circle cx="12" cy="12" r="12" fill=${tokenToColorHex(token1)} stroke="white"/></g><circle cx="12" cy="12" r="4" style=mix-blend-mode:\
+overlay fill="white" /><circle cx="12" cy="12" r="8" style=mix-blend-mode:overlay fill="white" />\<defs><clipPath id=\
+beta-${tokenToColorHex(token0)}><rect width=12 height="24" fill="white"/></clipPath></defs></svg>`
+  }
+
+  function encodedSvgImage(token0: string, token1: string): string {
+    return `data:image/svg+xml;base64,${base64Encode(svgImage(token0, token1))}`
   }
 
   function tokenURI(
@@ -506,6 +503,6 @@ beta-${tokenToColorHex(token0)}><rect width=12 height=\\"24\\" fill=\\"white\\"/
 "name":"Uniswap V3 - ${fee} - ${token0Symbol}/${token1Symbol} - ${prices}", \
 "description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
 \\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}", \
-"image": "${svgImage(token0, token1)}"}`
+"image": "${encodedSvgImage(token0, token1)}"}`
   }
 })
