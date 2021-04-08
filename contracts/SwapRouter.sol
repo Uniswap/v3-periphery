@@ -201,10 +201,7 @@ contract SwapRouter is
             params.amountOut,
             params.recipient,
             params.sqrtPriceLimitX96,
-            SwapCallbackData({
-                path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn),
-                payer: msg.sender
-            })
+            SwapCallbackData({path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn), payer: msg.sender})
         );
 
         require(amountIn <= params.amountInMaximum, 'Too much requested');
