@@ -6,7 +6,7 @@ import { TestERC20, NFTDescriptorTest } from '../typechain'
 import { Fixture } from 'ethereum-waffle'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import snapshotGasCost from './shared/snapshotGasCost'
-import { base64Encode } from './shared/base64Encode'
+import { base64Encode } from './shared/base64encode'
 import { getMaxTick, getMinTick } from './shared/ticks'
 
 describe('NFTDescriptor', () => {
