@@ -3,15 +3,11 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import './interfaces/INonfungiblePositionManager.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
 
-import './libraries/PoolAddress.sol';
 import './libraries/TransferHelper.sol';
 
-import './libraries/LiquidityAmounts.sol';
+import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
 import './interfaces/IV3Migrator.sol';
 import './base/PeripheryImmutableState.sol';
 import './base/Multicall.sol';
@@ -20,7 +16,7 @@ import './interfaces/external/IWETH9.sol';
 
 /// @title Uniswap V3 Migrator
 contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPermit {
-    using SafeMath for uint256;
+    using LowGasSafeMath for uint256;
 
     address public immutable nonfungiblePositionManager;
 
@@ -60,8 +56,8 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
         (uint256 amount0V2, uint256 amount1V2) = IUniswapV2Pair(params.pair).burn(address(this));
 
         // calculate the amounts to migrate to v3
-        uint256 amount0V2ToMigrate = amount0V2.mul(params.percentageToMigrate).div(100);
-        uint256 amount1V2ToMigrate = amount1V2.mul(params.percentageToMigrate).div(100);
+        uint256 amount0V2ToMigrate = amount0V2.mul(params.percentageToMigrate) / 100;
+        uint256 amount1V2ToMigrate = amount1V2.mul(params.percentageToMigrate) / 100;
 
         // approve the position manager up to the maximum token amounts
         TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, amount0V2ToMigrate);
@@ -84,6 +80,14 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
                     deadline: params.deadline
                 })
             );
+
+        // special slippage checks for migrating out of range
+        if (params.amount0Min == 0) {
+            require(amount0V3 == 0, 'Not out of range');
+        }
+        if (params.amount1Min == 0) {
+            require(amount1V3 == 0, 'Not out of range');
+        }
 
         // if necessary, clear allowance and refund dust
         if (amount0V3 < amount0V2) {
