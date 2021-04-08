@@ -1,4 +1,5 @@
 import { ethers } from 'hardhat'
+import { base64Encode } from './shared/base64encode'
 import { expect } from './shared/expect'
 import { Base64Test } from '../typechain'
 import { randomBytes } from 'crypto'
@@ -6,10 +7,6 @@ import snapshotGasCost from './shared/snapshotGasCost'
 
 function stringToHex(str: string): string {
   return `0x${Buffer.from(str, 'utf8').toString('hex')}`
-}
-
-function base64Encode(str: string): string {
-  return Buffer.from(str, 'utf8').toString('base64')
 }
 
 describe('Base64', () => {
