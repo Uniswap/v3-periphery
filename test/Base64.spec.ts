@@ -1,6 +1,7 @@
 import { ethers } from 'hardhat'
 import { expect } from './shared/expect'
 import { Base64Test } from '../typechain'
+import { randomBytes } from 'crypto'
 
 function stringToHex(str: string): string {
   return `0x${Buffer.from(str, 'utf8').toString('hex')}`
@@ -40,5 +41,22 @@ describe('Base64', () => {
         expect(await base64.encode(stringToHex(example))).to.eq(base64Encode(example))
       })
     }
+
+    it('tiny fuzzing', async () => {
+      const inputs = []
+      for (let i = 0; i < 100; i++) {
+        inputs.push(randomBytes(Math.random() * 100))
+      }
+
+      const promises = inputs.map((input) => {
+        return base64.encode(`0x${input.toString('hex')}`)
+      })
+
+      const results = await Promise.all(promises)
+
+      for (let i = 0; i < inputs.length; i++) {
+        expect(inputs[i].toString('base64')).to.eq(results[i])
+      }
+    }).timeout(300_000)
   })
 })
