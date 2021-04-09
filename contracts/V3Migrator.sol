@@ -82,14 +82,6 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
                 })
             );
 
-        // special slippage checks for migrating out of range
-        if (params.amount0Min == 0) {
-            require(amount0V3 == 0, 'Not out of range');
-        }
-        if (params.amount1Min == 0) {
-            require(amount1V3 == 0, 'Not out of range');
-        }
-
         // if necessary, clear allowance and refund dust
         if (amount0V3 < amount0V2) {
             if (amount0V3 < amount0V2ToMigrate) {
