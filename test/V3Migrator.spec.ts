@@ -124,12 +124,14 @@ describe('V3Migrator', () => {
         migrator.migrate({
           pair: pair.address,
           liquidityToMigrate: expectedLiquidity,
+          percentageToMigrate: 100,
           token0: tokenLower ? token.address : weth9.address,
           token1: tokenLower ? weth9.address : token.address,
           fee: FeeAmount.MEDIUM,
           tickLower: -1,
           tickUpper: 1,
-          liquidityV3Min: expectedLiquidity,
+          amount0Min: 9000,
+          amount1Min: 9000,
           recipient: wallet.address,
           deadline: 1,
           refundAsETH: false,
@@ -149,12 +151,14 @@ describe('V3Migrator', () => {
       await migrator.migrate({
         pair: pair.address,
         liquidityToMigrate: expectedLiquidity,
+        percentageToMigrate: 100,
         token0: tokenLower ? token.address : weth9.address,
         token1: tokenLower ? weth9.address : token.address,
         fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(FeeAmount.MEDIUM),
         tickUpper: getMaxTick(FeeAmount.MEDIUM),
-        liquidityV3Min: expectedLiquidity, // sqrt(9000 * 9000) (unscaled b/c max range)
+        amount0Min: 9000,
+        amount1Min: 9000,
         recipient: wallet.address,
         deadline: 1,
         refundAsETH: false,
@@ -166,6 +170,48 @@ describe('V3Migrator', () => {
       const poolAddress = await factoryV3.getPool(token.address, weth9.address, FeeAmount.MEDIUM)
       expect(await token.balanceOf(poolAddress)).to.be.eq(9000)
       expect(await weth9.balanceOf(poolAddress)).to.be.eq(9000)
+    })
+
+    it('works for partial', async () => {
+      await migrator.createAndInitializePoolIfNecessary(
+        token.address,
+        weth9.address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      const tokenBalanceBefore = await token.balanceOf(wallet.address)
+      const weth9BalanceBefore = await weth9.balanceOf(wallet.address)
+
+      await pair.approve(migrator.address, expectedLiquidity)
+      await migrator.migrate({
+        pair: pair.address,
+        liquidityToMigrate: expectedLiquidity,
+        percentageToMigrate: 50,
+        token0: tokenLower ? token.address : weth9.address,
+        token1: tokenLower ? weth9.address : token.address,
+        fee: FeeAmount.MEDIUM,
+        tickLower: getMinTick(FeeAmount.MEDIUM),
+        tickUpper: getMaxTick(FeeAmount.MEDIUM),
+        amount0Min: 4500,
+        amount1Min: 4500,
+        recipient: wallet.address,
+        deadline: 1,
+        refundAsETH: false,
+      })
+
+      const tokenBalanceAfter = await token.balanceOf(wallet.address)
+      const weth9BalanceAfter = await weth9.balanceOf(wallet.address)
+
+      expect(tokenBalanceAfter.sub(tokenBalanceBefore)).to.be.eq(4500)
+      expect(weth9BalanceAfter.sub(weth9BalanceBefore)).to.be.eq(4500)
+
+      const position = await nft.positions(1)
+      expect(position.liquidity).to.be.eq(4500)
+
+      const poolAddress = await factoryV3.getPool(token.address, weth9.address, FeeAmount.MEDIUM)
+      expect(await token.balanceOf(poolAddress)).to.be.eq(4500)
+      expect(await weth9.balanceOf(poolAddress)).to.be.eq(4500)
     })
 
     it('double the price', async () => {
@@ -183,12 +229,14 @@ describe('V3Migrator', () => {
       await migrator.migrate({
         pair: pair.address,
         liquidityToMigrate: expectedLiquidity,
+        percentageToMigrate: 100,
         token0: tokenLower ? token.address : weth9.address,
         token1: tokenLower ? weth9.address : token.address,
         fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(FeeAmount.MEDIUM),
         tickUpper: getMaxTick(FeeAmount.MEDIUM),
-        liquidityV3Min: 6363, // sqrt(9000 * 4500) (unscaled b/c max range)
+        amount0Min: 4500,
+        amount1Min: 8999,
         recipient: wallet.address,
         deadline: 1,
         refundAsETH: false,
@@ -229,12 +277,14 @@ describe('V3Migrator', () => {
       await migrator.migrate({
         pair: pair.address,
         liquidityToMigrate: expectedLiquidity,
+        percentageToMigrate: 100,
         token0: tokenLower ? token.address : weth9.address,
         token1: tokenLower ? weth9.address : token.address,
         fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(FeeAmount.MEDIUM),
         tickUpper: getMaxTick(FeeAmount.MEDIUM),
-        liquidityV3Min: 6363, // sqrt(9000 * 4500) (unscaled b/c max range)
+        amount0Min: 8999,
+        amount1Min: 4500,
         recipient: wallet.address,
         deadline: 1,
         refundAsETH: false,
@@ -275,12 +325,14 @@ describe('V3Migrator', () => {
         migrator.migrate({
           pair: pair.address,
           liquidityToMigrate: expectedLiquidity,
+          percentageToMigrate: 100,
           token0: tokenLower ? token.address : weth9.address,
           token1: tokenLower ? weth9.address : token.address,
           fee: FeeAmount.MEDIUM,
           tickLower: getMinTick(FeeAmount.MEDIUM),
           tickUpper: getMaxTick(FeeAmount.MEDIUM),
-          liquidityV3Min: 6363, // sqrt(9000 * 4500) (unscaled b/c max range)
+          amount0Min: 4500,
+          amount1Min: 8999,
           recipient: wallet.address,
           deadline: 1,
           refundAsETH: true,
@@ -321,12 +373,14 @@ describe('V3Migrator', () => {
         migrator.migrate({
           pair: pair.address,
           liquidityToMigrate: expectedLiquidity,
+          percentageToMigrate: 100,
           token0: tokenLower ? token.address : weth9.address,
           token1: tokenLower ? weth9.address : token.address,
           fee: FeeAmount.MEDIUM,
           tickLower: getMinTick(FeeAmount.MEDIUM),
           tickUpper: getMaxTick(FeeAmount.MEDIUM),
-          liquidityV3Min: 6363, // sqrt(9000 * 4500) (unscaled b/c max range)
+          amount0Min: 8999,
+          amount1Min: 4500,
           recipient: wallet.address,
           deadline: 1,
           refundAsETH: true,
@@ -365,12 +419,14 @@ describe('V3Migrator', () => {
         migrator.migrate({
           pair: pair.address,
           liquidityToMigrate: expectedLiquidity,
+          percentageToMigrate: 100,
           token0: tokenLower ? token.address : weth9.address,
           token1: tokenLower ? weth9.address : token.address,
           fee: FeeAmount.MEDIUM,
           tickLower: getMinTick(FeeAmount.MEDIUM),
           tickUpper: getMaxTick(FeeAmount.MEDIUM),
-          liquidityV3Min: expectedLiquidity,
+          amount0Min: 9000,
+          amount1Min: 9000,
           recipient: wallet.address,
           deadline: 1,
           refundAsETH: false,
