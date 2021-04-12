@@ -164,12 +164,12 @@ contract SwapRouter is
         address recipient,
         uint160 sqrtPriceLimitX96,
         SwapCallbackData memory data
-    ) private returns (int256 amount0Delta, int256 amount1Delta) {
+    ) private returns (uint256 amountIn) {
         (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
 
-        return
+        (int256 amount0Delta, int256 amount1Delta) =
             getPool(tokenIn, tokenOut, fee).swap(
                 recipient,
                 zeroForOne,
@@ -179,6 +179,14 @@ contract SwapRouter is
                     : sqrtPriceLimitX96,
                 abi.encode(data)
             );
+
+        uint256 amountOutReceived;
+        (amountIn, amountOutReceived) = zeroForOne
+            ? (uint256(amount0Delta), uint256(-amount1Delta))
+            : (uint256(amount1Delta), uint256(-amount0Delta));
+        // it's technically possible to not receive the full output amount,
+        // so if no price limit has been specified, require this possibility away
+        if (sqrtPriceLimitX96 == 0) require(amountOutReceived == amountOut);
     }
 
     /// @inheritdoc ISwapRouter
@@ -189,23 +197,17 @@ contract SwapRouter is
         checkDeadline(params.deadline)
         returns (uint256 amountIn)
     {
-        (int256 amount0Delta, int256 amount1Delta) =
-            exactOutputInternal(
-                params.amountOut,
-                params.recipient,
-                params.sqrtPriceLimitX96,
-                SwapCallbackData({
-                    path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn),
-                    payer: msg.sender
-                })
-            );
-
         // avoid an SLOAD by using the swap return data
-        amountIn = uint256(params.tokenIn < params.tokenOut ? amount0Delta : amount1Delta);
+        amountIn = exactOutputInternal(
+            params.amountOut,
+            params.recipient,
+            params.sqrtPriceLimitX96,
+            SwapCallbackData({path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn), payer: msg.sender})
+        );
 
+        require(amountIn <= params.amountInMaximum, 'Too much requested');
         // has to be reset even though we don't use it in the single hop case
         amountInCached = DEFAULT_AMOUNT_IN_CACHED;
-        require(amountIn <= params.amountInMaximum, 'Too much requested');
     }
 
     /// @inheritdoc ISwapRouter
@@ -224,7 +226,7 @@ contract SwapRouter is
         );
 
         amountIn = amountInCached;
-        amountInCached = DEFAULT_AMOUNT_IN_CACHED;
         require(amountIn <= params.amountInMaximum, 'Too much requested');
+        amountInCached = DEFAULT_AMOUNT_IN_CACHED;
     }
 }
