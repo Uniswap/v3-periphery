@@ -189,11 +189,14 @@ library NFTDescriptor {
         if (difference > 0 && difference <= 18) {
             if (token0Decimals > token1Decimals) {
                 adjustedSqrtRatioX96 = sqrtRatioX96.mul(10**(difference.div(2)));
+                if (difference % 2 == 1) {
+                    adjustedSqrtRatioX96 = FullMath.mulDiv(adjustedSqrtRatioX96, sqrt10X128, 1 << 128);
+                }
             } else {
                 adjustedSqrtRatioX96 = sqrtRatioX96.div(10**(difference.div(2)));
-            }
-            if (difference % 2 == 1) {
-                adjustedSqrtRatioX96 = FullMath.mulDiv(adjustedSqrtRatioX96, sqrt10X128, 1 << 128);
+                if (difference % 2 == 1) {
+                    adjustedSqrtRatioX96 = FullMath.mulDiv(adjustedSqrtRatioX96, 1 << 128, sqrt10X128);
+                }
             }
         } else {
             adjustedSqrtRatioX96 = uint256(sqrtRatioX96);
