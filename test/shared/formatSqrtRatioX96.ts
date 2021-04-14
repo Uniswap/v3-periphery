@@ -1,4 +1,4 @@
-import  { BigNumber } from 'ethers'
+import { BigNumber } from 'ethers'
 import Decimal from 'decimal.js'
 
 const TWO = BigNumber.from(2)

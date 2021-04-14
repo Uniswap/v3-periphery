@@ -7,11 +7,10 @@ import { Fixture } from 'ethereum-waffle'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { base64Encode } from './shared/base64encode'
-import {formatSqrtRatioX96} from './shared/formatSqrtRatioX96'
+import { formatSqrtRatioX96 } from './shared/formatSqrtRatioX96'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import Decimal from 'decimal.js'
 import { randomBytes } from 'crypto'
-
 
 const TEN = BigNumber.from(10)
 const LOWEST_SQRT_RATIO = 4310618292
@@ -399,8 +398,12 @@ describe('NFTDescriptor', () => {
       })
 
       it('some fuzz', async () => {
-        const random3To21 = () => { return Math.floor(3 + Math.random() * 100 % 18) }
-        const random1To20 = () => { return Math.floor(1 + Math.random() * 100 % 19) }
+        const random3To21 = () => {
+          return Math.floor(3 + ((Math.random() * 100) % 18))
+        }
+        const random1To20 = () => {
+          return Math.floor(1 + ((Math.random() * 100) % 19))
+        }
 
         const inputs = []
         let i = 0
@@ -410,17 +413,16 @@ describe('NFTDescriptor', () => {
           const decimals1 = random3To21()
           const decimalDiff = Math.abs(decimals0 - decimals1)
 
-
           // TODO: Address edgecase out of bounds prices due to decimal differences
           if (
-            BigNumber.from(`0x${value.toString('hex')}`).div(TEN.pow(decimalDiff)).gt(LOWEST_SQRT_RATIO)
-            && BigNumber.from(`0x${value.toString('hex')}`).mul(TEN.pow(decimalDiff)).lt(HIGHEST_SQRT_RATIO)
+            BigNumber.from(`0x${value.toString('hex')}`)
+              .div(TEN.pow(decimalDiff))
+              .gt(LOWEST_SQRT_RATIO) &&
+            BigNumber.from(`0x${value.toString('hex')}`)
+              .mul(TEN.pow(decimalDiff))
+              .lt(HIGHEST_SQRT_RATIO)
           ) {
-            inputs.push([
-              BigNumber.from(`0x${value.toString('hex')}`),
-              decimals0,
-              decimals1
-            ])
+            inputs.push([BigNumber.from(`0x${value.toString('hex')}`), decimals0, decimals1])
             i++
           }
         }
@@ -429,7 +431,7 @@ describe('NFTDescriptor', () => {
           let input: any
           let decimals0: any
           let decimals1: any
-          [input, decimals0, decimals1] = inputs[i]
+          ;[input, decimals0, decimals1] = inputs[i]
           let result = await nftDescriptor.fixedPointToDecimalString(input, decimals0, decimals1)
           expect(formatSqrtRatioX96(input, decimals0, decimals1)).to.eq(result)
         }
