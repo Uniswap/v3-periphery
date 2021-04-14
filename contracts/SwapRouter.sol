@@ -144,7 +144,7 @@ contract SwapRouter is
                 0,
                 SwapCallbackData({
                     path: params.path.getFirstPool(), // only the first pool in the path is necessary
-                    payer: payer 
+                    payer: payer
                 })
             );
 
