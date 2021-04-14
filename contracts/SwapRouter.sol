@@ -148,10 +148,9 @@ contract SwapRouter is
                 })
             );
 
-            if (payer != address(this)) payer = address(this); // this contract pays for subsequent hops
-
             // decide whether to continue or terminate
             if (hasMultiplePools) {
+                payer = address(this); // at this point, the caller has paid
                 params.path = params.path.skipToken();
             } else {
                 amountOut = params.amountIn;
