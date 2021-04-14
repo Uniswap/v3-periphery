@@ -564,8 +564,7 @@ describe('NonfungiblePositionManager', () => {
       ).to.be.reverted
     })
 
-    // todo: this test fails due to https://github.com/Uniswap/uniswap-v3-periphery/issues/86
-    it.skip('cannot decrease for more than the liquidity of the nft position', async () => {
+    it('cannot decrease for more than the liquidity of the nft position', async () => {
       await nft.mint({
         token0: tokens[0].address,
         token1: tokens[1].address,
