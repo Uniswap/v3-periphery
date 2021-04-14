@@ -114,24 +114,26 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
             uint256 amount1
         );
 
+    struct IncreaseLiquidityParams {
+        uint256 tokenId;
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+        uint256 amount0Min;
+        uint256 amount1Min;
+        uint256 deadline;
+    }
+
     /// @notice Increases the amount of liquidity in a position, with tokens paid by the `msg.sender`
-    /// @param tokenId The ID of the token for which liquidity is being increased
-    /// @param amount0Desired The desired amount of token0 to be spent
-    /// @param amount1Desired The desired amount of token1 to be spent
-    /// @param amount0Min The minimum amount of token0 to spend, which serves as a slippage check
-    /// @param amount1Min The minimum amount of token1 to spend, which serves as a slippage check
-    /// @param deadline The time by which the transaction must be included to effect the change
+    /// @param params tokenId The ID of the token for which liquidity is being increased,
+    /// amount0Desired The desired amount of token0 to be spent,
+    /// amount1Desired The desired amount of token1 to be spent,
+    /// amount0Min The minimum amount of token0 to spend, which serves as a slippage check,
+    /// amount1Min The minimum amount of token1 to spend, which serves as a slippage check,
+    /// deadline The time by which the transaction must be included to effect the change
     /// @return liquidity The new liquidity amount as a result of the increase
     /// @return amount0 The amount of token0 to acheive resulting liquidity
     /// @return amount1 The amount of token1 to acheive resulting liquidity
-    function increaseLiquidity(
-        uint256 tokenId,
-        uint256 amount0Desired,
-        uint256 amount1Desired,
-        uint256 amount0Min,
-        uint256 amount1Min,
-        uint256 deadline
-    )
+    function increaseLiquidity(IncreaseLiquidityParams calldata params)
         external
         payable
         returns (
@@ -140,35 +142,42 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
             uint256 amount1
         );
 
+    struct DecreaseLiquidityParams {
+        uint256 tokenId;
+        uint128 liquidity;
+        uint256 amount0Min;
+        uint256 amount1Min;
+        uint256 deadline;
+    }
+
     /// @notice Decreases the amount of liquidity in a position and accounts it to the position
-    /// @param tokenId The ID of the token for which liquidity is being decreased
-    /// @param amount The amount by which liquidity will be decreased
-    /// @param amount0Min The minimum amount of token0 that should be received in the burn
-    /// @param amount1Min The minimum amount of token1 that should be received in the burn
-    /// @param deadline The time by which the transaction must be included to effect the change
+    /// @param params tokenId The ID of the token for which liquidity is being decreased,
+    /// amount The amount by which liquidity will be decreased,
+    /// amount0Min The minimum amount of token0 that should be received in the burn,
+    /// amount1Min The minimum amount of token1 that should be received in the burn,
+    /// deadline The time by which the transaction must be included to effect the change
     /// @return amount0 The amount of token0 sent to recipient
     /// @return amount1 The amount of token1 sent to recipient
-    function decreaseLiquidity(
-        uint256 tokenId,
-        uint128 amount,
-        uint256 amount0Min,
-        uint256 amount1Min,
-        uint256 deadline
-    ) external payable returns (uint256 amount0, uint256 amount1);
+    function decreaseLiquidity(DecreaseLiquidityParams calldata params)
+        external
+        payable
+        returns (uint256 amount0, uint256 amount1);
+
+    struct CollectParams {
+        uint256 tokenId;
+        address recipient;
+        uint128 amount0Max;
+        uint128 amount1Max;
+    }
 
     /// @notice Collects up to a maximum amount of fees owed to a specific position to the recipient
-    /// @param tokenId The ID of the NFT for which tokens are being collected
-    /// @param recipient The account that should receive the tokens
-    /// @param amount0Max The maximum amount of token0 to collect
-    /// @param amount1Max The maximum amount of token1 to collect
+    /// @param params tokenId The ID of the NFT for which tokens are being collected,
+    /// recipient The account that should receive the tokens,
+    /// amount0Max The maximum amount of token0 to collect,
+    /// amount1Max The maximum amount of token1 to collect
     /// @return amount0 The amount of fees collected in token0
     /// @return amount1 The amount of fees collected in token1
-    function collect(
-        uint256 tokenId,
-        address recipient,
-        uint128 amount0Max,
-        uint128 amount1Max
-    ) external payable returns (uint256 amount0, uint256 amount1);
+    function collect(CollectParams calldata params) external payable returns (uint256 amount0, uint256 amount1);
 
     /// @notice Burns a token ID, which deletes it from the NFT contract. The token must have 0 liquidity and all tokens
     /// must be collected first.
