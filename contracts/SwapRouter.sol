@@ -132,6 +132,8 @@ contract SwapRouter is
         checkDeadline(params.deadline)
         returns (uint256 amountOut)
     {
+        address payer = msg.sender; // msg.sender pays for the first hop
+
         while (true) {
             bool hasMultiplePools = params.path.hasMultiplePools();
 
@@ -142,9 +144,11 @@ contract SwapRouter is
                 0,
                 SwapCallbackData({
                     path: params.path.getFirstPool(), // only the first pool in the path is necessary
-                    payer: msg.sender
+                    payer: payer 
                 })
             );
+
+            if (payer != address(this)) payer = address(this); // this contract pays for subsequent hops
 
             // decide whether to continue or terminate
             if (hasMultiplePools) {
@@ -218,6 +222,8 @@ contract SwapRouter is
         checkDeadline(params.deadline)
         returns (uint256 amountIn)
     {
+        // it's okay that the payer is fixed to msg.sender here, as they're only paying for the "final" exact output
+        // swap, which happens first, and subsequent swaps are paid for within nested callback frames
         exactOutputInternal(
             params.amountOut,
             params.recipient,
