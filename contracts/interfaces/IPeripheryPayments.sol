@@ -10,16 +10,6 @@ interface IPeripheryPayments {
     /// @param recipient The address receiving ETH
     function unwrapWETH9(uint256 amountMinimum, address recipient) external payable;
 
-    /// @notice Unwraps the contract's WETH9 balance and sends it to recipient as ETH, with an optional percentage
-    /// going to the specified fee address
-    /// @dev The amountMinimum parameter prevents malicious contracts from stealing WETH9 from users.
-    function unwrapWETH9WithFee(
-        uint256 amountMinimum,
-        address recipient,
-        uint256 feePercentage,
-        address feeRecipient
-    ) external payable;
-
     /// @notice Calculates the full amount of a token held by this contract and sends it to the given recipient
     /// @dev The amountMinimum parameter prevents malicious contracts from stealing the token from users
     /// @param token The contract address of the token which will be transferred to `recipient`
@@ -29,16 +19,5 @@ interface IPeripheryPayments {
         address token,
         uint256 amountMinimum,
         address recipient
-    ) external payable;
-
-    /// @notice Calculates the full amount of a token held by this contract and sends it to the given recipient, with an
-    /// optional percentage going to the specified fee address
-    /// @dev The amountMinimum parameter prevents malicious contracts from stealing the token from users
-    function sweepTokenWithFee(
-        address token,
-        uint256 amountMinimum,
-        address recipient,
-        uint256 feePercentage,
-        address feeRecipient
     ) external payable;
 }

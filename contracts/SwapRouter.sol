@@ -9,7 +9,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import './interfaces/ISwapRouter.sol';
 import './base/PeripheryImmutableState.sol';
 import './base/PeripheryValidation.sol';
-import './base/PeripheryPayments.sol';
+import './base/PeripheryPaymentsWithFee.sol';
 import './base/Multicall.sol';
 import './base/SelfPermit.sol';
 import './libraries/Path.sol';
@@ -23,7 +23,7 @@ contract SwapRouter is
     ISwapRouter,
     PeripheryImmutableState,
     PeripheryValidation,
-    PeripheryPayments,
+    PeripheryPaymentsWithFee,
     Multicall,
     SelfPermit
 {
