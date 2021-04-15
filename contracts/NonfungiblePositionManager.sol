@@ -150,12 +150,13 @@ contract NonfungiblePositionManager is
         checkDeadline(params.deadline)
         returns (
             uint256 tokenId,
+            uint128 liquidity,
             uint256 amount0,
             uint256 amount1
         )
     {
         IUniswapV3Pool pool;
-        (amount0, amount1, pool) = addLiquidity(
+        (liquidity, amount0, amount1, pool) = addLiquidity(
             AddLiquidityParams({
                 token0: params.token0,
                 token1: params.token1,
@@ -163,9 +164,10 @@ contract NonfungiblePositionManager is
                 recipient: address(this),
                 tickLower: params.tickLower,
                 tickUpper: params.tickUpper,
-                amount: params.amount,
-                amount0Max: params.amount0Max,
-                amount1Max: params.amount1Max
+                amount0Desired: params.amount0Desired,
+                amount1Desired: params.amount1Desired,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min
             })
         );
 
@@ -187,12 +189,14 @@ contract NonfungiblePositionManager is
             poolId: poolId,
             tickLower: params.tickLower,
             tickUpper: params.tickUpper,
-            liquidity: params.amount,
+            liquidity: liquidity,
             feeGrowthInside0LastX128: feeGrowthInside0LastX128,
             feeGrowthInside1LastX128: feeGrowthInside1LastX128,
             tokensOwed0: 0,
             tokensOwed1: 0
         });
+
+        emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);
     }
 
     modifier isAuthorizedForToken(uint256 tokenId) {
@@ -209,29 +213,33 @@ contract NonfungiblePositionManager is
     function baseURI() public pure override returns (string memory) {}
 
     /// @inheritdoc INonfungiblePositionManager
-    function increaseLiquidity(
-        uint256 tokenId,
-        uint128 amount,
-        uint256 amount0Max,
-        uint256 amount1Max,
-        uint256 deadline
-    ) external payable override checkDeadline(deadline) returns (uint256 amount0, uint256 amount1) {
-        require(amount > 0);
-        Position storage position = _positions[tokenId];
+    function increaseLiquidity(IncreaseLiquidityParams calldata params)
+        external
+        payable
+        override
+        checkDeadline(params.deadline)
+        returns (
+            uint128 liquidity,
+            uint256 amount0,
+            uint256 amount1
+        )
+    {
+        Position storage position = _positions[params.tokenId];
 
         PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
 
         IUniswapV3Pool pool;
-        (amount0, amount1, pool) = addLiquidity(
+        (liquidity, amount0, amount1, pool) = addLiquidity(
             AddLiquidityParams({
                 token0: poolKey.token0,
                 token1: poolKey.token1,
                 fee: poolKey.fee,
                 tickLower: position.tickLower,
                 tickUpper: position.tickUpper,
-                amount: amount,
-                amount0Max: amount0Max,
-                amount1Max: amount1Max,
+                amount0Desired: params.amount0Desired,
+                amount1Desired: params.amount1Desired,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min,
                 recipient: address(this)
             })
         );
@@ -258,33 +266,31 @@ contract NonfungiblePositionManager is
 
         position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
-        position.liquidity += amount;
+        position.liquidity += liquidity;
+
+        emit IncreaseLiquidity(params.tokenId, liquidity, amount0, amount1);
     }
 
     /// @inheritdoc INonfungiblePositionManager
-    function decreaseLiquidity(
-        uint256 tokenId,
-        uint128 amount,
-        uint256 amount0Min,
-        uint256 amount1Min,
-        uint256 deadline
-    )
+    function decreaseLiquidity(DecreaseLiquidityParams calldata params)
         external
         payable
         override
-        isAuthorizedForToken(tokenId)
-        checkDeadline(deadline)
+        isAuthorizedForToken(params.tokenId)
+        checkDeadline(params.deadline)
         returns (uint256 amount0, uint256 amount1)
     {
-        require(amount > 0);
-        Position storage position = _positions[tokenId];
+        require(params.liquidity > 0);
+        Position storage position = _positions[params.tokenId];
+
+        uint128 positionLiquidity = position.liquidity;
+        require(positionLiquidity >= params.liquidity);
 
         PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
-        (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, amount);
+        (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, params.liquidity);
 
-        require(amount0 >= amount0Min);
-        require(amount1 >= amount1Min);
+        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, 'Price slippage check');
 
         bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
         // this is now updated to the current transaction
@@ -295,7 +301,7 @@ contract NonfungiblePositionManager is
             uint128(
                 FullMath.mulDiv(
                     feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,
-                    position.liquidity,
+                    positionLiquidity,
                     FixedPoint128.Q128
                 )
             );
@@ -304,25 +310,29 @@ contract NonfungiblePositionManager is
             uint128(
                 FullMath.mulDiv(
                     feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,
-                    position.liquidity,
+                    positionLiquidity,
                     FixedPoint128.Q128
                 )
             );
 
         position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
-        position.liquidity -= amount;
+        // subtraction is safe because we checked positionLiquidity is gte params.liquidity
+        position.liquidity = positionLiquidity - params.liquidity;
+
+        emit DecreaseLiquidity(params.tokenId, params.liquidity, amount0, amount1);
     }
 
     /// @inheritdoc INonfungiblePositionManager
-    function collect(
-        uint256 tokenId,
-        address recipient,
-        uint128 amount0Max,
-        uint128 amount1Max
-    ) external payable override isAuthorizedForToken(tokenId) returns (uint256 amount0, uint256 amount1) {
-        require(amount0Max > 0 || amount1Max > 0);
-        Position storage position = _positions[tokenId];
+    function collect(CollectParams calldata params)
+        external
+        payable
+        override
+        isAuthorizedForToken(params.tokenId)
+        returns (uint256 amount0, uint256 amount1)
+    {
+        require(params.amount0Max > 0 || params.amount1Max > 0);
+        Position storage position = _positions[params.tokenId];
 
         PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
 
@@ -355,17 +365,27 @@ contract NonfungiblePositionManager is
             position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
         }
 
-        // adjust amount0Max, amount1Max to the max for the position
-        (amount0Max, amount1Max) = (
-            amount0Max > tokensOwed0 ? tokensOwed0 : amount0Max,
-            amount1Max > tokensOwed1 ? tokensOwed1 : amount1Max
-        );
+        // compute the arguments to give to the pool#collect method
+        (uint128 amount0Collect, uint128 amount1Collect) =
+            (
+                params.amount0Max > tokensOwed0 ? tokensOwed0 : params.amount0Max,
+                params.amount1Max > tokensOwed1 ? tokensOwed1 : params.amount1Max
+            );
 
-        (amount0, amount1) = pool.collect(recipient, position.tickLower, position.tickUpper, amount0Max, amount1Max);
+        // the actual amounts collected are returned
+        (amount0, amount1) = pool.collect(
+            params.recipient,
+            position.tickLower,
+            position.tickUpper,
+            amount0Collect,
+            amount1Collect
+        );
 
         // sometimes there will be a few less wei than expected due to rounding down in core, but we just subtract the full amount expected
         // instead of the actual amount so we can burn the token
-        (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - amount0Max, tokensOwed1 - amount1Max);
+        (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - amount0Collect, tokensOwed1 - amount1Collect);
+
+        emit Collect(params.tokenId, params.recipient, amount0Collect, amount1Collect);
     }
 
     /// @inheritdoc INonfungiblePositionManager

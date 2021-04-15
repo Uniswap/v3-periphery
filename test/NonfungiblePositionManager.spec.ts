@@ -171,10 +171,11 @@ describe('NonfungiblePositionManager', () => {
           token1: tokens[1].address,
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          amount0Max: constants.MaxUint256,
-          amount1Max: constants.MaxUint256,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
           recipient: wallet.address,
-          amount: 10,
           deadline: 1,
           fee: FeeAmount.MEDIUM,
         })
@@ -196,10 +197,11 @@ describe('NonfungiblePositionManager', () => {
           fee: FeeAmount.MEDIUM,
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-          amount0Max: constants.MaxUint256,
-          amount1Max: constants.MaxUint256,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
           recipient: wallet.address,
-          amount: 10,
           deadline: 1,
         })
       ).to.be.revertedWith('STF')
@@ -220,9 +222,10 @@ describe('NonfungiblePositionManager', () => {
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         fee: FeeAmount.MEDIUM,
         recipient: other.address,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
-        amount: 15,
+        amount0Desired: 15,
+        amount1Desired: 15,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 10,
       })
       expect(await nft.balanceOf(other.address)).to.eq(1)
@@ -274,10 +277,11 @@ describe('NonfungiblePositionManager', () => {
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           fee: FeeAmount.MEDIUM,
           recipient: other.address,
-          amount: 10,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
           deadline: 1,
-          amount0Max: constants.MaxUint256,
-          amount1Max: constants.MaxUint256,
         },
       ])
 
@@ -285,6 +289,8 @@ describe('NonfungiblePositionManager', () => {
 
       await nft.multicall([mintData, unwrapWETH9Data], { value: expandTo18Decimals(1) })
     })
+
+    it('emits an event')
 
     it('gas first mint for pool', async () => {
       await nft.createAndInitializePoolIfNecessary(
@@ -302,9 +308,10 @@ describe('NonfungiblePositionManager', () => {
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           fee: FeeAmount.MEDIUM,
           recipient: wallet.address,
-          amount0Max: constants.MaxUint256,
-          amount1Max: constants.MaxUint256,
-          amount: 15,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
           deadline: 10,
         })
       )
@@ -325,9 +332,10 @@ describe('NonfungiblePositionManager', () => {
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         fee: FeeAmount.MEDIUM,
         recipient: other.address,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
-        amount: 15,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 10,
       })
 
@@ -339,9 +347,10 @@ describe('NonfungiblePositionManager', () => {
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           fee: FeeAmount.MEDIUM,
           recipient: wallet.address,
-          amount0Max: constants.MaxUint256,
-          amount1Max: constants.MaxUint256,
-          amount: 15,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
           deadline: 10,
         })
       )
@@ -362,9 +371,10 @@ describe('NonfungiblePositionManager', () => {
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         fee: FeeAmount.MEDIUM,
         recipient: other.address,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
-        amount: 15,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 10,
       })
 
@@ -376,9 +386,10 @@ describe('NonfungiblePositionManager', () => {
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]) - TICK_SPACINGS[FeeAmount.MEDIUM],
           fee: FeeAmount.MEDIUM,
           recipient: wallet.address,
-          amount0Max: constants.MaxUint256,
-          amount1Max: constants.MaxUint256,
-          amount: 15,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
           deadline: 10,
         })
       )
@@ -402,18 +413,28 @@ describe('NonfungiblePositionManager', () => {
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         fee: FeeAmount.MEDIUM,
         recipient: other.address,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
-        amount: 100,
+        amount0Desired: 1000,
+        amount1Desired: 1000,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
       })
     })
 
     it('increases position liquidity', async () => {
-      await nft.increaseLiquidity(tokenId, 150, constants.MaxUint256, constants.MaxUint256, 1)
+      await nft.increaseLiquidity({
+        tokenId: tokenId,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 1,
+      })
       const { liquidity } = await nft.positions(tokenId)
-      expect(liquidity).to.eq(250)
+      expect(liquidity).to.eq(1100)
     })
+
+    it('emits an event')
 
     it('can be paid with ETH', async () => {
       const [token0, token1] = sortedTokens(tokens[0], weth9)
@@ -435,9 +456,10 @@ describe('NonfungiblePositionManager', () => {
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           recipient: other.address,
-          amount: 100,
-          amount0Max: constants.MaxUint256,
-          amount1Max: constants.MaxUint256,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
           deadline: 1,
         },
       ])
@@ -445,17 +467,29 @@ describe('NonfungiblePositionManager', () => {
       await nft.multicall([mintData, refundETHData], { value: expandTo18Decimals(1) })
 
       const increaseLiquidityData = nft.interface.encodeFunctionData('increaseLiquidity', [
-        tokenId,
-        150,
-        constants.MaxUint256,
-        constants.MaxUint256,
-        1,
+        {
+          tokenId: tokenId,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
+          deadline: 1,
+        },
       ])
       await nft.multicall([increaseLiquidityData, refundETHData], { value: expandTo18Decimals(1) })
     })
 
     it('gas', async () => {
-      await snapshotGasCost(nft.increaseLiquidity(tokenId, 150, constants.MaxUint256, constants.MaxUint256, 1))
+      await snapshotGasCost(
+        nft.increaseLiquidity({
+          tokenId: tokenId,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
+          deadline: 1,
+        })
+      )
     })
   })
 
@@ -476,45 +510,89 @@ describe('NonfungiblePositionManager', () => {
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         fee: FeeAmount.MEDIUM,
         recipient: other.address,
-        amount: 100,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
       })
     })
 
+    it('emits an event')
+
     it('fails if past deadline', async () => {
       await nft.setTime(2)
-      await expect(nft.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)).to.be.revertedWith('Transaction too old')
+      await expect(
+        nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      ).to.be.revertedWith('Transaction too old')
     })
 
     it('cannot be called by other addresses', async () => {
-      await expect(nft.decreaseLiquidity(tokenId, 50, 0, 0, 1)).to.be.revertedWith('Not approved')
+      await expect(
+        nft.decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      ).to.be.revertedWith('Not approved')
     })
 
     it('decreases position liquidity', async () => {
-      await nft.connect(other).decreaseLiquidity(tokenId, 25, 0, 0, 1)
+      await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 25, amount0Min: 0, amount1Min: 0, deadline: 1 })
       const { liquidity } = await nft.positions(tokenId)
       expect(liquidity).to.eq(75)
     })
 
     it('is payable', async () => {
-      await nft.connect(other).decreaseLiquidity(tokenId, 25, 0, 0, 1, { value: 1 })
+      await nft
+        .connect(other)
+        .decreaseLiquidity({ tokenId, liquidity: 25, amount0Min: 0, amount1Min: 0, deadline: 1 }, { value: 1 })
     })
 
     it('accounts for tokens owed', async () => {
-      await nft.connect(other).decreaseLiquidity(tokenId, 25, 0, 0, 1)
+      await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 25, amount0Min: 0, amount1Min: 0, deadline: 1 })
       const { tokensOwed0, tokensOwed1 } = await nft.positions(tokenId)
       expect(tokensOwed0).to.eq(24)
       expect(tokensOwed1).to.eq(24)
     })
 
+    it('can decrease for all the liquidity', async () => {
+      await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 100, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      const { liquidity } = await nft.positions(tokenId)
+      expect(liquidity).to.eq(0)
+    })
+
+    it('cannot decrease for more than all the liquidity', async () => {
+      await expect(
+        nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 101, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      ).to.be.reverted
+    })
+
+    it('cannot decrease for more than the liquidity of the nft position', async () => {
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
+        recipient: other.address,
+        amount0Desired: 200,
+        amount1Desired: 200,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 1,
+      })
+      await expect(
+        nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 101, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      ).to.be.reverted
+    })
+
     it('gas partial decrease', async () => {
-      await snapshotGasCost(nft.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1))
+      await snapshotGasCost(
+        nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      )
     })
 
     it('gas complete decrease', async () => {
-      await snapshotGasCost(nft.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1))
+      await snapshotGasCost(
+        nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 100, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      )
     })
   })
 
@@ -535,31 +613,62 @@ describe('NonfungiblePositionManager', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
-        amount: 100,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
       })
     })
 
+    it('emits an event')
+
     it('cannot be called by other addresses', async () => {
-      await expect(nft.collect(tokenId, wallet.address, MaxUint128, MaxUint128)).to.be.revertedWith('Not approved')
+      await expect(
+        nft.collect({
+          tokenId,
+          recipient: wallet.address,
+          amount0Max: MaxUint128,
+          amount1Max: MaxUint128,
+        })
+      ).to.be.revertedWith('Not approved')
     })
 
-    it('cannot be called with 0 amounts', async () => {
-      await expect(nft.connect(other).collect(tokenId, wallet.address, 0, 0)).to.be.reverted
+    it('cannot be called with 0 for both amounts', async () => {
+      await expect(
+        nft.connect(other).collect({
+          tokenId,
+          recipient: wallet.address,
+          amount0Max: 0,
+          amount1Max: 0,
+        })
+      ).to.be.reverted
     })
 
     it('no op if no tokens are owed', async () => {
-      await expect(nft.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128))
+      await expect(
+        nft.connect(other).collect({
+          tokenId,
+          recipient: wallet.address,
+          amount0Max: MaxUint128,
+          amount1Max: MaxUint128,
+        })
+      )
         .to.not.emit(tokens[0], 'Transfer')
         .to.not.emit(tokens[1], 'Transfer')
     })
 
     it('transfers tokens owed from burn', async () => {
-      await nft.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
+      await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0, deadline: 1 })
       const poolAddress = computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM)
-      await expect(nft.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128))
+      await expect(
+        nft.connect(other).collect({
+          tokenId,
+          recipient: wallet.address,
+          amount0Max: MaxUint128,
+          amount1Max: MaxUint128,
+        })
+      )
         .to.emit(tokens[0], 'Transfer')
         .withArgs(poolAddress, wallet.address, 49)
         .to.emit(tokens[1], 'Transfer')
@@ -567,18 +676,39 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('gas transfers both', async () => {
-      await nft.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
-      await snapshotGasCost(nft.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128))
+      await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      await snapshotGasCost(
+        nft.connect(other).collect({
+          tokenId,
+          recipient: wallet.address,
+          amount0Max: MaxUint128,
+          amount1Max: MaxUint128,
+        })
+      )
     })
 
     it('gas transfers token0 only', async () => {
-      await nft.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
-      await snapshotGasCost(nft.connect(other).collect(tokenId, wallet.address, MaxUint128, 0))
+      await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      await snapshotGasCost(
+        nft.connect(other).collect({
+          tokenId,
+          recipient: wallet.address,
+          amount0Max: MaxUint128,
+          amount1Max: 0,
+        })
+      )
     })
 
     it('gas transfers token1 only', async () => {
-      await nft.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
-      await snapshotGasCost(nft.connect(other).collect(tokenId, wallet.address, 0, MaxUint128))
+      await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      await snapshotGasCost(
+        nft.connect(other).collect({
+          tokenId,
+          recipient: wallet.address,
+          amount0Max: 0,
+          amount1Max: MaxUint128,
+        })
+      )
     })
   })
 
@@ -599,12 +729,15 @@ describe('NonfungiblePositionManager', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
-        amount: 100,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
       })
     })
+
+    it('emits an event')
 
     it('cannot be called by other addresses', async () => {
       await expect(nft.burn(tokenId)).to.be.revertedWith('Not approved')
@@ -615,25 +748,35 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('cannot be called while there is still partial liquidity', async () => {
-      await nft.connect(other).decreaseLiquidity(tokenId, 50, 0, 0, 1)
+      await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0, deadline: 1 })
       await expect(nft.connect(other).burn(tokenId)).to.be.revertedWith('Not cleared')
     })
 
     it('cannot be called while there is still tokens owed', async () => {
-      await nft.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
+      await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 100, amount0Min: 0, amount1Min: 0, deadline: 1 })
       await expect(nft.connect(other).burn(tokenId)).to.be.revertedWith('Not cleared')
     })
 
     it('deletes the token', async () => {
-      await nft.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
-      await nft.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128)
+      await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 100, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      await nft.connect(other).collect({
+        tokenId,
+        recipient: wallet.address,
+        amount0Max: MaxUint128,
+        amount1Max: MaxUint128,
+      })
       await nft.connect(other).burn(tokenId)
       await expect(nft.positions(tokenId)).to.be.revertedWith('Invalid token ID')
     })
 
     it('gas', async () => {
-      await nft.connect(other).decreaseLiquidity(tokenId, 100, 0, 0, 1)
-      await nft.connect(other).collect(tokenId, wallet.address, MaxUint128, MaxUint128)
+      await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 100, amount0Min: 0, amount1Min: 0, deadline: 1 })
+      await nft.connect(other).collect({
+        tokenId,
+        recipient: wallet.address,
+        amount0Max: MaxUint128,
+        amount1Max: MaxUint128,
+      })
       await snapshotGasCost(nft.connect(other).burn(tokenId))
     })
   })
@@ -655,9 +798,10 @@ describe('NonfungiblePositionManager', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
-        amount: 100,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
       })
     })
@@ -691,6 +835,8 @@ describe('NonfungiblePositionManager', () => {
   })
 
   describe('#permit', () => {
+    it('emits an event')
+
     describe('owned by eoa', () => {
       const tokenId = 1
       beforeEach('create a position', async () => {
@@ -708,9 +854,10 @@ describe('NonfungiblePositionManager', () => {
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           recipient: other.address,
-          amount: 100,
-          amount0Max: constants.MaxUint256,
-          amount1Max: constants.MaxUint256,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
           deadline: 1,
         })
       })
@@ -772,9 +919,10 @@ describe('NonfungiblePositionManager', () => {
           tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
           recipient: testPositionNFTOwner.address,
-          amount: 100,
-          amount0Max: constants.MaxUint256,
-          amount1Max: constants.MaxUint256,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
           deadline: 1,
         })
       })
@@ -831,9 +979,10 @@ describe('NonfungiblePositionManager', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
-        amount: 100,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
       })
     })
@@ -854,13 +1003,16 @@ describe('NonfungiblePositionManager', () => {
       recipient: string
     }) {
       const decreaseLiquidityData = nft.interface.encodeFunctionData('decreaseLiquidity', [
-        tokenId,
-        liquidity,
-        amount0Min,
-        amount1Min,
-        /*deadline=*/ 1,
+        { tokenId, liquidity, amount0Min, amount1Min, deadline: 1 },
       ])
-      const collectData = nft.interface.encodeFunctionData('collect', [tokenId, recipient, MaxUint128, MaxUint128])
+      const collectData = nft.interface.encodeFunctionData('collect', [
+        {
+          tokenId,
+          recipient,
+          amount0Max: MaxUint128,
+          amount1Max: MaxUint128,
+        },
+      ])
       const burnData = nft.interface.encodeFunctionData('burn', [tokenId])
 
       return nft.multicall([decreaseLiquidityData, collectData, burnData])
@@ -916,9 +1068,10 @@ describe('NonfungiblePositionManager', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: other.address,
-        amount: 100,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
       })
     })
@@ -953,9 +1106,10 @@ describe('NonfungiblePositionManager', () => {
         fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(FeeAmount.MEDIUM),
         tickUpper: getMaxTick(FeeAmount.MEDIUM),
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
-        amount: 10,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
         recipient: wallet.address,
       })
@@ -966,9 +1120,11 @@ describe('NonfungiblePositionManager', () => {
         fee: FeeAmount.MEDIUM,
         tickLower: getMinTick(FeeAmount.MEDIUM),
         tickUpper: getMaxTick(FeeAmount.MEDIUM),
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
-        amount: 30,
+
+        amount0Desired: 300,
+        amount1Desired: 300,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
         recipient: wallet.address,
       })
@@ -987,21 +1143,21 @@ describe('NonfungiblePositionManager', () => {
         })
       })
       it('expected amounts', async () => {
-        const { amount0: nft1Amount0, amount1: nft1Amount1 } = await nft.callStatic.collect(
-          1,
-          wallet.address,
-          MaxUint128,
-          MaxUint128
-        )
-        const { amount0: nft2Amount0, amount1: nft2Amount1 } = await nft.callStatic.collect(
-          2,
-          wallet.address,
-          MaxUint128,
-          MaxUint128
-        )
+        const { amount0: nft1Amount0, amount1: nft1Amount1 } = await nft.callStatic.collect({
+          tokenId: 1,
+          recipient: wallet.address,
+          amount0Max: MaxUint128,
+          amount1Max: MaxUint128,
+        })
+        const { amount0: nft2Amount0, amount1: nft2Amount1 } = await nft.callStatic.collect({
+          tokenId: 2,
+          recipient: wallet.address,
+          amount0Max: MaxUint128,
+          amount1Max: MaxUint128,
+        })
         expect(nft1Amount0).to.eq(2501)
         expect(nft1Amount1).to.eq(0)
-        expect(nft2Amount0).to.eq(7505)
+        expect(nft2Amount0).to.eq(7503)
         expect(nft2Amount1).to.eq(0)
       })
 
@@ -1012,13 +1168,27 @@ describe('NonfungiblePositionManager', () => {
           FeeAmount.MEDIUM
         )
 
-        await expect(nft.collect(1, wallet.address, MaxUint128, MaxUint128))
+        await expect(
+          nft.collect({
+            tokenId: 1,
+            recipient: wallet.address,
+            amount0Max: MaxUint128,
+            amount1Max: MaxUint128,
+          })
+        )
           .to.emit(tokens[0], 'Transfer')
           .withArgs(poolAddress, wallet.address, 2501)
           .to.not.emit(tokens[1], 'Transfer')
-        await expect(nft.collect(2, wallet.address, MaxUint128, MaxUint128))
+        await expect(
+          nft.collect({
+            tokenId: 2,
+            recipient: wallet.address,
+            amount0Max: MaxUint128,
+            amount1Max: MaxUint128,
+          })
+        )
           .to.emit(tokens[0], 'Transfer')
-          .withArgs(poolAddress, wallet.address, 7505)
+          .withArgs(poolAddress, wallet.address, 7503)
           .to.not.emit(tokens[1], 'Transfer')
       })
     })

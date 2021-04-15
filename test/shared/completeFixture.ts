@@ -27,7 +27,7 @@ const completeFixture: Fixture<{
   ])) as [TestERC20, TestERC20, TestERC20]
 
   const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor')
-  const positionDescriptor = await positionDescriptorFactory.deploy()
+  const positionDescriptor = await positionDescriptorFactory.deploy(tokens[0].address)
 
   const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')
   const nft = (await positionManagerFactory.deploy(

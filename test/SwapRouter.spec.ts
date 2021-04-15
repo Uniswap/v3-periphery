@@ -9,6 +9,7 @@ import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
+import { computePoolAddress } from './shared/computePoolAddress'
 
 describe('SwapRouter', () => {
   const wallets = waffle.provider.getWallets()
@@ -82,6 +83,14 @@ describe('SwapRouter', () => {
     }
   })
 
+  // ensure the swap router never ends up with a balance
+  afterEach('load fixture', async () => {
+    const balances = await getBalances(router.address)
+    expect(Object.values(balances).every((b) => b.eq(0))).to.be.eq(true)
+    const balance = await waffle.provider.getBalance(router.address)
+    expect(balance.eq(0)).to.be.eq(true)
+  })
+
   it('bytecode size', async () => {
     expect(((await router.provider.getCode(router.address)).length - 2) / 2).to.matchSnapshot()
   })
@@ -106,9 +115,10 @@ describe('SwapRouter', () => {
         tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
         recipient: wallet.address,
-        amount: liquidity,
-        amount0Max: constants.MaxUint256,
-        amount1Max: constants.MaxUint256,
+        amount0Desired: 1000000,
+        amount1Desired: 1000000,
+        amount0Min: 0,
+        amount1Min: 0,
         deadline: 1,
       }
 
@@ -230,6 +240,40 @@ describe('SwapRouter', () => {
 
           expect(traderAfter.token2).to.be.eq(traderBefore.token2.sub(5))
           expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
+        })
+
+        it('events', async () => {
+          await expect(
+            exactInput(
+              tokens.map((token) => token.address),
+              5,
+              1
+            )
+          )
+            .to.emit(tokens[0], 'Transfer')
+            .withArgs(
+              trader.address,
+              computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+              5
+            )
+            .to.emit(tokens[1], 'Transfer')
+            .withArgs(
+              computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+              router.address,
+              3
+            )
+            .to.emit(tokens[1], 'Transfer')
+            .withArgs(
+              router.address,
+              computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
+              3
+            )
+            .to.emit(tokens[2], 'Transfer')
+            .withArgs(
+              computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
+              trader.address,
+              1
+            )
         })
       })
 
@@ -558,6 +602,34 @@ describe('SwapRouter', () => {
 
           expect(traderAfter.token2).to.be.eq(traderBefore.token2.sub(5))
           expect(traderAfter.token0).to.be.eq(traderBefore.token0.add(1))
+        })
+
+        it('events', async () => {
+          await expect(
+            exactOutput(
+              tokens.map((token) => token.address),
+              1,
+              5
+            )
+          )
+            .to.emit(tokens[2], 'Transfer')
+            .withArgs(
+              computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
+              trader.address,
+              1
+            )
+            .to.emit(tokens[1], 'Transfer')
+            .withArgs(
+              computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
+              computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
+              3
+            )
+            .to.emit(tokens[0], 'Transfer')
+            .withArgs(
+              trader.address,
+              computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
+              5
+            )
         })
       })
 

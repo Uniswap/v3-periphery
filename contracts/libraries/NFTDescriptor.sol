@@ -9,6 +9,7 @@ import '@openzeppelin/contracts/utils/Strings.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/math/SignedSafeMath.sol';
 import './HexStrings.sol';
+import './Base64.sol';
 
 library NFTDescriptor {
     using TickMath for int24;
@@ -28,6 +29,7 @@ library NFTDescriptor {
         string token1Symbol;
         uint8 token0Decimals;
         uint8 token1Decimals;
+        bool flipRatio;
         int24 tickLower;
         int24 tickUpper;
         int24 tickSpacing;
@@ -44,22 +46,24 @@ library NFTDescriptor {
                     'Uniswap V3 - ',
                     feeToPercentString(params.fee),
                     ' - ',
-                    params.token0Symbol,
+                    params.flipRatio ? params.token0Symbol : params.token1Symbol,
                     '/',
-                    params.token1Symbol,
+                    params.flipRatio ? params.token1Symbol : params.token0Symbol,
                     ' - ',
                     tickToDecimalString(
                         params.tickLower,
                         params.tickSpacing,
                         params.token0Decimals,
-                        params.token1Decimals
+                        params.token1Decimals,
+                        params.flipRatio
                     ),
                     '<>',
                     tickToDecimalString(
                         params.tickUpper,
                         params.tickSpacing,
                         params.token0Decimals,
-                        params.token1Decimals
+                        params.token1Decimals,
+                        params.flipRatio
                     )
                 )
             );
@@ -79,7 +83,18 @@ library NFTDescriptor {
             );
 
         return
-            string(abi.encodePacked('data:application/json,{"name":"', name, '", "description":"', description, '"}'));
+            string(
+                abi.encodePacked(
+                    'data:application/json,{"name":"',
+                    name,
+                    '", "description":"',
+                    description,
+                    '", "image": "',
+                    'data:image/svg+xml;base64,',
+                    Base64.encode(bytes(svgImage(params.token0, params.token1))),
+                    '"}'
+                )
+            );
     }
 
     struct DecimalStringParams {
@@ -130,14 +145,20 @@ library NFTDescriptor {
         int24 tick,
         int24 tickSpacing,
         uint8 token0Decimals,
-        uint8 token1Decimals
+        uint8 token1Decimals,
+        bool flipRatio
     ) internal pure returns (string memory) {
         if (tick == (TickMath.MIN_TICK / tickSpacing) * tickSpacing) {
             return 'MIN';
         } else if (tick == (TickMath.MAX_TICK / tickSpacing) * tickSpacing) {
             return 'MAX';
         } else {
-            return fixedPointToDecimalString(TickMath.getSqrtRatioAtTick(tick), token0Decimals, token1Decimals);
+            uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
+            if (flipRatio) {
+                sqrtRatioX96 = uint160(uint256(1 << 192).div(sqrtRatioX96));
+                return fixedPointToDecimalString(sqrtRatioX96, token1Decimals, token0Decimals);
+            }
+            return fixedPointToDecimalString(sqrtRatioX96, token0Decimals, token1Decimals);
         }
     }
 
@@ -293,5 +314,34 @@ library NFTDescriptor {
 
     function addressToString(address addr) internal pure returns (string memory) {
         return (uint256(addr)).toHexString(20);
+    }
+
+    function tokenToColorHex(uint256 token) internal pure returns (string memory str) {
+        return string(abi.encodePacked('#', (token >> (34 * 4)).toHexStringNoPrefix(3)));
+    }
+
+    function svgImage(address token0, address token1) internal pure returns (string memory svg) {
+        string memory token0Color = tokenToColorHex(uint256(token0));
+        string memory token1Color = tokenToColorHex(uint256(token1));
+        svg = string(
+            abi.encodePacked(
+                '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">',
+                '<circle cx="12" cy="12" r="12" fill=',
+                token0Color,
+                ' stroke="white"/>',
+                '<g clip-path=url(#beta-',
+                token0Color,
+                ')>',
+                '<circle cx="12" cy="12" r="12" fill=',
+                token1Color,
+                ' stroke="white"/></g>',
+                '<circle cx="12" cy="12" r="4" style=mix-blend-mode:overlay fill="white" />',
+                '<circle cx="12" cy="12" r="8" style=mix-blend-mode:overlay fill="white" />',
+                '<defs><clipPath id=beta-',
+                token0Color,
+                '><rect width=12 height="24" fill="white"/>',
+                '</clipPath></defs></svg>'
+            )
+        );
     }
 }

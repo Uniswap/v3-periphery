@@ -6,6 +6,7 @@ import { TestERC20, NFTDescriptorTest } from '../typechain'
 import { Fixture } from 'ethereum-waffle'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import snapshotGasCost from './shared/snapshotGasCost'
+import { base64Encode } from './shared/base64encode'
 import { getMaxTick, getMinTick } from './shared/ticks'
 
 describe('NFTDescriptor', () => {
@@ -50,6 +51,7 @@ describe('NFTDescriptor', () => {
       const token1Symbol = await tokens[1].symbol()
       const token0Decimals = await tokens[0].decimals()
       const token1Decimals = await tokens[1].decimals()
+      const flipRatio = false
       const tickLower = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       const tickUpper = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
@@ -64,6 +66,7 @@ describe('NFTDescriptor', () => {
         token1Symbol,
         token0Decimals,
         token1Decimals,
+        flipRatio,
         tickLower,
         tickUpper,
         tickSpacing,
@@ -72,10 +75,7 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(uri).to.equal(
-        `data:application/json,{\
-"name":"Uniswap V3 - 0.3% - ${token0Symbol}/${token1Symbol} - MIN<>MAX", \
-"description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
-\\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}"}`
+        tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', 'MIN<>MAX')
       )
     })
 
@@ -86,6 +86,7 @@ describe('NFTDescriptor', () => {
       const token1Symbol = await tokens[1].symbol()
       const token0Decimals = await tokens[0].decimals()
       const token1Decimals = await tokens[1].decimals()
+      const flipRatio = false
       const tickLower = -10
       const tickUpper = 10
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
@@ -100,6 +101,7 @@ describe('NFTDescriptor', () => {
         token1Symbol,
         token0Decimals,
         token1Decimals,
+        flipRatio,
         tickLower,
         tickUpper,
         tickSpacing,
@@ -108,10 +110,7 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(uri).to.equal(
-        `data:application/json,{\
-"name":"Uniswap V3 - 0.3% - ${token0Symbol}/${token1Symbol} - 0.99900<>1.0010", \
-"description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
-\\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}"}`
+        tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', '0.99900<>1.0010')
       )
     })
 
@@ -122,6 +121,7 @@ describe('NFTDescriptor', () => {
       const token1Symbol = await tokens[1].symbol()
       const token0Decimals = await tokens[0].decimals()
       const token1Decimals = await tokens[1].decimals()
+      const flipRatio = false
       const tickLower = -10
       const tickUpper = 10
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
@@ -137,6 +137,7 @@ describe('NFTDescriptor', () => {
           token1Symbol,
           token0Decimals,
           token1Decimals,
+          flipRatio,
           tickLower,
           tickUpper,
           tickSpacing,
@@ -170,20 +171,20 @@ describe('NFTDescriptor', () => {
       })
 
       it('returns MIN on lowest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18)).to.equal('MIN')
+        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18, false)).to.equal('MIN')
       })
 
       it('returns MAX on the highest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18)).to.equal('MAX')
+        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18, false)).to.equal('MAX')
       })
 
       it('returns the correct decimal string when the tick is in range', async () => {
-        expect(await nftDescriptor.tickToDecimalString(1, tickSpacing, 18, 18)).to.equal('1.0001')
+        expect(await nftDescriptor.tickToDecimalString(1, tickSpacing, 18, 18, false)).to.equal('1.0001')
       })
 
       it('returns the correct decimal string when tick is mintick for different tickspace', async () => {
         const otherMinTick = getMinTick(TICK_SPACINGS[FeeAmount.HIGH])
-        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18)).to.equal(
+        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18, false)).to.equal(
           '0.0000000000000000000000000000000000000029387'
         )
       })
@@ -197,20 +198,20 @@ describe('NFTDescriptor', () => {
       })
 
       it('returns MIN on lowest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18)).to.equal('MIN')
+        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18, false)).to.equal('MIN')
       })
 
       it('returns MAX on the highest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18)).to.equal('MAX')
+        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18, false)).to.equal('MAX')
       })
 
       it('returns the correct decimal string when the tick is in range', async () => {
-        expect(await nftDescriptor.tickToDecimalString(-1, tickSpacing, 18, 18)).to.equal('0.99990')
+        expect(await nftDescriptor.tickToDecimalString(-1, tickSpacing, 18, 18, false)).to.equal('0.99990')
       })
 
       it('returns the correct decimal string when tick is mintick for different tickspace', async () => {
         const otherMinTick = getMinTick(TICK_SPACINGS[FeeAmount.HIGH])
-        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18)).to.equal(
+        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18, false)).to.equal(
           '0.0000000000000000000000000000000000000029387'
         )
       })
@@ -224,22 +225,55 @@ describe('NFTDescriptor', () => {
       })
 
       it('returns MIN on lowest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18)).to.equal('MIN')
+        expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18, false)).to.equal('MIN')
       })
 
       it('returns MAX on the highest tick', async () => {
-        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18)).to.equal('MAX')
+        expect(await nftDescriptor.tickToDecimalString(maxTick, tickSpacing, 18, 18, false)).to.equal('MAX')
       })
 
       it('returns the correct decimal string when the tick is in range', async () => {
-        expect(await nftDescriptor.tickToDecimalString(0, tickSpacing, 18, 18)).to.equal('1.0000')
+        expect(await nftDescriptor.tickToDecimalString(0, tickSpacing, 18, 18, false)).to.equal('1.0000')
       })
 
       it('returns the correct decimal string when tick is mintick for different tickspace', async () => {
         const otherMinTick = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
-        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18)).to.equal(
+        expect(await nftDescriptor.tickToDecimalString(otherMinTick, tickSpacing, 18, 18, false)).to.equal(
           '0.0000000000000000000000000000000000000029387'
         )
+      })
+    })
+
+    describe('when token0 should be the ratio numerator', () => {
+      it('returns the inverse of default ratio for medium sized numbers', async () => {
+        const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        expect(await nftDescriptor.tickToDecimalString(10, tickSpacing, 18, 18, false)).to.eq('1.0010')
+        expect(await nftDescriptor.tickToDecimalString(10, tickSpacing, 18, 18, true)).to.eq('0.99900')
+      })
+
+      it('returns the inverse of default ratio for large numbers', async () => {
+        const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        expect(await nftDescriptor.tickToDecimalString(487272, tickSpacing, 18, 18, false)).to.eq(
+          '1448400000000000000000'
+        )
+        expect(await nftDescriptor.tickToDecimalString(487272, tickSpacing, 18, 18, true)).to.eq(
+          '0.00000000000000000000069041'
+        )
+      })
+
+      it('returns the inverse of default ratio for small numbers', async () => {
+        const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        expect(await nftDescriptor.tickToDecimalString(-387272, tickSpacing, 18, 18, false)).to.eq(
+          '0.000000000000000015200'
+        )
+        expect(await nftDescriptor.tickToDecimalString(-387272, tickSpacing, 18, 18, true)).to.eq('65791000000000000')
+      })
+
+      it('returns the correct string with differing token decimals', async () => {
+        const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 18, 18, true)).to.eq('0.90484')
+        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 10, 18, true)).to.eq('90484000')
+        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 18, 10, true)).to.eq('0.0000000090484')
       })
     })
   })
@@ -423,4 +457,56 @@ describe('NFTDescriptor', () => {
       expect(await nftDescriptor.feeToPercentString(12300000)).to.eq('1230%')
     })
   })
+
+  describe('#tokenToColorHex', () => {
+    it('returns a string with a hash symbol and the first 3 bytes of the token', async () => {
+      expect(await nftDescriptor.tokenToColorHex(tokens[0].address)).to.eq(tokenToColorHex(tokens[0].address))
+      expect(await nftDescriptor.tokenToColorHex(tokens[1].address)).to.eq(tokenToColorHex(tokens[1].address))
+    })
+  })
+
+  describe('#svgImage', () => {
+    it('returns the svgImage', async () => {
+      expect(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address)).to.eq(
+        svgImage(tokens[0].address, tokens[1].address)
+      )
+    })
+  })
+
+  function tokenToColorHex(tokenAddress: string): string {
+    return `#${tokenAddress.slice(2, 8).toLowerCase()}`
+  }
+
+  function svgImage(token0: string, token1: string): string {
+    return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\
+<circle cx="12" cy="12" r="12" fill=${tokenToColorHex(token0)} stroke="white"/><g clip-path=url(#beta-${tokenToColorHex(
+      token0
+    )})>\
+<circle cx="12" cy="12" r="12" fill=${tokenToColorHex(
+      token1
+    )} stroke="white"/></g><circle cx="12" cy="12" r="4" style=mix-blend-mode:\
+overlay fill="white" /><circle cx="12" cy="12" r="8" style=mix-blend-mode:overlay fill="white" />\<defs><clipPath id=\
+beta-${tokenToColorHex(token0)}><rect width=12 height="24" fill="white"/></clipPath></defs></svg>`
+  }
+
+  function encodedSvgImage(token0: string, token1: string): string {
+    return `data:image/svg+xml;base64,${base64Encode(svgImage(token0, token1))}`
+  }
+
+  function tokenURI(
+    token0: string,
+    token1: string,
+    poolAddress: string,
+    token0Symbol: string,
+    token1Symbol: string,
+    liquidity: number,
+    fee: string,
+    prices: string
+  ): string {
+    return `data:application/json,{\
+"name":"Uniswap V3 - ${fee} - ${token0Symbol}/${token1Symbol} - ${prices}", \
+"description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
+\\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}", \
+"image": "${encodedSvgImage(token0, token1)}"}`
+  }
 })
