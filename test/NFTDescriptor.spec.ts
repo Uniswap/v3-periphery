@@ -617,9 +617,14 @@ describe('NFTDescriptor', () => {
   })
 
   describe('#tokenToColorHex', () => {
-    it('returns a string with a hash symbol and the first 3 bytes of the token', async () => {
-      expect(await nftDescriptor.tokenToColorHex(tokens[0].address)).to.eq(tokenToColorHex(tokens[0].address))
-      expect(await nftDescriptor.tokenToColorHex(tokens[1].address)).to.eq(tokenToColorHex(tokens[1].address))
+    it('returns the correct hash for the first 3 bytes of the token address', async () => {
+      expect(await nftDescriptor.tokenToColorHex(tokens[0].address, 136)).to.eq(tokenToColorHex(tokens[0].address, 2))
+      expect(await nftDescriptor.tokenToColorHex(tokens[1].address, 136)).to.eq(tokenToColorHex(tokens[1].address, 2))
+    })
+
+    it('returns the correct hash for the last 3 bytes of the address', async () => {
+      expect(await nftDescriptor.tokenToColorHex(tokens[0].address, 0)).to.eq(tokenToColorHex(tokens[0].address, 36))
+      expect(await nftDescriptor.tokenToColorHex(tokens[1].address, 0)).to.eq(tokenToColorHex(tokens[1].address, 36))
     })
   })
 
@@ -635,13 +640,13 @@ describe('NFTDescriptor', () => {
     })
   })
 
-  function tokenToColorHex(tokenAddress: string): string {
-    return `#${tokenAddress.slice(2, 8).toLowerCase()}`
+  function tokenToColorHex(tokenAddress: string, startIndex: number): string {
+    return `#${tokenAddress.slice(startIndex, startIndex + 6).toLowerCase()}`
   }
 
   function svgImage(quoteTokenAddress: string, baseTokenAddress: string): string {
-    const quoteTokenColor = tokenToColorHex(quoteTokenAddress)
-    const baseTokenColor = tokenToColorHex(baseTokenAddress)
+    const quoteTokenColor = tokenToColorHex(quoteTokenAddress, 2)
+    const baseTokenColor = tokenToColorHex(baseTokenAddress, 2)
     return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\
 <circle cx="12" cy="12" r="12" fill=${quoteTokenColor} stroke="white"/><g clip-path=url(#beta-${quoteTokenColor})>\
 <circle cx="12" cy="12" r="12" fill=${baseTokenColor} stroke="white"/></g><circle cx="12" cy="12" r="4" style=mix-blend-mode:\

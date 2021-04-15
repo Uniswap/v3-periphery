@@ -368,8 +368,8 @@ library NFTDescriptor {
         return (uint256(addr)).toHexString(20);
     }
 
-    function tokenToColorHex(uint256 token) internal pure returns (string memory str) {
-        return string(abi.encodePacked('#', (token >> (34 * 4)).toHexStringNoPrefix(3)));
+    function tokenToColorHex(uint256 token, uint256 offset) internal pure returns (string memory str) {
+        return string(abi.encodePacked('#', (token >> offset).toHexStringNoPrefix(3)));
     }
 
     function normalizeTick(
@@ -407,8 +407,8 @@ library NFTDescriptor {
         int24 tickCurrent,
         int24 tickSpacing
     ) internal pure returns (string memory svg) {
-        string memory quoteTokenColor = tokenToColorHex(uint256(quoteToken));
-        string memory baseTokenColor = tokenToColorHex(uint256(baseToken));
+        string memory quoteTokenColor = tokenToColorHex(uint256(quoteToken), 136);
+        string memory baseTokenColor = tokenToColorHex(uint256(baseToken), 136);
         (uint256 tickLowerNormalized, uint256 tickUpperNormalized) =
             normalizeTicks(tickLower, tickUpper, tickCurrent, tickSpacing);
         svg = string(
