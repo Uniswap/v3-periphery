@@ -19,6 +19,7 @@ library NFTDescriptor {
     using SafeMath for uint160;
     using SafeMath for uint8;
     using SignedSafeMath for int256;
+    using SignedSafeMath for int24;
     using HexStrings for uint256;
 
     uint256 constant sqrt10X128 = 1076067327063303206878105757264492625226;
@@ -34,6 +35,7 @@ library NFTDescriptor {
         bool flipRatio;
         int24 tickLower;
         int24 tickUpper;
+        int24 tickCurrent;
         int24 tickSpacing;
         uint24 fee;
         address poolAddress;
@@ -107,7 +109,18 @@ library NFTDescriptor {
                     description,
                     '", "image": "',
                     'data:image/svg+xml;base64,',
-                    Base64.encode(bytes(svgImage(params.quoteTokenAddress, params.baseTokenAddress))),
+                    Base64.encode(
+                        bytes(
+                            svgImage(
+                                params.quoteTokenAddress,
+                                params.baseTokenAddress,
+                                params.tickLower,
+                                params.tickUpper,
+                                params.tickCurrent,
+                                params.tickSpacing
+                            )
+                        )
+                    ),
                     '"}'
                 )
             );
@@ -359,9 +372,45 @@ library NFTDescriptor {
         return string(abi.encodePacked('#', (token >> (34 * 4)).toHexStringNoPrefix(3)));
     }
 
-    function svgImage(address quoteToken, address baseToken) internal pure returns (string memory svg) {
+    function normalizeTick(
+        int24 tick,
+        int24 lowerBound,
+        int24 upperBound,
+        int24 tickSpacing
+    ) private pure returns (uint256 tickNormalized) {
+        if (tick < lowerBound) {
+            tickNormalized = 0;
+        } else if (tick > upperBound) {
+            tickNormalized = 100;
+        } else {
+            tickNormalized = uint256(tick.sub(lowerBound).div(tickSpacing));
+        }
+    }
+
+    function normalizeTicks(
+        int24 tickLower,
+        int24 tickUpper,
+        int24 tickCurrent,
+        int24 tickSpacing
+    ) internal pure returns (uint256 tickLowerNormalized, uint256 tickUpperNormalized) {
+        int24 lowerBound = int24(tickCurrent.sub(tickSpacing.mul(50)));
+        int24 upperBound = int24(tickCurrent.add(tickSpacing.mul(50)));
+        tickLowerNormalized = normalizeTick(tickLower, lowerBound, upperBound, tickSpacing);
+        tickUpperNormalized = normalizeTick(tickUpper, lowerBound, upperBound, tickSpacing);
+    }
+
+    function svgImage(
+        address quoteToken,
+        address baseToken,
+        int24 tickLower,
+        int24 tickUpper,
+        int24 tickCurrent,
+        int24 tickSpacing
+    ) internal pure returns (string memory svg) {
         string memory quoteTokenColor = tokenToColorHex(uint256(quoteToken));
         string memory baseTokenColor = tokenToColorHex(uint256(baseToken));
+        (uint256 tickLowerNormalized, uint256 tickUpperNormalized) =
+            normalizeTicks(tickLower, tickUpper, tickCurrent, tickSpacing);
         svg = string(
             abi.encodePacked(
                 '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">',

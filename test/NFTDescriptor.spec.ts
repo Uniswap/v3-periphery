@@ -61,6 +61,7 @@ describe('NFTDescriptor', () => {
     let flipRatio: boolean
     let tickLower: number
     let tickUpper: number
+    let tickCurrent: number
     let tickSpacing: number
     let fee: number
     let poolAddress: string
@@ -76,6 +77,7 @@ describe('NFTDescriptor', () => {
       flipRatio = false
       tickLower = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       tickUpper = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
+      tickCurrent = 0
       tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
       fee = 3000
       poolAddress = `0x${'b'.repeat(40)}`
@@ -93,6 +95,7 @@ describe('NFTDescriptor', () => {
         flipRatio,
         tickLower,
         tickUpper,
+        tickCurrent,
         tickSpacing,
         fee,
         poolAddress,
@@ -129,6 +132,7 @@ describe('NFTDescriptor', () => {
         flipRatio,
         tickLower,
         tickUpper,
+        tickCurrent,
         tickSpacing,
         fee,
         poolAddress,
@@ -161,6 +165,7 @@ describe('NFTDescriptor', () => {
         flipRatio,
         tickLower,
         tickUpper,
+        tickCurrent,
         tickSpacing,
         fee,
         poolAddress,
@@ -197,6 +202,7 @@ describe('NFTDescriptor', () => {
           flipRatio,
           tickLower,
           tickUpper,
+          tickCurrent,
           tickSpacing,
           fee,
           poolAddress,
@@ -230,6 +236,7 @@ describe('NFTDescriptor', () => {
           flipRatio,
           tickLower,
           tickUpper,
+          tickCurrent,
           tickSpacing,
           fee,
           poolAddress,
@@ -263,6 +270,7 @@ describe('NFTDescriptor', () => {
           flipRatio,
           tickLower,
           tickUpper,
+          tickCurrent,
           tickSpacing,
           fee,
           poolAddress,
@@ -617,7 +625,11 @@ describe('NFTDescriptor', () => {
 
   describe('#svgImage', () => {
     it('returns the svgImage', async () => {
-      expect(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address)).to.eq(
+      const tickLower = 1
+      const tickUpper = 10
+      const tickSpacing = 3
+      const tickCurrent = 4
+      expect(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address, tickLower, tickUpper, tickSpacing, tickCurrent)).to.eq(
         svgImage(tokens[0].address, tokens[1].address)
       )
     })
