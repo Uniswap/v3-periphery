@@ -41,17 +41,17 @@ library NFTDescriptor {
 
     function constructTokenURI(ConstructTokenURIParams memory params) internal pure returns (string memory) {
         string memory feeTier = feeToPercentString(params.fee);
-        string memory token0Symbol = !params.flipRatio ? params.token0Symbol : params.token1Symbol;
-        string memory token1Symbol = !params.flipRatio ? params.token1Symbol : params.token0Symbol;
+        string memory tokenNumSymbol = !params.flipRatio ? params.token1Symbol : params.token0Symbol;
+        string memory tokenDenomSymbol = !params.flipRatio ? params.token0Symbol : params.token1Symbol;
         string memory name =
             string(
                 abi.encodePacked(
                     'Uniswap - ',
                     feeToPercentString(params.fee),
                     ' - ',
-                    token1Symbol,
+                    tokenNumSymbol,
                     '/',
-                    token0Symbol,
+                    tokenDenomSymbol,
                     ' - ',
                     tickToDecimalString(
                         params.tickLower,
@@ -74,21 +74,21 @@ library NFTDescriptor {
             string(
                 abi.encodePacked(
                     'This NFT represents a liquidity position in a Uniswap V3 ',
-                    token1Symbol,
+                    tokenNumSymbol,
                     '-',
-                    token0Symbol,
+                    tokenDenomSymbol,
                     ' pool. ',
                     'The owner of this NFT can modify or redeem the position.\\n',
                     '\\nPool Address: ',
                     addressToString(params.poolAddress),
                     '\\n',
-                    token1Symbol,
+                    tokenNumSymbol,
                     ' Address: ',
-                    addressToString(params.token1),
+                    !params.flipRatio ? addressToString(params.token1) : addressToString(params.token0),
                     '\\n',
-                    token0Symbol,
+                    tokenDenomSymbol,
                     ' Address: ',
-                    addressToString(params.token0),
+                    !params.flipRatio ? addressToString(params.token0) : addressToString(params.token1),
                     '\\nFee Tier: ',
                     feeTier,
                     '\\nToken ID: ',
