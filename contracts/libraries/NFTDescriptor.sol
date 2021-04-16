@@ -92,7 +92,7 @@ library NFTDescriptor {
                     '\\nToken ID: ',
                     params.tokenId.toString(),
                     '\\n\\n',
-                    unicode'DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
+                    unicode'⚠️DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
                 )
             );
 
