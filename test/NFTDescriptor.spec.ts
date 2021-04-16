@@ -45,6 +45,7 @@ describe('NFTDescriptor', () => {
 
   describe('#constructTokenURI', () => {
     it('returns the valid JSON string with min and max ticks', async () => {
+      const tokenId = 123
       const token0 = tokens[0].address
       const token1 = tokens[1].address
       const token0Symbol = await tokens[0].symbol()
@@ -60,6 +61,7 @@ describe('NFTDescriptor', () => {
       const poolAddress = `0x${'b'.repeat(40)}`
 
       const uri = await nftDescriptor.constructTokenURI({
+        tokenId,
         token0,
         token1,
         token0Symbol,
@@ -75,11 +77,12 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(uri).to.equal(
-        tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', 'MIN<>MAX')
+        tokenURI(tokenId, token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', 'MIN<>MAX')
       )
     })
 
     it('returns the valid JSON string with mid ticks', async () => {
+      const tokenId = 123
       const token0 = tokens[0].address
       const token1 = tokens[1].address
       const token0Symbol = await tokens[0].symbol()
@@ -95,6 +98,7 @@ describe('NFTDescriptor', () => {
       const poolAddress = `0x${'b'.repeat(40)}`
 
       const uri = await nftDescriptor.constructTokenURI({
+        tokenId,
         token0,
         token1,
         token0Symbol,
@@ -110,11 +114,12 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(uri).to.equal(
-        tokenURI(token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', '0.99900<>1.0010')
+        tokenURI(tokenId, token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', '0.99900<>1.0010')
       )
     })
 
     it('gas', async () => {
+      const tokenId = 123
       const token0 = tokens[0].address
       const token1 = tokens[1].address
       const token0Symbol = await tokens[0].symbol()
@@ -131,6 +136,7 @@ describe('NFTDescriptor', () => {
 
       await snapshotGasCost(
         nftDescriptor.getGasCostOfConstructTokenURI({
+          tokenId,
           token0,
           token1,
           token0Symbol,
@@ -494,6 +500,7 @@ beta-${tokenToColorHex(token0)}><rect width=12 height="24" fill="white"/></clipP
   }
 
   function tokenURI(
+    tokenId: number,
     token0: string,
     token1: string,
     poolAddress: string,
@@ -504,9 +511,10 @@ beta-${tokenToColorHex(token0)}><rect width=12 height="24" fill="white"/></clipP
     prices: string
   ): string {
     return `data:application/json,{\
-"name":"Uniswap V3 - ${fee} - ${token0Symbol}/${token1Symbol} - ${prices}", \
-"description":"Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.\
-\\nliquidity: ${liquidity}\\npoolAddress: ${poolAddress}\\ntoken0Address: ${token0.toLowerCase()}\\ntoken1Address: ${token1.toLowerCase()}", \
-"image": "${encodedSvgImage(token0, token1)}"}`
+"name":"Uniswap - ${fee} - ${token1Symbol}/${token0Symbol} - ${prices}", \
+"description":"This NFT represents a liquidity position in a Uniswap V3 ${token1Symbol}-${token0Symbol} pool. The owner of this NFT can modify or redeem the position.\\n\
+\\nPool Address: ${poolAddress}\\n${token1Symbol} Address: ${token1.toLowerCase()}\\n${token0Symbol} Address: ${token0.toLowerCase()}\\n\
+Fee Tier: ${fee}\\nToken ID: ${tokenId}\\n\\n⚠️DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
+token symbols may be imitated.", "image": "${encodedSvgImage(token0, token1)}"}`
   }
 })

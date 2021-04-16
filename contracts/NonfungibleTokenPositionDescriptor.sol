@@ -49,6 +49,7 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         return
             NFTDescriptor.constructTokenURI(
                 NFTDescriptor.ConstructTokenURIParams({
+                    tokenId: tokenId,
                     token0: token0,
                     token1: token1,
                     token0Symbol: SafeERC20Namer.tokenSymbol(token0),

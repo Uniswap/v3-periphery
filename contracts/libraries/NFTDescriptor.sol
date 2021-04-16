@@ -23,6 +23,7 @@ library NFTDescriptor {
     uint256 constant sqrt10X128 = 1076067327063303206878105757264492625226;
 
     struct ConstructTokenURIParams {
+        uint256 tokenId;
         address token1;
         address token0;
         string token0Symbol;
@@ -38,17 +39,19 @@ library NFTDescriptor {
         address poolAddress;
     }
 
-    // TODO: submit final draft of description text
     function constructTokenURI(ConstructTokenURIParams memory params) internal pure returns (string memory) {
+        string memory feeTier = feeToPercentString(params.fee);
+        string memory token0Symbol = !params.flipRatio ? params.token0Symbol : params.token1Symbol;
+        string memory token1Symbol = !params.flipRatio ? params.token1Symbol : params.token0Symbol;
         string memory name =
             string(
                 abi.encodePacked(
-                    'Uniswap V3 - ',
+                    'Uniswap - ',
                     feeToPercentString(params.fee),
                     ' - ',
-                    params.flipRatio ? params.token0Symbol : params.token1Symbol,
+                    token1Symbol,
                     '/',
-                    params.flipRatio ? params.token1Symbol : params.token0Symbol,
+                    token0Symbol,
                     ' - ',
                     tickToDecimalString(
                         params.tickLower,
@@ -70,15 +73,28 @@ library NFTDescriptor {
         string memory description =
             string(
                 abi.encodePacked(
-                    'Represents a liquidity position in a Uniswap V3 pool. Redeemable for owed reserve tokens.',
-                    '\\nliquidity: ',
-                    uint256(params.liquidity).toString(),
-                    '\\npoolAddress: ',
+                    'This NFT represents a liquidity position in a Uniswap V3 ',
+                    token1Symbol,
+                    '-',
+                    token0Symbol,
+                    ' pool. ',
+                    'The owner of this NFT can modify or redeem the position.\\n',
+                    '\\nPool Address: ',
                     addressToString(params.poolAddress),
-                    '\\ntoken0Address: ',
+                    '\\n',
+                    token1Symbol,
+                    ' Address: ',
+                    addressToString(params.token1),
+                    '\\n',
+                    token0Symbol,
+                    ' Address: ',
                     addressToString(params.token0),
-                    '\\ntoken1Address: ',
-                    addressToString(params.token1)
+                    '\\nFee Tier: ',
+                    feeTier,
+                    '\\nToken ID: ',
+                    params.tokenId.toString(),
+                    '\\n\\n',
+                    unicode"⚠️DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated."
                 )
             );
 
