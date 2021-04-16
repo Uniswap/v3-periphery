@@ -47,7 +47,7 @@ describe('NFTDescriptor', () => {
     it('returns the valid JSON string with min and max ticks', async () => {
       const tokenId = 123
       const baseTokenAddr = tokens[0].address
-      const quoteTokenAddr = tokens[1].address
+      const quoteTokenAddress = tokens[1].address
       const baseTokenSymbol = await tokens[0].symbol()
       const quoteTokenSymbol = await tokens[1].symbol()
       const baseTokenDecimals = await tokens[0].decimals()
@@ -63,7 +63,7 @@ describe('NFTDescriptor', () => {
       const uri = await nftDescriptor.constructTokenURI({
         tokenId,
         baseTokenAddr,
-        quoteTokenAddr,
+        quoteTokenAddress,
         baseTokenSymbol,
         quoteTokenSymbol,
         baseTokenDecimals,
@@ -80,7 +80,7 @@ describe('NFTDescriptor', () => {
         tokenURI(
           tokenId,
           baseTokenAddr,
-          quoteTokenAddr,
+          quoteTokenAddress,
           poolAddress,
           baseTokenSymbol,
           quoteTokenSymbol,
@@ -95,7 +95,7 @@ describe('NFTDescriptor', () => {
     it('returns the valid JSON string with mid ticks', async () => {
       const tokenId = 123
       const baseTokenAddr = tokens[0].address
-      const quoteTokenAddr = tokens[1].address
+      const quoteTokenAddress = tokens[1].address
       const baseTokenSymbol = await tokens[0].symbol()
       const quoteTokenSymbol = await tokens[1].symbol()
       const baseTokenDecimals = await tokens[0].decimals()
@@ -111,7 +111,7 @@ describe('NFTDescriptor', () => {
       const uri = await nftDescriptor.constructTokenURI({
         tokenId,
         baseTokenAddr,
-        quoteTokenAddr,
+        quoteTokenAddress,
         baseTokenSymbol,
         quoteTokenSymbol,
         baseTokenDecimals,
@@ -128,7 +128,7 @@ describe('NFTDescriptor', () => {
         tokenURI(
           tokenId,
           baseTokenAddr,
-          quoteTokenAddr,
+          quoteTokenAddress,
           poolAddress,
           baseTokenSymbol,
           quoteTokenSymbol,
@@ -143,7 +143,7 @@ describe('NFTDescriptor', () => {
     it('returns the valid JSON when the token ratio is flipped', async () => {
       const tokenId = 123
       const baseTokenAddr = tokens[0].address
-      const quoteTokenAddr = tokens[1].address
+      const quoteTokenAddress = tokens[1].address
       const baseTokenSymbol = await tokens[0].symbol()
       const quoteTokenSymbol = await tokens[1].symbol()
       const baseTokenDecimals = await tokens[0].decimals()
@@ -159,7 +159,7 @@ describe('NFTDescriptor', () => {
       const uri = await nftDescriptor.constructTokenURI({
         tokenId,
         baseTokenAddr,
-        quoteTokenAddr,
+        quoteTokenAddress,
         baseTokenSymbol,
         quoteTokenSymbol,
         baseTokenDecimals,
@@ -176,7 +176,7 @@ describe('NFTDescriptor', () => {
         tokenURI(
           tokenId,
           baseTokenAddr,
-          quoteTokenAddr,
+          quoteTokenAddress,
           poolAddress,
           baseTokenSymbol,
           quoteTokenSymbol,
@@ -191,7 +191,7 @@ describe('NFTDescriptor', () => {
     it('gas', async () => {
       const tokenId = 123
       const baseTokenAddr = tokens[0].address
-      const quoteTokenAddr = tokens[1].address
+      const quoteTokenAddress = tokens[1].address
       const baseTokenSymbol = await tokens[0].symbol()
       const quoteTokenSymbol = await tokens[1].symbol()
       const baseTokenDecimals = await tokens[0].decimals()
@@ -208,7 +208,7 @@ describe('NFTDescriptor', () => {
         nftDescriptor.getGasCostOfConstructTokenURI({
           tokenId,
           baseTokenAddr,
-          quoteTokenAddr,
+          quoteTokenAddress,
           baseTokenSymbol,
           quoteTokenSymbol,
           baseTokenDecimals,
@@ -553,8 +553,8 @@ describe('NFTDescriptor', () => {
     return `#${tokenAddress.slice(2, 8).toLowerCase()}`
   }
 
-  function svgImage(quoteTokenAddr: string, baseTokenAddr: string): string {
-    const quoteTokenColor = tokenToColorHex(quoteTokenAddr)
+  function svgImage(quoteTokenAddress: string, baseTokenAddr: string): string {
+    const quoteTokenColor = tokenToColorHex(quoteTokenAddress)
     const baseTokenColor = tokenToColorHex(baseTokenAddr)
     return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\
 <circle cx="12" cy="12" r="12" fill=${quoteTokenColor} stroke="white"/><g clip-path=url(#beta-${quoteTokenColor})>\
@@ -563,14 +563,14 @@ overlay fill="white" /><circle cx="12" cy="12" r="8" style=mix-blend-mode:overla
 beta-${quoteTokenColor}><rect width=12 height="24" fill="white"/></clipPath></defs></svg>`
   }
 
-  function encodedSvgImage(baseTokenAddr: string, quoteTokenAddr: string): string {
-    return `data:image/svg+xml;base64,${base64Encode(svgImage(baseTokenAddr, quoteTokenAddr))}`
+  function encodedSvgImage(baseTokenAddr: string, quoteTokenAddress: string): string {
+    return `data:image/svg+xml;base64,${base64Encode(svgImage(baseTokenAddr, quoteTokenAddress))}`
   }
 
   function tokenURI(
     tokenId: number,
     baseTokenAddr: string,
-    quoteTokenAddr: string,
+    quoteTokenAddress: string,
     poolAddress: string,
     baseTokenSymbol: string,
     quoteTokenSymbol: string,
@@ -582,8 +582,8 @@ beta-${quoteTokenColor}><rect width=12 height="24" fill="white"/></clipPath></de
     return `data:application/json,{\
 "name":"Uniswap - ${fee} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}", \
 "description":"This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\\n\
-\\nPool Address: ${poolAddress}\\n${quoteTokenSymbol} Address: ${quoteTokenAddr.toLowerCase()}\\n${baseTokenSymbol} Address: ${baseTokenAddr.toLowerCase()}\\n\
+\\nPool Address: ${poolAddress}\\n${quoteTokenSymbol} Address: ${quoteTokenAddress.toLowerCase()}\\n${baseTokenSymbol} Address: ${baseTokenAddr.toLowerCase()}\\n\
 Fee Tier: ${fee}\\nToken ID: ${tokenId}\\n\\n⚠️DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
-token symbols may be imitated.", "image": "${encodedSvgImage(quoteTokenAddr, baseTokenAddr)}"}`
+token symbols may be imitated.", "image": "${encodedSvgImage(quoteTokenAddress, baseTokenAddr)}"}`
   }
 })
