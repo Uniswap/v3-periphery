@@ -57,7 +57,6 @@ describe('NFTDescriptor', () => {
       const tickUpper = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
       const fee = 3000
-      const liquidity = 123456
       const poolAddress = `0x${'b'.repeat(40)}`
 
       const uri = await nftDescriptor.constructTokenURI({
@@ -73,7 +72,6 @@ describe('NFTDescriptor', () => {
         tickUpper,
         tickSpacing,
         fee,
-        liquidity,
         poolAddress,
       })
       expect(uri).to.equal(
@@ -84,7 +82,6 @@ describe('NFTDescriptor', () => {
           poolAddress,
           baseTokenSymbol,
           quoteTokenSymbol,
-          liquidity,
           flipRatio,
           '0.3%',
           'MIN<>MAX'
@@ -105,7 +102,6 @@ describe('NFTDescriptor', () => {
       const tickUpper = 10
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
       const fee = 3000
-      const liquidity = 123456789
       const poolAddress = `0x${'b'.repeat(40)}`
 
       const uri = await nftDescriptor.constructTokenURI({
@@ -121,7 +117,6 @@ describe('NFTDescriptor', () => {
         tickUpper,
         tickSpacing,
         fee,
-        liquidity,
         poolAddress,
       })
       expect(uri).to.equal(
@@ -132,7 +127,6 @@ describe('NFTDescriptor', () => {
           poolAddress,
           baseTokenSymbol,
           quoteTokenSymbol,
-          liquidity,
           flipRatio,
           '0.3%',
           '0.99900<>1.0010'
@@ -153,7 +147,6 @@ describe('NFTDescriptor', () => {
       const tickUpper = 10
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
       const fee = 3000
-      const liquidity = 123456789
       const poolAddress = `0x${'b'.repeat(40)}`
 
       const uri = await nftDescriptor.constructTokenURI({
@@ -169,7 +162,6 @@ describe('NFTDescriptor', () => {
         tickUpper,
         tickSpacing,
         fee,
-        liquidity,
         poolAddress,
       })
       expect(uri).to.equal(
@@ -180,7 +172,6 @@ describe('NFTDescriptor', () => {
           poolAddress,
           baseTokenSymbol,
           quoteTokenSymbol,
-          liquidity,
           flipRatio,
           '0.3%',
           '0.99900<>1.0010'
@@ -201,7 +192,6 @@ describe('NFTDescriptor', () => {
       const tickUpper = 10
       const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
       const fee = 3000
-      const liquidity = 123456789
       const poolAddress = `0x${'b'.repeat(40)}`
 
       await snapshotGasCost(
@@ -218,7 +208,6 @@ describe('NFTDescriptor', () => {
           tickUpper,
           tickSpacing,
           fee,
-          liquidity,
           poolAddress,
         })
       )
@@ -574,7 +563,6 @@ beta-${quoteTokenColor}><rect width=12 height="24" fill="white"/></clipPath></de
     poolAddress: string,
     baseTokenSymbol: string,
     quoteTokenSymbol: string,
-    liquidity: number,
     flipRatio: boolean,
     fee: string,
     prices: string

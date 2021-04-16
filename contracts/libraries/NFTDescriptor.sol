@@ -35,7 +35,6 @@ library NFTDescriptor {
         int24 tickUpper;
         int24 tickSpacing;
         uint24 fee;
-        uint256 liquidity;
         address poolAddress;
     }
 
