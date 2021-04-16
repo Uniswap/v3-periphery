@@ -2,7 +2,7 @@ import { BigNumber, constants } from 'ethers'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { waffle, ethers } from 'hardhat'
 import { expect } from './shared/expect'
-import { TestERC20, NFTDescriptorTest } from '../typechain'
+import { TestERC20Metadata, NFTDescriptorTest } from '../typechain'
 import { Fixture } from 'ethereum-waffle'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import snapshotGasCost from './shared/snapshotGasCost'
@@ -13,16 +13,16 @@ describe('NFTDescriptor', () => {
   const wallets = waffle.provider.getWallets()
 
   const nftDescriptorFixture: Fixture<{
-    tokens: [TestERC20, TestERC20]
+    tokens: [TestERC20Metadata, TestERC20Metadata]
     nftDescriptor: NFTDescriptorTest
   }> = async (wallets, provider) => {
-    const tokenFactory = await ethers.getContractFactory('TestERC20')
+    const tokenFactory = await ethers.getContractFactory('TestERC20Metadata')
     const NFTDescriptorFactory = await ethers.getContractFactory('NFTDescriptorTest')
     const nftDescriptor = (await NFTDescriptorFactory.deploy()) as NFTDescriptorTest
     const tokens = (await Promise.all([
-      tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu256 to avoid overflowing
-      tokenFactory.deploy(constants.MaxUint256.div(2)),
-    ])) as [TestERC20, TestERC20]
+      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1'), // do not use maxu256 to avoid overflowing
+      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST2'),
+    ])) as [TestERC20Metadata, TestERC20Metadata]
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
     return {
       nftDescriptor,
@@ -31,7 +31,7 @@ describe('NFTDescriptor', () => {
   }
 
   let nftDescriptor: NFTDescriptorTest
-  let tokens: [TestERC20, TestERC20]
+  let tokens: [TestERC20Metadata, TestERC20Metadata]
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
@@ -46,12 +46,12 @@ describe('NFTDescriptor', () => {
   describe('#constructTokenURI', () => {
     it('returns the valid JSON string with min and max ticks', async () => {
       const tokenId = 123
-      const token0 = tokens[0].address
-      const token1 = tokens[1].address
-      const token0Symbol = await tokens[0].symbol()
-      const token1Symbol = await tokens[1].symbol()
-      const token0Decimals = await tokens[0].decimals()
-      const token1Decimals = await tokens[1].decimals()
+      const baseTokenAddr = tokens[0].address
+      const quoteTokenAddr = tokens[1].address
+      const baseTokenSymbol = await tokens[0].symbol()
+      const quoteTokenSymbol = await tokens[1].symbol()
+      const baseTokenDecimals = await tokens[0].decimals()
+      const quoteTokenDecimals = await tokens[1].decimals()
       const flipRatio = false
       const tickLower = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       const tickUpper = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
@@ -62,12 +62,12 @@ describe('NFTDescriptor', () => {
 
       const uri = await nftDescriptor.constructTokenURI({
         tokenId,
-        token0,
-        token1,
-        token0Symbol,
-        token1Symbol,
-        token0Decimals,
-        token1Decimals,
+        baseTokenAddr,
+        quoteTokenAddr,
+        baseTokenSymbol,
+        quoteTokenSymbol,
+        baseTokenDecimals,
+        quoteTokenDecimals,
         flipRatio,
         tickLower,
         tickUpper,
@@ -77,18 +77,18 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(uri).to.equal(
-        tokenURI(tokenId, token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', 'MIN<>MAX')
+        tokenURI(tokenId, baseTokenAddr, quoteTokenAddr, poolAddress, baseTokenSymbol, quoteTokenSymbol, liquidity, flipRatio, '0.3%', 'MIN<>MAX')
       )
     })
 
     it('returns the valid JSON string with mid ticks', async () => {
       const tokenId = 123
-      const token0 = tokens[0].address
-      const token1 = tokens[1].address
-      const token0Symbol = await tokens[0].symbol()
-      const token1Symbol = await tokens[1].symbol()
-      const token0Decimals = await tokens[0].decimals()
-      const token1Decimals = await tokens[1].decimals()
+      const baseTokenAddr = tokens[0].address
+      const quoteTokenAddr = tokens[1].address
+      const baseTokenSymbol = await tokens[0].symbol()
+      const quoteTokenSymbol = await tokens[1].symbol()
+      const baseTokenDecimals = await tokens[0].decimals()
+      const quoteTokenDecimals = await tokens[1].decimals()
       const flipRatio = false
       const tickLower = -10
       const tickUpper = 10
@@ -99,12 +99,12 @@ describe('NFTDescriptor', () => {
 
       const uri = await nftDescriptor.constructTokenURI({
         tokenId,
-        token0,
-        token1,
-        token0Symbol,
-        token1Symbol,
-        token0Decimals,
-        token1Decimals,
+        baseTokenAddr,
+        quoteTokenAddr,
+        baseTokenSymbol,
+        quoteTokenSymbol,
+        baseTokenDecimals,
+        quoteTokenDecimals,
         flipRatio,
         tickLower,
         tickUpper,
@@ -114,18 +114,55 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(uri).to.equal(
-        tokenURI(tokenId, token0, token1, poolAddress, token0Symbol, token1Symbol, liquidity, '0.3%', '0.99900<>1.0010')
+        tokenURI(tokenId, baseTokenAddr, quoteTokenAddr, poolAddress, baseTokenSymbol, quoteTokenSymbol, liquidity, flipRatio, '0.3%', '0.99900<>1.0010')
+      )
+    })
+
+    it('returns the valid JSON when the token ratio is flipped', async () => {
+      const tokenId = 123
+      const baseTokenAddr = tokens[0].address
+      const quoteTokenAddr = tokens[1].address
+      const baseTokenSymbol = await tokens[0].symbol()
+      const quoteTokenSymbol = await tokens[1].symbol()
+      const baseTokenDecimals = await tokens[0].decimals()
+      const quoteTokenDecimals = await tokens[1].decimals()
+      const flipRatio = true
+      const tickLower = -10
+      const tickUpper = 10
+      const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
+      const fee = 3000
+      const liquidity = 123456789
+      const poolAddress = `0x${'b'.repeat(40)}`
+
+      const uri = await nftDescriptor.constructTokenURI({
+        tokenId,
+        baseTokenAddr,
+        quoteTokenAddr,
+        baseTokenSymbol,
+        quoteTokenSymbol,
+        baseTokenDecimals,
+        quoteTokenDecimals,
+        flipRatio,
+        tickLower,
+        tickUpper,
+        tickSpacing,
+        fee,
+        liquidity,
+        poolAddress,
+      })
+      expect(uri).to.equal(
+        tokenURI(tokenId, baseTokenAddr, quoteTokenAddr, poolAddress, baseTokenSymbol, quoteTokenSymbol, liquidity, flipRatio, '0.3%', '0.99900<>1.0010')
       )
     })
 
     it('gas', async () => {
       const tokenId = 123
-      const token0 = tokens[0].address
-      const token1 = tokens[1].address
-      const token0Symbol = await tokens[0].symbol()
-      const token1Symbol = await tokens[1].symbol()
-      const token0Decimals = await tokens[0].decimals()
-      const token1Decimals = await tokens[1].decimals()
+      const baseTokenAddr = tokens[0].address
+      const quoteTokenAddr = tokens[1].address
+      const baseTokenSymbol = await tokens[0].symbol()
+      const quoteTokenSymbol = await tokens[1].symbol()
+      const baseTokenDecimals = await tokens[0].decimals()
+      const quoteTokenDecimals = await tokens[1].decimals()
       const flipRatio = false
       const tickLower = -10
       const tickUpper = 10
@@ -137,12 +174,12 @@ describe('NFTDescriptor', () => {
       await snapshotGasCost(
         nftDescriptor.getGasCostOfConstructTokenURI({
           tokenId,
-          token0,
-          token1,
-          token0Symbol,
-          token1Symbol,
-          token0Decimals,
-          token1Decimals,
+          baseTokenAddr,
+          quoteTokenAddr,
+          baseTokenSymbol,
+          quoteTokenSymbol,
+          baseTokenDecimals,
+          quoteTokenDecimals,
           flipRatio,
           tickLower,
           tickUpper,
@@ -250,7 +287,7 @@ describe('NFTDescriptor', () => {
       })
     })
 
-    describe('when token0 should be the ratio numerator', () => {
+    describe('when token ratio is flipped', () => {
       it('returns the inverse of default ratio for medium sized numbers', async () => {
         const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
         expect(await nftDescriptor.tickToDecimalString(10, tickSpacing, 18, 18, false)).to.eq('1.0010')
@@ -278,8 +315,8 @@ describe('NFTDescriptor', () => {
       it('returns the correct string with differing token decimals', async () => {
         const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
         expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 18, 18, true)).to.eq('0.90484')
-        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 10, 18, true)).to.eq('90484000')
-        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 18, 10, true)).to.eq('0.0000000090484')
+        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 18, 10, true)).to.eq('90484000')
+        expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 10, 18, true)).to.eq('0.0000000090484')
       })
     })
   })
@@ -359,7 +396,7 @@ describe('NFTDescriptor', () => {
         ratio = encodePriceSqrt(1, 1)
       })
 
-      describe('when token0 has more precision decimals than token1', () => {
+      describe('when baseToken has more precision decimals than quoteToken', () => {
         it('returns the correct string when the decimal difference is even', async () => {
           expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 16)).to.eq('100.00')
         })
@@ -369,12 +406,12 @@ describe('NFTDescriptor', () => {
           expect(await nftDescriptor.fixedPointToDecimalString(tenRatio, 18, 17)).to.eq('100.00')
         })
 
-        it('does not account for higher token0 precision if difference is more than 18', async () => {
+        it('does not account for higher baseToken precision if difference is more than 18', async () => {
           expect(await nftDescriptor.fixedPointToDecimalString(ratio, 24, 5)).to.eq('1.0000')
         })
       })
 
-      describe('when token1 has more precision decimals than token0', () => {
+      describe('when quoteToken has more precision decimals than baseToken', () => {
         it('returns the correct string when the decimal difference is even', async () => {
           expect(await nftDescriptor.fixedPointToDecimalString(ratio, 10, 18)).to.eq('0.000000010000')
         })
@@ -391,7 +428,7 @@ describe('NFTDescriptor', () => {
           )
         })
 
-        it('does not account for higher token1 precision if difference is more than 18', async () => {
+        it('does not account for higher quoteToken precision if difference is more than 18', async () => {
           expect(await nftDescriptor.fixedPointToDecimalString(ratio, 24, 5)).to.eq('1.0000')
         })
       })
@@ -483,38 +520,37 @@ describe('NFTDescriptor', () => {
     return `#${tokenAddress.slice(2, 8).toLowerCase()}`
   }
 
-  function svgImage(token0: string, token1: string): string {
+  function svgImage(quoteTokenAddr: string, baseTokenAddr: string): string {
+    const quoteTokenColor = tokenToColorHex(quoteTokenAddr)
+    const baseTokenColor = tokenToColorHex(baseTokenAddr)
     return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\
-<circle cx="12" cy="12" r="12" fill=${tokenToColorHex(token0)} stroke="white"/><g clip-path=url(#beta-${tokenToColorHex(
-      token0
-    )})>\
-<circle cx="12" cy="12" r="12" fill=${tokenToColorHex(
-      token1
-    )} stroke="white"/></g><circle cx="12" cy="12" r="4" style=mix-blend-mode:\
+<circle cx="12" cy="12" r="12" fill=${quoteTokenColor} stroke="white"/><g clip-path=url(#beta-${quoteTokenColor})>\
+<circle cx="12" cy="12" r="12" fill=${baseTokenColor} stroke="white"/></g><circle cx="12" cy="12" r="4" style=mix-blend-mode:\
 overlay fill="white" /><circle cx="12" cy="12" r="8" style=mix-blend-mode:overlay fill="white" />\<defs><clipPath id=\
-beta-${tokenToColorHex(token0)}><rect width=12 height="24" fill="white"/></clipPath></defs></svg>`
+beta-${quoteTokenColor}><rect width=12 height="24" fill="white"/></clipPath></defs></svg>`
   }
 
-  function encodedSvgImage(token0: string, token1: string): string {
-    return `data:image/svg+xml;base64,${base64Encode(svgImage(token0, token1))}`
+  function encodedSvgImage(baseTokenAddr: string, quoteTokenAddr: string): string {
+    return `data:image/svg+xml;base64,${base64Encode(svgImage(baseTokenAddr, quoteTokenAddr))}`
   }
 
   function tokenURI(
     tokenId: number,
-    token0: string,
-    token1: string,
+    baseTokenAddr: string,
+    quoteTokenAddr: string,
     poolAddress: string,
-    token0Symbol: string,
-    token1Symbol: string,
+    baseTokenSymbol: string,
+    quoteTokenSymbol: string,
     liquidity: number,
+    flipRatio: boolean,
     fee: string,
     prices: string
   ): string {
     return `data:application/json,{\
-"name":"Uniswap - ${fee} - ${token1Symbol}/${token0Symbol} - ${prices}", \
-"description":"This NFT represents a liquidity position in a Uniswap V3 ${token1Symbol}-${token0Symbol} pool. The owner of this NFT can modify or redeem the position.\\n\
-\\nPool Address: ${poolAddress}\\n${token1Symbol} Address: ${token1.toLowerCase()}\\n${token0Symbol} Address: ${token0.toLowerCase()}\\n\
+"name":"Uniswap - ${fee} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}", \
+"description":"This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\\n\
+\\nPool Address: ${poolAddress}\\n${quoteTokenSymbol} Address: ${quoteTokenAddr.toLowerCase()}\\n${baseTokenSymbol} Address: ${baseTokenAddr.toLowerCase()}\\n\
 Fee Tier: ${fee}\\nToken ID: ${tokenId}\\n\\n⚠️DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
-token symbols may be imitated.", "image": "${encodedSvgImage(token0, token1)}"}`
+token symbols may be imitated.", "image": "${encodedSvgImage(quoteTokenAddr, baseTokenAddr)}"}`
   }
 })

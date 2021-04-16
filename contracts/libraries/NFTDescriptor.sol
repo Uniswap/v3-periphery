@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.6.0;
+pragma solidity >=0.7.0;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
@@ -24,12 +24,12 @@ library NFTDescriptor {
 
     struct ConstructTokenURIParams {
         uint256 tokenId;
-        address token1;
-        address token0;
-        string token0Symbol;
-        string token1Symbol;
-        uint8 token0Decimals;
-        uint8 token1Decimals;
+        address quoteTokenAddr;
+        address baseTokenAddr;
+        string quoteTokenSymbol;
+        string baseTokenSymbol;
+        uint8 quoteTokenDecimals;
+        uint8 baseTokenDecimals;
         bool flipRatio;
         int24 tickLower;
         int24 tickUpper;
@@ -41,31 +41,29 @@ library NFTDescriptor {
 
     function constructTokenURI(ConstructTokenURIParams memory params) internal pure returns (string memory) {
         string memory feeTier = feeToPercentString(params.fee);
-        string memory tokenNumSymbol = !params.flipRatio ? params.token1Symbol : params.token0Symbol;
-        string memory tokenDenomSymbol = !params.flipRatio ? params.token0Symbol : params.token1Symbol;
         string memory name =
             string(
                 abi.encodePacked(
                     'Uniswap - ',
-                    feeToPercentString(params.fee),
+                    feeTier,
                     ' - ',
-                    tokenNumSymbol,
+                    params.quoteTokenSymbol,
                     '/',
-                    tokenDenomSymbol,
+                    params.baseTokenSymbol,
                     ' - ',
                     tickToDecimalString(
-                        params.tickLower,
+                        !params.flipRatio ? params.tickLower : params.tickUpper,
                         params.tickSpacing,
-                        params.token0Decimals,
-                        params.token1Decimals,
+                        params.baseTokenDecimals,
+                        params.quoteTokenDecimals,
                         params.flipRatio
                     ),
                     '<>',
                     tickToDecimalString(
-                        params.tickUpper,
+                        !params.flipRatio ? params.tickUpper : params.tickLower,
                         params.tickSpacing,
-                        params.token0Decimals,
-                        params.token1Decimals,
+                        params.baseTokenDecimals,
+                        params.quoteTokenDecimals,
                         params.flipRatio
                     )
                 )
@@ -74,27 +72,27 @@ library NFTDescriptor {
             string(
                 abi.encodePacked(
                     'This NFT represents a liquidity position in a Uniswap V3 ',
-                    tokenNumSymbol,
+                    params.quoteTokenSymbol,
                     '-',
-                    tokenDenomSymbol,
+                    params.baseTokenSymbol,
                     ' pool. ',
                     'The owner of this NFT can modify or redeem the position.\\n',
                     '\\nPool Address: ',
                     addressToString(params.poolAddress),
                     '\\n',
-                    tokenNumSymbol,
+                    params.quoteTokenSymbol,
                     ' Address: ',
-                    !params.flipRatio ? addressToString(params.token1) : addressToString(params.token0),
+                    addressToString(params.quoteTokenAddr),
                     '\\n',
-                    tokenDenomSymbol,
+                    params.baseTokenSymbol,
                     ' Address: ',
-                    !params.flipRatio ? addressToString(params.token0) : addressToString(params.token1),
+                    addressToString(params.baseTokenAddr),
                     '\\nFee Tier: ',
                     feeTier,
                     '\\nToken ID: ',
                     params.tokenId.toString(),
                     '\\n\\n',
-                    unicode"⚠️DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated."
+                    unicode'DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
                 )
             );
 
@@ -107,7 +105,7 @@ library NFTDescriptor {
                     description,
                     '", "image": "',
                     'data:image/svg+xml;base64,',
-                    Base64.encode(bytes(svgImage(params.token0, params.token1))),
+                    Base64.encode(bytes(svgImage(params.quoteTokenAddr, params.baseTokenAddr))),
                     '"}'
                 )
             );
@@ -160,8 +158,8 @@ library NFTDescriptor {
     function tickToDecimalString(
         int24 tick,
         int24 tickSpacing,
-        uint8 token0Decimals,
-        uint8 token1Decimals,
+        uint8 baseTokenDecimals,
+        uint8 quoteTokenDecimals,
         bool flipRatio
     ) internal pure returns (string memory) {
         if (tick == (TickMath.MIN_TICK / tickSpacing) * tickSpacing) {
@@ -172,9 +170,8 @@ library NFTDescriptor {
             uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
             if (flipRatio) {
                 sqrtRatioX96 = uint160(uint256(1 << 192).div(sqrtRatioX96));
-                return fixedPointToDecimalString(sqrtRatioX96, token1Decimals, token0Decimals);
             }
-            return fixedPointToDecimalString(sqrtRatioX96, token0Decimals, token1Decimals);
+            return fixedPointToDecimalString(sqrtRatioX96, baseTokenDecimals, quoteTokenDecimals);
         }
     }
 
@@ -198,12 +195,12 @@ library NFTDescriptor {
 
     function adjustForDecimalPrecision(
         uint160 sqrtRatioX96,
-        uint8 token0Decimals,
-        uint8 token1Decimals
+        uint8 baseTokenDecimals,
+        uint8 quoteTokenDecimals
     ) private pure returns (uint256 adjustedSqrtRatioX96) {
-        uint256 difference = abs(int256(token0Decimals).sub(int256(token1Decimals)));
+        uint256 difference = abs(int256(baseTokenDecimals).sub(int256(quoteTokenDecimals)));
         if (difference > 0 && difference <= 18) {
-            if (token0Decimals > token1Decimals) {
+            if (baseTokenDecimals > quoteTokenDecimals) {
                 adjustedSqrtRatioX96 = sqrtRatioX96.mul(10**(difference.div(2)));
             } else {
                 adjustedSqrtRatioX96 = sqrtRatioX96.div(10**(difference.div(2)));
@@ -225,10 +222,10 @@ library NFTDescriptor {
     // TODO: return price in terms of token/ETH for ETH pairs
     function fixedPointToDecimalString(
         uint160 sqrtRatioX96,
-        uint8 token0Decimals,
-        uint8 token1Decimals
+        uint8 baseTokenDecimals,
+        uint8 quoteTokenDecimals
     ) internal pure returns (string memory) {
-        uint256 adjustedSqrtRatioX96 = adjustForDecimalPrecision(sqrtRatioX96, token0Decimals, token1Decimals);
+        uint256 adjustedSqrtRatioX96 = adjustForDecimalPrecision(sqrtRatioX96, baseTokenDecimals, quoteTokenDecimals);
         uint256 value = FullMath.mulDiv(adjustedSqrtRatioX96, adjustedSqrtRatioX96, 1 << 64);
 
         bool priceBelow1 = adjustedSqrtRatioX96 < 2**96;
@@ -336,25 +333,25 @@ library NFTDescriptor {
         return string(abi.encodePacked('#', (token >> (34 * 4)).toHexStringNoPrefix(3)));
     }
 
-    function svgImage(address token0, address token1) internal pure returns (string memory svg) {
-        string memory token0Color = tokenToColorHex(uint256(token0));
-        string memory token1Color = tokenToColorHex(uint256(token1));
+    function svgImage(address quoteToken, address baseToken) internal pure returns (string memory svg) {
+        string memory quoteTokenColor = tokenToColorHex(uint256(quoteToken));
+        string memory baseTokenColor = tokenToColorHex(uint256(baseToken));
         svg = string(
             abi.encodePacked(
                 '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">',
                 '<circle cx="12" cy="12" r="12" fill=',
-                token0Color,
+                quoteTokenColor,
                 ' stroke="white"/>',
                 '<g clip-path=url(#beta-',
-                token0Color,
+                quoteTokenColor,
                 ')>',
                 '<circle cx="12" cy="12" r="12" fill=',
-                token1Color,
+                baseTokenColor,
                 ' stroke="white"/></g>',
                 '<circle cx="12" cy="12" r="4" style=mix-blend-mode:overlay fill="white" />',
                 '<circle cx="12" cy="12" r="8" style=mix-blend-mode:overlay fill="white" />',
                 '<defs><clipPath id=beta-',
-                token0Color,
+                quoteTokenColor,
                 '><rect width=12 height="24" fill="white"/>',
                 '</clipPath></defs></svg>'
             )
