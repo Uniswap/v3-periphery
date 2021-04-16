@@ -77,7 +77,18 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(uri).to.equal(
-        tokenURI(tokenId, baseTokenAddr, quoteTokenAddr, poolAddress, baseTokenSymbol, quoteTokenSymbol, liquidity, flipRatio, '0.3%', 'MIN<>MAX')
+        tokenURI(
+          tokenId,
+          baseTokenAddr,
+          quoteTokenAddr,
+          poolAddress,
+          baseTokenSymbol,
+          quoteTokenSymbol,
+          liquidity,
+          flipRatio,
+          '0.3%',
+          'MIN<>MAX'
+        )
       )
     })
 
@@ -114,7 +125,18 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(uri).to.equal(
-        tokenURI(tokenId, baseTokenAddr, quoteTokenAddr, poolAddress, baseTokenSymbol, quoteTokenSymbol, liquidity, flipRatio, '0.3%', '0.99900<>1.0010')
+        tokenURI(
+          tokenId,
+          baseTokenAddr,
+          quoteTokenAddr,
+          poolAddress,
+          baseTokenSymbol,
+          quoteTokenSymbol,
+          liquidity,
+          flipRatio,
+          '0.3%',
+          '0.99900<>1.0010'
+        )
       )
     })
 
@@ -151,7 +173,18 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(uri).to.equal(
-        tokenURI(tokenId, baseTokenAddr, quoteTokenAddr, poolAddress, baseTokenSymbol, quoteTokenSymbol, liquidity, flipRatio, '0.3%', '0.99900<>1.0010')
+        tokenURI(
+          tokenId,
+          baseTokenAddr,
+          quoteTokenAddr,
+          poolAddress,
+          baseTokenSymbol,
+          quoteTokenSymbol,
+          liquidity,
+          flipRatio,
+          '0.3%',
+          '0.99900<>1.0010'
+        )
       )
     })
 
