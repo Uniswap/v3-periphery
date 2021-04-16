@@ -48,18 +48,18 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
 
         bool _flipRatio = flipRatio(token0, token1, ChainId.get());
         address quoteTokenAddress = !_flipRatio ? token1 : token0;
-        address baseTokenAddr = !_flipRatio ? token0 : token1;
+        address baseTokenAddress = !_flipRatio ? token0 : token1;
 
         return
             NFTDescriptor.constructTokenURI(
                 NFTDescriptor.ConstructTokenURIParams({
                     tokenId: tokenId,
                     quoteTokenAddress: quoteTokenAddress,
-                    baseTokenAddr: baseTokenAddr,
+                    baseTokenAddress: baseTokenAddress,
                     quoteTokenSymbol: SafeERC20Namer.tokenSymbol(quoteTokenAddress),
-                    baseTokenSymbol: SafeERC20Namer.tokenSymbol(baseTokenAddr),
+                    baseTokenSymbol: SafeERC20Namer.tokenSymbol(baseTokenAddress),
                     quoteTokenDecimals: IERC20Metadata(quoteTokenAddress).decimals(),
-                    baseTokenDecimals: IERC20Metadata(baseTokenAddr).decimals(),
+                    baseTokenDecimals: IERC20Metadata(baseTokenAddress).decimals(),
                     flipRatio: _flipRatio,
                     tickLower: tickLower,
                     tickUpper: tickUpper,

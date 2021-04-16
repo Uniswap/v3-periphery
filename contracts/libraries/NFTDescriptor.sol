@@ -25,7 +25,7 @@ library NFTDescriptor {
     struct ConstructTokenURIParams {
         uint256 tokenId;
         address quoteTokenAddress;
-        address baseTokenAddr;
+        address baseTokenAddress;
         string quoteTokenSymbol;
         string baseTokenSymbol;
         uint8 quoteTokenDecimals;
@@ -86,7 +86,7 @@ library NFTDescriptor {
                     '\\n',
                     params.baseTokenSymbol,
                     ' Address: ',
-                    addressToString(params.baseTokenAddr),
+                    addressToString(params.baseTokenAddress),
                     '\\nFee Tier: ',
                     feeTier,
                     '\\nToken ID: ',
@@ -105,7 +105,7 @@ library NFTDescriptor {
                     description,
                     '", "image": "',
                     'data:image/svg+xml;base64,',
-                    Base64.encode(bytes(svgImage(params.quoteTokenAddress, params.baseTokenAddr))),
+                    Base64.encode(bytes(svgImage(params.quoteTokenAddress, params.baseTokenAddress))),
                     '"}'
                 )
             );
