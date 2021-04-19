@@ -35,7 +35,7 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         override
         returns (string memory)
     {
-        (, , address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) =
+        (, , address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, , , , , ) =
             positionManager.positions(tokenId);
 
         IUniswapV3Pool pool =
@@ -46,21 +46,25 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                 )
             );
 
+        bool _flipRatio = flipRatio(token0, token1, ChainId.get());
+        address quoteTokenAddress = !_flipRatio ? token1 : token0;
+        address baseTokenAddress = !_flipRatio ? token0 : token1;
+
         return
             NFTDescriptor.constructTokenURI(
                 NFTDescriptor.ConstructTokenURIParams({
-                    token0: token0,
-                    token1: token1,
-                    token0Symbol: SafeERC20Namer.tokenSymbol(token0),
-                    token1Symbol: SafeERC20Namer.tokenSymbol(token1),
-                    token0Decimals: IERC20Metadata(token0).decimals(),
-                    token1Decimals: IERC20Metadata(token1).decimals(),
-                    flipRatio: flipRatio(token0, token1, ChainId.get()),
+                    tokenId: tokenId,
+                    quoteTokenAddress: quoteTokenAddress,
+                    baseTokenAddress: baseTokenAddress,
+                    quoteTokenSymbol: SafeERC20Namer.tokenSymbol(quoteTokenAddress),
+                    baseTokenSymbol: SafeERC20Namer.tokenSymbol(baseTokenAddress),
+                    quoteTokenDecimals: IERC20Metadata(quoteTokenAddress).decimals(),
+                    baseTokenDecimals: IERC20Metadata(baseTokenAddress).decimals(),
+                    flipRatio: _flipRatio,
                     tickLower: tickLower,
                     tickUpper: tickUpper,
                     tickSpacing: pool.tickSpacing(),
                     fee: fee,
-                    liquidity: liquidity,
                     poolAddress: address(pool)
                 })
             );
