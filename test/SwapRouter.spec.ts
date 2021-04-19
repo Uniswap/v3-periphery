@@ -853,5 +853,64 @@ describe('SwapRouter', () => {
         })
       })
     })
+
+    describe('*WithFee', () => {
+      const feeRecipient = '0xfEE0000000000000000000000000000000000000'
+
+      it('#sweepTokenWithFee', async () => {
+        const amountOutMinimum = 100
+        const params = {
+          path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+          recipient: router.address,
+          deadline: 1,
+          amountIn: 102,
+          amountOutMinimum,
+        }
+
+        const data = [
+          router.interface.encodeFunctionData('exactInput', [params]),
+          router.interface.encodeFunctionData('sweepTokenWithFee', [
+            tokens[1].address,
+            amountOutMinimum,
+            trader.address,
+            100,
+            feeRecipient,
+          ]),
+        ]
+
+        await router.connect(trader).multicall(data)
+
+        const balance = await tokens[1].balanceOf(feeRecipient)
+        expect(balance.eq(1)).to.be.eq(true)
+      })
+
+      it('#unwrapWETH9WithFee', async () => {
+        await createPoolWETH9(tokens[0].address)
+
+        const amountOutMinimum = 100
+        const params = {
+          path: encodePath([tokens[0].address, weth9.address], [FeeAmount.MEDIUM]),
+          recipient: router.address,
+          deadline: 1,
+          amountIn: 102,
+          amountOutMinimum,
+        }
+
+        const data = [
+          router.interface.encodeFunctionData('exactInput', [params]),
+          router.interface.encodeFunctionData('unwrapWETH9WithFee', [
+            amountOutMinimum,
+            trader.address,
+            100,
+            feeRecipient,
+          ]),
+        ]
+
+        await router.connect(trader).multicall(data)
+
+        const balance = await waffle.provider.getBalance(feeRecipient)
+        expect(balance.eq(1)).to.be.eq(true)
+      })
+    })
   })
 })
