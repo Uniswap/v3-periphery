@@ -355,14 +355,10 @@ describe('NFTDescriptor', () => {
     })
 
     describe('when tokens have different decimal precision', () => {
-      let ratio: BigNumber
-      before(() => {
-        ratio = encodePriceSqrt(1, 1)
-      })
 
       describe('when token0 has more precision decimals than token1', () => {
         it('returns the correct string when the decimal difference is even', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 16)).to.eq('100.00')
+          expect(await nftDescriptor.fixedPointToDecimalString(encodePriceSqrt(1, 1), 18, 16)).to.eq('100.00')
         })
 
         it('returns the correct string when the decimal difference is odd', async () => {
@@ -371,17 +367,17 @@ describe('NFTDescriptor', () => {
         })
 
         it('does not account for higher token0 precision if difference is more than 18', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 24, 5)).to.eq('1.0000')
+          expect(await nftDescriptor.fixedPointToDecimalString(encodePriceSqrt(1, 1), 24, 5)).to.eq('1.0000')
         })
       })
 
       describe('when token1 has more precision decimals than token0', () => {
         it('returns the correct string when the decimal difference is even', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 10, 18)).to.eq('0.000000010000')
+          expect(await nftDescriptor.fixedPointToDecimalString(encodePriceSqrt(1, 1), 10, 18)).to.eq('0.000000010000')
         })
 
         it('returns the correct string when the decimal difference is odd', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 7, 18)).to.eq('0.000000000010000')
+          expect(await nftDescriptor.fixedPointToDecimalString(encodePriceSqrt(1, 1), 7, 18)).to.eq('0.000000000010000')
         })
 
         // TODO: provide compatibility token prices that breach minimum price due to token decimal differences
@@ -393,7 +389,7 @@ describe('NFTDescriptor', () => {
         })
 
         it('does not account for higher token1 precision if difference is more than 18', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 24, 5)).to.eq('1.0000')
+          expect(await nftDescriptor.fixedPointToDecimalString(encodePriceSqrt(1, 1), 24, 5)).to.eq('1.0000')
         })
       })
 
@@ -404,7 +400,7 @@ describe('NFTDescriptor', () => {
 
         const inputs = []
         let i = 0
-        while (i <= 10) {
+        while (i <= 20) {
           const ratio = BigNumber.from(`0x${randomBytes(random(7, 20)).toString('hex')}`)
           const decimals0 = random(3, 21)
           const decimals1 = random(3, 21)
