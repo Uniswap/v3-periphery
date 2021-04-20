@@ -1,7 +1,7 @@
 # Testnet Deploys
 
-The latest version of `@uniswap/v3-core`, `@uniswap/v3-periphery`, 
-and supporting contracts (e.g. `WETH9`, `Multicall2`) are all 
+The latest version of `@uniswap/v3-core`, `@uniswap/v3-periphery`,
+and supporting contracts (e.g. `WETH9`, `Multicall2`) are all
 deployed to testnets.
 
 These addresses are as of the following package versions:
@@ -13,7 +13,7 @@ Below you will find the addresses of each contract on each testnet. The
 keys are mapped to their respective source code in the table below:
 
 | Key                                         | Source Code                                                                                                                 |
-|---------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `v3CoreFactoryAddress`                      | https://github.com/Uniswap/uniswap-v3-core/blob/v1.0.0-rc.2/contracts/UniswapV3Factory.sol                                  |
 | `weth9Address`                              | https://rinkeby.etherscan.io/address/0xc778417E063141139Fce010982780140Aa0cD5Ab#code                                        |
 | `multicall2Address`                         | https://rinkeby.etherscan.io/address/0x5BA1e12693Dc8F9c48aAD8770482f4739bEeD696#code                                        |
@@ -97,4 +97,3 @@ keys are mapped to their respective source code in the table below:
   "v3MigratorAddress": "0xbBca0fFBFE60F60071630A8c80bb6253dC9D6023"
 }
 ```
-
