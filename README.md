@@ -9,7 +9,7 @@ repository.
 
 ## Bug bounty
 
-This repository is subject to the Uniswap V3 bug bounty program, 
+This repository is subject to the Uniswap V3 bug bounty program,
 per the terms defined [here](./bug-bounty.md).
 
 ## Local deployment
