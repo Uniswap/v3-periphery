@@ -12,7 +12,7 @@ export function formatSqrtRatioX96(
 ): string {
   Decimal.set({ precision: 5, toExpPos: 9_999_999, toExpNeg: -9_999_999, rounding: Decimal.ROUND_HALF_EVEN })
 
-  let ratioNum = ((parseInt(sqrtRatioX96.toString()) /  2 ** 96) ** 2).toPrecision(5)
+  let ratioNum = ((parseInt(sqrtRatioX96.toString()) / 2 ** 96) ** 2).toPrecision(5)
   let ratio = new Decimal(ratioNum.toString())
 
   // adjust for decimals

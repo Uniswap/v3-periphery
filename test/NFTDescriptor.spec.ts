@@ -411,7 +411,8 @@ describe('NFTDescriptor', () => {
           const decimalDiff = Math.abs(decimals0 - decimals1)
 
           // TODO: Address edgecase out of bounds prices due to decimal differences
-          if (ratio.div(TEN.pow(decimalDiff)).gt(LOWEST_SQRT_RATIO) &&
+          if (
+            ratio.div(TEN.pow(decimalDiff)).gt(LOWEST_SQRT_RATIO) &&
             ratio.mul(TEN.pow(decimalDiff)).lt(HIGHEST_SQRT_RATIO)
           ) {
             inputs.push([ratio, decimals0, decimals1])
