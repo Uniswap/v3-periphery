@@ -35,7 +35,7 @@
   },
   "peerDependencies": {
     "@uniswap/v2-core": "1.0.1",
-    "@uniswap/v3-core": "1.0.0-rc.1"
+    "@uniswap/v3-core": "1.0.0-rc.2"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
