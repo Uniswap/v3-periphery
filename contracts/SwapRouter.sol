@@ -9,7 +9,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import './interfaces/ISwapRouter.sol';
 import './base/PeripheryImmutableState.sol';
 import './base/PeripheryValidation.sol';
-import './base/PeripheryPayments.sol';
+import './base/PeripheryPaymentsWithFee.sol';
 import './base/Multicall.sol';
 import './base/SelfPermit.sol';
 import './libraries/Path.sol';
@@ -23,7 +23,7 @@ contract SwapRouter is
     ISwapRouter,
     PeripheryImmutableState,
     PeripheryValidation,
-    PeripheryPayments,
+    PeripheryPaymentsWithFee,
     Multicall,
     SelfPermit
 {
@@ -132,6 +132,8 @@ contract SwapRouter is
         checkDeadline(params.deadline)
         returns (uint256 amountOut)
     {
+        address payer = msg.sender; // msg.sender pays for the first hop
+
         while (true) {
             bool hasMultiplePools = params.path.hasMultiplePools();
 
@@ -142,12 +144,13 @@ contract SwapRouter is
                 0,
                 SwapCallbackData({
                     path: params.path.getFirstPool(), // only the first pool in the path is necessary
-                    payer: msg.sender
+                    payer: payer
                 })
             );
 
             // decide whether to continue or terminate
             if (hasMultiplePools) {
+                payer = address(this); // at this point, the caller has paid
                 params.path = params.path.skipToken();
             } else {
                 amountOut = params.amountIn;
@@ -164,12 +167,12 @@ contract SwapRouter is
         address recipient,
         uint160 sqrtPriceLimitX96,
         SwapCallbackData memory data
-    ) private returns (int256 amount0Delta, int256 amount1Delta) {
+    ) private returns (uint256 amountIn) {
         (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
 
-        return
+        (int256 amount0Delta, int256 amount1Delta) =
             getPool(tokenIn, tokenOut, fee).swap(
                 recipient,
                 zeroForOne,
@@ -179,6 +182,14 @@ contract SwapRouter is
                     : sqrtPriceLimitX96,
                 abi.encode(data)
             );
+
+        uint256 amountOutReceived;
+        (amountIn, amountOutReceived) = zeroForOne
+            ? (uint256(amount0Delta), uint256(-amount1Delta))
+            : (uint256(amount1Delta), uint256(-amount0Delta));
+        // it's technically possible to not receive the full output amount,
+        // so if no price limit has been specified, require this possibility away
+        if (sqrtPriceLimitX96 == 0) require(amountOutReceived == amountOut);
     }
 
     /// @inheritdoc ISwapRouter
@@ -189,23 +200,17 @@ contract SwapRouter is
         checkDeadline(params.deadline)
         returns (uint256 amountIn)
     {
-        (int256 amount0Delta, int256 amount1Delta) =
-            exactOutputInternal(
-                params.amountOut,
-                params.recipient,
-                params.sqrtPriceLimitX96,
-                SwapCallbackData({
-                    path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn),
-                    payer: msg.sender
-                })
-            );
-
         // avoid an SLOAD by using the swap return data
-        amountIn = uint256(params.tokenIn < params.tokenOut ? amount0Delta : amount1Delta);
+        amountIn = exactOutputInternal(
+            params.amountOut,
+            params.recipient,
+            params.sqrtPriceLimitX96,
+            SwapCallbackData({path: abi.encodePacked(params.tokenOut, params.fee, params.tokenIn), payer: msg.sender})
+        );
 
+        require(amountIn <= params.amountInMaximum, 'Too much requested');
         // has to be reset even though we don't use it in the single hop case
         amountInCached = DEFAULT_AMOUNT_IN_CACHED;
-        require(amountIn <= params.amountInMaximum, 'Too much requested');
     }
 
     /// @inheritdoc ISwapRouter
@@ -216,6 +221,8 @@ contract SwapRouter is
         checkDeadline(params.deadline)
         returns (uint256 amountIn)
     {
+        // it's okay that the payer is fixed to msg.sender here, as they're only paying for the "final" exact output
+        // swap, which happens first, and subsequent swaps are paid for within nested callback frames
         exactOutputInternal(
             params.amountOut,
             params.recipient,
@@ -224,7 +231,7 @@ contract SwapRouter is
         );
 
         amountIn = amountInCached;
-        amountInCached = DEFAULT_AMOUNT_IN_CACHED;
         require(amountIn <= params.amountInMaximum, 'Too much requested');
+        amountInCached = DEFAULT_AMOUNT_IN_CACHED;
     }
 }

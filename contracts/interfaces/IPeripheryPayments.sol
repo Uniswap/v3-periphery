@@ -10,7 +10,7 @@ interface IPeripheryPayments {
     /// @param recipient The address receiving ETH
     function unwrapWETH9(uint256 amountMinimum, address recipient) external payable;
 
-    /// @notice Sends the full amount of a token held by this contract to the given recipient
+    /// @notice Transfers the full amount of a token held by this contract to recipient
     /// @dev The amountMinimum parameter prevents malicious contracts from stealing the token from users
     /// @param token The contract address of the token which will be transferred to `recipient`
     /// @param amountMinimum The minimum amount of token required for a transfer
