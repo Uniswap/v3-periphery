@@ -7,7 +7,14 @@ import { Fixture } from 'ethereum-waffle'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { base64Encode } from './shared/base64encode'
+import { formatSqrtRatioX96 } from './shared/formatSqrtRatioX96'
 import { getMaxTick, getMinTick } from './shared/ticks'
+import Decimal from 'decimal.js'
+import { randomBytes } from 'crypto'
+
+const TEN = BigNumber.from(10)
+const LOWEST_SQRT_RATIO = 4310618292
+const HIGHEST_SQRT_RATIO = BigNumber.from(33849).mul(TEN.pow(34))
 
 describe('NFTDescriptor', () => {
   const wallets = waffle.provider.getWallets()
@@ -413,14 +420,9 @@ describe('NFTDescriptor', () => {
     })
 
     describe('when tokens have different decimal precision', () => {
-      let ratio: BigNumber
-      before(() => {
-        ratio = encodePriceSqrt(1, 1)
-      })
-
       describe('when baseToken has more precision decimals than quoteToken', () => {
         it('returns the correct string when the decimal difference is even', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 18, 16)).to.eq('100.00')
+          expect(await nftDescriptor.fixedPointToDecimalString(encodePriceSqrt(1, 1), 18, 16)).to.eq('100.00')
         })
 
         it('returns the correct string when the decimal difference is odd', async () => {
@@ -428,18 +430,18 @@ describe('NFTDescriptor', () => {
           expect(await nftDescriptor.fixedPointToDecimalString(tenRatio, 18, 17)).to.eq('100.00')
         })
 
-        it('does not account for higher baseToken precision if difference is more than 18', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 24, 5)).to.eq('1.0000')
+        it('does not account for higher token0 precision if difference is more than 18', async () => {
+          expect(await nftDescriptor.fixedPointToDecimalString(encodePriceSqrt(1, 1), 24, 5)).to.eq('1.0000')
         })
       })
 
       describe('when quoteToken has more precision decimals than baseToken', () => {
         it('returns the correct string when the decimal difference is even', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 10, 18)).to.eq('0.000000010000')
+          expect(await nftDescriptor.fixedPointToDecimalString(encodePriceSqrt(1, 1), 10, 18)).to.eq('0.000000010000')
         })
 
         it('returns the correct string when the decimal difference is odd', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 7, 18)).to.eq('0.0000000010000')
+          expect(await nftDescriptor.fixedPointToDecimalString(encodePriceSqrt(1, 1), 7, 18)).to.eq('0.000000000010000')
         })
 
         // TODO: provide compatibility token prices that breach minimum price due to token decimal differences
@@ -450,10 +452,43 @@ describe('NFTDescriptor', () => {
           )
         })
 
-        it('does not account for higher quoteToken precision if difference is more than 18', async () => {
-          expect(await nftDescriptor.fixedPointToDecimalString(ratio, 24, 5)).to.eq('1.0000')
+        it('does not account for higher token1 precision if difference is more than 18', async () => {
+          expect(await nftDescriptor.fixedPointToDecimalString(encodePriceSqrt(1, 1), 24, 5)).to.eq('1.0000')
         })
       })
+
+      it('some fuzz', async () => {
+        const random = (min: number, max: number): number => {
+          return Math.floor(min + ((Math.random() * 100) % (max + 1 - min)))
+        }
+
+        const inputs: [BigNumber, number, number][] = []
+        let i = 0
+        while (i <= 20) {
+          const ratio = BigNumber.from(`0x${randomBytes(random(7, 20)).toString('hex')}`)
+          const decimals0 = random(3, 21)
+          const decimals1 = random(3, 21)
+          const decimalDiff = Math.abs(decimals0 - decimals1)
+
+          // TODO: Address edgecase out of bounds prices due to decimal differences
+          if (
+            ratio.div(TEN.pow(decimalDiff)).gt(LOWEST_SQRT_RATIO) &&
+            ratio.mul(TEN.pow(decimalDiff)).lt(HIGHEST_SQRT_RATIO)
+          ) {
+            inputs.push([ratio, decimals0, decimals1])
+            i++
+          }
+        }
+
+        for (let i in inputs) {
+          let ratio: BigNumber | number
+          let decimals0: number
+          let decimals1: number
+          ;[ratio, decimals0, decimals1] = inputs[i]
+          let result = await nftDescriptor.fixedPointToDecimalString(ratio, decimals0, decimals1)
+          expect(formatSqrtRatioX96(ratio, decimals0, decimals1)).to.eq(result)
+        }
+      }).timeout(300_000)
     })
   })
 

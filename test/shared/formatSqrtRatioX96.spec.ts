@@ -1,6 +1,6 @@
 import { encodePriceSqrt } from './encodePriceSqrt'
 import { expect } from './expect'
-import formatSqrtRatioX96 from './formatSqrtRatioX96'
+import { formatSqrtRatioX96 } from './formatSqrtRatioX96'
 
 describe('#formatSqrtRatioX96', () => {
   it('is correct for 9_999_999/10_000_000', () => {

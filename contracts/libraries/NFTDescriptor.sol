@@ -201,11 +201,14 @@ library NFTDescriptor {
         if (difference > 0 && difference <= 18) {
             if (baseTokenDecimals > quoteTokenDecimals) {
                 adjustedSqrtRatioX96 = sqrtRatioX96.mul(10**(difference.div(2)));
+                if (difference % 2 == 1) {
+                    adjustedSqrtRatioX96 = FullMath.mulDiv(adjustedSqrtRatioX96, sqrt10X128, 1 << 128);
+                }
             } else {
                 adjustedSqrtRatioX96 = sqrtRatioX96.div(10**(difference.div(2)));
-            }
-            if (difference % 2 == 1) {
-                adjustedSqrtRatioX96 = FullMath.mulDiv(adjustedSqrtRatioX96, sqrt10X128, 1 << 128);
+                if (difference % 2 == 1) {
+                    adjustedSqrtRatioX96 = FullMath.mulDiv(adjustedSqrtRatioX96, 1 << 128, sqrt10X128);
+                }
             }
         } else {
             adjustedSqrtRatioX96 = uint256(sqrtRatioX96);
@@ -218,7 +221,6 @@ library NFTDescriptor {
 
     // @notice Returns string that includes first 5 significant figures of a decimal number
     // @param sqrtRatioX96 a sqrt price
-    // TODO: return price in terms of token/ETH for ETH pairs
     function fixedPointToDecimalString(
         uint160 sqrtRatioX96,
         uint8 baseTokenDecimals,

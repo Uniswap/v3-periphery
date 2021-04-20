@@ -1,19 +1,19 @@
 import { BigNumber } from 'ethers'
 import Decimal from 'decimal.js'
 
+const TWO = BigNumber.from(2)
 const TEN = BigNumber.from(10)
 const FIVE_SIG_FIGS_POW = new Decimal(10).pow(5)
 
-export default function formatSqrtRatioX96(
-  sqrtRatioX96: BigNumber,
+export function formatSqrtRatioX96(
+  sqrtRatioX96: BigNumber | number,
   decimalsToken0: number = 18,
   decimalsToken1: number = 18
 ): string {
-  Decimal.set({ precision: 5, toExpPos: 9_999_999, toExpNeg: -9_999_999, rounding: Decimal.ROUND_HALF_CEIL })
+  Decimal.set({ toExpPos: 9_999_999, toExpNeg: -9_999_999 })
 
-  const decRatio = new Decimal(sqrtRatioX96.toString())
-
-  let ratio = decRatio.div(new Decimal(2).pow(96)).pow(2)
+  let ratioNum = ((parseInt(sqrtRatioX96.toString()) / 2 ** 96) ** 2).toPrecision(5)
+  let ratio = new Decimal(ratioNum.toString())
 
   // adjust for decimals
   if (decimalsToken1 < decimalsToken0) {
