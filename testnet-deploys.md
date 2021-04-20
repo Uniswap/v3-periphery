@@ -4,7 +4,8 @@ The latest version of `@uniswap/v3-core`, `@uniswap/v3-periphery`,
 and supporting contracts (e.g. `WETH9`, `Multicall2`) are all
 deployed to testnets.
 
-These addresses are as of the following package versions:
+Note these addresses are not final, they will be changed as we make final updates to the periphery repository.
+These addresses are given as of the following releases (tagged commits + npm packages):
 
 - `@uniswap/v3-core`: `1.0.0-rc.2`
 - `@uniswap/v3-periphery`: `1.0.0-beta.20`
@@ -17,12 +18,12 @@ keys are mapped to their respective source code in the table below:
 | `v3CoreFactoryAddress`                      | https://github.com/Uniswap/uniswap-v3-core/blob/v1.0.0-rc.2/contracts/UniswapV3Factory.sol                                  |
 | `weth9Address`                              | https://rinkeby.etherscan.io/address/0xc778417E063141139Fce010982780140Aa0cD5Ab#code                                        |
 | `multicall2Address`                         | https://rinkeby.etherscan.io/address/0x5BA1e12693Dc8F9c48aAD8770482f4739bEeD696#code                                        |
-| `proxyAdminAddress`                         | https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v3.4.0-solc-0.7/contracts/proxy/ProxyAdmin.sol                  |
+| `proxyAdminAddress`                         | https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v3.4.1-solc-0.7-2/contracts/proxy/ProxyAdmin.sol                  |
 | `tickLensAddress`                           | https://github.com/Uniswap/uniswap-v3-periphery/blob/v1.0.0-beta.20/contracts/lens/TickLens.sol                             |
 | `quoterAddress`                             | https://github.com/Uniswap/uniswap-v3-periphery/blob/v1.0.0-beta.20/contracts/lens/Quoter.sol                               |
 | `swapRouter`                                | https://github.com/Uniswap/uniswap-v3-periphery/blob/v1.0.0-beta.20/contracts/SwapRouter.sol                                |
 | `nonfungibleTokenPositionDescriptorAddress` | https://github.com/Uniswap/uniswap-v3-periphery/blob/v1.0.0-beta.20/contracts/NonfungibleTokenPositionDescriptor.sol        |
-| `descriptorProxyAddress`                    | https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v3.4.0-solc-0.7/contracts/proxy/TransparentUpgradeableProxy.sol |
+| `descriptorProxyAddress`                    | https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v3.4.1-solc-0.7-2/contracts/proxy/TransparentUpgradeableProxy.sol |
 | `nonfungibleTokenPositionManagerAddress`    | https://github.com/Uniswap/uniswap-v3-periphery/blob/v1.0.0-beta.20/contracts/NonfungiblePositionManager.sol                |
 | `v3MigratorAddress`                         | https://github.com/Uniswap/uniswap-v3-periphery/blob/v1.0.0-beta.20/contracts/V3Migrator.sol                                |
 
