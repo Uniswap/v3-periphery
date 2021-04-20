@@ -131,7 +131,6 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
         bool zeroForOne = tokenIn < tokenOut;
 
         // if no price limit has been specified, cache the output amount for comparison in the swap callback
-        // the SSTORE ultimately gets reverted
         if (sqrtPriceLimitX96 == 0) amountOutCached = amountOut;
         try
             getPool(tokenIn, tokenOut, fee).swap(
@@ -144,7 +143,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
                 abi.encodePacked(tokenOut, fee, tokenIn)
             )
         {} catch (bytes memory reason) {
-            if (sqrtPriceLimitX96 == 0) delete amountOutCached;
+            if (sqrtPriceLimitX96 == 0) delete amountOutCached; // clear cache
             return parseRevertReason(reason);
         }
     }
