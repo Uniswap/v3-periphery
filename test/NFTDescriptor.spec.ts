@@ -420,7 +420,6 @@ describe('NFTDescriptor', () => {
     })
 
     describe('when tokens have different decimal precision', () => {
-
       describe('when baseToken has more precision decimals than quoteToken', () => {
         it('returns the correct string when the decimal difference is even', async () => {
           expect(await nftDescriptor.fixedPointToDecimalString(encodePriceSqrt(1, 1), 18, 16)).to.eq('100.00')
