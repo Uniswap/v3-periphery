@@ -462,7 +462,7 @@ describe('NFTDescriptor', () => {
           return Math.floor(min + ((Math.random() * 100) % (max + 1 - min)))
         }
 
-        const inputs = []
+        const inputs: [BigNumber, number, number][] = []
         let i = 0
         while (i <= 20) {
           const ratio = BigNumber.from(`0x${randomBytes(random(7, 20)).toString('hex')}`)
@@ -482,8 +482,8 @@ describe('NFTDescriptor', () => {
 
         for (let i in inputs) {
           let ratio: BigNumber | number
-          let decimals0: any
-          let decimals1: any
+          let decimals0: number
+          let decimals1: number
           ;[ratio, decimals0, decimals1] = inputs[i]
           let result = await nftDescriptor.fixedPointToDecimalString(ratio, decimals0, decimals1)
           expect(formatSqrtRatioX96(ratio, decimals0, decimals1)).to.eq(result)
