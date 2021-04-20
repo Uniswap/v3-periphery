@@ -398,42 +398,34 @@ describe('NFTDescriptor', () => {
       })
 
       it('some fuzz', async () => {
-        const random3To21 = () => {
-          return Math.floor(3 + ((Math.random() * 100) % 18))
-        }
-        const random1To20 = () => {
-          return Math.floor(1 + ((Math.random() * 100) % 19))
+        const random = (min: number, max: number): number => {
+          return Math.floor(min + ((Math.random() * 100) % (max + 1 - min)))
         }
 
         const inputs = []
         let i = 0
         while (i <= 10) {
-          const value = randomBytes(random1To20())
-          const decimals0 = random3To21()
-          const decimals1 = random3To21()
+          const ratio = BigNumber.from(`0x${randomBytes(random(7, 20)).toString('hex')}`)
+          const decimals0 = random(3, 21)
+          const decimals1 = random(3, 21)
           const decimalDiff = Math.abs(decimals0 - decimals1)
 
           // TODO: Address edgecase out of bounds prices due to decimal differences
-          if (
-            BigNumber.from(`0x${value.toString('hex')}`)
-              .div(TEN.pow(decimalDiff))
-              .gt(LOWEST_SQRT_RATIO) &&
-            BigNumber.from(`0x${value.toString('hex')}`)
-              .mul(TEN.pow(decimalDiff))
-              .lt(HIGHEST_SQRT_RATIO)
+          if (ratio.div(TEN.pow(decimalDiff)).gt(LOWEST_SQRT_RATIO) &&
+            ratio.mul(TEN.pow(decimalDiff)).lt(HIGHEST_SQRT_RATIO)
           ) {
-            inputs.push([BigNumber.from(`0x${value.toString('hex')}`), decimals0, decimals1])
+            inputs.push([ratio, decimals0, decimals1])
             i++
           }
         }
 
         for (let i in inputs) {
-          let input: any
+          let ratio: BigNumber | number
           let decimals0: any
           let decimals1: any
-          ;[input, decimals0, decimals1] = inputs[i]
-          let result = await nftDescriptor.fixedPointToDecimalString(input, decimals0, decimals1)
-          expect(formatSqrtRatioX96(input, decimals0, decimals1)).to.eq(result)
+          ;[ratio, decimals0, decimals1] = inputs[i]
+          let result = await nftDescriptor.fixedPointToDecimalString(ratio, decimals0, decimals1)
+          expect(formatSqrtRatioX96(ratio, decimals0, decimals1)).to.eq(result)
         }
       }).timeout(300_000)
     })
