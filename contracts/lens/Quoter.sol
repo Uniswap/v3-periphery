@@ -21,6 +21,9 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
     using Path for bytes;
     using SafeCast for uint256;
 
+    /// @dev Transient storage variable used to check a safety condition in exact output swaps.
+    uint256 private amountOutCached;
+
     constructor(address _factory, address _WETH9) PeripheryImmutableState(_factory, _WETH9) {}
 
     function getPool(
@@ -51,6 +54,8 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
                 revert(ptr, 32)
             }
         } else {
+            // if the cache has been populated, ensure that the full output amount has been received
+            if (amountOutCached != 0) require(amountReceived == amountOutCached);
             assembly {
                 let ptr := mload(0x40)
                 mstore(ptr, amountToPay)
@@ -86,7 +91,9 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
                 address(this), // address(0) might cause issues with some tokens
                 zeroForOne,
                 amountIn.toInt256(),
-                sqrtPriceLimitX96,
+                sqrtPriceLimitX96 == 0
+                    ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+                    : sqrtPriceLimitX96,
                 abi.encodePacked(tokenIn, fee, tokenOut)
             )
         {} catch (bytes memory reason) {
@@ -102,13 +109,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
             // the outputs of prior swaps become the inputs to subsequent ones
-            amountIn = quoteExactInputSingle(
-                tokenIn,
-                tokenOut,
-                fee,
-                amountIn,
-                tokenIn < tokenOut ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1
-            );
+            amountIn = quoteExactInputSingle(tokenIn, tokenOut, fee, amountIn, 0);
 
             // decide whether to continue or terminate
             if (hasMultiplePools) {
@@ -129,15 +130,20 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
     ) public override returns (uint256 amountIn) {
         bool zeroForOne = tokenIn < tokenOut;
 
+        // if no price limit has been specified, cache the output amount for comparison in the swap callback
+        if (sqrtPriceLimitX96 == 0) amountOutCached = amountOut;
         try
             getPool(tokenIn, tokenOut, fee).swap(
                 address(this), // address(0) might cause issues with some tokens
                 zeroForOne,
                 -amountOut.toInt256(),
-                sqrtPriceLimitX96,
+                sqrtPriceLimitX96 == 0
+                    ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
+                    : sqrtPriceLimitX96,
                 abi.encodePacked(tokenOut, fee, tokenIn)
             )
         {} catch (bytes memory reason) {
+            if (sqrtPriceLimitX96 == 0) delete amountOutCached; // clear cache
             return parseRevertReason(reason);
         }
     }
@@ -150,13 +156,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
             (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
 
             // the inputs of prior swaps become the outputs of subsequent ones
-            amountOut = quoteExactOutputSingle(
-                tokenIn,
-                tokenOut,
-                fee,
-                amountOut,
-                tokenIn < tokenOut ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1
-            );
+            amountOut = quoteExactOutputSingle(tokenIn, tokenOut, fee, amountOut, 0);
 
             // decide whether to continue or terminate
             if (hasMultiplePools) {
