@@ -16,6 +16,7 @@ import './base/Multicall.sol';
 import './base/ERC721Permit.sol';
 import './base/PeripheryValidation.sol';
 import './base/SelfPermit.sol';
+import './base/PoolInitializer.sol';
 
 /// @title NFT positions
 /// @notice Wraps Uniswap V3 positions in the ERC721 non-fungible token interface
@@ -24,6 +25,7 @@ contract NonfungiblePositionManager is
     Multicall,
     ERC721Permit,
     PeripheryImmutableState,
+    PoolInitializer,
     LiquidityManagement,
     PeripheryValidation,
     SelfPermit
@@ -111,26 +113,6 @@ contract NonfungiblePositionManager is
             position.tokensOwed0,
             position.tokensOwed1
         );
-    }
-
-    /// @inheritdoc INonfungiblePositionManager
-    function createAndInitializePoolIfNecessary(
-        address tokenA,
-        address tokenB,
-        uint24 fee,
-        uint160 sqrtPriceX96
-    ) external payable override returns (address pool) {
-        pool = IUniswapV3Factory(factory).getPool(tokenA, tokenB, fee);
-
-        if (pool == address(0)) {
-            pool = IUniswapV3Factory(factory).createPool(tokenA, tokenB, fee);
-            IUniswapV3Pool(pool).initialize(sqrtPriceX96);
-        } else {
-            (uint160 sqrtPriceX96Existing, , , , , , ) = IUniswapV3Pool(pool).slot0();
-            if (sqrtPriceX96Existing == 0) {
-                IUniswapV3Pool(pool).initialize(sqrtPriceX96);
-            }
-        }
     }
 
     /// @dev Caches a pool key

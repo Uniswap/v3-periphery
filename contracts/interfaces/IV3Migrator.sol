@@ -4,24 +4,11 @@ pragma abicoder v2;
 
 import './IMulticall.sol';
 import './ISelfPermit.sol';
+import './IPoolInitializer.sol';
 
 /// @title V3 Migrator
 /// @notice Enables migration of liqudity from Uniswap v2-compatible pairs into Uniswap v3 pools
-interface IV3Migrator is IMulticall, ISelfPermit {
-    /// @notice Creates a new pool if it does not exist, then initializes if not initialized
-    /// @dev This method can wrapped for use in multicall
-    /// @param tokenA The contract address of either token0 or token1 in the v2 pair
-    /// We use tokenA and tokenB when we are referring to unsorted, or unordered tokens
-    /// @param tokenB The contract address of the other token, unsorted
-    /// @param fee The fee amount of the v3 pool for the specified token pair
-    /// @param sqrtPriceX96 The initial square root price of the pool as a Q64.96 value
-    function createAndInitializePoolIfNecessary(
-        address tokenA,
-        address tokenB,
-        uint24 fee,
-        uint160 sqrtPriceX96
-    ) external;
-
+interface IV3Migrator is IMulticall, ISelfPermit, IPoolInitializer {
     struct MigrateParams {
         address pair; // the Uniswap v2-compatible pair
         uint256 liquidityToMigrate; // expected to be balanceOf(msg.sender)

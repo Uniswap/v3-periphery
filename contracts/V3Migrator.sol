@@ -14,9 +14,10 @@ import './base/PeripheryImmutableState.sol';
 import './base/Multicall.sol';
 import './base/SelfPermit.sol';
 import './interfaces/external/IWETH9.sol';
+import './base/PoolInitializer.sol';
 
 /// @title Uniswap V3 Migrator
-contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPermit {
+contract V3Migrator is IV3Migrator, PeripheryImmutableState, PoolInitializer, Multicall, SelfPermit {
     using LowGasSafeMath for uint256;
 
     address public immutable nonfungiblePositionManager;
@@ -31,21 +32,6 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, Multicall, SelfPerm
 
     receive() external payable {
         require(msg.sender == WETH9, 'Not WETH9');
-    }
-
-    // wrap createAndInitializePoolIfNecessary for use in multicall
-    function createAndInitializePoolIfNecessary(
-        address tokenA,
-        address tokenB,
-        uint24 fee,
-        uint160 sqrtPriceX96
-    ) external override {
-        INonfungiblePositionManager(nonfungiblePositionManager).createAndInitializePoolIfNecessary(
-            tokenA,
-            tokenB,
-            fee,
-            sqrtPriceX96
-        );
     }
 
     function migrate(MigrateParams calldata params) external override {

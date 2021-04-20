@@ -5,6 +5,7 @@ pragma abicoder v2;
 import '@openzeppelin/contracts/token/ERC721/IERC721Metadata.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol';
 
+import './IPoolInitializer.sol';
 import './IERC721Permit.sol';
 import './IPeripheryImmutableState.sol';
 import '../libraries/PoolAddress.sol';
@@ -12,7 +13,13 @@ import '../libraries/PoolAddress.sol';
 /// @title Non-fungible token for positions
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
-interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metadata, IERC721Enumerable, IERC721Permit {
+interface INonfungiblePositionManager is
+    IPoolInitializer,
+    IPeripheryImmutableState,
+    IERC721Metadata,
+    IERC721Enumerable,
+    IERC721Permit
+{
     /// @notice Emitted when liquidity is increased for a position NFT
     /// @dev Also emitted when a token is minted
     /// @param tokenId The ID of the token for which liquidity was increased
@@ -66,21 +73,6 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
             uint128 tokensOwed0,
             uint128 tokensOwed1
         );
-
-    /// @notice Creates a new pool if it does not exist, then initializes if not initialized
-    /// @dev This method can be bundled with mint for the first mint of a pool to create, initialize a pool and mint at the same time
-    /// @param tokenA The contract address of either token0 or token1
-    /// We use tokenA and tokenB when we are referring to unsorted, or unordered tokens
-    /// @param tokenB The contract address of the other token, unsorted
-    /// @param fee The fee amount of the v3 pool for the specified token pair
-    /// @param sqrtPriceX96 The initial square root price of the pool as a Q64.96 value
-    /// @return pool Returns the pool address based on the pair of tokens and fee, will return the newly created pool address if necessary
-    function createAndInitializePoolIfNecessary(
-        address tokenA,
-        address tokenB,
-        uint24 fee,
-        uint160 sqrtPriceX96
-    ) external payable returns (address pool);
 
     struct MintParams {
         address token0;
