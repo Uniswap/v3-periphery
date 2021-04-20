@@ -153,11 +153,11 @@ interface INonfungiblePositionManager is IPeripheryImmutableState, IERC721Metada
     /// @notice Decreases the amount of liquidity in a position and accounts it to the position
     /// @param params tokenId The ID of the token for which liquidity is being decreased,
     /// amount The amount by which liquidity will be decreased,
-    /// amount0Min The minimum amount of token0 that should be received in the burn,
-    /// amount1Min The minimum amount of token1 that should be received in the burn,
+    /// amount0Min The minimum amount of token0 that should be accounted for the burned liquidity,
+    /// amount1Min The minimum amount of token1 that should be accounted for the burned liquidity,
     /// deadline The time by which the transaction must be included to effect the change
-    /// @return amount0 The amount of token0 sent to recipient
-    /// @return amount1 The amount of token1 sent to recipient
+    /// @return amount0 The amount of token0 accounted to the position's tokens owed
+    /// @return amount1 The amount of token1 accounted to the position's tokens owed
     function decreaseLiquidity(DecreaseLiquidityParams calldata params)
         external
         payable
