@@ -41,7 +41,7 @@ to be eligible for the bug bounty:
 ## Rewards
 
 Rewards will be allocated based on the severity of the bug disclosed and will be evaluated and rewarded at the discretion of the Uniswap Labs team.
-For critical bugs that lead to any significant loss of user funds (>1% or user slippage tolerance, whichever is greater),
+For critical bugs that lead to loss of user funds (more than 1% or user specified slippage tolerance),
 rewards of up to $500,000 will be granted. Lower severity bugs will be rewarded at the discretion of the team.
 In addition, all vulnerabilities disclosed prior to the mainnet launch date will be subject to receive higher rewards.
 
