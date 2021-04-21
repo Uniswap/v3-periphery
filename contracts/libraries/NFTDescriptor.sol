@@ -407,28 +407,43 @@ library NFTDescriptor {
         int24 tickCurrent,
         int24 tickSpacing
     ) internal pure returns (string memory svg) {
-        string memory quoteTokenColor = tokenToColorHex(uint256(quoteToken), 136);
-        string memory baseTokenColor = tokenToColorHex(uint256(baseToken), 136);
-        (uint256 tickLowerNormalized, uint256 tickUpperNormalized) =
-            normalizeTicks(tickLower, tickUpper, tickCurrent, tickSpacing);
+        string memory c0 = tokenToColorHex(uint256(quoteToken), 136);
+        string memory c1 = tokenToColorHex(uint256(baseToken), 136);
+        string memory c2 = tokenToColorHex(uint256(quoteToken), 0);
+        string memory c3 = tokenToColorHex(uint256(baseToken), 0);
+        string memory r1w = '290';
+        string memory r1h = '500';
+        string memory r1c = '42';
         svg = string(
             abi.encodePacked(
-                '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">',
-                '<circle cx="12" cy="12" r="12" fill=',
-                quoteTokenColor,
-                ' stroke="white"/>',
-                '<g clip-path=url(#beta-',
-                quoteTokenColor,
-                ')>',
-                '<circle cx="12" cy="12" r="12" fill=',
-                baseTokenColor,
-                ' stroke="white"/></g>',
-                '<circle cx="12" cy="12" r="4" style=mix-blend-mode:overlay fill="white" />',
-                '<circle cx="12" cy="12" r="8" style=mix-blend-mode:overlay fill="white" />',
-                '<defs><clipPath id=beta-',
-                quoteTokenColor,
-                '><rect width=12 height="24" fill="white"/>',
-                '</clipPath></defs></svg>'
+              '<svg width="',
+              r1w,
+              '" height="',
+              r1h,
+              '" viewBox="0 0 ',
+              r1w,
+              ' ',
+              r1h,
+              '" xmlns="http://www.w3.org/2000/svg"',
+              'xmlns:xlink="http://www.w3.org/1999/xlink"><style>@import url(',
+              '"https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap");</style><defs>',
+          /* <!-- Background gradient --> */
+              '<filter id="f1"><feImage result="p0" '
+               'xlink:href="data:image/svg+xml;utf8,%3Csvg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="290px" height="500px" fill="%23',
+               c0,
+               '"/%3E%3C/svg%3E" />',
+               '<feImage result="p1" xlink:href="data:image/svg+xml;utf8,%3Csvg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"%3E%3Ccircle cx="${x1}" cy="${y1}" r="120px" fill="%23',
+               c1,
+               '"/%3E%3C/svg%3E" />',
+               '<feImage result="p2" xlink:href="data:image/svg+xml;utf8,%3Csvg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"%3E%3Ccircle cx="${x2}" cy="${y2}" r="120px" fill="%23',
+               c2,
+               '"/%3E%3C/svg%3E" />',
+               '<feImage result="p3" xlink:href="data:image/svg+xml;utf8,%3Csvg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"%3E%3Ccircle cx="${x3}" cy="${y3}" r="$100px" fill="%23',
+               c3,
+               '"/%3E%3C/svg%3E" />',
+               '<feBlend mode="overlay" in="p0" in2="p1" /> <feBlend mode="exclusion" in2="p2" /><feBlend mode="overlay" in2="p3" result="blendOut" /><feGaussianBlur in="blendOut" stdDeviation="42" /></filter>',
+               '<clipPath id="corners"> rect width="${r1w}" height="${r1h}" rx="${r1c}" ry="${r1c}" /></clipPath>',
+               '<path id="text-path-a" d="M40 12 H250 A28 28 0 0 1 278 40 V460 A28 28 0 0 1 250 488 H40 A28 28 0 0 1 12 460 V40 A28 28 0 0 1 40 12 z" />'
             )
         );
     }
