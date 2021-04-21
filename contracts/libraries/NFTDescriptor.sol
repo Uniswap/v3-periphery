@@ -40,8 +40,8 @@ library NFTDescriptor {
 
     function constructTokenURI(ConstructTokenURIParams memory params) internal pure returns (string memory) {
         string memory feeTier = feeToPercentString(params.fee);
-        string memory quoteSymbolFormatted = formatTokenSymbol(params.quoteTokenSymbol);
-        string memory baseSymbolFormatted = formatTokenSymbol(params.baseTokenSymbol);
+        string memory quoteSymbolFormatted = escapeQuotes(params.quoteTokenSymbol);
+        string memory baseSymbolFormatted = escapeQuotes(params.baseTokenSymbol);
         string memory name =
             string(
                 abi.encodePacked(
@@ -112,13 +112,12 @@ library NFTDescriptor {
             );
     }
 
-    function formatTokenSymbol(string memory symbol) internal pure returns (string memory) {
-        bytes memory symbolBytes = bytes(symbol);
-        uint8 quotesCount = 0;
-        for (uint8 i = 0; i < symbolBytes.length; i++) {
-            if (symbolBytes[i] == '"') {
-                quotesCount++;
-            }
+    function escapeQuotes(string memory symbol) internal pure returns (string memory) {
+      bytes memory symbolBytes = bytes(symbol);
+      uint8 quotesCount = 0;
+      for(uint8 i = 0; i < symbolBytes.length; i++) {
+        if (symbolBytes[i] == '"') {
+          quotesCount++;
         }
         if (quotesCount > 0) {
             bytes memory formattedBytes = new bytes(symbolBytes.length + (quotesCount));
