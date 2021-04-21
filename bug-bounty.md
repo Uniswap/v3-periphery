@@ -1,5 +1,3 @@
-# Bug bounty not active until merged
-
 # Uniswap V3 Bug Bounty
 
 ## Overview
