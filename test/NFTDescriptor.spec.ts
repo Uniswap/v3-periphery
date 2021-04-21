@@ -51,21 +51,37 @@ describe('NFTDescriptor', () => {
   })
 
   describe('#constructTokenURI', () => {
-    it('returns the valid JSON string with min and max ticks', async () => {
-      const tokenId = 123
-      const baseTokenAddress = tokens[0].address
-      const quoteTokenAddress = tokens[1].address
-      const baseTokenSymbol = await tokens[0].symbol()
-      const quoteTokenSymbol = await tokens[1].symbol()
-      const baseTokenDecimals = await tokens[0].decimals()
-      const quoteTokenDecimals = await tokens[1].decimals()
-      const flipRatio = false
-      const tickLower = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
-      const tickUpper = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
-      const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
-      const fee = 3000
-      const poolAddress = `0x${'b'.repeat(40)}`
+    let tokenId: number
+    let baseTokenAddress: string
+    let quoteTokenAddress: string
+    let baseTokenSymbol: string
+    let quoteTokenSymbol: string
+    let baseTokenDecimals: number
+    let quoteTokenDecimals: number
+    let flipRatio: boolean
+    let tickLower: number
+    let tickUpper: number
+    let tickSpacing: number
+    let fee: number
+    let poolAddress: string
 
+    beforeEach(async () => {
+      tokenId = 123
+      baseTokenAddress = tokens[0].address
+      quoteTokenAddress = tokens[1].address
+      baseTokenSymbol = await tokens[0].symbol()
+      quoteTokenSymbol = await tokens[1].symbol()
+      baseTokenDecimals = await tokens[0].decimals()
+      quoteTokenDecimals = await tokens[1].decimals()
+      flipRatio = false
+      tickLower = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
+      tickUpper = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
+      tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
+      fee = 3000
+      poolAddress = `0x${'b'.repeat(40)}`
+    })
+
+    it('returns the valid JSON string with min and max ticks', async () => {
       const uri = await nftDescriptor.constructTokenURI({
         tokenId,
         baseTokenAddress,
@@ -97,19 +113,10 @@ describe('NFTDescriptor', () => {
     })
 
     it('returns the valid JSON string with mid ticks', async () => {
-      const tokenId = 123
-      const baseTokenAddress = tokens[0].address
-      const quoteTokenAddress = tokens[1].address
-      const baseTokenSymbol = await tokens[0].symbol()
-      const quoteTokenSymbol = await tokens[1].symbol()
-      const baseTokenDecimals = await tokens[0].decimals()
-      const quoteTokenDecimals = await tokens[1].decimals()
-      const flipRatio = false
-      const tickLower = -10
-      const tickUpper = 10
-      const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
-      const fee = 3000
-      const poolAddress = `0x${'b'.repeat(40)}`
+      tickLower = -10
+      tickUpper = 10
+      tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
+      fee = 3000
 
       const uri = await nftDescriptor.constructTokenURI({
         tokenId,
@@ -141,21 +148,8 @@ describe('NFTDescriptor', () => {
       )
     })
 
-    it('returns the valid JSON when the token ratio is flipped', async () => {
-      const tokenId = 123
-      const baseTokenAddress = tokens[0].address
-      const quoteTokenAddress = tokens[1].address
-      const baseTokenSymbol = await tokens[0].symbol()
-      const quoteTokenSymbol = await tokens[1].symbol()
-      const baseTokenDecimals = await tokens[0].decimals()
-      const quoteTokenDecimals = await tokens[1].decimals()
-      const flipRatio = true
-      const tickLower = -10
-      const tickUpper = 10
-      const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
-      const fee = 3000
-      const poolAddress = `0x${'b'.repeat(40)}`
-
+    it('returns valid JSON when token symbols contain quotes', async () => {
+      quoteTokenSymbol = '"TES"T1"'
       const uri = await nftDescriptor.constructTokenURI({
         tokenId,
         baseTokenAddress,
@@ -181,26 +175,82 @@ describe('NFTDescriptor', () => {
           quoteTokenSymbol,
           flipRatio,
           '0.3%',
-          '0.99900<>1.0010'
+          'MIN<>MAX'
         )
       )
+    })
+
+    describe('when the token ratio is flipped', () => {
+      it('returns the valid JSON for mid ticks', async () => {
+        flipRatio = true
+        tickLower = -10
+        tickUpper = 10
+
+        const uri = await nftDescriptor.constructTokenURI({
+          tokenId,
+          baseTokenAddress,
+          quoteTokenAddress,
+          baseTokenSymbol,
+          quoteTokenSymbol,
+          baseTokenDecimals,
+          quoteTokenDecimals,
+          flipRatio,
+          tickLower,
+          tickUpper,
+          tickSpacing,
+          fee,
+          poolAddress,
+        })
+        expect(uri).to.equal(
+          tokenURI(
+            tokenId,
+            baseTokenAddress,
+            quoteTokenAddress,
+            poolAddress,
+            baseTokenSymbol,
+            quoteTokenSymbol,
+            flipRatio,
+            '0.3%',
+            '0.99900<>1.0010'
+          )
+        )
+      })
+
+      it('returns the valid JSON for min/max ticks', async () => {
+        flipRatio = true
+
+        const uri = await nftDescriptor.constructTokenURI({
+          tokenId,
+          baseTokenAddress,
+          quoteTokenAddress,
+          baseTokenSymbol,
+          quoteTokenSymbol,
+          baseTokenDecimals,
+          quoteTokenDecimals,
+          flipRatio,
+          tickLower,
+          tickUpper,
+          tickSpacing,
+          fee,
+          poolAddress,
+        })
+        expect(uri).to.equal(
+          tokenURI(
+            tokenId,
+            baseTokenAddress,
+            quoteTokenAddress,
+            poolAddress,
+            baseTokenSymbol,
+            quoteTokenSymbol,
+            flipRatio,
+            '0.3%',
+            'MIN<>MAX'
+          )
+        )
+      })
     })
 
     it('gas', async () => {
-      const tokenId = 123
-      const baseTokenAddress = tokens[0].address
-      const quoteTokenAddress = tokens[1].address
-      const baseTokenSymbol = await tokens[0].symbol()
-      const quoteTokenSymbol = await tokens[1].symbol()
-      const baseTokenDecimals = await tokens[0].decimals()
-      const quoteTokenDecimals = await tokens[1].decimals()
-      const flipRatio = false
-      const tickLower = -10
-      const tickUpper = 10
-      const tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
-      const fee = 3000
-      const poolAddress = `0x${'b'.repeat(40)}`
-
       await snapshotGasCost(
         nftDescriptor.getGasCostOfConstructTokenURI({
           tokenId,
@@ -602,6 +652,8 @@ beta-${quoteTokenColor}><rect width=12 height="24" fill="white"/></clipPath></de
     fee: string,
     prices: string
   ): string {
+    baseTokenSymbol = baseTokenSymbol.replace(/"/gi, '\\"')
+    quoteTokenSymbol = quoteTokenSymbol.replace(/"/gi, '\\"')
     return `data:application/json,{\
 "name":"Uniswap - ${fee} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}", \
 "description":"This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\\n\
