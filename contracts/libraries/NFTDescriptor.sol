@@ -121,15 +121,15 @@ library NFTDescriptor {
             }
         }
         if (quotesCount > 0) {
-            bytes memory formattedBytes = new bytes(symbolBytes.length + (quotesCount));
+            bytes memory escapedBytes = new bytes(symbolBytes.length + (quotesCount));
             uint256 index;
             for (uint8 i = 0; i < symbolBytes.length; i++) {
                 if (symbolBytes[i] == '"') {
-                    formattedBytes[index++] = '\\';
+                    escapedBytes[index++] = '\\';
                 }
-                formattedBytes[index++] = symbolBytes[i];
+                escapedBytes[index++] = symbolBytes[i];
             }
-            return string(formattedBytes);
+            return string(escapedBytes);
         }
         return symbol;
     }
