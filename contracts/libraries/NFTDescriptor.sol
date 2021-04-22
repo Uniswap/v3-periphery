@@ -447,4 +447,9 @@ library NFTDescriptor {
             )
         );
     }
+
+    function scale(uint8 n, uint8 inMn, uint8 inMx, uint8 outMn, uint8 outMx) private pure returns (string memory) {
+      return n.sub(inMn).mul(outMx.sub(outMn)).div(inMx.sub(inMn)).add(outMn).toString();
+    }
+
 }
