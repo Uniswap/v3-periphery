@@ -83,7 +83,7 @@ describe('NFTDescriptor', () => {
       poolAddress = `0x${'b'.repeat(40)}`
     })
 
-    it('returns the valid JSON string with min and max ticks', async () => {
+    it.only('returns the valid JSON string with min and max ticks', async () => {
       const uri = await nftDescriptor.constructTokenURI({
         tokenId,
         baseTokenAddress,
@@ -628,13 +628,15 @@ describe('NFTDescriptor', () => {
     })
   })
 
-  describe('#svgImage', () => {
+  describe.only('#svgImage', () => {
     it('returns the svgImage', async () => {
       const tickLower = 1
       const tickUpper = 10
       const tickSpacing = 3
       const tickCurrent = 4
-      expect(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address, tickLower, tickUpper, tickSpacing, tickCurrent)).to.eq(
+      const token0Symbol = await tokens[0].symbol()
+      const token1Symbol = await tokens[1].symbol()
+      expect(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address, token0Symbol, token1Symbol, tickLower, tickUpper, tickSpacing, tickCurrent)).to.eq(
         svgImage(tokens[0].address, tokens[1].address)
       )
     })

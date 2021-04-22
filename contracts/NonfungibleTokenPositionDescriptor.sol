@@ -49,7 +49,7 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         bool _flipRatio = flipRatio(token0, token1, ChainId.get());
         address quoteTokenAddress = !_flipRatio ? token1 : token0;
         address baseTokenAddress = !_flipRatio ? token0 : token1;
-        (, int24 tick, , , , ,) = pool.slot0();
+        (, int24 tick, , , , , ) = pool.slot0();
 
         return
             NFTDescriptor.constructTokenURI(
