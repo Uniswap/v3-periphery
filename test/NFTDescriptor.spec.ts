@@ -16,7 +16,7 @@ const TEN = BigNumber.from(10)
 const LOWEST_SQRT_RATIO = 4310618292
 const HIGHEST_SQRT_RATIO = BigNumber.from(33849).mul(TEN.pow(34))
 
-describe.only('NFTDescriptor', () => {
+describe('NFTDescriptor', () => {
   const wallets = waffle.provider.getWallets()
 
   const nftDescriptorFixture: Fixture<{
