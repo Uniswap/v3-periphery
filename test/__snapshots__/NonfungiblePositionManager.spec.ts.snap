@@ -18,7 +18,9 @@ exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `176626`;
 
 exports[`NonfungiblePositionManager #mint gas first mint for pool 1`] = `619406`;
 
-exports[`NonfungiblePositionManager #mint gas first mint for pool using eth with 0 refund 1`] = `622524`;
+exports[`NonfungiblePositionManager #mint gas first mint for pool using eth with non-zero refund 1`] = `629749`;
+
+exports[`NonfungiblePositionManager #mint gas first mint for pool using eth with zero refund 1`] = `622524`;
 
 exports[`NonfungiblePositionManager #mint gas mint for same pool, different ticks 1`] = `451862`;
 

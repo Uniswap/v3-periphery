@@ -321,7 +321,7 @@ describe('NonfungiblePositionManager', () => {
       )
     })
 
-    it('gas first mint for pool using eth with 0 refund', async () => {
+    it('gas first mint for pool using eth with zero refund', async () => {
       const [token0, token1] = sortedTokens(weth9, tokens[0])
       await nft.createAndInitializePoolIfNecessary(
         token0.address,
@@ -351,6 +351,40 @@ describe('NonfungiblePositionManager', () => {
             nft.interface.encodeFunctionData('refundETH'),
           ],
           { value: 100 }
+        )
+      )
+    })
+
+    it('gas first mint for pool using eth with non-zero refund', async () => {
+      const [token0, token1] = sortedTokens(weth9, tokens[0])
+      await nft.createAndInitializePoolIfNecessary(
+        token0.address,
+        token1.address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await snapshotGasCost(
+        nft.multicall(
+          [
+            nft.interface.encodeFunctionData('mint', [
+              {
+                token0: token0.address,
+                token1: token1.address,
+                tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+                tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+                fee: FeeAmount.MEDIUM,
+                recipient: wallet.address,
+                amount0Desired: 100,
+                amount1Desired: 100,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: 10,
+              },
+            ]),
+            nft.interface.encodeFunctionData('refundETH'),
+          ],
+          { value: 1000 }
         )
       )
     })
