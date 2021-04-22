@@ -40,15 +40,17 @@ library NFTDescriptor {
 
     function constructTokenURI(ConstructTokenURIParams memory params) internal pure returns (string memory) {
         string memory feeTier = feeToPercentString(params.fee);
+        string memory quoteSymbolFormatted = escapeQuotes(params.quoteTokenSymbol);
+        string memory baseSymbolFormatted = escapeQuotes(params.baseTokenSymbol);
         string memory name =
             string(
                 abi.encodePacked(
                     'Uniswap - ',
                     feeTier,
                     ' - ',
-                    params.quoteTokenSymbol,
+                    quoteSymbolFormatted,
                     '/',
-                    params.baseTokenSymbol,
+                    baseSymbolFormatted,
                     ' - ',
                     tickToDecimalString(
                         !params.flipRatio ? params.tickLower : params.tickUpper,
@@ -71,19 +73,19 @@ library NFTDescriptor {
             string(
                 abi.encodePacked(
                     'This NFT represents a liquidity position in a Uniswap V3 ',
-                    params.quoteTokenSymbol,
+                    quoteSymbolFormatted,
                     '-',
-                    params.baseTokenSymbol,
+                    baseSymbolFormatted,
                     ' pool. ',
                     'The owner of this NFT can modify or redeem the position.\\n',
                     '\\nPool Address: ',
                     addressToString(params.poolAddress),
                     '\\n',
-                    params.quoteTokenSymbol,
+                    quoteSymbolFormatted,
                     ' Address: ',
                     addressToString(params.quoteTokenAddress),
                     '\\n',
-                    params.baseTokenSymbol,
+                    baseSymbolFormatted,
                     ' Address: ',
                     addressToString(params.baseTokenAddress),
                     '\\nFee Tier: ',
@@ -108,6 +110,28 @@ library NFTDescriptor {
                     '"}'
                 )
             );
+    }
+
+    function escapeQuotes(string memory symbol) internal pure returns (string memory) {
+        bytes memory symbolBytes = bytes(symbol);
+        uint8 quotesCount = 0;
+        for (uint8 i = 0; i < symbolBytes.length; i++) {
+            if (symbolBytes[i] == '"') {
+                quotesCount++;
+            }
+        }
+        if (quotesCount > 0) {
+            bytes memory escapedBytes = new bytes(symbolBytes.length + (quotesCount));
+            uint256 index;
+            for (uint8 i = 0; i < symbolBytes.length; i++) {
+                if (symbolBytes[i] == '"') {
+                    escapedBytes[index++] = '\\';
+                }
+                escapedBytes[index++] = symbolBytes[i];
+            }
+            return string(escapedBytes);
+        }
+        return symbol;
     }
 
     struct DecimalStringParams {
@@ -162,9 +186,9 @@ library NFTDescriptor {
         bool flipRatio
     ) internal pure returns (string memory) {
         if (tick == (TickMath.MIN_TICK / tickSpacing) * tickSpacing) {
-            return 'MIN';
+            return !flipRatio ? 'MIN' : 'MAX';
         } else if (tick == (TickMath.MAX_TICK / tickSpacing) * tickSpacing) {
-            return 'MAX';
+            return !flipRatio ? 'MAX' : 'MIN';
         } else {
             uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
             if (flipRatio) {
