@@ -40,6 +40,11 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
         }
     }
 
+    /// @inheritdoc IPeripheryPayments
+    function refundETH() external payable override {
+        if (address(this).balance > 0) TransferHelper.safeTransferETH(msg.sender, address(this).balance);
+    }
+
     /// @param token The token to pay
     /// @param payer The entity that must pay
     /// @param recipient The entity that will receive payment
@@ -50,10 +55,9 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
         address recipient,
         uint256 value
     ) internal {
-        uint256 selfBalance;
-        if (token == WETH9 && (selfBalance = address(this).balance) >= value) {
-            // pay with WETH9 generated from ETH
-            IWETH9(WETH9).deposit{value: selfBalance}(); // wrap whole balance
+        if (token == WETH9 && address(this).balance >= value) {
+            // pay with WETH9
+            IWETH9(WETH9).deposit{value: value}(); // wrap only what is needed to pay
             IWETH9(WETH9).transfer(recipient, value);
         } else if (payer == address(this)) {
             // pay with tokens already in the contract (for the exact input multihop case)

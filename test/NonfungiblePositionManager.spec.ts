@@ -257,17 +257,15 @@ describe('NonfungiblePositionManager', () => {
     it('can use eth via multicall', async () => {
       const [token0, token1] = sortedTokens(weth9, tokens[0])
 
-      await weth9.deposit({ value: expandTo18Decimals(1) })
-      await weth9.approve(nft.address, constants.MaxUint256)
+      // remove any approval
+      await weth9.approve(nft.address, 0)
 
-      await nft.createAndInitializePoolIfNecessary(
+      const createAndInitializeData = nft.interface.encodeFunctionData('createAndInitializePoolIfNecessary', [
         token0.address,
         token1.address,
         FeeAmount.MEDIUM,
-        encodePriceSqrt(1, 1)
-      )
-
-      await weth9.approve(nft.address, 0)
+        encodePriceSqrt(1, 1),
+      ])
 
       const mintData = nft.interface.encodeFunctionData('mint', [
         {
@@ -285,9 +283,15 @@ describe('NonfungiblePositionManager', () => {
         },
       ])
 
-      const unwrapWETH9Data = nft.interface.encodeFunctionData('unwrapWETH9', [0, other.address])
+      const refundETHData = nft.interface.encodeFunctionData('refundETH')
 
-      await nft.multicall([mintData, unwrapWETH9Data], { value: expandTo18Decimals(1) })
+      const balanceBefore = await wallet.getBalance()
+      await nft.multicall([createAndInitializeData, mintData, refundETHData], {
+        value: expandTo18Decimals(1),
+        gasPrice: 0, // necessary so the balance doesn't change by anything that's not spent
+      })
+      const balanceAfter = await wallet.getBalance()
+      expect(balanceBefore.sub(balanceAfter)).to.eq(100)
     })
 
     it('emits an event')
@@ -314,6 +318,74 @@ describe('NonfungiblePositionManager', () => {
           amount1Min: 0,
           deadline: 10,
         })
+      )
+    })
+
+    it('gas first mint for pool using eth with zero refund', async () => {
+      const [token0, token1] = sortedTokens(weth9, tokens[0])
+      await nft.createAndInitializePoolIfNecessary(
+        token0.address,
+        token1.address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await snapshotGasCost(
+        nft.multicall(
+          [
+            nft.interface.encodeFunctionData('mint', [
+              {
+                token0: token0.address,
+                token1: token1.address,
+                tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+                tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+                fee: FeeAmount.MEDIUM,
+                recipient: wallet.address,
+                amount0Desired: 100,
+                amount1Desired: 100,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: 10,
+              },
+            ]),
+            nft.interface.encodeFunctionData('refundETH'),
+          ],
+          { value: 100 }
+        )
+      )
+    })
+
+    it('gas first mint for pool using eth with non-zero refund', async () => {
+      const [token0, token1] = sortedTokens(weth9, tokens[0])
+      await nft.createAndInitializePoolIfNecessary(
+        token0.address,
+        token1.address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await snapshotGasCost(
+        nft.multicall(
+          [
+            nft.interface.encodeFunctionData('mint', [
+              {
+                token0: token0.address,
+                token1: token1.address,
+                tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+                tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+                fee: FeeAmount.MEDIUM,
+                recipient: wallet.address,
+                amount0Desired: 100,
+                amount1Desired: 100,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: 10,
+              },
+            ]),
+            nft.interface.encodeFunctionData('refundETH'),
+          ],
+          { value: 1000 }
+        )
       )
     })
 

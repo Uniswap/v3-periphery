@@ -745,7 +745,7 @@ describe('SwapRouter', () => {
         }
 
         const data = [router.interface.encodeFunctionData('exactOutputSingle', [params])]
-        if (inputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [0, trader.address]))
+        if (inputIsWETH9) data.push(router.interface.encodeFunctionData('refundETH'))
         if (outputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [amountOut, trader.address]))
 
         // ensure that the swap fails if the limit is any tighter
