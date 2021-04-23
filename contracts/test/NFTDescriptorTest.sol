@@ -63,7 +63,18 @@ contract NFTDescriptorTest {
         int24 tickCurrent,
         int24 tickSpacing
     ) public pure returns (string memory) {
-        return NFTDescriptor.svgImage(token0, token1, token0Symbol, token1Symbol, feeTier, tickLower, tickUpper, tickCurrent, tickSpacing);
+        return
+            NFTDescriptor.svgImage(
+                token0,
+                token1,
+                token0Symbol,
+                token1Symbol,
+                feeTier,
+                tickLower,
+                tickUpper,
+                tickCurrent,
+                tickSpacing
+            );
     }
 
     function tokenToColorHex(address token, uint256 offset) public pure returns (string memory) {
