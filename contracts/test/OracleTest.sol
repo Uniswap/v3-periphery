@@ -10,6 +10,8 @@ contract OracleTest {
 
     Oracle.Observation[65535] public observations;
 
+    address public token0;
+    address public token1;
     uint32 public time;
     int24 public tick;
     uint128 public liquidity;
@@ -21,6 +23,8 @@ contract OracleTest {
         uint32 time;
         int24 tick;
         uint128 liquidity;
+        address token0;
+        address token1;
     }
 
     function initialize(InitializeParams calldata params) external {
@@ -28,6 +32,8 @@ contract OracleTest {
         time = params.time;
         tick = params.tick;
         liquidity = params.liquidity;
+        token0 = params.token0;
+        token1 = params.token1;
         (cardinality, cardinalityNext) = observations.initialize(params.time);
     }
 
@@ -101,9 +107,11 @@ contract OracleTest {
 
     function consult(
         address poolAddress,
+        address tokenIn,
+        uint256 amountIn,
         uint32 startBlockTimestamp,
         uint32 endBlockTimestamp
-    ) public view returns (uint256 ratioX128) {
-        ratioX128 = OracleLibrary.consult(time, poolAddress, startBlockTimestamp, endBlockTimestamp);
+    ) public view returns (uint256 amountOut) {
+        amountOut = OracleLibrary.consult(time, poolAddress, tokenIn, amountIn, startBlockTimestamp, endBlockTimestamp);
     }
 }
