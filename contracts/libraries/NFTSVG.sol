@@ -48,7 +48,7 @@ library NFTSVG {
         svg = string(
             abi.encodePacked(
                 '<svg width=\\"290\\" height=\\"500\\" viewBox=\\"0 0 290 500\\" xmlns=\\"http://www.w3.org/2000/svg\\"',
-								"xmlns:xlink='http://www.w3.org/1999/xlink'>",
+								" xmlns:xlink='http://www.w3.org/1999/xlink'>",
                 /* '<!-- {\\"address\\": "0xe8ab59d3bcde16a29912de83a90eb39628cfc163", \\"msg\\": "Forged in SVG for Uniswap in 2021 by 0xe8ab59d3bcde16a29912de83a90eb39628cfc163\\",',
 					'"sig": "0x2df0e99d9cbfec33a705d83f75666d98b22dea7c1af412c584f7d626d83f02875993df740dc87563b9c73378f8462426da572d7989de88079a382ad96c57b68d1b",',
 					'\\"version\\": \\"2\\"} -->', */
@@ -103,7 +103,7 @@ library NFTSVG {
                 '\\" x=\\"0px\\" y=\\"0px\\" width=\\"290px\\" height=\\"500px\\" />',
                 '<rect style=\\"filter: url(#f1)\\" x=\\"0px\\" y=\\"0px\\" width=\\"290px\\" height=\\"500px\\" />',
                 '<!-- Top dark area -->',
-                '<g style=\\"filter:url(#top-region-blur); transform:scale(1.5); transform-origin:center top;\\">',
+                ' <g style=\\"filter:url(#top-region-blur); transform:scale(1.5); transform-origin:center top;\\">',
                 '<rect fill=\\"none\\" x=\\"0px\\" y=\\"0px\\" width=\\"290px\\" height=\\"500px\\" />',
                 '<ellipse cx=\\"50%\\" cy=\\"0px\\" rx=\\"180px\\" ry=\\"120px\\" fill=\\"#000\\" opacity=\\"0.85\\" /></g></g>'
             )
@@ -119,22 +119,22 @@ library NFTSVG {
                 params.baseToken,
                 unicode' • ',
                 params.baseTokenSymbol,
-                '<animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\" repeatCount=\\"indefinite\\" />',
+                ' <animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\" repeatCount=\\"indefinite\\" />',
                 '</textPath> <textPath startOffset=\\"0%\\" fill=\\"white\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"10px\\" xlink:href=\\"#text-path-a\\">',
                 params.baseToken,
                 unicode' • ',
                 params.baseTokenSymbol,
-                '<animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\" repeatCount=\\"indefinite\\" /> </textPath>',
+                ' <animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\" repeatCount=\\"indefinite\\" /> </textPath>',
                 '<textPath startOffset=\\"50%\\" fill=\\"white\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"10px\\" xlink:href=\\"#text-path-a\\">',
                 params.quoteToken,
                 unicode' • ',
                 params.quoteTokenSymbol,
-                '<animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\"',
+                ' <animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\"',
                 'repeatCount=\\"indefinite\\" /></textPath><textPath startOffset=\\"-50%\\" fill=\\"white\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"10px\\" xlink:href=\\"#text-path-a\\">',
                 params.quoteToken,
                 unicode' • ',
                 params.quoteTokenSymbol,
-                '<animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\" repeatCount=\\"indefinite\\" /></textPath></text>'
+                ' <animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\" repeatCount=\\"indefinite\\" /></textPath></text>'
             )
         );
     }
@@ -165,11 +165,11 @@ library NFTSVG {
         string memory curve = 'M1 1C1 97 49 145 145 145';
         svg = string(
             abi.encodePacked(
-                '<!-- Curve -->',
+                ' <!-- Curve --> ',
                 '<g mask=\\"url(',
                 fade,
                 ')\\"',
-                'style=\\"transform:translate(73px,189px)\\">'
+                ' style=\\"transform:translate(73px,189px)\\">'
                 '<rect x=\\"-16px\\" y=\\"-16px\\" width=\\"180px\\" height=\\"180px\\" fill=\\"none\\" />'
                 '<path d=\\"',
                 curve,
@@ -177,7 +177,7 @@ library NFTSVG {
                 '</g><g mask=\\"url(',
                 fade,
                 ')\\"',
-                'style=\\"transform:translate(73px,189px)\\">',
+                ' style=\\"transform:translate(73px,189px)\\">',
                 '<rect x=\\"-16px\\" y=\\"-16px\\" width=\\"180px\\" height=\\"180px\\" fill=\\"none\\" />',
                 '<path d=\\"',
                 curve,
@@ -230,21 +230,21 @@ library NFTSVG {
 			uint256 str3length = bytes(params.tickUpper).length  + 5;
 			svg = string(
 				abi.encodePacked(
-					'<g style=\\"transform:translate(29px, 384px)\\">',
+					' <g style=\\"transform:translate(29px, 384px)\\">',
 					'<rect width=\\"',
 					uint256(7 * (str1length + 4)).toString(),
 					'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
 					'<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">ID: </tspan>',
 					params.tokenId,
 					'</text></g>',
-					'<g style=\\"transform:translate(29px, 414px)\\">',
+					' <g style=\\"transform:translate(29px, 414px)\\">',
 					'<rect width=\\"',
 					uint256(7 * (str2length + 4)).toString(),
 					'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
 					'<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">Min: </tspan>',
 					params.tickLower,
 					'</text></g>',
-					'<g style=\\"transform:translate(29px, 444px)\\">',
+					' <g style=\\"transform:translate(29px, 444px)\\">',
 					'<rect width=\\"',
 					uint256(7 * (str3length + 4)).toString(),
 					'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
