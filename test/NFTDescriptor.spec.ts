@@ -636,7 +636,8 @@ describe('NFTDescriptor', () => {
       const tickCurrent = 4
       const token0Symbol = await tokens[0].symbol()
       const token1Symbol = await tokens[1].symbol()
-      expect(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address, token0Symbol, token1Symbol, tickLower, tickUpper, tickSpacing, tickCurrent)).to.eq(
+      const feeTier = '0.05%'
+      expect(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address, token0Symbol, token1Symbol, feeTier, tickLower, tickUpper, tickCurrent, tickSpacing)).to.eq(
         svgImage(tokens[0].address, tokens[1].address)
       )
     })

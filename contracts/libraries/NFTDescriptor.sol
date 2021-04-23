@@ -42,18 +42,16 @@ library NFTDescriptor {
     }
 
     function constructTokenURI(ConstructTokenURIParams memory params) internal pure returns (string memory) {
-        /* string memory feeTier = feeToPercentString(params.fee); */
-        string memory quoteSymbolFormatted = escapeQuotes(params.quoteTokenSymbol);
-        string memory baseSymbolFormatted = escapeQuotes(params.baseTokenSymbol);
+        string memory feeTier = feeToPercentString(params.fee);
         string memory name =
             string(
                 abi.encodePacked(
                     'Uniswap - ',
-                    feeToPercentString(params.fee),
+                    feeTier,
                     ' - ',
-                    quoteSymbolFormatted,
+                    escapeQuotes(params.quoteTokenSymbol),
                     '/',
-                    baseSymbolFormatted,
+                    escapeQuotes(params.baseTokenSymbol),
                     ' - ',
                     tickToDecimalString(
                         !params.flipRatio ? params.tickLower : params.tickUpper,
@@ -76,23 +74,23 @@ library NFTDescriptor {
             string(
                 abi.encodePacked(
                     'This NFT represents a liquidity position in a Uniswap V3 ',
-                    quoteSymbolFormatted,
+                    escapeQuotes(params.quoteTokenSymbol),
                     '-',
-                    baseSymbolFormatted,
+                    escapeQuotes(params.baseTokenSymbol),
                     ' pool. ',
                     'The owner of this NFT can modify or redeem the position.\\n',
                     '\\nPool Address: ',
                     addressToString(params.poolAddress),
                     '\\n',
-                    quoteSymbolFormatted,
+                    escapeQuotes(params.quoteTokenSymbol),
                     ' Address: ',
                     addressToString(params.quoteTokenAddress),
                     '\\n',
-                    baseSymbolFormatted,
+                    escapeQuotes(params.baseTokenSymbol),
                     ' Address: ',
                     addressToString(params.baseTokenAddress),
                     '\\nFee Tier: ',
-                    feeToPercentString(params.fee),
+                    feeTier,
                     '\\nToken ID: ',
                     params.tokenId.toString(),
                     '\\n\\n',
@@ -112,8 +110,9 @@ library NFTDescriptor {
                     svgImage(
                         params.quoteTokenAddress,
                         params.baseTokenAddress,
-                        quoteSymbolFormatted,
-                        baseSymbolFormatted,
+                        escapeQuotes(params.quoteTokenSymbol),
+                        escapeQuotes(params.baseTokenSymbol),
+                        feeTier,
                         params.tickLower,
                         params.tickUpper,
                         params.tickCurrent,
@@ -398,6 +397,7 @@ library NFTDescriptor {
       string baseToken;
       string quoteTokenSymbol;
       string baseTokenSymbol;
+      string feeTier;
       string color0;
       string color1;
       string color2;
@@ -415,6 +415,7 @@ library NFTDescriptor {
         address baseToken,
         string memory quoteTokenSymbol,
         string memory baseTokenSymbol,
+        string memory feeTier,
         int24 tickLower,
         int24 tickUpper,
         int24 tickCurrent,
@@ -425,6 +426,7 @@ library NFTDescriptor {
           baseToken: addressToString(baseToken),
           quoteTokenSymbol: quoteTokenSymbol,
           baseTokenSymbol: baseTokenSymbol,
+          feeTier: feeTier,
           color0: tokenToColorHex(uint256(quoteToken), 136),
           color1: tokenToColorHex(uint256(baseToken), 136),
           color2: tokenToColorHex(uint256(quoteToken), 0),
@@ -440,7 +442,8 @@ library NFTDescriptor {
         return string(
           abi.encodePacked(
             generateSVGDefs(svgParams),
-            generateSVGText(svgParams)
+            generateSVGBorderText(svgParams),
+            generateSVGCardMantle(svgParams)
           )
         );
 
@@ -514,7 +517,7 @@ library NFTDescriptor {
       );
     }
 
-    function generateSVGText(SVGParams memory params) private pure returns (string memory svg) {
+    function generateSVGBorderText(SVGParams memory params) private pure returns (string memory svg) {
       svg = string(
         abi.encodePacked(
           '<!-- Outerdata string -->',
@@ -540,6 +543,24 @@ library NFTDescriptor {
           params.quoteTokenSymbol,
           '<animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\" repeatCount=\\"indefinite\\" /></textPath></text>'
         )
+      );
+    }
+
+    function generateSVGCardMantle(SVGParams memory params) private pure returns (string memory svg) {
+      svg = string(
+        abi.encodePacked(
+          '<!-- Card mantle -->'
+          '<g mask=\\"url(#fade-symbol)\\"><rect fill=\\"none\\" x=\\"0px\\" y=\\"0px\\" width=\\"290px\\" height=\\"200px\\" />  <text y=\\"70px\\" x=\\"32px\\" fill=\\"white\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-weight=\\"200\\" font-size=\\"36px\\">',
+          params.quoteTokenSymbol,
+          '/',
+          params.baseTokenSymbol,
+          '</text><text y=\\"115px\\" x=\\"32px\\" fill=\\"white\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-weight=\\"200\\" font-size=\\"36px\\">',
+          params.feeTier,
+          '</text></g>',
+          '<!-- Translucent inner border -->',
+          '<rect x=\\"16\\" y=\\"16\\" width=\\"258\\" height=\\"468\\" rx=\\"26\\" ry=\\"26\\" fill=\\"rgba(0,0,0,0)\\" ',
+          'stroke=\\"rgba(255,255,255,0.2)\\" /><rect x=\\"0\\" y=\\"0\\" width=\\"290\\" height=\\"468\\" rx=\\"42\\" ry=\\"42\\" fill=\\"rgba(0,0,0,0)\\" stroke=\\"rgba(255,255,255,0.2)\\" />'
+          )
       );
     }
 
