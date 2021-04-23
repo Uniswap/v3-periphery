@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
 
-/* pragma abicoder v2; */
+import '@openzeppelin/contracts/utils/Strings.sol';
+
 /// @title NFTSVG
 /// @notice Provides a function for generating an SVG associated with a Uniswap NFT
 library NFTSVG {
+    using Strings for uint256;
     struct SVGParams {
         string quoteToken;
         string baseToken;
         string quoteTokenSymbol;
         string baseTokenSymbol;
         string feeTier;
+				string tickLower;
+				string tickUpper;
+				string tokenId;
         string color0;
         string color1;
         string color2;
@@ -30,7 +35,8 @@ library NFTSVG {
                     generateSVGDefs(params),
                     generateSVGBorderText(params),
                     generateSVGCardMantle(params),
-                    generageSvgCurve(params)
+                    generageSvgCurve(params),
+										generateSVGPositionData(params)
                 )
             );
     }
@@ -42,10 +48,11 @@ library NFTSVG {
         svg = string(
             abi.encodePacked(
                 '<svg width=\\"290\\" height=\\"500\\" viewBox=\\"0 0 290 500\\" xmlns=\\"http://www.w3.org/2000/svg\\"',
+								"xmlns:xlink='http://www.w3.org/1999/xlink'>",
                 /* '<!-- {\\"address\\": "0xe8ab59d3bcde16a29912de83a90eb39628cfc163", \\"msg\\": "Forged in SVG for Uniswap in 2021 by 0xe8ab59d3bcde16a29912de83a90eb39628cfc163\\",',
 					'"sig": "0x2df0e99d9cbfec33a705d83f75666d98b22dea7c1af412c584f7d626d83f02875993df740dc87563b9c73378f8462426da572d7989de88079a382ad96c57b68d1b",',
 					'\\"version\\": \\"2\\"} -->', */
-                "xmlns:xlink='http://www.w3.org/1999/xlink'><style>@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;400&display=swap');</style><defs>"
+                "<style>@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;400&display=swap');</style><defs>",
                 '<!-- Background gradient -->',
                 "<filter id=\\\"f1\\\"><feImage result=\\\"p0\\\" xlink:href=\\\"data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='290px' height='500px' fill='%23",
                 params.color0,
@@ -152,7 +159,7 @@ library NFTSVG {
 
     function generageSvgCurve(SVGParams memory params) private pure returns (string memory svg) {
         // TODO: Make this a dynamic passed in data value
-        int8 overRange;
+        int8 overRange = 1;
         string memory fade = overRange == -1 ? '#fade-up' : overRange == 1 ? '#fade-down' : '#none';
         // TODO: Make curve dynamic
         string memory curve = 'M1 1C1 97 49 145 145 145';
@@ -162,7 +169,7 @@ library NFTSVG {
                 '<g mask=\\"url(',
                 fade,
                 ')\\"',
-                'style=\\"transform:translate(73px,209px)\\">'
+                'style=\\"transform:translate(73px,189px)\\">'
                 '<rect x=\\"-16px\\" y=\\"-16px\\" width=\\"180px\\" height=\\"180px\\" fill=\\"none\\" />'
                 '<path d=\\"',
                 curve,
@@ -170,7 +177,7 @@ library NFTSVG {
                 '</g><g mask=\\"url(',
                 fade,
                 ')\\"',
-                'style=\\"transform:translate(73px,209px)\\">',
+                'style=\\"transform:translate(73px,189px)\\">',
                 '<rect x=\\"-16px\\" y=\\"-16px\\" width=\\"180px\\" height=\\"180px\\" fill=\\"none\\" />',
                 '<path d=\\"',
                 curve,
@@ -181,10 +188,10 @@ library NFTSVG {
     }
 
     function generateSVGCurveCircle(int8 overRange) private pure returns (string memory svg) {
-        uint256 curvex1 = 73;
-        uint256 curvey1 = 210;
-        uint256 curvex2 = 217;
-        uint256 curvey2 = 354;
+        string memory curvex1 = "73";
+        string memory curvey1 = "190";
+        string memory curvex2 = "217";
+        string memory curvey2 = "334";
         if (overRange == 1 || overRange == -1) {
             svg = string(
                 abi.encodePacked(
@@ -216,4 +223,35 @@ library NFTSVG {
             );
         }
     }
+
+		function generateSVGPositionData(SVGParams memory params) private pure returns (string memory svg) {
+			uint256 str1length = bytes(params.tokenId).length + 4;
+			uint256 str2length = bytes(params.tickLower).length + 5;
+			uint256 str3length = bytes(params.tickUpper).length  + 5;
+			svg = string(
+				abi.encodePacked(
+					'<g style=\\"transform:translate(29px, 384px)\\">',
+					'<rect width=\\"',
+					uint256(7 * (str1length + 4)).toString(),
+					'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
+					'<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">ID: </tspan>',
+					params.tokenId,
+					'</text></g>',
+					'<g style=\\"transform:translate(29px, 414px)\\">',
+					'<rect width=\\"',
+					uint256(7 * (str2length + 4)).toString(),
+					'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
+					'<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">Min: </tspan>',
+					params.tickLower,
+					'</text></g>',
+					'<g style=\\"transform:translate(29px, 444px)\\">',
+					'<rect width=\\"',
+					uint256(7 * (str3length + 4)).toString(),
+					'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
+					'<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">Max: </tspan>',
+					params.tickUpper,
+					'</text></g>'
+					)
+				);
+		}
 }

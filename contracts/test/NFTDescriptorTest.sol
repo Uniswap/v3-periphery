@@ -53,6 +53,7 @@ contract NFTDescriptorTest {
     }
 
     function svgImage(
+        uint256 tokenId,
         address token0,
         address token1,
         string memory token0Symbol,
@@ -65,6 +66,7 @@ contract NFTDescriptorTest {
     ) public pure returns (string memory) {
         return
             NFTDescriptor.svgImage(
+                tokenId,
                 token0,
                 token1,
                 token0Symbol,

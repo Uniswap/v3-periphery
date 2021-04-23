@@ -73,33 +73,17 @@ library NFTDescriptor {
                     )
                 )
             );
-        string memory description =
-            string(
-                abi.encodePacked(
-                    'This NFT represents a liquidity position in a Uniswap V3 ',
-                    escapeQuotes(params.quoteTokenSymbol),
-                    '-',
-                    escapeQuotes(params.baseTokenSymbol),
-                    ' pool. ',
-                    'The owner of this NFT can modify or redeem the position.\\n',
-                    '\\nPool Address: ',
-                    addressToString(params.poolAddress),
-                    '\\n',
-                    escapeQuotes(params.quoteTokenSymbol),
-                    ' Address: ',
-                    addressToString(params.quoteTokenAddress),
-                    '\\n',
-                    escapeQuotes(params.baseTokenSymbol),
-                    ' Address: ',
-                    addressToString(params.baseTokenAddress),
-                    '\\nFee Tier: ',
-                    feeTier,
-                    '\\nToken ID: ',
-                    params.tokenId.toString(),
-                    '\\n\\n',
-                    unicode'⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
-                )
-            );
+/* 
+        string memory description = generateDescription(
+            params.tokenId.toString(),
+            escapeQuotes(params.quoteTokenSymbol),
+            escapeQuotes(params.baseTokenSymbol),
+            addressToString(params.poolAddress),
+            addressToString(params.quoteTokenAddress),
+            addressToString(params.baseTokenAddress),
+            feeTier
+          ); */
+
 
         return
             string(
@@ -107,10 +91,19 @@ library NFTDescriptor {
                     'data:application/json,{"name":"',
                     name,
                     '", "description":"',
-                    description,
+                    generateDescription(
+                        params.tokenId.toString(),
+                        escapeQuotes(params.quoteTokenSymbol),
+                        escapeQuotes(params.baseTokenSymbol),
+                        addressToString(params.poolAddress),
+                        addressToString(params.quoteTokenAddress),
+                        addressToString(params.baseTokenAddress),
+                        feeTier
+                      ),
                     '", "image": "',
                     'data:image/svg+xml;base64,',
                     svgImage(
+                        params.tokenId,
                         params.quoteTokenAddress,
                         params.baseTokenAddress,
                         escapeQuotes(params.quoteTokenSymbol),
@@ -147,6 +140,43 @@ library NFTDescriptor {
         }
         return symbol;
     }
+
+    function generateDescription(
+        string memory tokenId,
+        string memory quoteTokenSymbol,
+        string memory baseTokenSymbol,
+        string memory poolAddress,
+        string memory quoteTokenAddress,
+        string memory baseTokenAddress,
+        string memory feeTier
+      ) private pure returns (string memory) {
+        string(
+            abi.encodePacked(
+                'This NFT represents a liquidity position in a Uniswap V3 ',
+                quoteTokenSymbol,
+                '-',
+                baseTokenSymbol,
+                ' pool. ',
+                'The owner of this NFT can modify or redeem the position.\\n',
+                '\\nPool Address: ',
+                poolAddress,
+                '\\n',
+                quoteTokenSymbol,
+                ' Address: ',
+                quoteTokenAddress,
+                '\\n',
+                baseTokenSymbol,
+                ' Address: ',
+                baseTokenAddress,
+                '\\nFee Tier: ',
+                feeTier,
+                '\\nToken ID: ',
+                tokenId,
+                '\\n\\n',
+                unicode'⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
+            )
+        );
+      }
 
     struct DecimalStringParams {
         // significant figures of decimal
@@ -396,6 +426,7 @@ library NFTDescriptor {
     }
 
     function svgImage(
+        uint256 tokenId,
         address quoteToken,
         address baseToken,
         string memory quoteTokenSymbol,
@@ -413,6 +444,9 @@ library NFTDescriptor {
                 quoteTokenSymbol: quoteTokenSymbol,
                 baseTokenSymbol: baseTokenSymbol,
                 feeTier: feeTier,
+                tickLower: tickToString(tickLower),
+                tickUpper: tickToString(tickUpper),
+                tokenId: tokenId.toString(),
                 color0: tokenToColorHex(uint256(quoteToken), 136),
                 color1: tokenToColorHex(uint256(baseToken), 136),
                 color2: tokenToColorHex(uint256(quoteToken), 0),
@@ -436,6 +470,17 @@ library NFTDescriptor {
         uint256 outMx
     ) private pure returns (string memory) {
         return (n.sub(inMn).mul(outMx.sub(outMn)).div(inMx.sub(inMn)).add(outMn)).toString();
+    }
+
+    function tickToString(int24 tick) private pure returns (string memory) {
+      string memory sign = '';
+      if (tick < 0) {
+        tick = tick * -1;
+        sign = '-';
+      }
+      return string(
+        abi.encodePacked(sign, uint256(tick).toString())
+      );
     }
 
     function tokenToColorHex(uint256 token, uint256 offset) internal pure returns (string memory str) {
