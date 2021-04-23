@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.5.0;
+
 /* pragma abicoder v2; */
 /// @title NFTSVG
 /// @notice Provides a function for generating an SVG associated with a Uniswap NFT
@@ -22,17 +23,17 @@ library NFTSVG {
         string y3;
     }
 
-		function generateSVG(SVGParams memory params) internal pure returns (string memory svg) {
-			return
-					string(
-							abi.encodePacked(
-									generateSVGDefs(params),
-									generateSVGBorderText(params),
-									generateSVGCardMantle(params),
-									generageSvgCurve(params)
-							)
-					);
-		}
+    function generateSVG(SVGParams memory params) internal pure returns (string memory svg) {
+        return
+            string(
+                abi.encodePacked(
+                    generateSVGDefs(params),
+                    generateSVGBorderText(params),
+                    generateSVGCardMantle(params),
+                    generageSvgCurve(params)
+                )
+            );
+    }
 
     function generateSVGDefs(SVGParams memory params) private pure returns (string memory svg) {
         /* string memory r1w = '290';
