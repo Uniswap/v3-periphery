@@ -36,7 +36,9 @@ library NFTSVG {
                     generateSVGBorderText(params),
                     generateSVGCardMantle(params),
                     generageSvgCurve(params),
-										generateSVGPositionData(params)
+										generateSVGPositionData(params),
+                    generateSVGCurceLocationIndicator(params),
+                    '</svg>'
                 )
             );
     }
@@ -187,6 +189,21 @@ library NFTSVG {
         );
     }
 
+    /* function getCurve(SVGParams memory params) private pure returns (string memory) {
+      string[9] memory curves = [
+        'M1 1C1 97 49 145 145 145',
+        'M1 1C1 89 57.5 145 145 145',
+        'M1 1C9 81 65 137 145 145',
+        'M1 1C17 73 73 129 145 145',
+        'M1 1C25 65 81 121 145 145',
+        'M1 1C33 57 89 113 145 145',
+        'M1 1C33 49 97 113 145 145',
+        'M1 1C41 41 105 105 145 145'
+      ]
+
+
+    } */
+
     function generateSVGCurveCircle(int8 overRange) private pure returns (string memory svg) {
         string memory curvex1 = "73";
         string memory curvey1 = "190";
@@ -254,4 +271,32 @@ library NFTSVG {
 					)
 				);
 		}
+
+    function generateSVGCurceLocationIndicator(SVGParams memory params) private pure returns (string memory svg) {
+      // TODO make coords dynamic
+      string[2][10] memory miniCoords = [
+        ['8', '7'],
+        ['8', '10.5'],
+        ['8', '14.25'],
+        ['10', '18'],
+        ['11', '21'],
+        ['13', '23'],
+        ['15', '25'],
+        ['18', '26'],
+        ['21', '27'],
+        ['24', '27']
+      ];
+      svg = string(
+        abi.encodePacked(
+          '<g style=\\"transform:translate(226px, 433px)\\">',
+          '<rect width=\\"36px\\" height=\\"36px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"none\\" stroke=\\"rgba(255,255,255,0.2)\\" />',
+          '<path stroke-linecap=\\"round\\" d=\\"M8 9C8.00004 22.9494 16.2099 28 27 28\\" fill=\\"none\\" stroke=\\"white\\" />',
+          '<circle style=\\"transform:translate3d(',
+          miniCoords[0][0],
+          'px,',
+          miniCoords[0][1],
+          'px, 0px)\\" cx=\\"0px\\" cy=\\"0px\\" r=\\"4px\\" fill=\\"white\\"/></g>'
+        )
+      );
+    }
 }

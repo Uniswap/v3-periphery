@@ -20,7 +20,7 @@ describe('NFTDescriptor', () => {
   const wallets = waffle.provider.getWallets()
 
   const nftDescriptorFixture: Fixture<{
-    tokens: [TestERC20Metadata, TestERC20Metadata]
+    tokens: [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
     nftDescriptor: NFTDescriptorTest
   }> = async (wallets, provider) => {
     const tokenFactory = await ethers.getContractFactory('TestERC20Metadata')
@@ -29,7 +29,9 @@ describe('NFTDescriptor', () => {
     const tokens = (await Promise.all([
       tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1'), // do not use maxu256 to avoid overflowing
       tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST2'),
-    ])) as [TestERC20Metadata, TestERC20Metadata]
+      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST3'),
+      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST4'),
+    ])) as [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
     return {
       nftDescriptor,
@@ -38,7 +40,7 @@ describe('NFTDescriptor', () => {
   }
 
   let nftDescriptor: NFTDescriptorTest
-  let tokens: [TestERC20Metadata, TestERC20Metadata]
+  let tokens: [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
@@ -635,10 +637,10 @@ describe('NFTDescriptor', () => {
       const tickUpper = 10
       const tickSpacing = 3
       const tickCurrent = 4
-      const token0Symbol = await tokens[0].symbol()
-      const token1Symbol = await tokens[1].symbol()
+      const token0Symbol = await tokens[2].symbol()
+      const token1Symbol = await tokens[3].symbol()
       const feeTier = '0.05%'
-      expect(await nftDescriptor.svgImage(tokenId, tokens[0].address, tokens[1].address, token0Symbol, token1Symbol, feeTier, tickLower, tickUpper, tickCurrent, tickSpacing)).to.eq(
+      expect(await nftDescriptor.svgImage(tokenId, tokens[2].address, tokens[3].address, token0Symbol, token1Symbol, feeTier, tickLower, tickUpper, tickCurrent, tickSpacing)).to.eq(
         svgImage(tokens[0].address, tokens[1].address)
       )
     })

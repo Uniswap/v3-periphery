@@ -8,7 +8,7 @@ const LOW_OPTIMIZER_COMPILER_SETTINGS = {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 2_000,
+      runs: 100,
     },
     metadata: {
       bytecodeHash: 'none',
@@ -60,10 +60,7 @@ export default {
     overrides: {
       'contracts/NonfungiblePositionManager.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
       'contracts/test/MockTimeNonfungiblePositionManager.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
-      'contracts/NonfungibleTokenPositionDescriptor.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
-      'contracts/libraries/NFTDescriptor.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
       'contracts/test/NFTDescriptorTest.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
-      'contracts/libraries/NFTSVG.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
     },
   },
 }

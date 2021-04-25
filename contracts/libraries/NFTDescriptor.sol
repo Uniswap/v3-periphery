@@ -73,7 +73,7 @@ library NFTDescriptor {
                     )
                 )
             );
-/* 
+/*
         string memory description = generateDescription(
             params.tokenId.toString(),
             escapeQuotes(params.quoteTokenSymbol),
@@ -484,7 +484,7 @@ library NFTDescriptor {
     }
 
     function tokenToColorHex(uint256 token, uint256 offset) internal pure returns (string memory str) {
-        return string(abi.encodePacked('#', (token >> offset).toHexStringNoPrefix(3)));
+        return string((token >> offset).toHexStringNoPrefix(3));
     }
 
     function sliceTokenHex(address token, uint256 offset) internal pure returns (uint256) {
