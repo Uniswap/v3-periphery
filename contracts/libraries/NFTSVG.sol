@@ -13,8 +13,8 @@ library NFTSVG {
         string quoteTokenSymbol;
         string baseTokenSymbol;
         string feeTier;
-				string tickLower;
-				string tickUpper;
+				int24 tickLower;
+				int24 tickUpper;
 				string tokenId;
         string color0;
         string color1;
@@ -161,10 +161,9 @@ library NFTSVG {
 
     function generageSvgCurve(SVGParams memory params) private pure returns (string memory svg) {
         // TODO: Make this a dynamic passed in data value
-        int8 overRange = 1;
+        int8 overRange = 0;
         string memory fade = overRange == -1 ? '#fade-up' : overRange == 1 ? '#fade-down' : '#none';
-        // TODO: Make curve dynamic
-        string memory curve = 'M1 1C1 97 49 145 145 145';
+        string memory curve = getCurve(params.tickLower, params.tickUpper);
         svg = string(
             abi.encodePacked(
                 ' <!-- Curve --> ',
@@ -189,8 +188,8 @@ library NFTSVG {
         );
     }
 
-    /* function getCurve(SVGParams memory params) private pure returns (string memory) {
-      string[9] memory curves = [
+    function getCurve(int24 tickLower, int24 tickUpper) private pure returns (string memory) {
+      string[8] memory curves = [
         'M1 1C1 97 49 145 145 145',
         'M1 1C1 89 57.5 145 145 145',
         'M1 1C9 81 65 137 145 145',
@@ -199,10 +198,29 @@ library NFTSVG {
         'M1 1C33 57 89 113 145 145',
         'M1 1C33 49 97 113 145 145',
         'M1 1C41 41 105 105 145 145'
-      ]
+      ];
 
-
-    } */
+      int24 tickRange = tickUpper - tickLower;
+      uint8 index;
+      if (tickRange <= 5) {
+        index = 7;
+      } else if (tickRange <= 10) {
+        index = 6;
+      } else if (tickRange <= 20) {
+        index = 5;
+      } else if (tickRange <= 50) {
+        index = 4;
+      } else if (tickRange <= 100) {
+        index = 3;
+      } else if (tickRange <= 10_000) {
+        index = 2;
+      } else if (tickRange <= 100_000) {
+        index = 1;
+      } else {
+        index = 0;
+      }
+      return curves[index];
+    }
 
     function generateSVGCurveCircle(int8 overRange) private pure returns (string memory svg) {
         string memory curvex1 = "73";
@@ -242,9 +260,11 @@ library NFTSVG {
     }
 
 		function generateSVGPositionData(SVGParams memory params) private pure returns (string memory svg) {
+      string memory tickLower = tickToString(params.tickLower);
+      string memory tickUpper = tickToString(params.tickUpper);
 			uint256 str1length = bytes(params.tokenId).length + 4;
-			uint256 str2length = bytes(params.tickLower).length + 5;
-			uint256 str3length = bytes(params.tickUpper).length  + 5;
+			uint256 str2length = bytes(tickLower).length + 5;
+			uint256 str3length = bytes(tickUpper).length  + 5;
 			svg = string(
 				abi.encodePacked(
 					' <g style=\\"transform:translate(29px, 384px)\\">',
@@ -259,18 +279,29 @@ library NFTSVG {
 					uint256(7 * (str2length + 4)).toString(),
 					'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
 					'<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">Min: </tspan>',
-					params.tickLower,
+					tickLower,
 					'</text></g>',
 					' <g style=\\"transform:translate(29px, 444px)\\">',
 					'<rect width=\\"',
 					uint256(7 * (str3length + 4)).toString(),
 					'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
 					'<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">Max: </tspan>',
-					params.tickUpper,
+					tickUpper,
 					'</text></g>'
 					)
 				);
 		}
+
+    function tickToString(int24 tick) private pure returns (string memory) {
+      string memory sign = '';
+      if (tick < 0) {
+        tick = tick * -1;
+        sign = '-';
+      }
+      return string(
+        abi.encodePacked(sign, uint256(tick).toString())
+      );
+    }
 
     function generateSVGCurceLocationIndicator(SVGParams memory params) private pure returns (string memory svg) {
       // TODO make coords dynamic

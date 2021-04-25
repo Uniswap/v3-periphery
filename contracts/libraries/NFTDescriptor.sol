@@ -444,8 +444,8 @@ library NFTDescriptor {
                 quoteTokenSymbol: quoteTokenSymbol,
                 baseTokenSymbol: baseTokenSymbol,
                 feeTier: feeTier,
-                tickLower: tickToString(tickLower),
-                tickUpper: tickToString(tickUpper),
+                tickLower: tickLower,
+                tickUpper: tickUpper,
                 tokenId: tokenId.toString(),
                 color0: tokenToColorHex(uint256(quoteToken), 136),
                 color1: tokenToColorHex(uint256(baseToken), 136),
@@ -470,17 +470,6 @@ library NFTDescriptor {
         uint256 outMx
     ) private pure returns (string memory) {
         return (n.sub(inMn).mul(outMx.sub(outMn)).div(inMx.sub(inMn)).add(outMn)).toString();
-    }
-
-    function tickToString(int24 tick) private pure returns (string memory) {
-      string memory sign = '';
-      if (tick < 0) {
-        tick = tick * -1;
-        sign = '-';
-      }
-      return string(
-        abi.encodePacked(sign, uint256(tick).toString())
-      );
     }
 
     function tokenToColorHex(uint256 token, uint256 offset) internal pure returns (string memory str) {
