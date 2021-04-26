@@ -45,10 +45,10 @@ abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState,
         //ExactInputSingleParams inputSingleParams1 = ExactInputSingleParams({tokenIn: decoded.token0, tokenOut: decoded.token1, fee: decoded.poolFee2, recipient: decoded.payer, deadline: block.timestamp + 200, amountIn: decoded.amount0, amountOutMinimum: amount1Min, sqrtPriceLimitX96: 0 });
         
         // call exactInputSingle for swapping token1 for token0 in pool w/fee1
-        uint256 amountOut0 = swapRouter.exactInputSingle(ExactInputSingleParams({tokenIn: decoded.poolKey.token1, tokenOut: decoded.poolKey.token0, fee: decoded.poolFee1, recipient: decoded.payer, deadline: block.timestamp + 200, amountIn: decoded.amount1, amountOutMinimum: amount0Min, sqrtPriceLimitX96: 0 }));
+        uint256 amountOut0 = swapRouter.exactInputSingle(ExactInputSingleParams({tokenIn: decoded.poolKey.token1, tokenOut: decoded.poolKey.token0, fee: decoded.poolFee1, recipient: address(this), deadline: block.timestamp + 200, amountIn: decoded.amount1, amountOutMinimum: amount0Min, sqrtPriceLimitX96: 0 }));
 
         // call exactInputSingle for swapping token0 for token 1 in pool w/fee2
-        uint256 amountOut1 = swapRouter.exactInputSingle(ExactInputSingleParams({tokenIn: decoded.poolKey.token0, tokenOut: decoded.poolKey.token1, fee: decoded.poolFee2, recipient: decoded.payer, deadline: block.timestamp + 200, amountIn: decoded.amount0, amountOutMinimum: amount1Min, sqrtPriceLimitX96: 0 }));
+        uint256 amountOut1 = swapRouter.exactInputSingle(ExactInputSingleParams({tokenIn: decoded.poolKey.token0, tokenOut: decoded.poolKey.token1, fee: decoded.poolFee2, recipient: address(this), deadline: block.timestamp + 200, amountIn: decoded.amount0, amountOutMinimum: amount1Min, sqrtPriceLimitX96: 0 }));
 
         // end up with amountOut0 of token0 from first swap and amountOut1 of token1 from second swap
 
@@ -61,11 +61,16 @@ abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState,
 
         // pay back amount0 + fee0 and amount1 + fee1 to original pool (poolKey) and keep profits
 
-        // pay original pool the amount of token0 plus fees and amount of token1 plus fees
-        // with flash() must pay back the same token
+        // pay original pool (msg.sender) the amount of token0 plus fees and amount of token1 plus fees
 
-        if (amount0Owed > 0) pay(decoded.poolKey.token0, decoded.payer, msg.sender, amount0Owed);
-        if (amount1Owed > 0) pay(decoded.poolKey.token1, decoded.payer, msg.sender, amount1Owed);
+        if (amount0Owed > 0) pay(decoded.poolKey.token0, address(this), msg.sender, amount0Owed);
+        if (amount1Owed > 0) pay(decoded.poolKey.token1, address(this), msg.sender, amount1Owed);
+
+        uint256 profit0 = LowGasSafeMath.sub(amountOut0, amount0Owed);
+        uint256 profit1 = LowGasSafeMath.sub(amountOut1, amount1Owed);
+
+        if (profit0 > 0) pay(decoded.poolKey.token0, address(this), decoded.payer, profit0);
+        if (profit1 > 0) pay(decoded.poolKey.token1, address(this), decoded.payer, profit1);
     }
         //fee is the fee of the pool from the initial borrow 
         //fee1 is the fee of the first pool to arb from
