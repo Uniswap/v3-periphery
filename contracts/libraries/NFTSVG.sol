@@ -13,9 +13,10 @@ library NFTSVG {
         string quoteTokenSymbol;
         string baseTokenSymbol;
         string feeTier;
-				int24 tickLower;
-				int24 tickUpper;
-				string tokenId;
+        int24 tickLower;
+        int24 tickUpper;
+        int8 overRange;
+        string tokenId;
         string color0;
         string color1;
         string color2;
@@ -33,24 +34,25 @@ library NFTSVG {
             string(
                 abi.encodePacked(
                     generateSVGDefs(params),
-                    generateSVGBorderText(params),
-                    generateSVGCardMantle(params),
-                    generageSvgCurve(params),
-										generateSVGPositionData(params),
-                    generateSVGCurceLocationIndicator(params),
+                    generateSVGBorderText(
+                        params.quoteToken,
+                        params.baseToken,
+                        params.quoteTokenSymbol,
+                        params.baseTokenSymbol
+                    ),
+                    generateSVGCardMantle(params.quoteTokenSymbol, params.baseTokenSymbol, params.feeTier),
+                    generageSvgCurve(params.tickLower, params.tickUpper, params.overRange),
+                    generateSVGPositionData(params.tokenId, params.tickLower, params.tickUpper),
                     '</svg>'
                 )
             );
     }
 
     function generateSVGDefs(SVGParams memory params) private pure returns (string memory svg) {
-        /* string memory r1w = '290';
-		string memory r1h = '500';
-		string memory r1c = '42'; */
         svg = string(
             abi.encodePacked(
                 '<svg width=\\"290\\" height=\\"500\\" viewBox=\\"0 0 290 500\\" xmlns=\\"http://www.w3.org/2000/svg\\"',
-								" xmlns:xlink='http://www.w3.org/1999/xlink'>",
+                " xmlns:xlink='http://www.w3.org/1999/xlink'>",
                 /* '<!-- {\\"address\\": "0xe8ab59d3bcde16a29912de83a90eb39628cfc163", \\"msg\\": "Forged in SVG for Uniswap in 2021 by 0xe8ab59d3bcde16a29912de83a90eb39628cfc163\\",',
 					'"sig": "0x2df0e99d9cbfec33a705d83f75666d98b22dea7c1af412c584f7d626d83f02875993df740dc87563b9c73378f8462426da572d7989de88079a382ad96c57b68d1b",',
 					'\\"version\\": \\"2\\"} -->', */
@@ -112,45 +114,54 @@ library NFTSVG {
         );
     }
 
-    function generateSVGBorderText(SVGParams memory params) private pure returns (string memory svg) {
+    function generateSVGBorderText(
+        string memory quoteToken,
+        string memory baseToken,
+        string memory quoteTokenSymbol,
+        string memory baseTokenSymbol
+    ) private pure returns (string memory svg) {
         svg = string(
             abi.encodePacked(
                 '<!-- Outerdata string -->',
                 '<text text-rendering=\\"optimizeSpeed\\">',
                 '<textPath startOffset=\\"-100%\\" fill=\\"white\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"10px\\" xlink:href=\\"#text-path-a\\">',
-                params.baseToken,
+                baseToken,
                 unicode' • ',
-                params.baseTokenSymbol,
+                baseTokenSymbol,
                 ' <animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\" repeatCount=\\"indefinite\\" />',
                 '</textPath> <textPath startOffset=\\"0%\\" fill=\\"white\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"10px\\" xlink:href=\\"#text-path-a\\">',
-                params.baseToken,
+                baseToken,
                 unicode' • ',
-                params.baseTokenSymbol,
+                baseTokenSymbol,
                 ' <animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\" repeatCount=\\"indefinite\\" /> </textPath>',
                 '<textPath startOffset=\\"50%\\" fill=\\"white\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"10px\\" xlink:href=\\"#text-path-a\\">',
-                params.quoteToken,
+                quoteToken,
                 unicode' • ',
-                params.quoteTokenSymbol,
+                quoteTokenSymbol,
                 ' <animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\"',
                 'repeatCount=\\"indefinite\\" /></textPath><textPath startOffset=\\"-50%\\" fill=\\"white\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"10px\\" xlink:href=\\"#text-path-a\\">',
-                params.quoteToken,
+                quoteToken,
                 unicode' • ',
-                params.quoteTokenSymbol,
+                quoteTokenSymbol,
                 ' <animate additive=\\"sum\\" attributeName=\\"startOffset\\" from=\\"0%\\" to=\\"100%\\" begin=\\"0s\\" dur=\\"30s\\" repeatCount=\\"indefinite\\" /></textPath></text>'
             )
         );
     }
 
-    function generateSVGCardMantle(SVGParams memory params) private pure returns (string memory svg) {
+    function generateSVGCardMantle(
+        string memory quoteTokenSymbol,
+        string memory baseTokenSymbol,
+        string memory feeTier
+    ) private pure returns (string memory svg) {
         svg = string(
             abi.encodePacked(
                 '<!-- Card mantle -->'
                 '<g mask=\\"url(#fade-symbol)\\"><rect fill=\\"none\\" x=\\"0px\\" y=\\"0px\\" width=\\"290px\\" height=\\"200px\\" />  <text y=\\"70px\\" x=\\"32px\\" fill=\\"white\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-weight=\\"200\\" font-size=\\"36px\\">',
-                params.quoteTokenSymbol,
+                quoteTokenSymbol,
                 '/',
-                params.baseTokenSymbol,
+                baseTokenSymbol,
                 '</text><text y=\\"115px\\" x=\\"32px\\" fill=\\"white\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-weight=\\"200\\" font-size=\\"36px\\">',
-                params.feeTier,
+                feeTier,
                 '</text></g>',
                 '<!-- Translucent inner border -->',
                 '<rect x=\\"16\\" y=\\"16\\" width=\\"258\\" height=\\"468\\" rx=\\"26\\" ry=\\"26\\" fill=\\"rgba(0,0,0,0)\\" ',
@@ -159,11 +170,13 @@ library NFTSVG {
         );
     }
 
-    function generageSvgCurve(SVGParams memory params) private pure returns (string memory svg) {
-        // TODO: Make this a dynamic passed in data value
-        int8 overRange = 0;
+    function generageSvgCurve(
+        int24 tickLower,
+        int24 tickUpper,
+        int8 overRange
+    ) private pure returns (string memory svg) {
         string memory fade = overRange == -1 ? '#fade-up' : overRange == 1 ? '#fade-down' : '#none';
-        string memory curve = getCurve(params.tickLower, params.tickUpper);
+        string memory curve = getCurve(tickLower, tickUpper);
         svg = string(
             abi.encodePacked(
                 ' <!-- Curve --> ',
@@ -189,44 +202,45 @@ library NFTSVG {
     }
 
     function getCurve(int24 tickLower, int24 tickUpper) private pure returns (string memory) {
-      string[8] memory curves = [
-        'M1 1C1 97 49 145 145 145',
-        'M1 1C1 89 57.5 145 145 145',
-        'M1 1C9 81 65 137 145 145',
-        'M1 1C17 73 73 129 145 145',
-        'M1 1C25 65 81 121 145 145',
-        'M1 1C33 57 89 113 145 145',
-        'M1 1C33 49 97 113 145 145',
-        'M1 1C41 41 105 105 145 145'
-      ];
+        string[8] memory curves =
+            [
+                'M1 1C1 97 49 145 145 145',
+                'M1 1C1 89 57.5 145 145 145',
+                'M1 1C9 81 65 137 145 145',
+                'M1 1C17 73 73 129 145 145',
+                'M1 1C25 65 81 121 145 145',
+                'M1 1C33 57 89 113 145 145',
+                'M1 1C33 49 97 113 145 145',
+                'M1 1C41 41 105 105 145 145'
+            ];
 
-      int24 tickRange = tickUpper - tickLower;
-      uint8 index;
-      if (tickRange <= 5) {
-        index = 7;
-      } else if (tickRange <= 10) {
-        index = 6;
-      } else if (tickRange <= 20) {
-        index = 5;
-      } else if (tickRange <= 50) {
-        index = 4;
-      } else if (tickRange <= 100) {
-        index = 3;
-      } else if (tickRange <= 10_000) {
-        index = 2;
-      } else if (tickRange <= 100_000) {
-        index = 1;
-      } else {
-        index = 0;
-      }
-      return curves[index];
+        int24 tickRange = tickUpper - tickLower;
+        uint8 index;
+        if (tickRange <= 5) {
+            index = 7;
+        } else if (tickRange <= 10) {
+            index = 6;
+        } else if (tickRange <= 20) {
+            index = 5;
+        } else if (tickRange <= 50) {
+            index = 4;
+        } else if (tickRange <= 100) {
+            index = 3;
+        } else if (tickRange <= 10_000) {
+            index = 2;
+        } else if (tickRange <= 100_000) {
+            index = 1;
+        } else {
+            index = 0;
+        }
+        return curves[index];
     }
 
     function generateSVGCurveCircle(int8 overRange) private pure returns (string memory svg) {
-        string memory curvex1 = "73";
-        string memory curvey1 = "190";
-        string memory curvex2 = "217";
-        string memory curvey2 = "334";
+        string memory curvex1 = '73';
+        string memory curvey1 = '190';
+        string memory curvex2 = '217';
+        string memory curvey2 = '334';
         if (overRange == 1 || overRange == -1) {
             svg = string(
                 abi.encodePacked(
@@ -259,75 +273,49 @@ library NFTSVG {
         }
     }
 
-		function generateSVGPositionData(SVGParams memory params) private pure returns (string memory svg) {
-      string memory tickLower = tickToString(params.tickLower);
-      string memory tickUpper = tickToString(params.tickUpper);
-			uint256 str1length = bytes(params.tokenId).length + 4;
-			uint256 str2length = bytes(tickLower).length + 5;
-			uint256 str3length = bytes(tickUpper).length  + 5;
-			svg = string(
-				abi.encodePacked(
-					' <g style=\\"transform:translate(29px, 384px)\\">',
-					'<rect width=\\"',
-					uint256(7 * (str1length + 4)).toString(),
-					'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
-					'<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">ID: </tspan>',
-					params.tokenId,
-					'</text></g>',
-					' <g style=\\"transform:translate(29px, 414px)\\">',
-					'<rect width=\\"',
-					uint256(7 * (str2length + 4)).toString(),
-					'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
-					'<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">Min: </tspan>',
-					tickLower,
-					'</text></g>',
-					' <g style=\\"transform:translate(29px, 444px)\\">',
-					'<rect width=\\"',
-					uint256(7 * (str3length + 4)).toString(),
-					'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
-					'<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">Max: </tspan>',
-					tickUpper,
-					'</text></g>'
-					)
-				);
-		}
-
-    function tickToString(int24 tick) private pure returns (string memory) {
-      string memory sign = '';
-      if (tick < 0) {
-        tick = tick * -1;
-        sign = '-';
-      }
-      return string(
-        abi.encodePacked(sign, uint256(tick).toString())
-      );
+    function generateSVGPositionData(
+        string memory tokenId,
+        int24 tickLower,
+        int24 tickUpper
+    ) private pure returns (string memory svg) {
+        string memory tickLowerStr = tickToString(tickLower);
+        string memory tickUpperStr = tickToString(tickUpper);
+        uint256 str1length = bytes(tokenId).length + 4;
+        uint256 str2length = bytes(tickLowerStr).length + 5;
+        uint256 str3length = bytes(tickUpperStr).length + 5;
+        svg = string(
+            abi.encodePacked(
+                ' <g style=\\"transform:translate(29px, 384px)\\">',
+                '<rect width=\\"',
+                uint256(7 * (str1length + 4)).toString(),
+                'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
+                '<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">ID: </tspan>',
+                tokenId,
+                '</text></g>',
+                ' <g style=\\"transform:translate(29px, 414px)\\">',
+                '<rect width=\\"',
+                uint256(7 * (str2length + 4)).toString(),
+                'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
+                '<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">Min: </tspan>',
+                tickLowerStr,
+                '</text></g>',
+                ' <g style=\\"transform:translate(29px, 444px)\\">',
+                '<rect width=\\"',
+                uint256(7 * (str3length + 4)).toString(),
+                'px\\" height=\\"26px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"rgba(0,0,0,0.6)\\" />',
+                '<text x=\\"12px\\" y=\\"17px\\" font-family=\\"\'IBM Plex Mono\', monospace\\" font-size=\\"12px\\" fill=\\"white\\"><tspan fill=\\"rgba(255,255,255,0.6)\\">Max: </tspan>',
+                tickUpperStr,
+                '</text></g>'
+            )
+        );
     }
 
-    function generateSVGCurceLocationIndicator(SVGParams memory params) private pure returns (string memory svg) {
-      // TODO make coords dynamic
-      string[2][10] memory miniCoords = [
-        ['8', '7'],
-        ['8', '10.5'],
-        ['8', '14.25'],
-        ['10', '18'],
-        ['11', '21'],
-        ['13', '23'],
-        ['15', '25'],
-        ['18', '26'],
-        ['21', '27'],
-        ['24', '27']
-      ];
-      svg = string(
-        abi.encodePacked(
-          '<g style=\\"transform:translate(226px, 433px)\\">',
-          '<rect width=\\"36px\\" height=\\"36px\\" rx=\\"8px\\" ry=\\"8px\\" fill=\\"none\\" stroke=\\"rgba(255,255,255,0.2)\\" />',
-          '<path stroke-linecap=\\"round\\" d=\\"M8 9C8.00004 22.9494 16.2099 28 27 28\\" fill=\\"none\\" stroke=\\"white\\" />',
-          '<circle style=\\"transform:translate3d(',
-          miniCoords[0][0],
-          'px,',
-          miniCoords[0][1],
-          'px, 0px)\\" cx=\\"0px\\" cy=\\"0px\\" r=\\"4px\\" fill=\\"white\\"/></g>'
-        )
-      );
+    function tickToString(int24 tick) private pure returns (string memory) {
+        string memory sign = '';
+        if (tick < 0) {
+            tick = tick * -1;
+            sign = '-';
+        }
+        return string(abi.encodePacked(sign, uint256(tick).toString()));
     }
 }

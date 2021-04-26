@@ -73,17 +73,6 @@ library NFTDescriptor {
                     )
                 )
             );
-/*
-        string memory description = generateDescription(
-            params.tokenId.toString(),
-            escapeQuotes(params.quoteTokenSymbol),
-            escapeQuotes(params.baseTokenSymbol),
-            addressToString(params.poolAddress),
-            addressToString(params.quoteTokenAddress),
-            addressToString(params.baseTokenAddress),
-            feeTier
-          ); */
-
 
         return
             string(
@@ -99,7 +88,7 @@ library NFTDescriptor {
                         addressToString(params.quoteTokenAddress),
                         addressToString(params.baseTokenAddress),
                         feeTier
-                      ),
+                    ),
                     '", "image": "',
                     'data:image/svg+xml;base64,',
                     svgImage(
@@ -111,8 +100,7 @@ library NFTDescriptor {
                         feeTier,
                         params.tickLower,
                         params.tickUpper,
-                        params.tickCurrent,
-                        params.tickSpacing
+                        params.tickCurrent
                     ),
                     '"}'
                 )
@@ -149,7 +137,7 @@ library NFTDescriptor {
         string memory quoteTokenAddress,
         string memory baseTokenAddress,
         string memory feeTier
-      ) private pure returns (string memory) {
+    ) private pure returns (string memory) {
         string(
             abi.encodePacked(
                 'This NFT represents a liquidity position in a Uniswap V3 ',
@@ -176,7 +164,7 @@ library NFTDescriptor {
                 unicode'⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
             )
         );
-      }
+    }
 
     struct DecimalStringParams {
         // significant figures of decimal
@@ -398,33 +386,6 @@ library NFTDescriptor {
         return (uint256(addr)).toHexString(20);
     }
 
-    function normalizeTick(
-        int24 tick,
-        int24 lowerBound,
-        int24 upperBound,
-        int24 tickSpacing
-    ) private pure returns (uint256 tickNormalized) {
-        if (tick < lowerBound) {
-            tickNormalized = 0;
-        } else if (tick > upperBound) {
-            tickNormalized = 100;
-        } else {
-            tickNormalized = uint256(tick.sub(lowerBound).div(tickSpacing));
-        }
-    }
-
-    function normalizeTicks(
-        int24 tickLower,
-        int24 tickUpper,
-        int24 tickCurrent,
-        int24 tickSpacing
-    ) internal pure returns (uint256 tickLowerNormalized, uint256 tickUpperNormalized) {
-        int24 lowerBound = int24(tickCurrent.sub(tickSpacing.mul(50)));
-        int24 upperBound = int24(tickCurrent.add(tickSpacing.mul(50)));
-        tickLowerNormalized = normalizeTick(tickLower, lowerBound, upperBound, tickSpacing);
-        tickUpperNormalized = normalizeTick(tickUpper, lowerBound, upperBound, tickSpacing);
-    }
-
     function svgImage(
         uint256 tokenId,
         address quoteToken,
@@ -434,8 +395,7 @@ library NFTDescriptor {
         string memory feeTier,
         int24 tickLower,
         int24 tickUpper,
-        int24 tickCurrent,
-        int24 tickSpacing
+        int24 tickCurrent
     ) internal pure returns (string memory svg) {
         NFTSVG.SVGParams memory svgParams =
             NFTSVG.SVGParams({
@@ -446,20 +406,35 @@ library NFTDescriptor {
                 feeTier: feeTier,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
+                overRange: overRange(tickLower, tickUpper, tickCurrent),
                 tokenId: tokenId.toString(),
                 color0: tokenToColorHex(uint256(quoteToken), 136),
                 color1: tokenToColorHex(uint256(baseToken), 136),
                 color2: tokenToColorHex(uint256(quoteToken), 0),
                 color3: tokenToColorHex(uint256(baseToken), 0),
-                x1: scale(sliceTokenHex(quoteToken, 16), 0, 255, 16, 274),
-                y1: scale(sliceTokenHex(baseToken, 16), 0, 255, 100, 484),
-                x2: scale(sliceTokenHex(quoteToken, 32), 0, 255, 16, 274),
-                y2: scale(sliceTokenHex(baseToken, 32), 0, 255, 100, 484),
-                x3: scale(sliceTokenHex(quoteToken, 48), 0, 255, 16, 274),
-                y3: scale(sliceTokenHex(baseToken, 48), 0, 255, 100, 484)
+                x1: scale(sliceTokenHex(uint256(quoteToken), 16), 0, 255, 16, 274),
+                y1: scale(sliceTokenHex(uint256(baseToken), 16), 0, 255, 100, 484),
+                x2: scale(sliceTokenHex(uint256(quoteToken), 32), 0, 255, 16, 274),
+                y2: scale(sliceTokenHex(uint256(baseToken), 32), 0, 255, 100, 484),
+                x3: scale(sliceTokenHex(uint256(quoteToken), 48), 0, 255, 16, 274),
+                y3: scale(sliceTokenHex(uint256(baseToken), 48), 0, 255, 100, 484)
             });
 
         return NFTSVG.generateSVG(svgParams);
+    }
+
+    function overRange(
+        int24 tickLower,
+        int24 tickUpper,
+        int24 tickCurrent
+    ) private pure returns (int8) {
+        if (tickCurrent < tickLower) {
+            return -1;
+        } else if (tickCurrent > tickUpper) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
     function scale(
@@ -476,7 +451,7 @@ library NFTDescriptor {
         return string((token >> offset).toHexStringNoPrefix(3));
     }
 
-    function sliceTokenHex(address token, uint256 offset) internal pure returns (uint256) {
-        return uint256(uint8(uint256(token) >> offset));
+    function sliceTokenHex(uint256 token, uint256 offset) internal pure returns (uint256) {
+        return uint256(uint8(token >> offset));
     }
 }

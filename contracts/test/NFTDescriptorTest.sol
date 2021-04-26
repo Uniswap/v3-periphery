@@ -61,8 +61,7 @@ contract NFTDescriptorTest {
         string memory feeTier,
         int24 tickLower,
         int24 tickUpper,
-        int24 tickCurrent,
-        int24 tickSpacing
+        int24 tickCurrent
     ) public pure returns (string memory) {
         return
             NFTDescriptor.svgImage(
@@ -74,8 +73,7 @@ contract NFTDescriptorTest {
                 feeTier,
                 tickLower,
                 tickUpper,
-                tickCurrent,
-                tickSpacing
+                tickCurrent
             );
     }
 

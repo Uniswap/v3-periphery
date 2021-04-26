@@ -630,17 +630,17 @@ describe('NFTDescriptor', () => {
     })
   })
 
-  describe.only('#svgImage', () => {
-    it('returns the svgImage', async () => {
+  describe('#svgImage', () => {
+    it.only('returns the svgImage', async () => {
       const tokenId = 16383337
-      const tickLower = -1000
-      const tickUpper = 1000
+      const tickLower = -10
+      const tickUpper = 20
+      const tickCurrent = 40
       const tickSpacing = 3
-      const tickCurrent = 4
       const token0Symbol = await tokens[2].symbol()
       const token1Symbol = await tokens[3].symbol()
       const feeTier = '0.05%'
-      expect(await nftDescriptor.svgImage(tokenId, tokens[2].address, tokens[3].address, token0Symbol, token1Symbol, feeTier, tickLower, tickUpper, tickCurrent, tickSpacing)).to.eq(
+      expect(await nftDescriptor.svgImage(tokenId, tokens[2].address, tokens[3].address, token0Symbol, token1Symbol, feeTier, tickLower, tickUpper, tickCurrent)).to.eq(
         svgImage(tokens[0].address, tokens[1].address)
       )
     })
