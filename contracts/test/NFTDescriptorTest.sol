@@ -64,7 +64,7 @@ contract NFTDescriptorTest {
         int24 tickCurrent
     ) public pure returns (string memory) {
         return
-            NFTDescriptor.svgImage(
+            NFTDescriptor.generateSVGImage(
                 tokenId,
                 token0,
                 token1,

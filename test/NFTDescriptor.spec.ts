@@ -101,7 +101,7 @@ describe('NFTDescriptor', () => {
         tickSpacing,
         fee,
         poolAddress,
-      })
+      }, {gasLimit: 100000000})
       expect(uri).to.equal(
         tokenURI(
           tokenId,
@@ -259,7 +259,7 @@ describe('NFTDescriptor', () => {
       })
     })
 
-    it('gas', async () => {
+    it.only('gas', async () => {
       await snapshotGasCost(
         nftDescriptor.getGasCostOfConstructTokenURI({
           tokenId,
@@ -276,7 +276,7 @@ describe('NFTDescriptor', () => {
           tickSpacing,
           fee,
           poolAddress,
-        })
+        }, {gasLimit: 100000000})
       )
     })
   })
@@ -630,8 +630,8 @@ describe('NFTDescriptor', () => {
     })
   })
 
-  describe('#svgImage', () => {
-    it.only('returns the svgImage', async () => {
+  describe.only('#svgImage', () => {
+    it('returns the svgImage', async () => {
       const tokenId = 16383337
       const tickLower = -10
       const tickUpper = 20

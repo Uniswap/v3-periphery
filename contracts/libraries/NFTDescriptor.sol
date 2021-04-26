@@ -46,64 +46,38 @@ library NFTDescriptor {
 
     function constructTokenURI(ConstructTokenURIParams memory params) internal pure returns (string memory) {
         string memory feeTier = feeToPercentString(params.fee);
-        string memory name =
-            string(
-                abi.encodePacked(
-                    'Uniswap - ',
-                    feeTier,
-                    ' - ',
-                    escapeQuotes(params.quoteTokenSymbol),
-                    '/',
-                    escapeQuotes(params.baseTokenSymbol),
-                    ' - ',
-                    tickToDecimalString(
-                        !params.flipRatio ? params.tickLower : params.tickUpper,
-                        params.tickSpacing,
-                        params.baseTokenDecimals,
-                        params.quoteTokenDecimals,
-                        params.flipRatio
-                    ),
-                    '<>',
-                    tickToDecimalString(
-                        !params.flipRatio ? params.tickUpper : params.tickLower,
-                        params.tickSpacing,
-                        params.baseTokenDecimals,
-                        params.quoteTokenDecimals,
-                        params.flipRatio
-                    )
-                )
-            );
 
         return
             string(
                 abi.encodePacked(
-                    'data:application/json,{"name":"',
-                    name,
-                    '", "description":"',
-                    generateDescription(
-                        params.tokenId.toString(),
-                        escapeQuotes(params.quoteTokenSymbol),
-                        escapeQuotes(params.baseTokenSymbol),
-                        addressToString(params.poolAddress),
-                        addressToString(params.quoteTokenAddress),
-                        addressToString(params.baseTokenAddress),
-                        feeTier
-                    ),
-                    '", "image": "',
-                    'data:image/svg+xml;base64,',
-                    svgImage(
-                        params.tokenId,
-                        params.quoteTokenAddress,
-                        params.baseTokenAddress,
-                        escapeQuotes(params.quoteTokenSymbol),
-                        escapeQuotes(params.baseTokenSymbol),
-                        feeTier,
-                        params.tickLower,
-                        params.tickUpper,
-                        params.tickCurrent
-                    ),
-                    '"}'
-                )
+                    'data:application/json;base64,',
+                      '{"name":"',
+                        generateName(params, feeTier),
+                        '", "description":"',
+                        generateDescription(
+                            params.tokenId.toString(),
+                            escapeQuotes(params.quoteTokenSymbol),
+                            escapeQuotes(params.baseTokenSymbol),
+                            addressToString(params.poolAddress),
+                            addressToString(params.quoteTokenAddress),
+                            addressToString(params.baseTokenAddress),
+                            feeTier
+                        ),
+                        '", "image": "',
+                        'data:image/svg+xml;base64,',
+                        Base64.encode(bytes(generateSVGImage(
+                            params.tokenId,
+                            params.quoteTokenAddress,
+                            params.baseTokenAddress,
+                            escapeQuotes(params.quoteTokenSymbol),
+                            escapeQuotes(params.baseTokenSymbol),
+                            feeTier,
+                            params.tickLower,
+                            params.tickUpper,
+                            params.tickCurrent
+                        ))),
+                        '"}'
+                    )
             );
     }
 
@@ -138,7 +112,7 @@ library NFTDescriptor {
         string memory baseTokenAddress,
         string memory feeTier
     ) private pure returns (string memory) {
-        string(
+        return string(
             abi.encodePacked(
                 'This NFT represents a liquidity position in a Uniswap V3 ',
                 quoteTokenSymbol,
@@ -164,6 +138,35 @@ library NFTDescriptor {
                 unicode'⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
             )
         );
+    }
+
+    function generateName(ConstructTokenURIParams memory params, string memory feeTier) private pure returns (string memory) {
+      return string(
+          abi.encodePacked(
+              'Uniswap - ',
+              feeTier,
+              ' - ',
+              escapeQuotes(params.quoteTokenSymbol),
+              '/',
+              escapeQuotes(params.baseTokenSymbol),
+              ' - ',
+              tickToDecimalString(
+                  !params.flipRatio ? params.tickLower : params.tickUpper,
+                  params.tickSpacing,
+                  params.baseTokenDecimals,
+                  params.quoteTokenDecimals,
+                  params.flipRatio
+              ),
+              '<>',
+              tickToDecimalString(
+                  !params.flipRatio ? params.tickUpper : params.tickLower,
+                  params.tickSpacing,
+                  params.baseTokenDecimals,
+                  params.quoteTokenDecimals,
+                  params.flipRatio
+              )
+          )
+      );
     }
 
     struct DecimalStringParams {
@@ -386,7 +389,7 @@ library NFTDescriptor {
         return (uint256(addr)).toHexString(20);
     }
 
-    function svgImage(
+    function generateSVGImage(
         uint256 tokenId,
         address quoteToken,
         address baseToken,
