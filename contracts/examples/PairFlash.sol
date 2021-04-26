@@ -17,6 +17,8 @@ import '../interfaces/ISwapRouter.sol';
 
 abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState, PeripheryPayments, ISwapRouter {
     using LowGasSafeMath for uint256;
+
+    ISwapRouter swapRouter;
     
     // fee0 is the fee from calling flash for token0
     // fee1 is the fee from calling flash for token1
@@ -28,9 +30,6 @@ abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState,
         FlashCallbackData memory decoded = abi.decode(data, (FlashCallbackData));
         // more explicit decoding to get token variables
         CallbackValidation.verifyCallback(factory, decoded.poolKey);
-
-        SwapRouter swapRouter = new SwapRouter(factory, WETH9);
-
 
         // approve router for transfer of token0
         TransferHelper.safeApprove(decoded.poolKey.token0, address(swapRouter), decoded.amount0);
