@@ -11,6 +11,7 @@ import { formatSqrtRatioX96 } from './shared/formatSqrtRatioX96'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import Decimal from 'decimal.js'
 import { randomBytes } from 'crypto'
+import fs from 'fs'
 
 const TEN = BigNumber.from(10)
 const LOWEST_SQRT_RATIO = 4310618292
@@ -109,8 +110,7 @@ describe('NFTDescriptor', () => {
           tickSpacing,
           fee,
           poolAddress,
-        },
-        { gasLimit: 100000000 }
+        }
       )
       expect(uri).to.equal(
         await tokenURI(
@@ -302,8 +302,7 @@ describe('NFTDescriptor', () => {
             tickSpacing,
             fee,
             poolAddress,
-          },
-          { gasLimit: 100000000 }
+          }
         )
       )
     })
@@ -659,7 +658,7 @@ describe('NFTDescriptor', () => {
   })
 
   describe('#svgImage', () => {
-    it('returns the svgImage', async () => {
+    it.only('returns the svgImage', async () => {
       const tokenId = 123
       const tickLower = -1000
       const tickUpper = 2000
@@ -670,31 +669,20 @@ describe('NFTDescriptor', () => {
       const feeTier = '0.05%'
       const overRange = 0
 
-      expect(
-        await nftDescriptor.svgImage(
-          tokenId,
-          tokens[1].address,
-          tokens[0].address,
-          quoteTokenSymbol,
-          baseTokenSymbol,
-          feeTier,
-          tickLower,
-          tickUpper,
-          tickCurrent
-        )
-      ).to.eq(
-        await svgImage(
-          tokenId,
-          feeTier,
-          tokens[1].address.toLowerCase(),
-          tokens[0].address.toLowerCase(),
-          quoteTokenSymbol,
-          baseTokenSymbol,
-          overRange,
-          tickLower,
-          tickUpper
-        )
+      const svg = await nftDescriptor.svgImage(
+        tokenId,
+        tokens[1].address,
+        tokens[0].address,
+        quoteTokenSymbol,
+        baseTokenSymbol,
+        feeTier,
+        tickLower,
+        tickUpper,
+        tickCurrent
       )
+
+      expect(svg).toMatchSnapshot()
+      fs.writeFileSync('./test/__snapshots__/NFTDescriptor.svg', svg)
     })
   })
 
