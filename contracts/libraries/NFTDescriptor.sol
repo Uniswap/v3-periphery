@@ -8,8 +8,9 @@ import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/math/SignedSafeMath.sol';
+import 'base64-sol/base64.sol';
+
 import './HexStrings.sol';
-import './Base64.sol';
 
 library NFTDescriptor {
     using TickMath for int24;
