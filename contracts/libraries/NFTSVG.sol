@@ -62,7 +62,7 @@ library NFTSVG {
                 params.color0,
                 "'/%3E%3C/svg%3E\" /><feImage result=\"p1\" xlink:href=\"data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='",
                 params.x1,
-                "}' cy='",
+                "' cy='",
                 params.y1,
                 "' r='120px' fill='%23",
                 params.color1,
@@ -156,7 +156,7 @@ library NFTSVG {
         svg = string(
             abi.encodePacked(
                 '<!-- Card mantle -->'
-                '<g mask="url(#fade-symbol)"><rect fill="none" x="0px" y="0px" width="290px" height="200px" />  <text y="70px" x="32px" fill="white" font-family="\'IBM Plex Mono\', monospace" font-weight="200" font-size="36px">',
+                '<g mask="url(#fade-symbol)"><rect fill="none" x="0px" y="0px" width="290px" height="200px" /> <text y="70px" x="32px" fill="white" font-family="\'IBM Plex Mono\', monospace" font-weight="200" font-size="36px">',
                 quoteTokenSymbol,
                 '/',
                 baseTokenSymbol,
@@ -165,7 +165,7 @@ library NFTSVG {
                 '</text></g>',
                 '<!-- Translucent inner border -->',
                 '<rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" ',
-                'stroke="rgba(255,255,255,0.2)" /><rect x="0" y="0" width="290" height="468" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />'
+                'stroke="rgba(255,255,255,0.2)" /><rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />'
             )
         );
     }
@@ -201,7 +201,7 @@ library NFTSVG {
         );
     }
 
-    function getCurve(int24 tickLower, int24 tickUpper) private pure returns (string memory) {
+    function getCurve(int24 tickLower, int24 tickUpper) internal pure returns (string memory) {
         string[8] memory curves =
             [
                 'M1 1C1 97 49 145 145 145',
