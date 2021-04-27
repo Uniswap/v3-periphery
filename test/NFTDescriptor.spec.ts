@@ -103,13 +103,13 @@ describe('NFTDescriptor', () => {
         poolAddress,
       }, {gasLimit: 100000000})
       expect(uri).to.equal(
-        tokenURI(
+        await tokenURI(
           tokenId,
-          baseTokenAddress,
           quoteTokenAddress,
+          baseTokenAddress,
           poolAddress,
-          baseTokenSymbol,
           quoteTokenSymbol,
+          baseTokenSymbol,
           flipRatio,
           tickLower,
           tickUpper,
@@ -128,10 +128,10 @@ describe('NFTDescriptor', () => {
 
       const uri = await nftDescriptor.constructTokenURI({
         tokenId,
-        baseTokenAddress,
         quoteTokenAddress,
-        baseTokenSymbol,
+        baseTokenAddress,
         quoteTokenSymbol,
+        baseTokenSymbol,
         baseTokenDecimals,
         quoteTokenDecimals,
         flipRatio,
@@ -143,13 +143,13 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(uri).to.equal(
-        tokenURI(
+        await tokenURI(
           tokenId,
-          baseTokenAddress,
           quoteTokenAddress,
+          baseTokenAddress,
           poolAddress,
-          baseTokenSymbol,
           quoteTokenSymbol,
+          baseTokenSymbol,
           flipRatio,
           tickLower,
           tickUpper,
@@ -164,10 +164,10 @@ describe('NFTDescriptor', () => {
       quoteTokenSymbol = '"TES"T1"'
       const uri = await nftDescriptor.constructTokenURI({
         tokenId,
-        baseTokenAddress,
         quoteTokenAddress,
-        baseTokenSymbol,
+        baseTokenAddress,
         quoteTokenSymbol,
+        baseTokenSymbol,
         baseTokenDecimals,
         quoteTokenDecimals,
         flipRatio,
@@ -179,13 +179,13 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(uri).to.equal(
-        tokenURI(
+        await tokenURI(
           tokenId,
-          baseTokenAddress,
           quoteTokenAddress,
+          baseTokenAddress,
           poolAddress,
-          baseTokenSymbol,
           quoteTokenSymbol,
+          baseTokenSymbol,
           flipRatio,
           tickLower,
           tickUpper,
@@ -204,12 +204,12 @@ describe('NFTDescriptor', () => {
 
         const uri = await nftDescriptor.constructTokenURI({
           tokenId,
-          baseTokenAddress,
           quoteTokenAddress,
-          baseTokenSymbol,
+          baseTokenAddress,
           quoteTokenSymbol,
-          baseTokenDecimals,
+          baseTokenSymbol,
           quoteTokenDecimals,
+          baseTokenDecimals,
           flipRatio,
           tickLower,
           tickUpper,
@@ -219,13 +219,13 @@ describe('NFTDescriptor', () => {
           poolAddress,
         })
         expect(uri).to.equal(
-          tokenURI(
+          await tokenURI(
             tokenId,
-            baseTokenAddress,
             quoteTokenAddress,
+            baseTokenAddress,
             poolAddress,
-            baseTokenSymbol,
             quoteTokenSymbol,
+            baseTokenSymbol,
             flipRatio,
             tickLower,
             tickUpper,
@@ -241,12 +241,12 @@ describe('NFTDescriptor', () => {
 
         const uri = await nftDescriptor.constructTokenURI({
           tokenId,
-          baseTokenAddress,
           quoteTokenAddress,
-          baseTokenSymbol,
+          baseTokenAddress,
           quoteTokenSymbol,
-          baseTokenDecimals,
+          baseTokenSymbol,
           quoteTokenDecimals,
+          baseTokenDecimals,
           flipRatio,
           tickLower,
           tickUpper,
@@ -256,13 +256,13 @@ describe('NFTDescriptor', () => {
           poolAddress,
         })
         expect(uri).to.equal(
-          tokenURI(
+          await tokenURI(
             tokenId,
-            baseTokenAddress,
             quoteTokenAddress,
+            baseTokenAddress,
             poolAddress,
-            baseTokenSymbol,
             quoteTokenSymbol,
+            baseTokenSymbol,
             flipRatio,
             tickLower,
             tickUpper,
@@ -645,7 +645,7 @@ describe('NFTDescriptor', () => {
     })
   })
 
-  describe.only('#svgImage', () => {
+  describe('#svgImage', () => {
     it('returns the svgImage', async () => {
       const tokenId = 123
       const tickLower = -1000
@@ -658,7 +658,7 @@ describe('NFTDescriptor', () => {
       const overRange = 0
 
       expect(await nftDescriptor.svgImage(tokenId, tokens[1].address, tokens[0].address, quoteTokenSymbol, baseTokenSymbol, feeTier, tickLower, tickUpper, tickCurrent)).to.eq(
-        await svgImage(tokenId, tokens[0].address.toLowerCase(), tokens[1].address.toLowerCase(), baseTokenSymbol, quoteTokenSymbol, overRange, tickLower, tickUpper)
+        await svgImage(tokenId, feeTier, tokens[1].address.toLowerCase(), tokens[0].address.toLowerCase(), quoteTokenSymbol, baseTokenSymbol, overRange, tickLower, tickUpper)
       )
     })
   })
@@ -667,8 +667,8 @@ describe('NFTDescriptor', () => {
     return `${tokenAddress.slice(startIndex, startIndex + 6).toLowerCase()}`
   }
 
-  async function encodedSvgImage(tokenId: number, baseTokenAddress: string, quoteTokenAddress: string, baseTokenSymbol: string, quoteTokenSymbol: string, overRange: number, tickLower: number, tickUpper: number): Promise<string> {
-    let result = await `data:image/svg+xml;base64,${base64Encode(await svgImage(tokenId, baseTokenAddress.toLowerCase(), quoteTokenAddress.toLowerCase(), baseTokenSymbol, quoteTokenSymbol, overRange, tickLower, tickUpper))}`
+  async function encodedSvgImage(tokenId: number, feeTier: string, baseTokenAddress: string, quoteTokenAddress: string, baseTokenSymbol: string, quoteTokenSymbol: string, overRange: number, tickLower: number, tickUpper: number): Promise<string> {
+    let result = await `data:image/svg+xml;uft8,${base64Encode(await svgImage(tokenId, feeTier, baseTokenAddress.toLowerCase(), quoteTokenAddress.toLowerCase(), baseTokenSymbol, quoteTokenSymbol, overRange, tickLower, tickUpper))}`
     return result
   }
 
@@ -683,27 +683,29 @@ describe('NFTDescriptor', () => {
     tickLower: number,
     tickUpper: number,
     tickCurrent: number,
-    fee: string,
+    feeTier: string,
     prices: string
   ): Promise<string> {
     const overRange = tickCurrent < tickLower ? -1 : tickCurrent > tickUpper ? 1 : 0
     quoteTokenSymbol = quoteTokenSymbol.replace(/"/gi, '\\"')
     baseTokenSymbol = baseTokenSymbol.replace(/"/gi, '\\"')
     return `data:application/json,{\
-"name":"Uniswap - ${fee} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}", \
+"name":"Uniswap - ${feeTier} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}", \
 "description":"This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\\n\
 \\nPool Address: ${poolAddress}\\n${quoteTokenSymbol} Address: ${quoteTokenAddress.toLowerCase()}\\n${baseTokenSymbol} Address: ${baseTokenAddress.toLowerCase()}\\n\
-Fee Tier: ${fee}\\nToken ID: ${tokenId}\\n\\n⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
-token symbols may be imitated.", "image": "${await encodedSvgImage(tokenId, baseTokenAddress, quoteTokenAddress, baseTokenSymbol, quoteTokenSymbol, overRange, tickLower, tickUpper)}"}`
+Fee Tier: ${feeTier}\\nToken ID: ${tokenId}\\n\\n⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
+token symbols may be imitated.", "image": "data:image/svg+xml;uft8,${await svgImage(tokenId, feeTier, quoteTokenAddress, baseTokenAddress, quoteTokenSymbol, baseTokenSymbol, overRange, tickLower, tickUpper)}"}`
   }
 
-  async function svgImage(tokenId: number, baseTokenAddress: string, quoteTokenAddress: string, baseTokenSymbol: string, quoteTokenSymbol: string, overRange: number, tickLower: number, tickUpper: number): Promise<string> {
+  async function svgImage(tokenId: number, feeTier: string, quoteTokenAddress: string, baseTokenAddress: string, quoteTokenSymbol: string, baseTokenSymbol: string, overRange: number, tickLower: number, tickUpper: number): Promise<string> {
     const tokenToNum = (tokenAddr: string, index: number): number => {
       return parseInt(tokenAddr.slice(index, index + 2), 16)
     }
     const scale = (n: number, inMn: number, inMx: number, outMn: number, outMx: number): number => {
       return Math.floor((n - inMn) * (outMx - outMn) / (inMx - inMn) + outMn);
     }
+    baseTokenAddress = baseTokenAddress.toLowerCase()
+    quoteTokenAddress = quoteTokenAddress.toLowerCase()
     const fade = overRange === -1 ? '#fade-up' : overRange === 1 ? '#fade-down' : '#none';
     const curve = await nftDescriptor.getCurve(tickLower, tickUpper)
     const curveCircle = await nftDescriptor.generateSVGCurveCircle(overRange)
@@ -753,7 +755,7 @@ animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s
 <animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" /></textPath></text><!-- Card ma\
 ntle --><g mask="url(#fade-symbol)"><rect fill="none" x="0px" y="0px" width="290px" height="200px" /> <text y="70px" x="32px" fill="white" font-family=\
 "'IBM Plex Mono', monospace" font-weight="200" font-size="36px">${quoteTokenSymbol}/${baseTokenSymbol}</text><text y="115px" x="32px" fill="white" font-family="'IBM Plex Mono', mo\
-nospace" font-weight="200" font-size="36px">0.05%</text></g><!-- Translucent inner border --><rect x="16" y="16" width="258" height="468" rx="26" ry="26\
+nospace" font-weight="200" font-size="36px">${feeTier}</text></g><!-- Translucent inner border --><rect x="16" y="16" width="258" height="468" rx="26" ry="26\
 " fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" /><rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255\
 ,255,255,0.2)" /> <!-- Curve --> <g mask="url(${fade})" style="transform:translate(73px,189px)"><rect x="-16px" y="-16px" width="180px" height="180\
 px" fill="none" /><path d="${curve}" stroke="rgba(0,0,0,0.3)" stroke-width="32px" fill="none" stroke-linecap="round" /></g><g mask="u\

@@ -13,7 +13,6 @@ import 'base64-sol/base64.sol';
 
 import './HexStrings.sol';
 import './NFTSVG.sol';
-import './Base64.sol';
 
 library NFTDescriptor {
     using TickMath for int24;
@@ -50,7 +49,7 @@ library NFTDescriptor {
         return
             string(
                 abi.encodePacked(
-                    'data:application/json;base64,',
+                    'data:application/json,',
                       '{"name":"',
                         generateName(params, feeTier),
                         '", "description":"',
@@ -64,8 +63,8 @@ library NFTDescriptor {
                             feeTier
                         ),
                         '", "image": "',
-                        'data:image/svg+xml;base64,',
-                        Base64.encode(bytes(generateSVGImage(
+                        'data:image/svg+xml;uft8,',
+                        generateSVGImage(
                             params.tokenId,
                             params.quoteTokenAddress,
                             params.baseTokenAddress,
@@ -75,7 +74,7 @@ library NFTDescriptor {
                             params.tickLower,
                             params.tickUpper,
                             params.tickCurrent
-                        ))),
+                        ),
                         '"}'
                     )
             );
