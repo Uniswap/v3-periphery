@@ -14,48 +14,60 @@ library Base64 {
         // multiply by 4/3 rounded up
         uint256 encodedLen = 4 * ((data.length + 2) / 3);
 
-        // Add some extra buffer at the end
+        // add some extra buffer at the end required for the writing
         bytes memory result = new bytes(encodedLen + 32);
 
+        // prepare the lookup table
         bytes memory table = TABLE;
         uint256 tablePtr;
         assembly {
             tablePtr := add(table, 1)
         }
 
-        uint256 outOffset = 32;
-        for (uint256 i = 0; i < data.length; ) {
-            i += 3;
-            uint256 input;
+        // input ptr
+        uint256 dataPtr;
+        assembly {
+            dataPtr := data
+        }
+        uint256 endPtr = dataPtr + data.length;
+
+        // result ptr, jump over length
+        uint256 resultPtr;
+        assembly {
+            resultPtr := add(result, 32)
+        }
+
+        // run over the input, 3 bytes at a time
+        while (dataPtr < endPtr) {
+            dataPtr += 3;
             assembly {
-                input := and(mload(add(data, i)), 0xffffff)
+                // read 3 bytes
+                let input := mload(dataPtr)
+
+                // write 4 characters
+                mstore(resultPtr, shl(248, mload(add(tablePtr, and(shr(18, input), 0x3F)))))
+                resultPtr := add(resultPtr, 1)
+                mstore(resultPtr, shl(248, mload(add(tablePtr, and(shr(12, input), 0x3F)))))
+                resultPtr := add(resultPtr, 1)
+                mstore(resultPtr, shl(248, mload(add(tablePtr, and(shr(6, input), 0x3F)))))
+                resultPtr := add(resultPtr, 1)
+                mstore(resultPtr, shl(248, mload(add(tablePtr, and(input, 0x3F)))))
+                resultPtr := add(resultPtr, 1)
             }
-
-            assembly {
-                let out := and(mload(add(tablePtr, and(shr(18, input), 0x3F))), 0xFF)
-                out := shl(8, out)
-                out := add(out, and(mload(add(tablePtr, and(shr(12, input), 0x3F))), 0xFF))
-                out := shl(8, out)
-                out := add(out, and(mload(add(tablePtr, and(shr(6, input), 0x3F))), 0xFF))
-                out := shl(8, out)
-                out := add(out, and(mload(add(tablePtr, and(input, 0x3F))), 0xFF))
-                out := shl(224, out)
-
-                mstore(add(result, outOffset), out)
-            }
-            outOffset += 4;
         }
 
-        // Padding
-        uint256 r = data.length % 3;
-        if (r != 0) {
-            r = (r == 1) ? 2 : 1;
-        }
-        for (uint256 i = 0; i < r; i++) {
-            result[encodedLen - 1 - i] = '=';
+        // padding with '=''
+        assembly {
+            switch mod(mload(data), 3)
+                case 1 {
+                    mstore(sub(resultPtr, 2), shl(240, 0x3d3d))
+                }
+                case 2 {
+                    mstore(sub(resultPtr, 1), shl(248, 0x3d))
+                }
         }
 
-        // Set the actual output length
+        // set the actual output length
         assembly {
             mstore(result, encodedLen)
         }
