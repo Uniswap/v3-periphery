@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.7.0;
-/* pragma abicoder v2; */
+pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
@@ -43,7 +43,7 @@ library NFTDescriptor {
         address poolAddress;
     }
 
-    function constructTokenURI(ConstructTokenURIParams memory params) internal pure returns (string memory) {
+    function constructTokenURI(ConstructTokenURIParams memory params) public pure returns (string memory) {
         string memory feeTier = feeToPercentString(params.fee);
 
         return

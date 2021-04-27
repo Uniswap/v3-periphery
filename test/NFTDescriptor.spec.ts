@@ -16,15 +16,25 @@ const TEN = BigNumber.from(10)
 const LOWEST_SQRT_RATIO = 4310618292
 const HIGHEST_SQRT_RATIO = BigNumber.from(33849).mul(TEN.pow(34))
 
-describe('NFTDescriptor', () => {
+describe.only('NFTDescriptor', () => {
   const wallets = waffle.provider.getWallets()
 
   const nftDescriptorFixture: Fixture<{
     tokens: [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
     nftDescriptor: NFTDescriptorTest
   }> = async (wallets, provider) => {
+    const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
+    const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
+
     const tokenFactory = await ethers.getContractFactory('TestERC20Metadata')
-    const NFTDescriptorFactory = await ethers.getContractFactory('NFTDescriptorTest')
+    const NFTDescriptorFactory = await ethers.getContractFactory(
+      'NFTDescriptorTest',
+      {
+        libraries: {
+          NFTDescriptor: nftDescriptorLibrary.address
+        }
+      }
+    )
     const nftDescriptor = (await NFTDescriptorFactory.deploy()) as NFTDescriptorTest
     const tokens = (await Promise.all([
       tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1'), // do not use maxu256 to avoid overflowing
