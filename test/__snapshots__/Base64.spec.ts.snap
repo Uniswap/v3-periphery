@@ -28,3 +28,5 @@ exports[`Base64 #encode gas cost of encode(this is a test) 1`] = `1745`;
 exports[`Base64 #encode gas cost of encode(this is a very long string that should cost a lot of gas to encode :)) 1`] = `6090`;
 
 exports[`Base64 #encode gas cost of encode(😀) 1`] = `1011`;
+
+exports[`Base64 #encode max size string (24kB) gas cost 1`] = `3731907`;

@@ -45,6 +45,22 @@ describe('Base64', () => {
       })
     }
 
+    describe('max size string (24kB)', () => {
+      let str: string
+      before(() => {
+        str = Array<null>(24 * 1024)
+          .fill(null)
+          .map((_, i) => String.fromCharCode(i % 1024))
+          .join('')
+      })
+      it('correctness', async () => {
+        expect(await base64.encode(stringToHex(str))).to.eq(base64Encode(str))
+      })
+      it('gas cost', async () => {
+        await snapshotGasCost(base64.getGasCostOfEncode(stringToHex(str)))
+      })
+    })
+
     it('tiny fuzzing', async () => {
       const inputs = []
       for (let i = 0; i < 100; i++) {
