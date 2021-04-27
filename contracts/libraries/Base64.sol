@@ -4,7 +4,8 @@ pragma solidity >=0.5.0;
 /// @title Base64
 /// @notice Provides a function for encoding some bytes in base64
 library Base64 {
-    bytes internal constant TABLE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    bytes32 internal constant TABLE0 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef';
+    bytes32 internal constant TABLE1 = 'ghijklmnopqrstuvwxyz0123456789+/';
 
     /// @notice Encodes some bytes to the base64 representation
     function encode(bytes memory data) internal pure returns (string memory) {
@@ -26,7 +27,9 @@ library Base64 {
                 uint256 byteIndex = (bitStartIndex / 8);
                 uint8 bsiMod8 = uint8(bitStartIndex % 8);
                 if (bsiMod8 < 3) {
-                    result[i] = TABLE[(uint8(data[byteIndex]) >> (2 - bsiMod8)) % 64];
+                    uint8 c = (uint8(data[byteIndex]) >> (2 - bsiMod8)) % 64;
+                    if (c < 32) result[i] = TABLE0[c];
+                    else result[i] = TABLE1[c - 32];
                 } else {
                     uint16 bytesCombined =
                         (uint16(uint8(data[byteIndex])) << 8) +
@@ -34,7 +37,8 @@ library Base64 {
 
                     uint8 c = uint8((bytesCombined >> uint8(10 - bsiMod8)) % 64);
 
-                    result[i] = TABLE[c];
+                    if (c < 32) result[i] = TABLE0[c];
+                    else result[i] = TABLE1[c - 32];
                 }
             }
         }

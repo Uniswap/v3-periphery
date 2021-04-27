@@ -1,30 +1,30 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Base64 #encode gas cost of encode(<some html>) 1`] = `7984`;
+exports[`Base64 #encode gas cost of encode(<some html>) 1`] = `7449`;
 
-exports[`Base64 #encode gas cost of encode(aLpHaBeT) 1`] = `5995`;
+exports[`Base64 #encode gas cost of encode(aLpHaBeT) 1`] = `5607`;
 
-exports[`Base64 #encode gas cost of encode(alphabet soup) 1`] = `9579`;
+exports[`Base64 #encode gas cost of encode(alphabet soup) 1`] = `8941`;
 
-exports[`Base64 #encode gas cost of encode(f) 1`] = `1636`;
+exports[`Base64 #encode gas cost of encode(f) 1`] = `1565`;
 
-exports[`Base64 #encode gas cost of encode(fo) 1`] = `2027`;
+exports[`Base64 #encode gas cost of encode(fo) 1`] = `1907`;
 
-exports[`Base64 #encode gas cost of encode(foo) 1`] = `2342`;
+exports[`Base64 #encode gas cost of encode(foo) 1`] = `2193`;
 
-exports[`Base64 #encode gas cost of encode(foob) 1`] = `3621`;
+exports[`Base64 #encode gas cost of encode(foob) 1`] = `3403`;
 
-exports[`Base64 #encode gas cost of encode(fooba) 1`] = `4009`;
+exports[`Base64 #encode gas cost of encode(fooba) 1`] = `3749`;
 
-exports[`Base64 #encode gas cost of encode(foobar) 1`] = `4328`;
+exports[`Base64 #encode gas cost of encode(foobar) 1`] = `4035`;
 
 exports[`Base64 #encode gas cost of encode(includes
-newlines) 1`] = `11955`;
+newlines) 1`] = `11137`;
 
-exports[`Base64 #encode gas cost of encode(test string) 1`] = `7981`;
+exports[`Base64 #encode gas cost of encode(test string) 1`] = `7449`;
 
-exports[`Base64 #encode gas cost of encode(this is a test) 1`] = `9968`;
+exports[`Base64 #encode gas cost of encode(this is a test) 1`] = `9283`;
 
-exports[`Base64 #encode gas cost of encode(this is a very long string that should cost a lot of gas to encode :)) 1`] = `46165`;
+exports[`Base64 #encode gas cost of encode(this is a very long string that should cost a lot of gas to encode :)) 1`] = `42753`;
 
-exports[`Base64 #encode gas cost of encode(😀) 1`] = `3621`;
+exports[`Base64 #encode gas cost of encode(😀) 1`] = `3407`;
