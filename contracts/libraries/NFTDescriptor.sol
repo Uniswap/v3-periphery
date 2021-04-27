@@ -13,6 +13,7 @@ import 'base64-sol/base64.sol';
 
 import './HexStrings.sol';
 import './NFTSVG.sol';
+import './Base64.sol';
 
 library NFTDescriptor {
     using TickMath for int24;
@@ -44,37 +45,44 @@ library NFTDescriptor {
     }
 
     function constructTokenURI(ConstructTokenURIParams memory params) public pure returns (string memory) {
-        string memory feeTier = feeToPercentString(params.fee);
+        string memory name = generateName(params, feeToPercentString(params.fee));
+        string memory descriptionOne = generateDescriptionOne(
+            escapeQuotes(params.quoteTokenSymbol),
+            escapeQuotes(params.baseTokenSymbol),
+            addressToString(params.poolAddress)
+        );
+        string memory descriptionTwo = generateDescriptionTwo(
+            params.tokenId.toString(),
+            escapeQuotes(params.baseTokenSymbol),
+            addressToString(params.quoteTokenAddress),
+            addressToString(params.baseTokenAddress),
+            feeToPercentString(params.fee)
+        );
+        string memory image = Base64.encode(bytes(generateSVGImage(
+            params.tokenId,
+            params.quoteTokenAddress,
+            params.baseTokenAddress,
+            escapeQuotes(params.quoteTokenSymbol),
+            escapeQuotes(params.baseTokenSymbol),
+            feeToPercentString(params.fee),
+            params.tickLower,
+            params.tickUpper,
+            params.tickCurrent
+        )));
+
 
         return
             string(
                 abi.encodePacked(
                     'data:application/json,',
                       '{"name":"',
-                        generateName(params, feeTier),
+                        name,
                         '", "description":"',
-                        generateDescription(
-                            params.tokenId.toString(),
-                            escapeQuotes(params.quoteTokenSymbol),
-                            escapeQuotes(params.baseTokenSymbol),
-                            addressToString(params.poolAddress),
-                            addressToString(params.quoteTokenAddress),
-                            addressToString(params.baseTokenAddress),
-                            feeTier
-                        ),
+                        descriptionOne,
+                        descriptionTwo,
                         '", "image": "',
-                        'data:image/svg+xml;uft8,',
-                        generateSVGImage(
-                            params.tokenId,
-                            params.quoteTokenAddress,
-                            params.baseTokenAddress,
-                            escapeQuotes(params.quoteTokenSymbol),
-                            escapeQuotes(params.baseTokenSymbol),
-                            feeTier,
-                            params.tickLower,
-                            params.tickUpper,
-                            params.tickCurrent
-                        ),
+                        'data:image/svg+xml;base64,',
+                        image,
                         '"}'
                     )
             );
@@ -102,14 +110,10 @@ library NFTDescriptor {
         return symbol;
     }
 
-    function generateDescription(
-        string memory tokenId,
+    function generateDescriptionOne(
         string memory quoteTokenSymbol,
         string memory baseTokenSymbol,
-        string memory poolAddress,
-        string memory quoteTokenAddress,
-        string memory baseTokenAddress,
-        string memory feeTier
+        string memory poolAddress
     ) private pure returns (string memory) {
         return string(
             abi.encodePacked(
@@ -122,7 +126,19 @@ library NFTDescriptor {
                 '\\nPool Address: ',
                 poolAddress,
                 '\\n',
-                quoteTokenSymbol,
+                quoteTokenSymbol
+        ));
+    }
+
+    function generateDescriptionTwo(
+        string memory tokenId,
+        string memory baseTokenSymbol,
+        string memory quoteTokenAddress,
+        string memory baseTokenAddress,
+        string memory feeTier
+    ) private pure returns (string memory) {
+        return string(
+            abi.encodePacked(
                 ' Address: ',
                 quoteTokenAddress,
                 '\\n',

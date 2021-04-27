@@ -16,7 +16,7 @@ const TEN = BigNumber.from(10)
 const LOWEST_SQRT_RATIO = 4310618292
 const HIGHEST_SQRT_RATIO = BigNumber.from(33849).mul(TEN.pow(34))
 
-describe.only('NFTDescriptor', () => {
+describe('NFTDescriptor', () => {
   const wallets = waffle.provider.getWallets()
 
   const nftDescriptorFixture: Fixture<{
@@ -678,7 +678,7 @@ describe.only('NFTDescriptor', () => {
   }
 
   async function encodedSvgImage(tokenId: number, feeTier: string, baseTokenAddress: string, quoteTokenAddress: string, baseTokenSymbol: string, quoteTokenSymbol: string, overRange: number, tickLower: number, tickUpper: number): Promise<string> {
-    let result = await `data:image/svg+xml;uft8,${base64Encode(await svgImage(tokenId, feeTier, baseTokenAddress.toLowerCase(), quoteTokenAddress.toLowerCase(), baseTokenSymbol, quoteTokenSymbol, overRange, tickLower, tickUpper))}`
+    let result = await `data:image/svg+xml;base64,${base64Encode(await svgImage(tokenId, feeTier, baseTokenAddress.toLowerCase(), quoteTokenAddress.toLowerCase(), baseTokenSymbol, quoteTokenSymbol, overRange, tickLower, tickUpper))}`
     return result
   }
 
@@ -704,7 +704,7 @@ describe.only('NFTDescriptor', () => {
 "description":"This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\\n\
 \\nPool Address: ${poolAddress}\\n${quoteTokenSymbol} Address: ${quoteTokenAddress.toLowerCase()}\\n${baseTokenSymbol} Address: ${baseTokenAddress.toLowerCase()}\\n\
 Fee Tier: ${feeTier}\\nToken ID: ${tokenId}\\n\\n⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
-token symbols may be imitated.", "image": "data:image/svg+xml;uft8,${await svgImage(tokenId, feeTier, quoteTokenAddress, baseTokenAddress, quoteTokenSymbol, baseTokenSymbol, overRange, tickLower, tickUpper)}"}`
+token symbols may be imitated.", "image": "${await encodedSvgImage(tokenId, feeTier, quoteTokenAddress, baseTokenAddress, quoteTokenSymbol, baseTokenSymbol, overRange, tickLower, tickUpper)}"}`
   }
 
   async function svgImage(tokenId: number, feeTier: string, quoteTokenAddress: string, baseTokenAddress: string, quoteTokenSymbol: string, baseTokenSymbol: string, overRange: number, tickLower: number, tickUpper: number): Promise<string> {
