@@ -9,30 +9,26 @@ library Base64 {
 
     /// @notice Encodes some bytes to the base64 representation
     function encode(bytes memory data) internal pure returns (string memory) {
-        if (data.length == 0) return '';
+        uint256 len = data.length;
+        if (len == 0) return '';
 
         // multiply by 4/3 rounded up
-        uint256 encodedLen = 4 * ((data.length + 2) / 3);
+        uint256 encodedLen = 4 * ((len + 2) / 3);
 
         // Add some extra buffer at the end
         bytes memory result = new bytes(encodedLen + 32);
 
         bytes memory table = TABLE;
-        uint256 tablePtr;
+
         assembly {
-            tablePtr := add(table, 1)
-        }
+            let tablePtr := add(table, 1)
+            let resultPtr := add(result, 32)
 
-        uint256 outOffset = 32;
-        for (uint256 i = 0; i < data.length; ) {
-            i += 3;
-            uint256 input;
-            assembly {
-                input := and(mload(add(data, i)), 0xffffff)
-            }
+            for {let i := 0} lt(i, len) {} {
+                i := add(i, 3)
+                let input := and(mload(add(data, i)), 0xffffff)
 
-            assembly {
-                let out := and(mload(add(tablePtr, and(shr(18, input), 0x3F))), 0xFF)
+                let out := mload(add(tablePtr, and(shr(18, input), 0x3F)))
                 out := shl(8, out)
                 out := add(out, and(mload(add(tablePtr, and(shr(12, input), 0x3F))), 0xFF))
                 out := shl(8, out)
@@ -41,22 +37,19 @@ library Base64 {
                 out := add(out, and(mload(add(tablePtr, and(input, 0x3F))), 0xFF))
                 out := shl(224, out)
 
-                mstore(add(result, outOffset), out)
+                mstore(resultPtr, out)
+
+                resultPtr := add(resultPtr, 4)
             }
-            outOffset += 4;
-        }
 
-        // Padding
-        uint256 r = data.length % 3;
-        if (r != 0) {
-            r = (r == 1) ? 2 : 1;
-        }
-        for (uint256 i = 0; i < r; i++) {
-            result[encodedLen - 1 - i] = '=';
-        }
+            switch mod(len, 3)
+            case 1 {
+                mstore(sub(resultPtr, 2), shl(240, 0x3d3d))
+            }
+            case 2 {
+                mstore(sub(resultPtr, 1), shl(248, 0x3d))
+            }
 
-        // Set the actual output length
-        assembly {
             mstore(result, encodedLen)
         }
 
