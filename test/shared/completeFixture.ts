@@ -25,19 +25,13 @@ const completeFixture: Fixture<{
     tokenFactory.deploy(constants.MaxUint256.div(2)),
   ])) as [TestERC20, TestERC20, TestERC20]
 
-
-  const nftDescriptorLibraryFactory = await ethers.getContractFactory(
-    'NFTDescriptor',
-  )
+  const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
   const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
-  const positionDescriptorFactory = await ethers.getContractFactory(
-    'NonfungibleTokenPositionDescriptor',
-    {
-      libraries: {
-        NFTDescriptor: nftDescriptorLibrary.address
-      }
-    }
-  )
+  const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor', {
+    libraries: {
+      NFTDescriptor: nftDescriptorLibrary.address,
+    },
+  })
   const positionDescriptor = await positionDescriptorFactory.deploy(tokens[0].address)
 
   const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')

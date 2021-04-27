@@ -24,8 +24,8 @@ describe('NonfungibleTokenPositionDescriptor', () => {
       'NonfungibleTokenPositionDescriptor',
       {
         libraries: {
-          NFTDescriptor: nftDescriptorLibrary.address
-        }
+          NFTDescriptor: nftDescriptorLibrary.address,
+        },
       }
     )
     const tokens = (await Promise.all([

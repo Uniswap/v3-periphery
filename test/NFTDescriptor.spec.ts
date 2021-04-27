@@ -27,14 +27,11 @@ describe('NFTDescriptor', () => {
     const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
 
     const tokenFactory = await ethers.getContractFactory('TestERC20Metadata')
-    const NFTDescriptorFactory = await ethers.getContractFactory(
-      'NFTDescriptorTest',
-      {
-        libraries: {
-          NFTDescriptor: nftDescriptorLibrary.address
-        }
-      }
-    )
+    const NFTDescriptorFactory = await ethers.getContractFactory('NFTDescriptorTest', {
+      libraries: {
+        NFTDescriptor: nftDescriptorLibrary.address,
+      },
+    })
     const nftDescriptor = (await NFTDescriptorFactory.deploy()) as NFTDescriptorTest
     const tokens = (await Promise.all([
       tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1'), // do not use maxu256 to avoid overflowing
@@ -96,22 +93,25 @@ describe('NFTDescriptor', () => {
     })
 
     it('returns the valid JSON string with min and max ticks', async () => {
-      const uri = await nftDescriptor.constructTokenURI({
-        tokenId,
-        baseTokenAddress,
-        quoteTokenAddress,
-        baseTokenSymbol,
-        quoteTokenSymbol,
-        baseTokenDecimals,
-        quoteTokenDecimals,
-        flipRatio,
-        tickLower,
-        tickUpper,
-        tickCurrent,
-        tickSpacing,
-        fee,
-        poolAddress,
-      }, {gasLimit: 100000000})
+      const uri = await nftDescriptor.constructTokenURI(
+        {
+          tokenId,
+          baseTokenAddress,
+          quoteTokenAddress,
+          baseTokenSymbol,
+          quoteTokenSymbol,
+          baseTokenDecimals,
+          quoteTokenDecimals,
+          flipRatio,
+          tickLower,
+          tickUpper,
+          tickCurrent,
+          tickSpacing,
+          fee,
+          poolAddress,
+        },
+        { gasLimit: 100000000 }
+      )
       expect(uri).to.equal(
         await tokenURI(
           tokenId,
@@ -286,22 +286,25 @@ describe('NFTDescriptor', () => {
 
     it('gas', async () => {
       await snapshotGasCost(
-        nftDescriptor.getGasCostOfConstructTokenURI({
-          tokenId,
-          baseTokenAddress,
-          quoteTokenAddress,
-          baseTokenSymbol,
-          quoteTokenSymbol,
-          baseTokenDecimals,
-          quoteTokenDecimals,
-          flipRatio,
-          tickLower,
-          tickUpper,
-          tickCurrent,
-          tickSpacing,
-          fee,
-          poolAddress,
-        }, {gasLimit: 100000000})
+        nftDescriptor.getGasCostOfConstructTokenURI(
+          {
+            tokenId,
+            baseTokenAddress,
+            quoteTokenAddress,
+            baseTokenSymbol,
+            quoteTokenSymbol,
+            baseTokenDecimals,
+            quoteTokenDecimals,
+            flipRatio,
+            tickLower,
+            tickUpper,
+            tickCurrent,
+            tickSpacing,
+            fee,
+            poolAddress,
+          },
+          { gasLimit: 100000000 }
+        )
       )
     })
   })
@@ -667,8 +670,30 @@ describe('NFTDescriptor', () => {
       const feeTier = '0.05%'
       const overRange = 0
 
-      expect(await nftDescriptor.svgImage(tokenId, tokens[1].address, tokens[0].address, quoteTokenSymbol, baseTokenSymbol, feeTier, tickLower, tickUpper, tickCurrent)).to.eq(
-        await svgImage(tokenId, feeTier, tokens[1].address.toLowerCase(), tokens[0].address.toLowerCase(), quoteTokenSymbol, baseTokenSymbol, overRange, tickLower, tickUpper)
+      expect(
+        await nftDescriptor.svgImage(
+          tokenId,
+          tokens[1].address,
+          tokens[0].address,
+          quoteTokenSymbol,
+          baseTokenSymbol,
+          feeTier,
+          tickLower,
+          tickUpper,
+          tickCurrent
+        )
+      ).to.eq(
+        await svgImage(
+          tokenId,
+          feeTier,
+          tokens[1].address.toLowerCase(),
+          tokens[0].address.toLowerCase(),
+          quoteTokenSymbol,
+          baseTokenSymbol,
+          overRange,
+          tickLower,
+          tickUpper
+        )
       )
     })
   })
@@ -677,8 +702,30 @@ describe('NFTDescriptor', () => {
     return `${tokenAddress.slice(startIndex, startIndex + 6).toLowerCase()}`
   }
 
-  async function encodedSvgImage(tokenId: number, feeTier: string, baseTokenAddress: string, quoteTokenAddress: string, baseTokenSymbol: string, quoteTokenSymbol: string, overRange: number, tickLower: number, tickUpper: number): Promise<string> {
-    let result = await `data:image/svg+xml;base64,${base64Encode(await svgImage(tokenId, feeTier, baseTokenAddress.toLowerCase(), quoteTokenAddress.toLowerCase(), baseTokenSymbol, quoteTokenSymbol, overRange, tickLower, tickUpper))}`
+  async function encodedSvgImage(
+    tokenId: number,
+    feeTier: string,
+    baseTokenAddress: string,
+    quoteTokenAddress: string,
+    baseTokenSymbol: string,
+    quoteTokenSymbol: string,
+    overRange: number,
+    tickLower: number,
+    tickUpper: number
+  ): Promise<string> {
+    let result = await `data:image/svg+xml;base64,${base64Encode(
+      await svgImage(
+        tokenId,
+        feeTier,
+        baseTokenAddress.toLowerCase(),
+        quoteTokenAddress.toLowerCase(),
+        baseTokenSymbol,
+        quoteTokenSymbol,
+        overRange,
+        tickLower,
+        tickUpper
+      )
+    )}`
     return result
   }
 
@@ -704,19 +751,39 @@ describe('NFTDescriptor', () => {
 "description":"This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\\n\
 \\nPool Address: ${poolAddress}\\n${quoteTokenSymbol} Address: ${quoteTokenAddress.toLowerCase()}\\n${baseTokenSymbol} Address: ${baseTokenAddress.toLowerCase()}\\n\
 Fee Tier: ${feeTier}\\nToken ID: ${tokenId}\\n\\n⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
-token symbols may be imitated.", "image": "${await encodedSvgImage(tokenId, feeTier, quoteTokenAddress, baseTokenAddress, quoteTokenSymbol, baseTokenSymbol, overRange, tickLower, tickUpper)}"}`
+token symbols may be imitated.", "image": "${await encodedSvgImage(
+      tokenId,
+      feeTier,
+      quoteTokenAddress,
+      baseTokenAddress,
+      quoteTokenSymbol,
+      baseTokenSymbol,
+      overRange,
+      tickLower,
+      tickUpper
+    )}"}`
   }
 
-  async function svgImage(tokenId: number, feeTier: string, quoteTokenAddress: string, baseTokenAddress: string, quoteTokenSymbol: string, baseTokenSymbol: string, overRange: number, tickLower: number, tickUpper: number): Promise<string> {
+  async function svgImage(
+    tokenId: number,
+    feeTier: string,
+    quoteTokenAddress: string,
+    baseTokenAddress: string,
+    quoteTokenSymbol: string,
+    baseTokenSymbol: string,
+    overRange: number,
+    tickLower: number,
+    tickUpper: number
+  ): Promise<string> {
     const tokenToNum = (tokenAddr: string, index: number): number => {
       return parseInt(tokenAddr.slice(index, index + 2), 16)
     }
     const scale = (n: number, inMn: number, inMx: number, outMn: number, outMx: number): number => {
-      return Math.floor((n - inMn) * (outMx - outMn) / (inMx - inMn) + outMn);
+      return Math.floor(((n - inMn) * (outMx - outMn)) / (inMx - inMn) + outMn)
     }
     baseTokenAddress = baseTokenAddress.toLowerCase()
     quoteTokenAddress = quoteTokenAddress.toLowerCase()
-    const fade = overRange === -1 ? '#fade-up' : overRange === 1 ? '#fade-down' : '#none';
+    const fade = overRange === -1 ? '#fade-up' : overRange === 1 ? '#fade-down' : '#none'
     const curve = await nftDescriptor.getCurve(tickLower, tickUpper)
     const curveCircle = await nftDescriptor.generateSVGCurveCircle(overRange)
     const color0 = tokenToColorHex(quoteTokenAddress, 2)
@@ -729,9 +796,9 @@ token symbols may be imitated.", "image": "${await encodedSvgImage(tokenId, feeT
     const y2 = scale(tokenToNum(baseTokenAddress, 32), 0, 255, 100, 484)
     const x3 = scale(tokenToNum(quoteTokenAddress, 28), 0, 255, 16, 274)
     const y3 = scale(tokenToNum(baseTokenAddress, 28), 0, 255, 100, 484)
-    const str1length = 7 * (tokenId.toString().length + 4 + 4);
-    const str2length = 7 * (tickLower.toString().length + 5 + 4);
-    const str3length = 7 * (tickUpper.toString().length + 5 + 4);
+    const str1length = 7 * (tokenId.toString().length + 4 + 4)
+    const str2length = 7 * (tickLower.toString().length + 5 + 4)
+    const str3length = 7 * (tickUpper.toString().length + 5 + 4)
     return `<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink='http://www.w3.org/1999/xlink'><style>@import \
 url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;400');</style><defs><!-- Background gradient --><filter id="f1"><feImage result="p0" \
 xlink:href="data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='290px' hei\
