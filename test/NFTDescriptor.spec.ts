@@ -94,24 +94,22 @@ describe('NFTDescriptor', () => {
     })
 
     it('returns the valid JSON string with min and max ticks', async () => {
-      const uri = await nftDescriptor.constructTokenURI(
-        {
-          tokenId,
-          baseTokenAddress,
-          quoteTokenAddress,
-          baseTokenSymbol,
-          quoteTokenSymbol,
-          baseTokenDecimals,
-          quoteTokenDecimals,
-          flipRatio,
-          tickLower,
-          tickUpper,
-          tickCurrent,
-          tickSpacing,
-          fee,
-          poolAddress,
-        }
-      )
+      const uri = await nftDescriptor.constructTokenURI({
+        tokenId,
+        baseTokenAddress,
+        quoteTokenAddress,
+        baseTokenSymbol,
+        quoteTokenSymbol,
+        baseTokenDecimals,
+        quoteTokenDecimals,
+        flipRatio,
+        tickLower,
+        tickUpper,
+        tickCurrent,
+        tickSpacing,
+        fee,
+        poolAddress,
+      })
       expect(uri).to.equal(
         await tokenURI(
           tokenId,
@@ -286,24 +284,22 @@ describe('NFTDescriptor', () => {
 
     it('gas', async () => {
       await snapshotGasCost(
-        nftDescriptor.getGasCostOfConstructTokenURI(
-          {
-            tokenId,
-            baseTokenAddress,
-            quoteTokenAddress,
-            baseTokenSymbol,
-            quoteTokenSymbol,
-            baseTokenDecimals,
-            quoteTokenDecimals,
-            flipRatio,
-            tickLower,
-            tickUpper,
-            tickCurrent,
-            tickSpacing,
-            fee,
-            poolAddress,
-          }
-        )
+        nftDescriptor.getGasCostOfConstructTokenURI({
+          tokenId,
+          baseTokenAddress,
+          quoteTokenAddress,
+          baseTokenSymbol,
+          quoteTokenSymbol,
+          baseTokenDecimals,
+          quoteTokenDecimals,
+          flipRatio,
+          tickLower,
+          tickUpper,
+          tickCurrent,
+          tickSpacing,
+          fee,
+          poolAddress,
+        })
       )
     })
   })
