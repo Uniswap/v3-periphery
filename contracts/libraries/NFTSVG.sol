@@ -236,7 +236,7 @@ library NFTSVG {
         return curves[index];
     }
 
-    function generateSVGCurveCircle(int8 overRange) private pure returns (string memory svg) {
+    function generateSVGCurveCircle(int8 overRange) internal pure returns (string memory svg) {
         string memory curvex1 = '73';
         string memory curvey1 = '190';
         string memory curvex2 = '217';

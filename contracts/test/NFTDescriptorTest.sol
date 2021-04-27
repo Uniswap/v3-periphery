@@ -89,4 +89,8 @@ contract NFTDescriptorTest {
     function getCurve(int24 tickLower, int24 tickUpper) public pure returns (string memory) {
         return NFTSVG.getCurve(tickLower, tickUpper);
     }
+
+    function generateSVGCurveCircle(int8 overRange) public pure returns (string memory) {
+        return NFTSVG.generateSVGCurveCircle(overRange);
+    }
 }

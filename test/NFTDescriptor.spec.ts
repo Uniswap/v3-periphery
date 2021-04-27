@@ -111,6 +111,9 @@ describe('NFTDescriptor', () => {
           baseTokenSymbol,
           quoteTokenSymbol,
           flipRatio,
+          tickLower,
+          tickUpper,
+          tickCurrent,
           '0.3%',
           'MIN<>MAX'
         )
@@ -148,6 +151,9 @@ describe('NFTDescriptor', () => {
           baseTokenSymbol,
           quoteTokenSymbol,
           flipRatio,
+          tickLower,
+          tickUpper,
+          tickCurrent,
           '0.3%',
           '0.99900<>1.0010'
         )
@@ -181,6 +187,9 @@ describe('NFTDescriptor', () => {
           baseTokenSymbol,
           quoteTokenSymbol,
           flipRatio,
+          tickLower,
+          tickUpper,
+          tickCurrent,
           '0.3%',
           'MIN<>MAX'
         )
@@ -218,6 +227,9 @@ describe('NFTDescriptor', () => {
             baseTokenSymbol,
             quoteTokenSymbol,
             flipRatio,
+            tickLower,
+            tickUpper,
+            tickCurrent,
             '0.3%',
             '0.99900<>1.0010'
           )
@@ -252,6 +264,9 @@ describe('NFTDescriptor', () => {
             baseTokenSymbol,
             quoteTokenSymbol,
             flipRatio,
+            tickLower,
+            tickUpper,
+            tickCurrent,
             '0.3%',
             'MIN<>MAX'
           )
@@ -640,9 +655,10 @@ describe('NFTDescriptor', () => {
       const baseTokenSymbol = await tokens[0].symbol()
       const quoteTokenSymbol = await tokens[1].symbol()
       const feeTier = '0.05%'
+      const overRange = 0
 
       expect(await nftDescriptor.svgImage(tokenId, tokens[1].address, tokens[0].address, quoteTokenSymbol, baseTokenSymbol, feeTier, tickLower, tickUpper, tickCurrent)).to.eq(
-        svgImage(tokens[0].address, tokens[1].address, baseTokenSymbol, quoteTokenSymbol)
+        await svgImage(tokenId, tokens[0].address.toLowerCase(), tokens[1].address.toLowerCase(), baseTokenSymbol, quoteTokenSymbol, overRange, tickLower, tickUpper)
       )
     })
   })
@@ -651,11 +667,12 @@ describe('NFTDescriptor', () => {
     return `${tokenAddress.slice(startIndex, startIndex + 6).toLowerCase()}`
   }
 
-  function encodedSvgImage(baseTokenAddress: string, quoteTokenAddress: string, baseTokenSymbol: string, quoteTokenSymbol: string): string {
-    return `data:image/svg+xml;base64,${base64Encode(svgImage(baseTokenAddress, quoteTokenAddress, baseTokenSymbol, quoteTokenSymbol))}`
+  async function encodedSvgImage(tokenId: number, baseTokenAddress: string, quoteTokenAddress: string, baseTokenSymbol: string, quoteTokenSymbol: string, overRange: number, tickLower: number, tickUpper: number): Promise<string> {
+    let result = await `data:image/svg+xml;base64,${base64Encode(await svgImage(tokenId, baseTokenAddress.toLowerCase(), quoteTokenAddress.toLowerCase(), baseTokenSymbol, quoteTokenSymbol, overRange, tickLower, tickUpper))}`
+    return result
   }
 
-  function tokenURI(
+  async function tokenURI(
     tokenId: number,
     quoteTokenAddress: string,
     baseTokenAddress: string,
@@ -663,9 +680,13 @@ describe('NFTDescriptor', () => {
     quoteTokenSymbol: string,
     baseTokenSymbol: string,
     flipRatio: boolean,
+    tickLower: number,
+    tickUpper: number,
+    tickCurrent: number,
     fee: string,
     prices: string
-  ): string {
+  ): Promise<string> {
+    const overRange = tickCurrent < tickLower ? -1 : tickCurrent > tickUpper ? 1 : 0
     quoteTokenSymbol = quoteTokenSymbol.replace(/"/gi, '\\"')
     baseTokenSymbol = baseTokenSymbol.replace(/"/gi, '\\"')
     return `data:application/json,{\
@@ -673,26 +694,32 @@ describe('NFTDescriptor', () => {
 "description":"This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\\n\
 \\nPool Address: ${poolAddress}\\n${quoteTokenSymbol} Address: ${quoteTokenAddress.toLowerCase()}\\n${baseTokenSymbol} Address: ${baseTokenAddress.toLowerCase()}\\n\
 Fee Tier: ${fee}\\nToken ID: ${tokenId}\\n\\n⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
-token symbols may be imitated.", "image": "${encodedSvgImage(baseTokenAddress, quoteTokenAddress, baseTokenSymbol, quoteTokenSymbol)}"}`
+token symbols may be imitated.", "image": "${await encodedSvgImage(tokenId, baseTokenAddress, quoteTokenAddress, baseTokenSymbol, quoteTokenSymbol, overRange, tickLower, tickUpper)}"}`
   }
 
-  function svgImage(baseTokenAddress: string, quoteTokenAddress: string, baseTokenSymbol: string, quoteTokenSymbol: string): string {
+  async function svgImage(tokenId: number, baseTokenAddress: string, quoteTokenAddress: string, baseTokenSymbol: string, quoteTokenSymbol: string, overRange: number, tickLower: number, tickUpper: number): Promise<string> {
     const tokenToNum = (tokenAddr: string, index: number): number => {
       return parseInt(tokenAddr.slice(index, index + 2), 16)
     }
     const scale = (n: number, inMn: number, inMx: number, outMn: number, outMx: number): number => {
       return Math.floor((n - inMn) * (outMx - outMn) / (inMx - inMn) + outMn);
     }
-    const color0 = tokenToColorHex(baseTokenAddress, 2)
-    const color1 = tokenToColorHex(quoteTokenAddress, 2)
-    const color2 = tokenToColorHex(baseTokenAddress, 36)
-    const color3 = tokenToColorHex(quoteTokenAddress, 36)
-    const x1 = scale(tokenToNum(baseTokenAddress, 36), 0, 255, 16, 274)
-    const y1 = scale(tokenToNum(quoteTokenAddress, 36), 0, 255, 100, 484)
-    const x2 = scale(tokenToNum(baseTokenAddress, 32), 0, 255, 16, 274)
-    const y2 = scale(tokenToNum(quoteTokenAddress, 32), 0, 255, 100, 484)
-    const x3 = scale(tokenToNum(baseTokenAddress, 28), 0, 255, 16, 274)
-    const y3 = scale(tokenToNum(quoteTokenAddress, 28), 0, 255, 100, 484)
+    const fade = overRange === -1 ? '#fade-up' : overRange === 1 ? '#fade-down' : '#none';
+    const curve = await nftDescriptor.getCurve(tickLower, tickUpper)
+    const curveCircle = await nftDescriptor.generateSVGCurveCircle(overRange)
+    const color0 = tokenToColorHex(quoteTokenAddress, 2)
+    const color1 = tokenToColorHex(baseTokenAddress, 2)
+    const color2 = tokenToColorHex(quoteTokenAddress, 36)
+    const color3 = tokenToColorHex(baseTokenAddress, 36)
+    const x1 = scale(tokenToNum(quoteTokenAddress, 36), 0, 255, 16, 274)
+    const y1 = scale(tokenToNum(baseTokenAddress, 36), 0, 255, 100, 484)
+    const x2 = scale(tokenToNum(quoteTokenAddress, 32), 0, 255, 16, 274)
+    const y2 = scale(tokenToNum(baseTokenAddress, 32), 0, 255, 100, 484)
+    const x3 = scale(tokenToNum(quoteTokenAddress, 28), 0, 255, 16, 274)
+    const y3 = scale(tokenToNum(baseTokenAddress, 28), 0, 255, 100, 484)
+    const str1length = 7 * (tokenId.toString().length + 4 + 4);
+    const str2length = 7 * (tickLower.toString().length + 5 + 4);
+    const str3length = 7 * (tickUpper.toString().length + 5 + 4);
     return `<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink='http://www.w3.org/1999/xlink'><style>@import \
 url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;400');</style><defs><!-- Background gradient --><filter id="f1"><feImage result="p0" \
 xlink:href="data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='290px' hei\
@@ -728,16 +755,15 @@ ntle --><g mask="url(#fade-symbol)"><rect fill="none" x="0px" y="0px" width="290
 "'IBM Plex Mono', monospace" font-weight="200" font-size="36px">${quoteTokenSymbol}/${baseTokenSymbol}</text><text y="115px" x="32px" fill="white" font-family="'IBM Plex Mono', mo\
 nospace" font-weight="200" font-size="36px">0.05%</text></g><!-- Translucent inner border --><rect x="16" y="16" width="258" height="468" rx="26" ry="26\
 " fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" /><rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255\
-,255,255,0.2)" /> <!-- Curve --> <g mask="url(#fade-down)" style="transform:translate(73px,189px)"><rect x="-16px" y="-16px" width="180px" height="180\
-px" fill="none" /><path d="M1 1C25 65 81 121 145 145" stroke="rgba(0,0,0,0.3)" stroke-width="32px" fill="none" stroke-linecap="round" /></g><g mask="u\
-rl(#fade-down)" style="transform:translate(73px,189px)"><rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />\
-<path d="M1 1C25 65 81 121 145 145" stroke="rgba(255,255,255,1)" fill="none" stroke-linecap="round" /></g><circle cx="73px" cy="190px" r="4px" fill="w\
-hite" /><circle cx="73px" cy="190px" r="24px" fill="none" stroke="white" /> <g style="transform:translate(29px, 384px)"><rect width="112px" height="26\
+,255,255,0.2)" /> <!-- Curve --> <g mask="url(${fade})" style="transform:translate(73px,189px)"><rect x="-16px" y="-16px" width="180px" height="180\
+px" fill="none" /><path d="${curve}" stroke="rgba(0,0,0,0.3)" stroke-width="32px" fill="none" stroke-linecap="round" /></g><g mask="u\
+rl(${fade})" style="transform:translate(73px,189px)"><rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />\
+<path d="${curve}" stroke="rgba(255,255,255,1)" fill="none" stroke-linecap="round" /></g>${curveCircle} <g style="transform:translate(29px, 384px)"><rect width="${str1length}px" height="26\
 px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" /><text x="12px" y="17px" font-family="'IBM Plex Mono', monospace" font-size="12px" fill="white"><tspan f\
-ill="rgba(255,255,255,0.6)">ID: </tspan>16383337</text></g> <g style="transform:translate(29px, 414px)"><rect width="84px" height="26px" rx="8px" ry=\
+ill="rgba(255,255,255,0.6)">ID: </tspan>${tokenId}</text></g> <g style="transform:translate(29px, 414px)"><rect width="${str2length}px" height="26px" rx="8px" ry=\
 "8px" fill="rgba(0,0,0,0.6)" /><text x="12px" y="17px" font-family="'IBM Plex Mono', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,\
-255,0.6)">Min: </tspan>-10</text></g> <g style="transform:translate(29px, 444px)"><rect width="77px" height="26px" rx="8px" ry="8px" fill="rgba(0,0\
+255,0.6)">Min: </tspan>${tickLower}</text></g> <g style="transform:translate(29px, 444px)"><rect width="${str3length}px" height="26px" rx="8px" ry="8px" fill="rgba(0,0\
 ,0,0.6)" /><text x="12px" y="17px" font-family="'IBM Plex Mono', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">\
-Max: </tspan>20</text></g></svg>`
+Max: </tspan>${tickUpper}</text></g></svg>`
   }
 })
