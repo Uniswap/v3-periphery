@@ -44,14 +44,14 @@ library NFTDescriptor {
 
     function constructTokenURI(ConstructTokenURIParams memory params) public pure returns (string memory) {
         string memory name = generateName(params, feeToPercentString(params.fee));
-        string memory descriptionOne =
-            generateDescriptionOne(
+        string memory descriptionPartOne =
+            generateDescriptionPartOne(
                 escapeQuotes(params.quoteTokenSymbol),
                 escapeQuotes(params.baseTokenSymbol),
                 addressToString(params.poolAddress)
             );
-        string memory descriptionTwo =
-            generateDescriptionTwo(
+        string memory descriptionPartTwo =
+            generateDescriptionPartTwo(
                 params.tokenId.toString(),
                 escapeQuotes(params.baseTokenSymbol),
                 addressToString(params.quoteTokenAddress),
@@ -82,8 +82,8 @@ library NFTDescriptor {
                     '{"name":"',
                     name,
                     '", "description":"',
-                    descriptionOne,
-                    descriptionTwo,
+                    descriptionPartOne,
+                    descriptionPartTwo,
                     '", "image": "',
                     'data:image/svg+xml;base64,',
                     image,
@@ -114,7 +114,7 @@ library NFTDescriptor {
         return symbol;
     }
 
-    function generateDescriptionOne(
+    function generateDescriptionPartOne(
         string memory quoteTokenSymbol,
         string memory baseTokenSymbol,
         string memory poolAddress
@@ -136,7 +136,7 @@ library NFTDescriptor {
             );
     }
 
-    function generateDescriptionTwo(
+    function generateDescriptionPartTwo(
         string memory tokenId,
         string memory baseTokenSymbol,
         string memory quoteTokenAddress,

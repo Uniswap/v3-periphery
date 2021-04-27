@@ -18,6 +18,7 @@ const completeFixture: Fixture<{
   tokens: [TestERC20, TestERC20, TestERC20]
 }> = async (wallets, provider) => {
   const { weth9, factory, router } = await v3RouterFixture(wallets, provider)
+
   const tokenFactory = await ethers.getContractFactory('TestERC20')
   const tokens = (await Promise.all([
     tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu256 to avoid overflowing
