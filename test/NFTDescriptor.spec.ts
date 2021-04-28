@@ -12,8 +12,7 @@ import { getMaxTick, getMinTick } from './shared/ticks'
 import Decimal from 'decimal.js'
 import { randomBytes } from 'crypto'
 import fs from 'fs'
-import jsdom from 'jsdom'
-const { JSDOM } = jsdom
+import isSvg from 'is-svg'
 
 const TEN = BigNumber.from(10)
 const LOWEST_SQRT_RATIO = 4310618292
@@ -757,9 +756,7 @@ describe('NFTDescriptor', () => {
         tickUpper,
         tickCurrent
       )
-      // TODO: test that html has nothing invalid
-      const html = JSDOM.fragment(svg)
-      console.log(html.firstElementChild!.children.length)
+      expect(isSvg(svg)).to.eq(true)
     })
   })
 
