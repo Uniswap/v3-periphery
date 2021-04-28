@@ -122,7 +122,7 @@ describe('SwapRouter gas tests', () => {
 
     const params = {
       path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
-      recipient: outputIsWETH9 ? router.address : trader.address,
+      recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
       deadline: 1,
       amountIn,
       amountOutMinimum,
@@ -157,7 +157,7 @@ describe('SwapRouter gas tests', () => {
         sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
           ? BigNumber.from('4295128740')
           : BigNumber.from('1461446703485210103287273052203988822378723970341'),
-      recipient: outputIsWETH9 ? router.address : trader.address,
+      recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
       deadline: 1,
       amountIn,
       amountOutMinimum,
@@ -183,7 +183,7 @@ describe('SwapRouter gas tests', () => {
 
     const params = {
       path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
-      recipient: outputIsWETH9 ? router.address : trader.address,
+      recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
       deadline: 1,
       amountOut,
       amountInMaximum,
@@ -212,7 +212,7 @@ describe('SwapRouter gas tests', () => {
       tokenIn,
       tokenOut,
       fee: FeeAmount.MEDIUM,
-      recipient: outputIsWETH9 ? router.address : trader.address,
+      recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
       deadline: 1,
       amountOut,
       amountInMaximum,
