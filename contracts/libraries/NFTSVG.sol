@@ -2,6 +2,7 @@
 pragma solidity >=0.5.0;
 
 import '@openzeppelin/contracts/utils/Strings.sol';
+import 'base64-sol/base64.sol';
 
 /// @title NFTSVG
 /// @notice Provides a function for generating an SVG associated with a Uniswap NFT
@@ -64,9 +65,15 @@ library NFTSVG {
                 '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"',
                 " xmlns:xlink='http://www.w3.org/1999/xlink'>",
                 "<style>@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;400');</style><defs>",
-                "<filter id=\"f1\"><feImage result=\"p0\" xlink:href=\"data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='290px' height='500px' fill='%23",
-                params.color0,
-                "'/%3E%3C/svg%3E\" /><feImage result=\"p1\" xlink:href=\"data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='",
+                "<filter id=\"f1\"><feImage result=\"p0\" xlink:href=\"data:image/svg+xml;base64,",
+                Base64.encode(
+                  bytes(abi.encodePacked(
+                      "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><rect width='290px' height='500px' fill='#",
+                      params.color0,
+                      "'/></svg>"
+                    ))
+                  ),
+                "\"/><feImage result=\"p1\" xlink:href=\"data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='",
                 params.x1,
                 "' cy='",
                 params.y1,
