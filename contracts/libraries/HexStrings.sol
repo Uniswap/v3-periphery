@@ -24,7 +24,6 @@ library HexStrings {
             buffer[i - 1] = ALPHABET[value & 0xf];
             value >>= 4;
         }
-        require(value == 0, 'Strings: hex length insufficient');
         return string(buffer);
     }
 }

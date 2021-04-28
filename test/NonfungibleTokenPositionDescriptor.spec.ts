@@ -18,8 +18,15 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     nftPositionDescriptor: NonfungibleTokenPositionDescriptor
   }> = async (wallets, provider) => {
     const tokenFactory = await ethers.getContractFactory('TestERC20')
+    const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
+    const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
     const NonfungibleTokenPositionDescriptorFactory = await ethers.getContractFactory(
-      'NonfungibleTokenPositionDescriptor'
+      'NonfungibleTokenPositionDescriptor',
+      {
+        libraries: {
+          NFTDescriptor: nftDescriptorLibrary.address,
+        },
+      }
     )
     const tokens = (await Promise.all([
       tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu25e6 to avoid overflowing

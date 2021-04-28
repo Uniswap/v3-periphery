@@ -1153,13 +1153,16 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('returns a data URI with correct mime type', async () => {
-      expect(await nft.tokenURI(tokenId)).to.match(/data:application\/json,.+/)
+      expect(await nft.tokenURI(tokenId)).to.match(/data:application\/json;base64,.+/)
     })
 
     it('content is valid JSON and structure', async () => {
-      const content = JSON.parse((await nft.tokenURI(tokenId)).substr('data:application/json,'.length))
+      const encodedJSON = (await nft.tokenURI(tokenId)).substr('data:application/json;base64,'.length)
+      const decodedJSON = Buffer.from(encodedJSON, 'base64').toString('utf8')
+      const content = JSON.parse(decodedJSON)
       expect(content).to.haveOwnProperty('name').is.a('string')
       expect(content).to.haveOwnProperty('description').is.a('string')
+      expect(content).to.haveOwnProperty('image').is.a('string')
     })
   })
 
