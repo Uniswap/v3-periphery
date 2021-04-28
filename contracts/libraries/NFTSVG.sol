@@ -53,11 +53,7 @@ library NFTSVG {
             abi.encodePacked(
                 '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"',
                 " xmlns:xlink='http://www.w3.org/1999/xlink'>",
-                /* '<!-- {"address": "0xe8ab59d3bcde16a29912de83a90eb39628cfc163", "msg": "Forged in SVG for Uniswap in 2021 by 0xe8ab59d3bcde16a29912de83a90eb39628cfc163",',
-					'"sig": "0x2df0e99d9cbfec33a705d83f75666d98b22dea7c1af412c584f7d626d83f02875993df740dc87563b9c73378f8462426da572d7989de88079a382ad96c57b68d1b",',
-					'"version": "2"} -->', */
                 "<style>@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;400');</style><defs>",
-                '<!-- Background gradient -->',
                 "<filter id=\"f1\"><feImage result=\"p0\" xlink:href=\"data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='290px' height='500px' fill='%23",
                 params.color0,
                 "'/%3E%3C/svg%3E\" /><feImage result=\"p1\" xlink:href=\"data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='",
@@ -82,31 +78,23 @@ library NFTSVG {
                 "' r='100px' fill='%23",
                 params.color3,
                 '\'/%3E%3C/svg%3E" /><feBlend mode="overlay" in="p0" in2="p1" /><feBlend mode="exclusion" in2="p2" /><feBlend mode="overlay" in2="p3" result="blendOut" /><feGaussianBlur in="blendOut" stdDeviation="42" /></filter>',
-                '<!-- Clip path for gradients -->',
                 ' <clipPath id="corners"><rect width="290" height="500" rx="42" ry="42" /></clipPath>',
-                '<!-- Outer text animation path. Must be a path for chrome support. Can be generated with elementToPath above. -->',
                 '<path id="text-path-a" d="M40 12 H250 A28 28 0 0 1 278 40 V460 A28 28 0 0 1 250 488 H40 A28 28 0 0 1 12 460 V40 A28 28 0 0 1 40 12 z" />',
-                '<!-- Minimap -->',
                 '<path id="minimap" d="M234 444C234 457.949 242.21 463 253 463" />',
-                '<!-- Top dark region blur filter -->',
                 '<filter id="top-region-blur"><feGaussianBlur in="SourceGraphic" stdDeviation="24" /></filter>',
                 '<linearGradient id="grad-up" x1="1" x2="0" y1="1" y2="0"><stop offset="0.0" stop-color="white" stop-opacity="1" />',
                 '<stop offset=".9" stop-color="white" stop-opacity="0" /></linearGradient>',
-                '<!-- Positive out of range -->',
                 '<linearGradient id="grad-down" x1="0" x2="1" y1="0" y2="1"><stop offset="0.0" stop-color="white" stop-opacity="1" /><stop offset="0.9" stop-color="white" stop-opacity="0" /></linearGradient>',
                 '<mask id="fade-up" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#grad-up)" /></mask>',
                 '<mask id="fade-down" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#grad-down)" /></mask>',
                 '<mask id="none" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="white" /></mask>',
-                '<!-- Symbol text overflow -->',
                 '<linearGradient id="grad-symbol"><stop offset="0.7" stop-color="white" stop-opacity="1" /><stop offset=".95" stop-color="white" stop-opacity="0" /></linearGradient>',
                 '<mask id="fade-symbol" maskContentUnits="userSpaceOnUse"><rect width="290px" height="200px" fill="url(#grad-symbol)" /></mask></defs>',
                 '<g clip-path="url(#corners)">',
-                '<!-- Background and border -->',
                 '<rect fill="',
                 params.color0,
                 '" x="0px" y="0px" width="290px" height="500px" />',
                 '<rect style="filter: url(#f1)" x="0px" y="0px" width="290px" height="500px" />',
-                '<!-- Top dark area -->',
                 ' <g style="filter:url(#top-region-blur); transform:scale(1.5); transform-origin:center top;">',
                 '<rect fill="none" x="0px" y="0px" width="290px" height="500px" />',
                 '<ellipse cx="50%" cy="0px" rx="180px" ry="120px" fill="#000" opacity="0.85" /></g></g>'
@@ -122,7 +110,6 @@ library NFTSVG {
     ) private pure returns (string memory svg) {
         svg = string(
             abi.encodePacked(
-                '<!-- Outerdata string -->',
                 '<text text-rendering="optimizeSpeed">',
                 '<textPath startOffset="-100%" fill="white" font-family="\'IBM Plex Mono\', monospace" font-size="10px" xlink:href="#text-path-a">',
                 baseToken,
@@ -155,7 +142,6 @@ library NFTSVG {
     ) private pure returns (string memory svg) {
         svg = string(
             abi.encodePacked(
-                '<!-- Card mantle -->'
                 '<g mask="url(#fade-symbol)"><rect fill="none" x="0px" y="0px" width="290px" height="200px" /> <text y="70px" x="32px" fill="white" font-family="\'IBM Plex Mono\', monospace" font-weight="200" font-size="36px">',
                 quoteTokenSymbol,
                 '/',
@@ -163,7 +149,6 @@ library NFTSVG {
                 '</text><text y="115px" x="32px" fill="white" font-family="\'IBM Plex Mono\', monospace" font-weight="200" font-size="36px">',
                 feeTier,
                 '</text></g>',
-                '<!-- Translucent inner border -->',
                 '<rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" ',
                 'stroke="rgba(255,255,255,0.2)" /><rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />'
             )
@@ -179,7 +164,6 @@ library NFTSVG {
         string memory curve = getCurve(tickLower, tickUpper);
         svg = string(
             abi.encodePacked(
-                ' <!-- Curve --> ',
                 '<g mask="url(',
                 fade,
                 ')"',

@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat'
-import { base64Encode } from './shared/base64encode'
+import { base64Encode } from './shared/base64'
 import { expect } from './shared/expect'
 import { Base64Test } from '../typechain'
 import { randomBytes } from 'crypto'

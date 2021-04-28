@@ -6,7 +6,7 @@ import { TestERC20Metadata, NFTDescriptorTest } from '../typechain'
 import { Fixture } from 'ethereum-waffle'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import snapshotGasCost from './shared/snapshotGasCost'
-import { base64Encode } from './shared/base64encode'
+import { base64Encode, base64Decode } from './shared/base64'
 import { formatSqrtRatioX96 } from './shared/formatSqrtRatioX96'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import Decimal from 'decimal.js'
@@ -17,7 +17,7 @@ const TEN = BigNumber.from(10)
 const LOWEST_SQRT_RATIO = 4310618292
 const HIGHEST_SQRT_RATIO = BigNumber.from(33849).mul(TEN.pow(34))
 
-describe('NFTDescriptor', () => {
+describe.only('NFTDescriptor', () => {
   const wallets = waffle.provider.getWallets()
 
   const nftDescriptorFixture: Fixture<{
@@ -93,8 +93,14 @@ describe('NFTDescriptor', () => {
       poolAddress = `0x${'b'.repeat(40)}`
     })
 
-    it('returns the valid JSON string with min and max ticks', async () => {
-      const uri = await nftDescriptor.constructTokenURI({
+    function extractURIJson(uri: string): {name: string, description: string, image: string} {
+      const encodedJSON = uri.substr('data:application/json;base64,'.length)
+      const decodedJSON = Buffer.from(encodedJSON, 'base64').toString('utf8')
+      return JSON.parse(decodedJSON)
+    }
+
+    it.only('returns the valid JSON string with min and max ticks', async () => {
+      const json = extractURIJson(await nftDescriptor.constructTokenURI({
         tokenId,
         baseTokenAddress,
         quoteTokenAddress,
@@ -109,23 +115,23 @@ describe('NFTDescriptor', () => {
         tickSpacing,
         fee,
         poolAddress,
-      })
-      expect(uri).to.equal(
-        await tokenURI(
-          tokenId,
-          quoteTokenAddress,
-          baseTokenAddress,
-          poolAddress,
-          quoteTokenSymbol,
-          baseTokenSymbol,
-          flipRatio,
-          tickLower,
-          tickUpper,
-          tickCurrent,
-          '0.3%',
-          'MIN<>MAX'
-        )
-      )
+      }))
+
+      // console.log(json)
+      expect(json.description).to.equal(tokenURI(
+        tokenId,
+        quoteTokenAddress,
+        baseTokenAddress,
+        poolAddress,
+        quoteTokenSymbol,
+        baseTokenSymbol,
+        flipRatio,
+        tickLower,
+        tickUpper,
+        tickCurrent,
+        '0.3%',
+        'MIN<>MAX'
+      ).description)
     })
 
     it('returns the valid JSON string with mid ticks', async () => {
@@ -732,7 +738,7 @@ describe('NFTDescriptor', () => {
     return result
   }
 
-  async function tokenURI(
+  function tokenURI(
     tokenId: number,
     quoteTokenAddress: string,
     baseTokenAddress: string,
@@ -745,25 +751,17 @@ describe('NFTDescriptor', () => {
     tickCurrent: number,
     feeTier: string,
     prices: string
-  ): Promise<string> {
+  ): {name: string, description: string} {
     const overRange = tickCurrent < tickLower ? -1 : tickCurrent > tickUpper ? 1 : 0
     quoteTokenSymbol = quoteTokenSymbol.replace(/"/gi, '\\"')
     baseTokenSymbol = baseTokenSymbol.replace(/"/gi, '\\"')
-    return `data:application/json;base64,${base64Encode(`{"name":"Uniswap - ${feeTier} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}", \
-"description":"This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\\n\
-\\nPool Address: ${poolAddress}\\n${quoteTokenSymbol} Address: ${quoteTokenAddress.toLowerCase()}\\n${baseTokenSymbol} Address: ${baseTokenAddress.toLowerCase()}\\n\
-Fee Tier: ${feeTier}\\nToken ID: ${tokenId}\\n\\n⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
-token symbols may be imitated.", "image": "${await encodedSvgImage(
-      tokenId,
-      feeTier,
-      quoteTokenAddress,
-      baseTokenAddress,
-      quoteTokenSymbol,
-      baseTokenSymbol,
-      overRange,
-      tickLower,
-      tickUpper
-    )}"}`)}`
+    return {
+      name: `Uniswap - ${feeTier} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}`,
+      description: `This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\n\
+\nPool Address: ${poolAddress}\n${quoteTokenSymbol} Address: ${quoteTokenAddress.toLowerCase()}\n${baseTokenSymbol} Address: ${baseTokenAddress.toLowerCase()}\n\
+Fee Tier: ${feeTier}\nToken ID: ${tokenId}\n\n⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
+token symbols may be imitated.`
+    }
   }
 
   async function svgImage(
@@ -802,28 +800,27 @@ token symbols may be imitated.", "image": "${await encodedSvgImage(
     const str2length = 7 * (tickLower.toString().length + 5 + 4)
     const str3length = 7 * (tickUpper.toString().length + 5 + 4)
     return `<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink='http://www.w3.org/1999/xlink'><style>@import \
-url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;400');</style><defs><!-- Background gradient --><filter id="f1"><feImage result="p0" \
+url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;400');</style><defs><filter id="f1"><feImage result="p0" \
 xlink:href="data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='290px' hei\
 ght='500px' fill='%23${color0}'/%3E%3C/svg%3E" /><feImage result="p1" xlink:href="data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 5\
 00' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='${x1}' cy='${y1}' r='120px' fill='%23${color1}'/%3E%3C/svg%3E" /><feImage result="p2" xlink:href="data:ima\
 ge/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='${x2}' cy='${y2}' r='120px' fill='%23\
 ${color2}'/%3E%3C/svg%3E" /><feImage result="p3" xlink:href="data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.\
 w3.org/2000/svg'%3E%3Ccircle cx='${x3}' cy='${y3}' r='100px' fill='%23${color3}'/%3E%3C/svg%3E" /><feBlend mode="overlay" in="p0" in2="p1" /><feBlend mode="exclu\
-sion" in2="p2" /><feBlend mode="overlay" in2="p3" result="blendOut" /><feGaussianBlur in="blendOut" stdDeviation="42" /></filter><!-- Clip path for gradien\
-ts --> <clipPath id="corners"><rect width="290" height="500" rx="42" ry="42" /></clipPath><!-- Outer text animation path. Must be a path for chrome support\
-. Can be generated with elementToPath above. --><path id="text-path-a" d="M40 12 H250 A28 28 0 0 1 278 40 V460 A28 28 0 0 1 250 488 H40 A28 28 0 0 1 12 460 \
-V40 A28 28 0 0 1 40 12 z" /><!-- Minimap --><path id="minimap" d="M234 444C234 457.949 242.21 463 253 463" /><!-- Top dark region blur filter --><filter id\
+sion" in2="p2" /><feBlend mode="overlay" in2="p3" result="blendOut" /><feGaussianBlur in="blendOut" stdDeviation="42" /></filter><clipPath id="corners"><rect width="290" height="500" rx="42" ry="42" /></clipPath>\
+<path id="text-path-a" d="M40 12 H250 A28 28 0 0 1 278 40 V460 A28 28 0 0 1 250 488 H40 A28 28 0 0 1 12 460 \
+V40 A28 28 0 0 1 40 12 z" /><path id="minimap" d="M234 444C234 457.949 242.21 463 253 463" /><filter id\
 ="top-region-blur"><feGaussianBlur in="SourceGraphic" stdDeviation="24" /></filter><linearGradient id="grad-up" x1="1" x2="0" y1="1" y2="0"><stop offset="0\
-.0" stop-color="white" stop-opacity="1" /><stop offset=".9" stop-color="white" stop-opacity="0" /></linearGradient><!-- Positive out of range --><linearGra\
+.0" stop-color="white" stop-opacity="1" /><stop offset=".9" stop-color="white" stop-opacity="0" /></linearGradient><linearGra\
 dient id="grad-down" x1="0" x2="1" y1="0" y2="1"><stop offset="0.0" stop-color="white" stop-opacity="1" /><stop offset="0.9" stop-color="white" stop-opacity\
 ="0" /></linearGradient><mask id="fade-up" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#grad-up)" /></mask><mask id="fade-down\
 " maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#grad-down)" /></mask><mask id="none" maskContentUnits="objectBoundingBox"><rect \
-width="1" height="1" fill="white" /></mask><!-- Symbol text overflow --><linearGradient id="grad-symbol"><stop offset="0.7" stop-color="white" stop-opacity=\
+width="1" height="1" fill="white" /></mask><linearGradient id="grad-symbol"><stop offset="0.7" stop-color="white" stop-opacity=\
 "1" /><stop offset=".95" stop-color="white" stop-opacity="0" /></linearGradient><mask id="fade-symbol" maskContentUnits="userSpaceOnUse"><rect width="290px" \
-height="200px" fill="url(#grad-symbol)" /></mask></defs><g clip-path="url(#corners)"><!-- Background and border --><rect fill="${color0}" x="0px" y="0px" width\
-="290px" height="500px" /><rect style="filter: url(#f1)" x="0px" y="0px" width="290px" height="500px" /><!-- Top dark area --> <g style="filter:url(#top-reg\
+height="200px" fill="url(#grad-symbol)" /></mask></defs><g clip-path="url(#corners)"><rect fill="${color0}" x="0px" y="0px" width\
+="290px" height="500px" /><rect style="filter: url(#f1)" x="0px" y="0px" width="290px" height="500px" /> <g style="filter:url(#top-reg\
 ion-blur); transform:scale(1.5); transform-origin:center top;"><rect fill="none" x="0px" y="0px" width="290px" height="500px" /><ellipse cx="50%" cy="0px\
-" rx="180px" ry="120px" fill="#000" opacity="0.85" /></g></g><!-- Outerdata string --><text text-rendering="optimizeSpeed"><textPath startOffset="-100%" \
+" rx="180px" ry="120px" fill="#000" opacity="0.85" /></g></g><text text-rendering="optimizeSpeed"><textPath startOffset="-100%" \
 fill="white" font-family="'IBM Plex Mono', monospace" font-size="10px" xlink:href="#text-path-a">${baseTokenAddress} • ${baseTokenSymbol} <anim\
 ate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" /></textPath> <textPath startOffset="0%\
 " fill="white" font-family="'IBM Plex Mono', monospace" font-size="10px" xlink:href="#text-path-a">${baseTokenAddress} • ${baseTokenSymbol} <an\
@@ -831,12 +828,12 @@ imate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" 
 0%" fill="white" font-family="'IBM Plex Mono', monospace" font-size="10px" xlink:href="#text-path-a">${quoteTokenAddress} • ${quoteTokenSymbol} <\
 animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" /></textPath><textPath startOffset="\
 -50%" fill="white" font-family="'IBM Plex Mono', monospace" font-size="10px" xlink:href="#text-path-a">${quoteTokenAddress} • ${quoteTokenSymbol} \
-<animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" /></textPath></text><!-- Card ma\
-ntle --><g mask="url(#fade-symbol)"><rect fill="none" x="0px" y="0px" width="290px" height="200px" /> <text y="70px" x="32px" fill="white" font-family=\
+<animate additive="sum" attributeName="startOffset" from="0%" to="100%" begin="0s" dur="30s" repeatCount="indefinite" /></textPath></text>\
+<g mask="url(#fade-symbol)"><rect fill="none" x="0px" y="0px" width="290px" height="200px" /> <text y="70px" x="32px" fill="white" font-family=\
 "'IBM Plex Mono', monospace" font-weight="200" font-size="36px">${quoteTokenSymbol}/${baseTokenSymbol}</text><text y="115px" x="32px" fill="white" font-family="'IBM Plex Mono', mo\
-nospace" font-weight="200" font-size="36px">${feeTier}</text></g><!-- Translucent inner border --><rect x="16" y="16" width="258" height="468" rx="26" ry="26\
+nospace" font-weight="200" font-size="36px">${feeTier}</text></g><rect x="16" y="16" width="258" height="468" rx="26" ry="26\
 " fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" /><rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255\
-,255,255,0.2)" /> <!-- Curve --> <g mask="url(${fade})" style="transform:translate(73px,189px)"><rect x="-16px" y="-16px" width="180px" height="180\
+,255,255,0.2)" /> <g mask="url(${fade})" style="transform:translate(73px,189px)"><rect x="-16px" y="-16px" width="180px" height="180\
 px" fill="none" /><path d="${curve}" stroke="rgba(0,0,0,0.3)" stroke-width="32px" fill="none" stroke-linecap="round" /></g><g mask="u\
 rl(${fade})" style="transform:translate(73px,189px)"><rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />\
 <path d="${curve}" stroke="rgba(255,255,255,1)" fill="none" stroke-linecap="round" /></g>${curveCircle} <g style="transform:translate(29px, 384px)"><rect width="${str1length}px" height="26\
