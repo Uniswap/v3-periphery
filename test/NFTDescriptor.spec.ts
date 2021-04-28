@@ -329,10 +329,10 @@ describe('NFTDescriptor', () => {
       expect(
         await nftDescriptor.constructTokenURI({
           tokenId,
-          baseTokenAddress,
-          quoteTokenAddress,
-          baseTokenSymbol,
-          quoteTokenSymbol,
+          baseTokenAddress: '0x1234567890123456789123456789012345678901',
+          quoteTokenAddress: '0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf',
+          baseTokenSymbol: 'UNI',
+          quoteTokenSymbol: 'WETH',
           baseTokenDecimals,
           quoteTokenDecimals,
           flipRatio,

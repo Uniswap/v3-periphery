@@ -7,6 +7,16 @@ import '@openzeppelin/contracts/utils/Strings.sol';
 /// @notice Provides a function for generating an SVG associated with a Uniswap NFT
 library NFTSVG {
     using Strings for uint256;
+
+    string constant curve1 = 'M1 1C41 41 105 105 145 145';
+    string constant curve2 = 'M1 1C33 49 97 113 145 145';
+    string constant curve3 = 'M1 1C33 57 89 113 145 145';
+    string constant curve4 = 'M1 1C25 65 81 121 145 145';
+    string constant curve5 = 'M1 1C17 73 73 129 145 145';
+    string constant curve6 = 'M1 1C9 81 65 137 145 145';
+    string constant curve7 = 'M1 1C1 89 57.5 145 145 145';
+    string constant curve8 = 'M1 1C1 97 49 145 145 145';
+
     struct SVGParams {
         string quoteToken;
         string baseToken;
@@ -185,39 +195,25 @@ library NFTSVG {
         );
     }
 
-    function getCurve(int24 tickLower, int24 tickUpper) internal pure returns (string memory) {
-        string[8] memory curves =
-            [
-                'M1 1C1 97 49 145 145 145',
-                'M1 1C1 89 57.5 145 145 145',
-                'M1 1C9 81 65 137 145 145',
-                'M1 1C17 73 73 129 145 145',
-                'M1 1C25 65 81 121 145 145',
-                'M1 1C33 57 89 113 145 145',
-                'M1 1C33 49 97 113 145 145',
-                'M1 1C41 41 105 105 145 145'
-            ];
-
+    function getCurve(int24 tickLower, int24 tickUpper) internal pure returns (string memory curve) {
         int24 tickRange = tickUpper - tickLower;
-        uint8 index;
         if (tickRange <= 5) {
-            index = 7;
+            curve = curve1;
         } else if (tickRange <= 10) {
-            index = 6;
+            curve = curve2;
         } else if (tickRange <= 20) {
-            index = 5;
+            curve = curve3;
         } else if (tickRange <= 50) {
-            index = 4;
+            curve = curve4;
         } else if (tickRange <= 100) {
-            index = 3;
+            curve = curve5;
         } else if (tickRange <= 10_000) {
-            index = 2;
+            curve = curve6;
         } else if (tickRange <= 100_000) {
-            index = 1;
+            curve = curve7;
         } else {
-            index = 0;
+            curve = curve8;
         }
-        return curves[index];
     }
 
     function generateSVGCurveCircle(int8 overRange) internal pure returns (string memory svg) {
