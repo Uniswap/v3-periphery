@@ -75,29 +75,51 @@ library NFTSVG {
                         )
                     )
                 ),
-                "\"/><feImage result=\"p1\" xlink:href=\"data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='",
-                params.x1,
-                "' cy='",
-                params.y1,
-                "' r='120px' fill='%23",
-                params.color1,
-                '\'/%3E%3C/svg%3E" />',
-                "<feImage result=\"p2\" xlink:href=\"data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='",
-                params.x2,
-                "' cy='",
-                params.y2,
-                "' r='120px' fill='%23",
-                params.color2,
-                '\'/%3E%3C/svg%3E" />',
-                '<feImage result="p3"',
-                " xlink:href=\"data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='",
-                params.x3,
-                "' cy='",
-                params.y3,
-                "' r='100px' fill='%23",
-                params.color3,
-                '\'/%3E%3C/svg%3E" /><feBlend mode="overlay" in="p0" in2="p1" /><feBlend mode="exclusion" in2="p2" /><feBlend mode="overlay" in2="p3" result="blendOut" /><feGaussianBlur in="blendOut" stdDeviation="42" /></filter>',
-                ' <clipPath id="corners"><rect width="290" height="500" rx="42" ry="42" /></clipPath>',
+                '"/><feImage result="p1" xlink:href="data:image/svg+xml;base64,',
+                Base64.encode(
+                    bytes(
+                        abi.encodePacked(
+                            "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><circle cx='",
+                            params.x1,
+                            "' cy='",
+                            params.y1,
+                            "' r='120px' fill='#",
+                            params.color1,
+                            "'/></svg>"
+                        )
+                    )
+                ),
+                '"/><feImage result="p2" xlink:href="data:image/svg+xml;base64,',
+                Base64.encode(
+                    bytes(
+                        abi.encodePacked(
+                            "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><circle cx='",
+                            params.x2,
+                            "' cy='",
+                            params.y2,
+                            "' r='120px' fill='#",
+                            params.color2,
+                            "'/></svg>"
+                        )
+                    )
+                ),
+                '" />',
+                '<feImage result="p3" xlink:href="data:image/svg+xml;base64,',
+                Base64.encode(
+                    bytes(
+                        abi.encodePacked(
+                            "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><circle cx='",
+                            params.x3,
+                            "' cy='",
+                            params.y3,
+                            "' r='100px' fill='#",
+                            params.color3,
+                            "'/></svg>"
+                        )
+                    )
+                ),
+                '" /><feBlend mode="overlay" in="p0" in2="p1" /><feBlend mode="exclusion" in2="p2" /><feBlend mode="overlay" in2="p3" result="blendOut" /><feGaussianBlur ',
+                'in="blendOut" stdDeviation="42" /></filter> <clipPath id="corners"><rect width="290" height="500" rx="42" ry="42" /></clipPath>',
                 '<path id="text-path-a" d="M40 12 H250 A28 28 0 0 1 278 40 V460 A28 28 0 0 1 250 488 H40 A28 28 0 0 1 12 460 V40 A28 28 0 0 1 40 12 z" />',
                 '<path id="minimap" d="M234 444C234 457.949 242.21 463 253 463" />',
                 '<filter id="top-region-blur"><feGaussianBlur in="SourceGraphic" stdDeviation="24" /></filter>',
