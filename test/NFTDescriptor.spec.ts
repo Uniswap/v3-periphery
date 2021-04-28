@@ -660,17 +660,15 @@ describe('NFTDescriptor', () => {
       const tickUpper = 2000
       const tickCurrent = 40
       const tickSpacing = 9
-      const baseTokenSymbol = await tokens[0].symbol()
-      const quoteTokenSymbol = await tokens[1].symbol()
       const feeTier = '0.05%'
       const overRange = 0
 
       const svg = await nftDescriptor.svgImage(
         tokenId,
-        tokens[1].address,
-        tokens[0].address,
-        quoteTokenSymbol,
-        baseTokenSymbol,
+        "0x1234567890123456789123456789012345678901",
+        "0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf",
+        "UNI",
+        'WETH',
         feeTier,
         tickLower,
         tickUpper,
