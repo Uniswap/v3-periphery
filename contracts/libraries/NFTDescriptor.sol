@@ -20,7 +20,6 @@ library NFTDescriptor {
     using SafeMath for uint160;
     using SafeMath for uint8;
     using SignedSafeMath for int256;
-    using SignedSafeMath for int24;
     using HexStrings for uint256;
 
     uint256 constant sqrt10X128 = 1076067327063303206878105757264492625226;

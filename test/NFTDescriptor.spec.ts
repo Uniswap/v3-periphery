@@ -302,6 +302,27 @@ describe('NFTDescriptor', () => {
         })
       )
     })
+
+    it('snapshot matches', async () => {
+      expect(
+        await nftDescriptor.constructTokenURI({
+          tokenId,
+          baseTokenAddress,
+          quoteTokenAddress,
+          baseTokenSymbol,
+          quoteTokenSymbol,
+          baseTokenDecimals,
+          quoteTokenDecimals,
+          flipRatio,
+          tickLower,
+          tickUpper,
+          tickCurrent,
+          tickSpacing,
+          fee,
+          poolAddress,
+        })
+      ).toMatchSnapshot()
+    })
   })
 
   describe('#addressToString', () => {
