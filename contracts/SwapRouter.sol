@@ -89,6 +89,9 @@ contract SwapRouter is
         uint160 sqrtPriceLimitX96,
         SwapCallbackData memory data
     ) private returns (uint256 amountOut) {
+        // we allow swapping to the router address with address 0
+        if (recipient == address(0)) recipient = address(this);
+
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
@@ -168,6 +171,8 @@ contract SwapRouter is
         uint160 sqrtPriceLimitX96,
         SwapCallbackData memory data
     ) private returns (uint256 amountIn) {
+        if (recipient == address(0)) recipient = address(this);
+
         (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
