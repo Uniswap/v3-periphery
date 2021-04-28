@@ -78,16 +78,22 @@ library NFTDescriptor {
         return
             string(
                 abi.encodePacked(
-                    'data:application/json,',
-                    '{"name":"',
-                    name,
-                    '", "description":"',
-                    descriptionPartOne,
-                    descriptionPartTwo,
-                    '", "image": "',
-                    'data:image/svg+xml;base64,',
-                    image,
-                    '"}'
+                    'data:application/json;base64,',
+                    Base64.encode(
+                        bytes(
+                            abi.encodePacked(
+                                '{"name":"',
+                                name,
+                                '", "description":"',
+                                descriptionPartOne,
+                                descriptionPartTwo,
+                                '", "image": "',
+                                'data:image/svg+xml;base64,',
+                                image,
+                                '"}'
+                            )
+                        )
+                    )
                 )
             );
     }

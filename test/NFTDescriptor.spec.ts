@@ -654,7 +654,7 @@ describe('NFTDescriptor', () => {
   })
 
   describe('#svgImage', () => {
-    it.only('returns the svgImage', async () => {
+    it('returns the svgImage', async () => {
       const tokenId = 123
       const tickLower = -1000
       const tickUpper = 2000
@@ -730,8 +730,7 @@ describe('NFTDescriptor', () => {
     const overRange = tickCurrent < tickLower ? -1 : tickCurrent > tickUpper ? 1 : 0
     quoteTokenSymbol = quoteTokenSymbol.replace(/"/gi, '\\"')
     baseTokenSymbol = baseTokenSymbol.replace(/"/gi, '\\"')
-    return `data:application/json,{\
-"name":"Uniswap - ${feeTier} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}", \
+    return `data:application/json;base64,${base64Encode(`{"name":"Uniswap - ${feeTier} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}", \
 "description":"This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\\n\
 \\nPool Address: ${poolAddress}\\n${quoteTokenSymbol} Address: ${quoteTokenAddress.toLowerCase()}\\n${baseTokenSymbol} Address: ${baseTokenAddress.toLowerCase()}\\n\
 Fee Tier: ${feeTier}\\nToken ID: ${tokenId}\\n\\n⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
@@ -745,7 +744,7 @@ token symbols may be imitated.", "image": "${await encodedSvgImage(
       overRange,
       tickLower,
       tickUpper
-    )}"}`
+    )}"}`)}`
   }
 
   async function svgImage(
