@@ -65,14 +65,16 @@ library NFTSVG {
                 '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"',
                 " xmlns:xlink='http://www.w3.org/1999/xlink'>",
                 "<style>@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;400');</style><defs>",
-                "<filter id=\"f1\"><feImage result=\"p0\" xlink:href=\"data:image/svg+xml;base64,",
+                '<filter id="f1"><feImage result="p0" xlink:href="data:image/svg+xml;base64,',
                 Base64.encode(
-                  bytes(abi.encodePacked(
-                      "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><rect width='290px' height='500px' fill='#",
-                      params.color0,
-                      "'/></svg>"
-                    ))
-                  ),
+                    bytes(
+                        abi.encodePacked(
+                            "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><rect width='290px' height='500px' fill='#",
+                            params.color0,
+                            "'/></svg>"
+                        )
+                    )
+                ),
                 "\"/><feImage result=\"p1\" xlink:href=\"data:image/svg+xml;utf8,%3Csvg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='",
                 params.x1,
                 "' cy='",
