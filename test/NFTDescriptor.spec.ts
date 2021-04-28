@@ -665,9 +665,9 @@ describe('NFTDescriptor', () => {
 
       const svg = await nftDescriptor.svgImage(
         tokenId,
-        "0x1234567890123456789123456789012345678901",
-        "0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf",
-        "UNI",
+        '0x1234567890123456789123456789012345678901',
+        '0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf',
+        'UNI',
         'WETH',
         feeTier,
         tickLower,

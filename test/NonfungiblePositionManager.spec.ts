@@ -1158,7 +1158,7 @@ describe('NonfungiblePositionManager', () => {
 
     it('content is valid JSON and structure', async () => {
       const encodedJSON = (await nft.tokenURI(tokenId)).substr('data:application/json;base64,'.length)
-      const decodedJSON = Buffer.from(encodedJSON,'base64').toString('utf8')
+      const decodedJSON = Buffer.from(encodedJSON, 'base64').toString('utf8')
       const content = JSON.parse(decodedJSON)
       expect(content).to.haveOwnProperty('name').is.a('string')
       expect(content).to.haveOwnProperty('description').is.a('string')
