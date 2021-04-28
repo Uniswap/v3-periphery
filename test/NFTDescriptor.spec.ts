@@ -13,7 +13,7 @@ import Decimal from 'decimal.js'
 import { randomBytes } from 'crypto'
 import fs from 'fs'
 import jsdom from 'jsdom'
-const { JSDOM } = jsdom;
+const { JSDOM } = jsdom
 
 const TEN = BigNumber.from(10)
 const LOWEST_SQRT_RATIO = 4310618292
@@ -782,8 +782,8 @@ describe('NFTDescriptor', () => {
     prices: string
   ): { name: string; description: string } {
     const overRange = tickCurrent < tickLower ? -1 : tickCurrent > tickUpper ? 1 : 0
-    quoteTokenSymbol = quoteTokenSymbol.replace(/"/gi, '\"')
-    baseTokenSymbol = baseTokenSymbol.replace(/"/gi, '\"')
+    quoteTokenSymbol = quoteTokenSymbol.replace(/"/gi, '"')
+    baseTokenSymbol = baseTokenSymbol.replace(/"/gi, '"')
     return {
       name: `Uniswap - ${feeTier} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}`,
       description: `This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\n\
