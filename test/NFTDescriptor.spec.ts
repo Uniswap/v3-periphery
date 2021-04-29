@@ -118,7 +118,7 @@ describe('NFTDescriptor', () => {
         })
       )
 
-      const tokenUri = tokenURI(
+      const tokenUri = constructTokenMetadata(
         tokenId,
         quoteTokenAddress,
         baseTokenAddress,
@@ -162,7 +162,7 @@ describe('NFTDescriptor', () => {
         })
       )
 
-      const tokenUri = tokenURI(
+      const tokenMetadata = constructTokenMetadata(
         tokenId,
         quoteTokenAddress,
         baseTokenAddress,
@@ -177,8 +177,8 @@ describe('NFTDescriptor', () => {
         '0.99900<>1.0010'
       )
 
-      expect(json.description).to.equal(tokenUri.description)
-      expect(json.name).to.equal(tokenUri.name)
+      expect(json.description).to.equal(tokenMetadata.description)
+      expect(json.name).to.equal(tokenMetadata.name)
     })
 
     it('returns valid JSON when token symbols contain quotes', async () => {
@@ -202,7 +202,7 @@ describe('NFTDescriptor', () => {
         })
       )
 
-      const tokenUri = tokenURI(
+      const tokenMetadata = constructTokenMetadata(
         tokenId,
         quoteTokenAddress,
         baseTokenAddress,
@@ -217,8 +217,8 @@ describe('NFTDescriptor', () => {
         'MIN<>MAX'
       )
 
-      expect(json.description).to.equal(tokenUri.description)
-      expect(json.name).to.equal(tokenUri.name)
+      expect(json.description).to.equal(tokenMetadata.description)
+      expect(json.name).to.equal(tokenMetadata.name)
     })
 
     describe('when the token ratio is flipped', () => {
@@ -246,7 +246,7 @@ describe('NFTDescriptor', () => {
           })
         )
 
-        const tokenUri = tokenURI(
+        const tokenMetadata = constructTokenMetadata(
           tokenId,
           quoteTokenAddress,
           baseTokenAddress,
@@ -261,8 +261,8 @@ describe('NFTDescriptor', () => {
           '0.99900<>1.0010'
         )
 
-        expect(json.description).to.equal(tokenUri.description)
-        expect(json.name).to.equal(tokenUri.name)
+        expect(json.description).to.equal(tokenMetadata.description)
+        expect(json.name).to.equal(tokenMetadata.name)
       })
 
       it('returns the valid JSON for min/max ticks', async () => {
@@ -287,7 +287,7 @@ describe('NFTDescriptor', () => {
           })
         )
 
-        const tokenUri = tokenURI(
+        const tokenMetadata = constructTokenMetadata(
           tokenId,
           quoteTokenAddress,
           baseTokenAddress,
@@ -302,8 +302,8 @@ describe('NFTDescriptor', () => {
           'MIN<>MAX'
         )
 
-        expect(json.description).to.equal(tokenUri.description)
-        expect(json.name).to.equal(tokenUri.name)
+        expect(json.description).to.equal(tokenMetadata.description)
+        expect(json.name).to.equal(tokenMetadata.name)
       })
     })
 
@@ -770,7 +770,7 @@ describe('NFTDescriptor', () => {
     })
   })
 
-  function tokenURI(
+  function constructTokenMetadata(
     tokenId: number,
     quoteTokenAddress: string,
     baseTokenAddress: string,
