@@ -2,12 +2,14 @@
 pragma solidity >=0.5.0;
 
 import '@openzeppelin/contracts/utils/Strings.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
 import 'base64-sol/base64.sol';
 
 /// @title NFTSVG
 /// @notice Provides a function for generating an SVG associated with a Uniswap NFT
 library NFTSVG {
     using Strings for uint256;
+    using SafeMath for uint256;
 
     string constant curve1 = 'M1 1C41 41 105 105 145 145';
     string constant curve2 = 'M1 1C33 49 97 113 145 145';
@@ -54,7 +56,7 @@ library NFTSVG {
                     ),
                     generateSVGCardMantle(params.quoteTokenSymbol, params.baseTokenSymbol, params.feeTier),
                     generageSvgCurve(params.tickLower, params.tickUpper, params.tickSpacing, params.overRange),
-                    generateSVGPositionData(params.tokenId, params.tickLower, params.tickUpper),
+                    generateSVGPositionDataAndLocationCurve(params.tokenId, params.tickLower, params.tickUpper),
                     '</svg>'
                 )
             );
@@ -290,7 +292,7 @@ library NFTSVG {
         }
     }
 
-    function generateSVGPositionData(
+    function generateSVGPositionDataAndLocationCurve(
         string memory tokenId,
         int24 tickLower,
         int24 tickUpper
@@ -300,6 +302,7 @@ library NFTSVG {
         uint256 str1length = bytes(tokenId).length + 4;
         uint256 str2length = bytes(tickLowerStr).length + 10;
         uint256 str3length = bytes(tickUpperStr).length + 10;
+        (string memory xCoord, string memory yCoord) = rangeLocation(tickLower, tickUpper);
         svg = string(
             abi.encodePacked(
                 ' <g style="transform:translate(29px, 384px)">',
@@ -323,6 +326,14 @@ library NFTSVG {
                 '<text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Max Tick: </tspan>',
                 tickUpperStr,
                 '</text></g>'
+                '<g style="transform:translate(226px, 433px)">',
+                '<rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
+                '<path stroke-linecap="round" d="M8 9C8.00004 22.9494 16.2099 28 27 28" fill="none" stroke="white" />',
+                '<circle style="transform:translate3d(',
+                xCoord,
+                'px, ',
+                yCoord,
+                'px, 0px)" cx="0px" cy="0px" r="4px" fill="white"/></g>'
             )
         );
     }
@@ -334,5 +345,42 @@ library NFTSVG {
             sign = '-';
         }
         return string(abi.encodePacked(sign, uint256(tick).toString()));
+    }
+
+    function rangeLocation(int24 tickLower, int24 tickUpper) internal pure returns (string memory, string memory) {
+      string[2][10] memory miniCoords = [
+        ['8','7'],
+        ['8','10.5'],
+        ['8','14.25'],
+        ['10','18'],
+        ['11','21'],
+        ['13','23'],
+        ['15','25'],
+        ['18','26'],
+        ['21','27'],
+        ['24','27']
+      ];
+      uint256 index;
+      int24 midPoint = (tickLower + tickUpper) / 2;
+      if (midPoint < -100_000) {
+        index = 0;
+      } else if (midPoint < -10_000) {
+        index = 1;
+      } else if (midPoint < -1_000) {
+        index = 3;
+      } else if (midPoint < -10) {
+        index = 4;
+      } else if (midPoint < 10) {
+        index = 5;
+      } else if (midPoint < 1_000) {
+        index = 6;
+      } else if (midPoint < 10_000) {
+        index = 7;
+      } else if (midPoint < 100_000) {
+        index = 8;
+      } else {
+        index = 9;
+      }
+      return (miniCoords[index][0], miniCoords[index][1]);
     }
 }
