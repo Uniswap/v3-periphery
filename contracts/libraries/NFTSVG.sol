@@ -292,8 +292,8 @@ library NFTSVG {
         string memory tickLowerStr = tickToString(tickLower);
         string memory tickUpperStr = tickToString(tickUpper);
         uint256 str1length = bytes(tokenId).length + 4;
-        uint256 str2length = bytes(tickLowerStr).length + 5;
-        uint256 str3length = bytes(tickUpperStr).length + 5;
+        uint256 str2length = bytes(tickLowerStr).length + 10;
+        uint256 str3length = bytes(tickUpperStr).length + 10;
         svg = string(
             abi.encodePacked(
                 ' <g style="transform:translate(29px, 384px)">',
@@ -307,14 +307,14 @@ library NFTSVG {
                 '<rect width="',
                 uint256(7 * (str2length + 4)).toString(),
                 'px" height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />',
-                '<text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Min: </tspan>',
+                '<text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Min Tick: </tspan>',
                 tickLowerStr,
                 '</text></g>',
                 ' <g style="transform:translate(29px, 444px)">',
                 '<rect width="',
                 uint256(7 * (str3length + 4)).toString(),
                 'px" height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />',
-                '<text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Max: </tspan>',
+                '<text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Max Tick: </tspan>',
                 tickUpperStr,
                 '</text></g>'
             )
