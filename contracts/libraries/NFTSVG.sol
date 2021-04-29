@@ -138,7 +138,8 @@ library NFTSVG {
                 '<rect style="filter: url(#f1)" x="0px" y="0px" width="290px" height="500px" />',
                 ' <g style="filter:url(#top-region-blur); transform:scale(1.5); transform-origin:center top;">',
                 '<rect fill="none" x="0px" y="0px" width="290px" height="500px" />',
-                '<ellipse cx="50%" cy="0px" rx="180px" ry="120px" fill="#000" opacity="0.85" /></g></g>'
+                '<ellipse cx="50%" cy="0px" rx="180px" ry="120px" fill="#000" opacity="0.85" /></g>',
+                '<rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" /></g>'
             )
         );
     }
@@ -190,8 +191,7 @@ library NFTSVG {
                 '</text><text y="115px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="36px">',
                 feeTier,
                 '</text></g>',
-                '<rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" ',
-                'stroke="rgba(255,255,255,0.2)" /><rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />'
+                '<rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />'
             )
         );
     }
