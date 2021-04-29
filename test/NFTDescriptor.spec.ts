@@ -118,22 +118,23 @@ describe('NFTDescriptor', () => {
         })
       )
 
-      expect(json.description).to.equal(
-        tokenURI(
-          tokenId,
-          quoteTokenAddress,
-          baseTokenAddress,
-          poolAddress,
-          quoteTokenSymbol,
-          baseTokenSymbol,
-          flipRatio,
-          tickLower,
-          tickUpper,
-          tickCurrent,
-          '0.3%',
-          'MIN<>MAX'
-        ).description
+      const tokenUri = tokenURI(
+        tokenId,
+        quoteTokenAddress,
+        baseTokenAddress,
+        poolAddress,
+        quoteTokenSymbol,
+        baseTokenSymbol,
+        flipRatio,
+        tickLower,
+        tickUpper,
+        tickCurrent,
+        '0.3%',
+        'MIN<>MAX'
       )
+
+      expect(json.description).to.equal(tokenUri.description)
+      expect(json.name).to.equal(tokenUri.name)
     })
 
     it('returns the valid JSON string with mid ticks', async () => {
@@ -161,22 +162,23 @@ describe('NFTDescriptor', () => {
         })
       )
 
-      expect(json.description).to.equal(
-        tokenURI(
-          tokenId,
-          quoteTokenAddress,
-          baseTokenAddress,
-          poolAddress,
-          quoteTokenSymbol,
-          baseTokenSymbol,
-          flipRatio,
-          tickLower,
-          tickUpper,
-          tickCurrent,
-          '0.3%',
-          'MIN<>MAX'
-        ).description
+      const tokenUri = tokenURI(
+        tokenId,
+        quoteTokenAddress,
+        baseTokenAddress,
+        poolAddress,
+        quoteTokenSymbol,
+        baseTokenSymbol,
+        flipRatio,
+        tickLower,
+        tickUpper,
+        tickCurrent,
+        '0.3%',
+        '0.99900<>1.0010'
       )
+
+      expect(json.description).to.equal(tokenUri.description)
+      expect(json.name).to.equal(tokenUri.name)
     })
 
     it('returns valid JSON when token symbols contain quotes', async () => {
@@ -200,22 +202,23 @@ describe('NFTDescriptor', () => {
         })
       )
 
-      expect(json.description).to.equal(
-        tokenURI(
-          tokenId,
-          quoteTokenAddress,
-          baseTokenAddress,
-          poolAddress,
-          quoteTokenSymbol,
-          baseTokenSymbol,
-          flipRatio,
-          tickLower,
-          tickUpper,
-          tickCurrent,
-          '0.3%',
-          'MIN<>MAX'
-        ).description
+      const tokenUri = tokenURI(
+        tokenId,
+        quoteTokenAddress,
+        baseTokenAddress,
+        poolAddress,
+        quoteTokenSymbol,
+        baseTokenSymbol,
+        flipRatio,
+        tickLower,
+        tickUpper,
+        tickCurrent,
+        '0.3%',
+        'MIN<>MAX'
       )
+
+      expect(json.description).to.equal(tokenUri.description)
+      expect(json.name).to.equal(tokenUri.name)
     })
 
     describe('when the token ratio is flipped', () => {
@@ -243,22 +246,23 @@ describe('NFTDescriptor', () => {
           })
         )
 
-        expect(json.description).to.equal(
-          tokenURI(
-            tokenId,
-            quoteTokenAddress,
-            baseTokenAddress,
-            poolAddress,
-            quoteTokenSymbol,
-            baseTokenSymbol,
-            flipRatio,
-            tickLower,
-            tickUpper,
-            tickCurrent,
-            '0.3%',
-            'MIN<>MAX'
-          ).description
+        const tokenUri = tokenURI(
+          tokenId,
+          quoteTokenAddress,
+          baseTokenAddress,
+          poolAddress,
+          quoteTokenSymbol,
+          baseTokenSymbol,
+          flipRatio,
+          tickLower,
+          tickUpper,
+          tickCurrent,
+          '0.3%',
+          '0.99900<>1.0010'
         )
+
+        expect(json.description).to.equal(tokenUri.description)
+        expect(json.name).to.equal(tokenUri.name)
       })
 
       it('returns the valid JSON for min/max ticks', async () => {
@@ -283,22 +287,23 @@ describe('NFTDescriptor', () => {
           })
         )
 
-        expect(json.description).to.equal(
-          tokenURI(
-            tokenId,
-            quoteTokenAddress,
-            baseTokenAddress,
-            poolAddress,
-            quoteTokenSymbol,
-            baseTokenSymbol,
-            flipRatio,
-            tickLower,
-            tickUpper,
-            tickCurrent,
-            '0.3%',
-            'MIN<>MAX'
-          ).description
+        const tokenUri = tokenURI(
+          tokenId,
+          quoteTokenAddress,
+          baseTokenAddress,
+          poolAddress,
+          quoteTokenSymbol,
+          baseTokenSymbol,
+          flipRatio,
+          tickLower,
+          tickUpper,
+          tickCurrent,
+          '0.3%',
+          'MIN<>MAX'
         )
+
+        expect(json.description).to.equal(tokenUri.description)
+        expect(json.name).to.equal(tokenUri.name)
       })
     })
 
@@ -699,6 +704,11 @@ describe('NFTDescriptor', () => {
   })
 
   describe('#tokenToColorHex', () => {
+
+    function tokenToColorHex(tokenAddress: string, startIndex: number): string {
+      return `${tokenAddress.slice(startIndex, startIndex + 6).toLowerCase()}`
+    }
+
     it('returns the correct hash for the first 3 bytes of the token address', async () => {
       expect(await nftDescriptor.tokenToColorHex(tokens[0].address, 136)).to.eq(tokenToColorHex(tokens[0].address, 2))
       expect(await nftDescriptor.tokenToColorHex(tokens[1].address, 136)).to.eq(tokenToColorHex(tokens[1].address, 2))
@@ -761,10 +771,6 @@ describe('NFTDescriptor', () => {
     })
   })
 
-  function tokenToColorHex(tokenAddress: string, startIndex: number): string {
-    return `${tokenAddress.slice(startIndex, startIndex + 6).toLowerCase()}`
-  }
-
   function tokenURI(
     tokenId: number,
     quoteTokenAddress: string,
@@ -779,7 +785,6 @@ describe('NFTDescriptor', () => {
     feeTier: string,
     prices: string
   ): { name: string; description: string } {
-    const overRange = tickCurrent < tickLower ? -1 : tickCurrent > tickUpper ? 1 : 0
     quoteTokenSymbol = quoteTokenSymbol.replace(/"/gi, '"')
     baseTokenSymbol = baseTokenSymbol.replace(/"/gi, '"')
     return {
