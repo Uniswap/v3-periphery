@@ -324,13 +324,17 @@ describe('NFTDescriptor', () => {
     })
 
     it('snapshot matches', async () => {
+      // get a snapshot with svg fade
+      tickCurrent = -1
+      tickLower = 0
+      tickUpper = 1000
       expect(
         await nftDescriptor.constructTokenURI({
           tokenId,
-          baseTokenAddress: '0x1234567890123456789123456789012345678901',
           quoteTokenAddress: '0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf',
-          baseTokenSymbol: 'UNI',
-          quoteTokenSymbol: 'WETH',
+          baseTokenAddress: '0x1234567890123456789123456789012345678901',
+          quoteTokenSymbol: 'UNI',
+          baseTokenSymbol: 'WETH',
           baseTokenDecimals,
           quoteTokenDecimals,
           flipRatio,
@@ -720,7 +724,6 @@ describe('NFTDescriptor', () => {
       tickLower = -1000
       tickUpper = 2000
       tickCurrent = 40
-      tickSpacing = 9
       feeTier = '0.05%'
       overRange = 0
     })

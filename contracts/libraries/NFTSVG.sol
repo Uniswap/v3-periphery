@@ -201,14 +201,14 @@ library NFTSVG {
         int24 tickUpper,
         int8 overRange
     ) private pure returns (string memory svg) {
-        string memory fade = overRange == -1 ? '#fade-up' : overRange == 1 ? '#fade-down' : '#none';
+        string memory fade = overRange == 1 ? '#fade-up' : overRange == -1 ? '#fade-down' : '#none';
         string memory curve = getCurve(tickLower, tickUpper);
         svg = string(
             abi.encodePacked(
                 '<g mask="url(',
                 fade,
                 ')"',
-                ' style="transform:translate(73px,189px)">'
+                ' style="transform:translate(72px,189px)">'
                 '<rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />'
                 '<path d="',
                 curve,
@@ -216,7 +216,7 @@ library NFTSVG {
                 '</g><g mask="url(',
                 fade,
                 ')"',
-                ' style="transform:translate(73px,189px)">',
+                ' style="transform:translate(72px,189px)">',
                 '<rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />',
                 '<path d="',
                 curve,
@@ -238,7 +238,7 @@ library NFTSVG {
             curve = curve4;
         } else if (tickRange <= 100) {
             curve = curve5;
-        } else if (tickRange <= 10_000) {
+        } else if (tickRange <= 1_000) {
             curve = curve6;
         } else if (tickRange <= 100_000) {
             curve = curve7;
@@ -256,13 +256,13 @@ library NFTSVG {
             svg = string(
                 abi.encodePacked(
                     '<circle cx="',
-                    overRange == 1 ? curvex1 : curvex2,
+                    overRange == -1 ? curvex1 : curvex2,
                     'px" cy="',
-                    overRange == 1 ? curvey1 : curvey2,
+                    overRange == -1 ? curvey1 : curvey2,
                     'px" r="4px" fill="white" /><circle cx="',
-                    overRange == 1 ? curvex1 : curvex2,
+                    overRange == -1 ? curvex1 : curvex2,
                     'px" cy="',
-                    overRange == 1 ? curvey1 : curvey2,
+                    overRange == -1 ? curvey1 : curvey2,
                     'px" r="24px" fill="none" stroke="white" />'
                 )
             );
