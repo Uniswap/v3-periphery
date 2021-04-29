@@ -704,7 +704,6 @@ describe('NFTDescriptor', () => {
   })
 
   describe('#tokenToColorHex', () => {
-
     function tokenToColorHex(tokenAddress: string, startIndex: number): string {
       return `${tokenAddress.slice(startIndex, startIndex + 6).toLowerCase()}`
     }
