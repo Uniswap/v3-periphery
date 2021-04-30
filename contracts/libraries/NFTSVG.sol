@@ -346,39 +346,40 @@ library NFTSVG {
     }
 
     function rangeLocation(int24 tickLower, int24 tickUpper) internal pure returns (string memory, string memory) {
-      string[2][10] memory miniCoords = [
-        ['8','7'],
-        ['8','10.5'],
-        ['8','14.25'],
-        ['10','18'],
-        ['11','21'],
-        ['13','23'],
-        ['15','25'],
-        ['18','26'],
-        ['21','27'],
-        ['24','27']
-      ];
-      uint256 index;
-      int24 midPoint = (tickLower + tickUpper) / 2;
-      if (midPoint < -100_000) {
-        index = 0;
-      } else if (midPoint < -10_000) {
-        index = 1;
-      } else if (midPoint < -1_000) {
-        index = 3;
-      } else if (midPoint < -10) {
-        index = 4;
-      } else if (midPoint < 10) {
-        index = 5;
-      } else if (midPoint < 1_000) {
-        index = 6;
-      } else if (midPoint < 10_000) {
-        index = 7;
-      } else if (midPoint < 100_000) {
-        index = 8;
-      } else {
-        index = 9;
-      }
-      return (miniCoords[index][0], miniCoords[index][1]);
+        string[2][10] memory miniCoords =
+            [
+                ['8', '7'],
+                ['8', '10.5'],
+                ['8', '14.25'],
+                ['10', '18'],
+                ['11', '21'],
+                ['13', '23'],
+                ['15', '25'],
+                ['18', '26'],
+                ['21', '27'],
+                ['24', '27']
+            ];
+        uint256 index;
+        int24 midPoint = (tickLower + tickUpper) / 2;
+        if (midPoint < -100_000) {
+            index = 0;
+        } else if (midPoint < -10_000) {
+            index = 1;
+        } else if (midPoint < -1_000) {
+            index = 3;
+        } else if (midPoint < -10) {
+            index = 4;
+        } else if (midPoint < 10) {
+            index = 5;
+        } else if (midPoint < 1_000) {
+            index = 6;
+        } else if (midPoint < 10_000) {
+            index = 7;
+        } else if (midPoint < 100_000) {
+            index = 8;
+        } else {
+            index = 9;
+        }
+        return (miniCoords[index][0], miniCoords[index][1]);
     }
 }
