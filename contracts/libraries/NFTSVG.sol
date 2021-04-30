@@ -2,14 +2,12 @@
 pragma solidity >=0.5.0;
 
 import '@openzeppelin/contracts/utils/Strings.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
 import 'base64-sol/base64.sol';
 
 /// @title NFTSVG
 /// @notice Provides a function for generating an SVG associated with a Uniswap NFT
 library NFTSVG {
     using Strings for uint256;
-    using SafeMath for uint256;
 
     string constant curve1 = 'M1 1C41 41 105 105 145 145';
     string constant curve2 = 'M1 1C33 49 97 113 145 145';
