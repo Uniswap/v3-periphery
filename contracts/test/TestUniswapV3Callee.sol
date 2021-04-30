@@ -2,11 +2,12 @@
 pragma solidity =0.7.6;
 
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
+import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
 import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-contract TestUniswapV3Callee is IUniswapV3SwapCallback {
+contract TestUniswapV3Callee is IUniswapV3SwapCallback, IUniswapV3MintCallback {
     using SafeCast for uint256;
 
     function swapExact0For1(
@@ -58,5 +59,29 @@ contract TestUniswapV3Callee is IUniswapV3SwapCallback {
             assert(amount1Delta > 0);
             IERC20(IUniswapV3Pool(msg.sender).token1()).transferFrom(sender, msg.sender, uint256(amount1Delta));
         }
+    }
+
+    function mint(
+        address pool,
+        address recipient,
+        int24 tickLower,
+        int24 tickUpper,
+        uint128 amount
+    ) external {
+        IUniswapV3Pool(pool).mint(recipient, tickLower, tickUpper, amount, abi.encode(msg.sender));
+    }
+
+    event MintCallback(uint256 amount0Owed, uint256 amount1Owed);
+
+    function uniswapV3MintCallback(
+        uint256 amount0Owed,
+        uint256 amount1Owed,
+        bytes calldata data
+    ) external override {
+        address sender = abi.decode(data, (address));
+
+        emit MintCallback(amount0Owed, amount1Owed);
+        if (amount0Owed > 0) IERC20(IUniswapV3Pool(msg.sender).token0()).transferFrom(sender, msg.sender, amount0Owed);
+        if (amount1Owed > 0) IERC20(IUniswapV3Pool(msg.sender).token1()).transferFrom(sender, msg.sender, amount1Owed);
     }
 }

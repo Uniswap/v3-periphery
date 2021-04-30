@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OracleLibrary gas tests #consult base token: token 0 1`] = `74764`;
+
+exports[`OracleLibrary gas tests #consult base token: token 1 1`] = `74764`;
