@@ -26,6 +26,7 @@ library NFTSVG {
         string feeTier;
         int24 tickLower;
         int24 tickUpper;
+        int24 tickSpacing;
         int8 overRange;
         string tokenId;
         string color0;
@@ -52,7 +53,7 @@ library NFTSVG {
                         params.baseTokenSymbol
                     ),
                     generateSVGCardMantle(params.quoteTokenSymbol, params.baseTokenSymbol, params.feeTier),
-                    generageSvgCurve(params.tickLower, params.tickUpper, params.overRange),
+                    generageSvgCurve(params.tickLower, params.tickUpper, params.tickSpacing, params.overRange),
                     generateSVGPositionData(params.tokenId, params.tickLower, params.tickUpper),
                     '</svg>'
                 )
@@ -138,7 +139,8 @@ library NFTSVG {
                 '<rect style="filter: url(#f1)" x="0px" y="0px" width="290px" height="500px" />',
                 ' <g style="filter:url(#top-region-blur); transform:scale(1.5); transform-origin:center top;">',
                 '<rect fill="none" x="0px" y="0px" width="290px" height="500px" />',
-                '<ellipse cx="50%" cy="0px" rx="180px" ry="120px" fill="#000" opacity="0.85" /></g></g>'
+                '<ellipse cx="50%" cy="0px" rx="180px" ry="120px" fill="#000" opacity="0.85" /></g>',
+                '<rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" /></g>'
             )
         );
     }
@@ -190,8 +192,7 @@ library NFTSVG {
                 '</text><text y="115px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="36px">',
                 feeTier,
                 '</text></g>',
-                '<rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" ',
-                'stroke="rgba(255,255,255,0.2)" /><rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />'
+                '<rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />'
             )
         );
     }
@@ -199,16 +200,17 @@ library NFTSVG {
     function generageSvgCurve(
         int24 tickLower,
         int24 tickUpper,
+        int24 tickSpacing,
         int8 overRange
     ) private pure returns (string memory svg) {
-        string memory fade = overRange == -1 ? '#fade-up' : overRange == 1 ? '#fade-down' : '#none';
-        string memory curve = getCurve(tickLower, tickUpper);
+        string memory fade = overRange == 1 ? '#fade-up' : overRange == -1 ? '#fade-down' : '#none';
+        string memory curve = getCurve(tickLower, tickUpper, tickSpacing);
         svg = string(
             abi.encodePacked(
                 '<g mask="url(',
                 fade,
                 ')"',
-                ' style="transform:translate(73px,189px)">'
+                ' style="transform:translate(72px,189px)">'
                 '<rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />'
                 '<path d="',
                 curve,
@@ -216,7 +218,7 @@ library NFTSVG {
                 '</g><g mask="url(',
                 fade,
                 ')"',
-                ' style="transform:translate(73px,189px)">',
+                ' style="transform:translate(72px,189px)">',
                 '<rect x="-16px" y="-16px" width="180px" height="180px" fill="none" />',
                 '<path d="',
                 curve,
@@ -226,21 +228,25 @@ library NFTSVG {
         );
     }
 
-    function getCurve(int24 tickLower, int24 tickUpper) internal pure returns (string memory curve) {
-        int24 tickRange = tickUpper - tickLower;
-        if (tickRange <= 5) {
+    function getCurve(
+        int24 tickLower,
+        int24 tickUpper,
+        int24 tickSpacing
+    ) internal pure returns (string memory curve) {
+        int24 tickRange = (tickUpper - tickLower) / tickSpacing;
+        if (tickRange <= 4) {
             curve = curve1;
-        } else if (tickRange <= 10) {
+        } else if (tickRange <= 8) {
             curve = curve2;
-        } else if (tickRange <= 20) {
+        } else if (tickRange <= 16) {
             curve = curve3;
-        } else if (tickRange <= 50) {
+        } else if (tickRange <= 32) {
             curve = curve4;
-        } else if (tickRange <= 100) {
+        } else if (tickRange <= 64) {
             curve = curve5;
-        } else if (tickRange <= 10_000) {
+        } else if (tickRange <= 128) {
             curve = curve6;
-        } else if (tickRange <= 100_000) {
+        } else if (tickRange <= 256) {
             curve = curve7;
         } else {
             curve = curve8;
@@ -256,13 +262,13 @@ library NFTSVG {
             svg = string(
                 abi.encodePacked(
                     '<circle cx="',
-                    overRange == 1 ? curvex1 : curvex2,
+                    overRange == -1 ? curvex1 : curvex2,
                     'px" cy="',
-                    overRange == 1 ? curvey1 : curvey2,
+                    overRange == -1 ? curvey1 : curvey2,
                     'px" r="4px" fill="white" /><circle cx="',
-                    overRange == 1 ? curvex1 : curvex2,
+                    overRange == -1 ? curvex1 : curvex2,
                     'px" cy="',
-                    overRange == 1 ? curvey1 : curvey2,
+                    overRange == -1 ? curvey1 : curvey2,
                     'px" r="24px" fill="none" stroke="white" />'
                 )
             );
@@ -292,8 +298,8 @@ library NFTSVG {
         string memory tickLowerStr = tickToString(tickLower);
         string memory tickUpperStr = tickToString(tickUpper);
         uint256 str1length = bytes(tokenId).length + 4;
-        uint256 str2length = bytes(tickLowerStr).length + 5;
-        uint256 str3length = bytes(tickUpperStr).length + 5;
+        uint256 str2length = bytes(tickLowerStr).length + 10;
+        uint256 str3length = bytes(tickUpperStr).length + 10;
         svg = string(
             abi.encodePacked(
                 ' <g style="transform:translate(29px, 384px)">',
@@ -307,14 +313,14 @@ library NFTSVG {
                 '<rect width="',
                 uint256(7 * (str2length + 4)).toString(),
                 'px" height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />',
-                '<text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Min: </tspan>',
+                '<text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Min Tick: </tspan>',
                 tickLowerStr,
                 '</text></g>',
                 ' <g style="transform:translate(29px, 444px)">',
                 '<rect width="',
                 uint256(7 * (str3length + 4)).toString(),
                 'px" height="26px" rx="8px" ry="8px" fill="rgba(0,0,0,0.6)" />',
-                '<text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Max: </tspan>',
+                '<text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Max Tick: </tspan>',
                 tickUpperStr,
                 '</text></g>'
             )

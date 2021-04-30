@@ -53,29 +53,8 @@ contract NFTDescriptorTest {
         return NFTDescriptor.addressToString(_address);
     }
 
-    function svgImage(
-        uint256 tokenId,
-        address token0,
-        address token1,
-        string memory token0Symbol,
-        string memory token1Symbol,
-        string memory feeTier,
-        int24 tickLower,
-        int24 tickUpper,
-        int24 tickCurrent
-    ) public pure returns (string memory) {
-        return
-            NFTDescriptor.generateSVGImage(
-                tokenId,
-                token0,
-                token1,
-                token0Symbol,
-                token1Symbol,
-                feeTier,
-                tickLower,
-                tickUpper,
-                tickCurrent
-            );
+    function generateSVGImage(NFTDescriptor.ConstructTokenURIParams memory params) public pure returns (string memory) {
+        return NFTDescriptor.generateSVGImage(params);
     }
 
     function tokenToColorHex(address token, uint256 offset) public pure returns (string memory) {
@@ -84,13 +63,5 @@ contract NFTDescriptorTest {
 
     function sliceTokenHex(address token, uint256 offset) public pure returns (uint256) {
         return NFTDescriptor.sliceTokenHex(uint256(token), offset);
-    }
-
-    function getCurve(int24 tickLower, int24 tickUpper) public pure returns (string memory) {
-        return NFTSVG.getCurve(tickLower, tickUpper);
-    }
-
-    function generateSVGCurveCircle(int8 overRange) public pure returns (string memory) {
-        return NFTSVG.generateSVGCurveCircle(overRange);
     }
 }
