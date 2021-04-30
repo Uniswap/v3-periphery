@@ -234,19 +234,19 @@ library NFTSVG {
         int24 tickSpacing
     ) internal pure returns (string memory curve) {
         int24 tickRange = (tickUpper - tickLower) / tickSpacing;
-        if (tickRange <= 2) {
+        if (tickRange <= 4) {
             curve = curve1;
-        } else if (tickRange <= 4) {
-            curve = curve2;
         } else if (tickRange <= 8) {
-            curve = curve3;
+            curve = curve2;
         } else if (tickRange <= 16) {
-            curve = curve4;
+            curve = curve3;
         } else if (tickRange <= 32) {
-            curve = curve5;
+            curve = curve4;
         } else if (tickRange <= 64) {
-            curve = curve6;
+            curve = curve5;
         } else if (tickRange <= 128) {
+            curve = curve6;
+        } else if (tickRange <= 256) {
             curve = curve7;
         } else {
             curve = curve8;
