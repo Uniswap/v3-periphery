@@ -57,12 +57,7 @@ library NFTDescriptor {
                 addressToString(params.baseTokenAddress),
                 feeToPercentString(params.fee)
             );
-        string memory image =
-            Base64.encode(
-                bytes(
-                    generateSVGImage(params)
-                )
-            );
+        string memory image = Base64.encode(bytes(generateSVGImage(params)));
 
         return
             string(

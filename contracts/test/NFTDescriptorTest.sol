@@ -54,8 +54,7 @@ contract NFTDescriptorTest {
     }
 
     function generateSVGImage(NFTDescriptor.ConstructTokenURIParams memory params) public pure returns (string memory) {
-        return
-            NFTDescriptor.generateSVGImage(params);
+        return NFTDescriptor.generateSVGImage(params);
     }
 
     function tokenToColorHex(address token, uint256 offset) public pure returns (string memory) {
