@@ -333,6 +333,8 @@ describe('NFTDescriptor', () => {
       tickCurrent = -1
       tickLower = 0
       tickUpper = 1000
+      tickSpacing = TICK_SPACINGS[FeeAmount.LOW]
+      fee = FeeAmount.LOW
       expect(
         await nftDescriptor.constructTokenURI({
           tokenId,
@@ -721,51 +723,76 @@ describe('NFTDescriptor', () => {
 
   describe('#svgImage', () => {
     let tokenId: number
+    let baseTokenAddress: string
+    let quoteTokenAddress: string
+    let baseTokenSymbol: string
+    let quoteTokenSymbol: string
+    let baseTokenDecimals: number
+    let quoteTokenDecimals: number
+    let flipRatio: boolean
     let tickLower: number
     let tickUpper: number
     let tickCurrent: number
     let tickSpacing: number
-    let feeTier: string
-    let overRange: number
+    let fee: number
+    let poolAddress: string
 
-    beforeEach(() => {
+    beforeEach(async () => {
       tokenId = 123
+      quoteTokenAddress = '0x1234567890123456789123456789012345678901'
+      baseTokenAddress = '0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf'
+      quoteTokenSymbol = 'UNI'
+      baseTokenSymbol = 'WETH'
       tickLower = -1000
       tickUpper = 2000
       tickCurrent = 40
-      feeTier = '0.05%'
-      overRange = 0
+      fee = 500
+      baseTokenDecimals = await tokens[0].decimals()
+      quoteTokenDecimals = await tokens[1].decimals()
+      flipRatio = false
+      tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
+      poolAddress = `0x${'b'.repeat(40)}`
     })
 
     it('matches the current snapshot', async () => {
-      const svg = await nftDescriptor.svgImage(
+      const svg = await nftDescriptor.generateSVGImage({
         tokenId,
-        '0x1234567890123456789123456789012345678901',
-        '0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf',
-        'UNI',
-        'WETH',
-        feeTier,
+        baseTokenAddress,
+        quoteTokenAddress,
+        baseTokenSymbol,
+        quoteTokenSymbol,
+        baseTokenDecimals,
+        quoteTokenDecimals,
+        flipRatio,
         tickLower,
         tickUpper,
-        tickCurrent
-      )
+        tickCurrent,
+        tickSpacing,
+        fee,
+        poolAddress,
+      })
 
       expect(svg).toMatchSnapshot()
       fs.writeFileSync('./test/__snapshots__/NFTDescriptor.svg', svg)
     })
 
     it('returns a valid SVG', async () => {
-      const svg = await nftDescriptor.svgImage(
+      const svg = await nftDescriptor.generateSVGImage({
         tokenId,
-        '0x1234567890123456789123456789012345678901',
-        '0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf',
-        'UNI',
-        'WETH',
-        feeTier,
+        baseTokenAddress,
+        quoteTokenAddress,
+        baseTokenSymbol,
+        quoteTokenSymbol,
+        baseTokenDecimals,
+        quoteTokenDecimals,
+        flipRatio,
         tickLower,
         tickUpper,
-        tickCurrent
-      )
+        tickCurrent,
+        tickSpacing,
+        fee,
+        poolAddress,
+      })
       expect(isSvg(svg)).to.eq(true)
     })
   })

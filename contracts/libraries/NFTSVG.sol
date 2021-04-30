@@ -26,6 +26,7 @@ library NFTSVG {
         string feeTier;
         int24 tickLower;
         int24 tickUpper;
+        int24 tickSpacing;
         int8 overRange;
         string tokenId;
         string color0;
@@ -52,7 +53,7 @@ library NFTSVG {
                         params.baseTokenSymbol
                     ),
                     generateSVGCardMantle(params.quoteTokenSymbol, params.baseTokenSymbol, params.feeTier),
-                    generageSvgCurve(params.tickLower, params.tickUpper, params.overRange),
+                    generageSvgCurve(params.tickLower, params.tickUpper, params.tickSpacing, params.overRange),
                     generateSVGPositionData(params.tokenId, params.tickLower, params.tickUpper),
                     '</svg>'
                 )
@@ -199,10 +200,11 @@ library NFTSVG {
     function generageSvgCurve(
         int24 tickLower,
         int24 tickUpper,
+        int24 tickSpacing,
         int8 overRange
     ) private pure returns (string memory svg) {
         string memory fade = overRange == 1 ? '#fade-up' : overRange == -1 ? '#fade-down' : '#none';
-        string memory curve = getCurve(tickLower, tickUpper);
+        string memory curve = getCurve(tickLower, tickUpper, tickSpacing);
         svg = string(
             abi.encodePacked(
                 '<g mask="url(',
@@ -226,8 +228,8 @@ library NFTSVG {
         );
     }
 
-    function getCurve(int24 tickLower, int24 tickUpper) internal pure returns (string memory curve) {
-        int24 tickRange = tickUpper - tickLower;
+    function getCurve(int24 tickLower, int24 tickUpper, int24 tickSpacing) internal pure returns (string memory curve) {
+        int24 tickRange = (tickUpper - tickLower) / tickSpacing;
         if (tickRange <= 5) {
             curve = curve1;
         } else if (tickRange <= 10) {
