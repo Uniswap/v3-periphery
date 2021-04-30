@@ -16,7 +16,7 @@ const TEN = BigNumber.from(10)
 const LOWEST_SQRT_RATIO = 4310618292
 const HIGHEST_SQRT_RATIO = BigNumber.from(33849).mul(TEN.pow(34))
 
-describe('NFTDescriptor', () => {
+describe.only('NFTDescriptor', () => {
   const wallets = waffle.provider.getWallets()
 
   const nftDescriptorFixture: Fixture<{
@@ -787,6 +787,29 @@ describe('NFTDescriptor', () => {
       expect(coords[0]).to.eq('24')
       expect(coords[1]).to.eq('27')
     })
+  })
+
+  describe('#isSpecial', () => {
+    // it('works', async () => {
+    //   // const isSpecial = await nftDescriptor.isSpecial(1)
+    //   // const num = (await nftDescriptor.numByesNum(15)).toString()
+    //   // console.log(isSpecial)
+    //   // console.log(num)
+    //   // console.log(isSpecial[0])
+    //   // console.log(isSpecial[1])
+    //
+    //   let x = 1
+    //   let y = 0
+    //   while (x < 100) {
+    //     const isSpecial = await nftDescriptor.isSpecial(x)
+    //     console.log(x,"\t", isSpecial, "\t", isSpecial ? 'YES!' : '')
+    //     if (isSpecial) {
+    //       y++
+    //     }
+    //     x++
+    //   }
+    //   console.log('total special: ', y)
+    // }).timeout(10000000)
   })
 
   describe('#svgImage', () => {
