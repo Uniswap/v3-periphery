@@ -363,17 +363,17 @@ library NFTSVG {
         int24 midPoint = (tickLower + tickUpper) / 2;
         if (midPoint < -100_000) {
             index = 0;
-        } else if (midPoint < -10_000) {
+        } else if (midPoint < -50_000) {
             index = 1;
-        } else if (midPoint < -1_000) {
+        } else if (midPoint < -10_000) {
             index = 3;
-        } else if (midPoint < -10) {
+        } else if (midPoint < -100) {
             index = 4;
-        } else if (midPoint < 10) {
+        } else if (midPoint < 100) {
             index = 5;
-        } else if (midPoint < 1_000) {
-            index = 6;
         } else if (midPoint < 10_000) {
+            index = 6;
+        } else if (midPoint < 50_000) {
             index = 7;
         } else if (midPoint < 100_000) {
             index = 8;
