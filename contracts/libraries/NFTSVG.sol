@@ -54,7 +54,11 @@ library NFTSVG {
                     ),
                     generateSVGCardMantle(params.quoteTokenSymbol, params.baseTokenSymbol, params.feeTier),
                     generageSvgCurve(params.tickLower, params.tickUpper, params.tickSpacing, params.overRange),
-                    generateSVGPositionDataAndLocationCurve(params.tokenId.toString(), params.tickLower, params.tickUpper),
+                    generateSVGPositionDataAndLocationCurve(
+                        params.tokenId.toString(),
+                        params.tickLower,
+                        params.tickUpper
+                    ),
                     generateSVGRareSparkle(params.tokenId),
                     '</svg>'
                 )
@@ -369,63 +373,63 @@ library NFTSVG {
         } else {
             return ('24', '27');
         }
-      }
-
-    function generateSVGRareSparkle(uint256 tokenId) private pure returns (string memory svg) {
-      if (isRare(tokenId)) {
-        svg = string(
-          abi.encodePacked(
-            '<g style="transform:translate(226px, 392px)"><rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
-            '<path style="transform:translate(6px,6px)" d="M12 0L12.6522 9.56587L18 1.6077L13.7819 10.2181L22.3923 6L14.4341 ',
-            '11.3478L24 12L14.4341 12.6522L22.3923 18L13.7819 13.7819L18 22.3923L12.6522 14.4341L12 24L11.3478 14.4341L6 22.39',
-            '23L10.2181 13.7819L1.6077 18L9.56587 12.6522L0 12L9.56587 11.3478L1.6077 6L10.2181 10.2181L6 1.6077L11.3478 9.56587L12 0Z" fill="white"/></g>'
-            )
-          );
-      } else {
-        svg = '';
-      }
     }
 
-    function isRare(uint256 tokenId) public pure returns (bool) {
-      return hashAndCondense(tokenId)  < 0x80000000 / logTwo(tokenId);
+    function generateSVGRareSparkle(uint256 tokenId) private pure returns (string memory svg) {
+        if (isRare(tokenId)) {
+            svg = string(
+                abi.encodePacked(
+                    '<g style="transform:translate(226px, 392px)"><rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
+                    '<path style="transform:translate(6px,6px)" d="M12 0L12.6522 9.56587L18 1.6077L13.7819 10.2181L22.3923 6L14.4341 ',
+                    '11.3478L24 12L14.4341 12.6522L22.3923 18L13.7819 13.7819L18 22.3923L12.6522 14.4341L12 24L11.3478 14.4341L6 22.39',
+                    '23L10.2181 13.7819L1.6077 18L9.56587 12.6522L0 12L9.56587 11.3478L1.6077 6L10.2181 10.2181L6 1.6077L11.3478 9.56587L12 0Z" fill="white"/></g>'
+                )
+            );
+        } else {
+            svg = '';
+        }
+    }
+
+    function isRare(uint256 tokenId) internal pure returns (bool) {
+        return hashAndCondense(tokenId) < 0x80000000 / logTwo(tokenId);
     }
 
     function hashAndCondense(uint256 tokenId) internal pure returns (uint256) {
-      bytes32 h = sha256(abi.encodePacked(tokenId)) & bytes32(uint256(0xffffffff));
-      return uint256(h);
+        bytes32 h = sha256(abi.encodePacked(tokenId)) & bytes32(uint256(0xffffffff));
+        return uint256(h);
     }
 
     function logTwo(uint256 tokenId) internal pure returns (uint256) {
-      {
-          uint256 l2 = 1;
-          if ( tokenId >= 18446744073709552000 ) {
-            tokenId = tokenId>>64;
-            l2 += 64;
-          }
-          if ( tokenId >= 4294967296 ) {
-              tokenId = tokenId>>32;
-              l2 += 32;
-          }
-          if ( tokenId >= 65536 ) {
-              tokenId = tokenId>>16;
-              l2 += 16;
-          }
-          if ( tokenId >= 256 ) {
-              tokenId = tokenId>>8;
-              l2 += 8;
-          }
-          if ( tokenId >= 16 ) {
-              tokenId = tokenId>>4;
-              l2 += 4;
-          }
-          if ( tokenId >= 4 ) {
-              tokenId = tokenId>>2;
-              l2 += 2;
-          }
-          if ( tokenId >= 2 ) {
-              l2 += 1;
-          }
-          return l2;
-      }
+        {
+            uint256 l2 = 1;
+            if (tokenId >= 18446744073709552000) {
+                tokenId = tokenId >> 64;
+                l2 += 64;
+            }
+            if (tokenId >= 4294967296) {
+                tokenId = tokenId >> 32;
+                l2 += 32;
+            }
+            if (tokenId >= 65536) {
+                tokenId = tokenId >> 16;
+                l2 += 16;
+            }
+            if (tokenId >= 256) {
+                tokenId = tokenId >> 8;
+                l2 += 8;
+            }
+            if (tokenId >= 16) {
+                tokenId = tokenId >> 4;
+                l2 += 4;
+            }
+            if (tokenId >= 4) {
+                tokenId = tokenId >> 2;
+                l2 += 2;
+            }
+            if (tokenId >= 2) {
+                l2 += 1;
+            }
+            return l2;
+        }
     }
 }

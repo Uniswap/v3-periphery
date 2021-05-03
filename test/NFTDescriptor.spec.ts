@@ -329,6 +329,8 @@ describe.only('NFTDescriptor', () => {
     })
 
     it('snapshot matches', async () => {
+      // get snapshot with rare sparkle
+      tokenId = 1
       // get a snapshot with svg fade
       tickCurrent = -1
       tickLower = 0
@@ -790,26 +792,26 @@ describe.only('NFTDescriptor', () => {
   })
 
   describe('#isSpecial', () => {
-    // it('works', async () => {
-    //   // const isSpecial = await nftDescriptor.isSpecial(1)
-    //   // const num = (await nftDescriptor.numByesNum(15)).toString()
-    //   // console.log(isSpecial)
-    //   // console.log(num)
-    //   // console.log(isSpecial[0])
-    //   // console.log(isSpecial[1])
-    //
-    //   let x = 1
-    //   let y = 0
-    //   while (x < 100) {
-    //     const isSpecial = await nftDescriptor.isSpecial(x)
-    //     console.log(x,"\t", isSpecial, "\t", isSpecial ? 'YES!' : '')
-    //     if (isSpecial) {
-    //       y++
-    //     }
-    //     x++
-    //   }
-    //   console.log('total special: ', y)
-    // }).timeout(10000000)
+    it.only('works', async () => {
+      // const isSpecial = await nftDescriptor.isSpecial(1)
+      // const num = (await nftDescriptor.numByesNum(15)).toString()
+      // console.log(isSpecial)
+      // console.log(num)
+      // console.log(isSpecial[0])
+      // console.log(isSpecial[1])
+
+      let x = 1
+      let y = 0
+      while (x < 1000) {
+        const isSpecial = await nftDescriptor.isRare(x)
+        console.log(x,"\t", isSpecial, "\t", isSpecial ? 'YES!' : '')
+        if (isSpecial) {
+          y++
+        }
+        x++
+      }
+      console.log('total special: ', y)
+    }).timeout(10000000)
   })
 
   describe('#svgImage', () => {
