@@ -16,7 +16,7 @@ const TEN = BigNumber.from(10)
 const LOWEST_SQRT_RATIO = 4310618292
 const HIGHEST_SQRT_RATIO = BigNumber.from(33849).mul(TEN.pow(34))
 
-describe.only('NFTDescriptor', () => {
+describe('NFTDescriptor', () => {
   const wallets = waffle.provider.getWallets()
 
   const nftDescriptorFixture: Fixture<{
@@ -330,7 +330,7 @@ describe.only('NFTDescriptor', () => {
 
     it('snapshot matches', async () => {
       // get snapshot with rare sparkle
-      tokenId = 1
+      tokenId = 2
       // get a snapshot with svg fade
       tickCurrent = -1
       tickLower = 0
@@ -789,29 +789,6 @@ describe.only('NFTDescriptor', () => {
       expect(coords[0]).to.eq('24')
       expect(coords[1]).to.eq('27')
     })
-  })
-
-  describe('#isSpecial', () => {
-    it.only('works', async () => {
-      // const isSpecial = await nftDescriptor.isSpecial(1)
-      // const num = (await nftDescriptor.numByesNum(15)).toString()
-      // console.log(isSpecial)
-      // console.log(num)
-      // console.log(isSpecial[0])
-      // console.log(isSpecial[1])
-
-      let x = 1
-      let y = 0
-      while (x < 1000) {
-        const isSpecial = await nftDescriptor.isRare(x)
-        console.log(x,"\t", isSpecial, "\t", isSpecial ? 'YES!' : '')
-        if (isSpecial) {
-          y++
-        }
-        x++
-      }
-      console.log('total special: ', y)
-    }).timeout(10000000)
   })
 
   describe('#svgImage', () => {
