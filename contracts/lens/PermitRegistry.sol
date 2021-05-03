@@ -81,7 +81,17 @@ contract PermitRegistry is Multicall, IERC1271 {
         bytes32 s
     ) public {
         require(IERC20(token).allowance(owner, address(this)) == 0, 'Non-zero starting allowance');
-        IERC20Permit(token).permit(owner, address(this), 1, type(uint256).max, v, r, s);
+        IERC20Permit(token).permit(
+            owner,
+            address(this),
+            /* value= */
+            1,
+            /* deadline= */
+            type(uint256).max,
+            v,
+            r,
+            s
+        );
         require(IERC20(token).allowance(owner, address(this)) == 1, 'No ERC2612');
         _permits[token] |= ERC2612;
         emit PermitRegistered(token, ERC2612);
