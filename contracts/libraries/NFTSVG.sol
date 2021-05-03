@@ -366,8 +366,10 @@ library NFTSVG {
         } else if (midPoint < -50_000) {
             index = 1;
         } else if (midPoint < -10_000) {
-            index = 3;
+            index = 2;
         } else if (midPoint < -100) {
+            index = 3;
+        } else if (midPoint < 0) {
             index = 4;
         } else if (midPoint < 100) {
             index = 5;
