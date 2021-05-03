@@ -64,4 +64,8 @@ contract NFTDescriptorTest {
     function sliceTokenHex(address token, uint256 offset) public pure returns (uint256) {
         return NFTDescriptor.sliceTokenHex(uint256(token), offset);
     }
+
+    function rangeLocation(int24 tickLower, int24 tickUpper) public pure returns (string memory, string memory) {
+        return NFTSVG.rangeLocation(tickLower, tickUpper);
+    }
 }

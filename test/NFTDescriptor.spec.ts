@@ -721,6 +721,74 @@ describe('NFTDescriptor', () => {
     })
   })
 
+  describe('#rangeLocation', () => {
+    it('returns the correct coordinates when range midpoint under -100_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(-887_272, -887_100)
+      expect(coords[0]).to.eq('8')
+      expect(coords[1]).to.eq('7')
+    })
+
+    it('returns the correct coordinates when range midpoint is between -100_000 and -50_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(-100_000, -90_000)
+      expect(coords[0]).to.eq('8')
+      expect(coords[1]).to.eq('10.5')
+    })
+
+    it('returns the correct coordinates when range midpoint is between -50_000 and -10_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(-50_000, -20_000)
+      expect(coords[0]).to.eq('8')
+      expect(coords[1]).to.eq('14.25')
+    })
+
+    it('returns the correct coordinates when range midpoint is between -10_000 and -100', async () => {
+      const coords = await nftDescriptor.rangeLocation(-10_000, -5_000)
+      expect(coords[0]).to.eq('10')
+      expect(coords[1]).to.eq('18')
+    })
+
+    it('returns the correct coordinates when range midpoint is between -100 and 0', async () => {
+      const coords = await nftDescriptor.rangeLocation(-5, -1)
+      expect(coords[0]).to.eq('11')
+      expect(coords[1]).to.eq('21')
+    })
+
+    it('returns the correct coordinates when range midpoint is between 0 and 100', async () => {
+      const coords = await nftDescriptor.rangeLocation(1, 100)
+      expect(coords[0]).to.eq('13')
+      expect(coords[1]).to.eq('23')
+    })
+
+    it('returns the correct coordinates when range midpoint is between 100 and 10_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(500, 100)
+      expect(coords[0]).to.eq('15')
+      expect(coords[1]).to.eq('25')
+    })
+
+    it('returns the correct coordinates when range midpoint is between 10_000 and 50_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(10_000, 30_000)
+      expect(coords[0]).to.eq('18')
+      expect(coords[1]).to.eq('26')
+    })
+
+    it('returns the correct coordinates when range midpoint is between 50_000 and 100_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(100_000, 99_500)
+      expect(coords[0]).to.eq('21')
+      expect(coords[1]).to.eq('27')
+    })
+
+    it('returns the correct coordinates when range midpoint is above 100_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(200_000, 100_000)
+      expect(coords[0]).to.eq('24')
+      expect(coords[1]).to.eq('27')
+    })
+
+    it('math does not overflow on max value', async () => {
+      const coords = await nftDescriptor.rangeLocation(887_272, 887_272)
+      expect(coords[0]).to.eq('24')
+      expect(coords[1]).to.eq('27')
+    })
+  })
+
   describe('#svgImage', () => {
     let tokenId: number
     let baseTokenAddress: string

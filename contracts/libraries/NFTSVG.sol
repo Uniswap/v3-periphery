@@ -54,7 +54,7 @@ library NFTSVG {
                     ),
                     generateSVGCardMantle(params.quoteTokenSymbol, params.baseTokenSymbol, params.feeTier),
                     generageSvgCurve(params.tickLower, params.tickUpper, params.tickSpacing, params.overRange),
-                    generateSVGPositionData(params.tokenId, params.tickLower, params.tickUpper),
+                    generateSVGPositionDataAndLocationCurve(params.tokenId, params.tickLower, params.tickUpper),
                     '</svg>'
                 )
             );
@@ -290,7 +290,7 @@ library NFTSVG {
         }
     }
 
-    function generateSVGPositionData(
+    function generateSVGPositionDataAndLocationCurve(
         string memory tokenId,
         int24 tickLower,
         int24 tickUpper
@@ -300,6 +300,7 @@ library NFTSVG {
         uint256 str1length = bytes(tokenId).length + 4;
         uint256 str2length = bytes(tickLowerStr).length + 10;
         uint256 str3length = bytes(tickUpperStr).length + 10;
+        (string memory xCoord, string memory yCoord) = rangeLocation(tickLower, tickUpper);
         svg = string(
             abi.encodePacked(
                 ' <g style="transform:translate(29px, 384px)">',
@@ -323,6 +324,14 @@ library NFTSVG {
                 '<text x="12px" y="17px" font-family="\'Courier New\', monospace" font-size="12px" fill="white"><tspan fill="rgba(255,255,255,0.6)">Max Tick: </tspan>',
                 tickUpperStr,
                 '</text></g>'
+                '<g style="transform:translate(226px, 433px)">',
+                '<rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
+                '<path stroke-linecap="round" d="M8 9C8.00004 22.9494 16.2099 28 27 28" fill="none" stroke="white" />',
+                '<circle style="transform:translate3d(',
+                xCoord,
+                'px, ',
+                yCoord,
+                'px, 0px)" cx="0px" cy="0px" r="4px" fill="white"/></g>'
             )
         );
     }
@@ -334,5 +343,30 @@ library NFTSVG {
             sign = '-';
         }
         return string(abi.encodePacked(sign, uint256(tick).toString()));
+    }
+
+    function rangeLocation(int24 tickLower, int24 tickUpper) internal pure returns (string memory, string memory) {
+        int24 midPoint = (tickLower + tickUpper) / 2;
+        if (midPoint < -100_000) {
+            return ('8', '7');
+        } else if (midPoint < -50_000) {
+            return ('8', '10.5');
+        } else if (midPoint < -10_000) {
+            return ('8', '14.25');
+        } else if (midPoint < -100) {
+            return ('10', '18');
+        } else if (midPoint < 0) {
+            return ('11', '21');
+        } else if (midPoint < 100) {
+            return ('13', '23');
+        } else if (midPoint < 10_000) {
+            return ('15', '25');
+        } else if (midPoint < 50_000) {
+            return ('18', '26');
+        } else if (midPoint < 100_000) {
+            return ('21', '27');
+        } else {
+            return ('24', '27');
+        }
     }
 }
