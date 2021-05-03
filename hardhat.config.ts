@@ -16,7 +16,6 @@ const LOW_OPTIMIZER_COMPILER_SETTINGS = {
   },
 }
 
-
 const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
   version: '0.7.6',
   settings: {
@@ -29,7 +28,6 @@ const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
     },
   },
 }
-
 
 const DEFAULT_COMPILER_SETTINGS = {
   version: '0.7.6',
