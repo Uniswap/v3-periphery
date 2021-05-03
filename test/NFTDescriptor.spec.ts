@@ -868,6 +868,16 @@ describe('NFTDescriptor', () => {
     })
   })
 
+  describe('#isRare', () => {
+    it('returns true sometimes', async () => {
+      expect(await nftDescriptor.isRare(1, `0x${'b'.repeat(40)}`)).to.eq(true)
+    })
+
+    it('returns false sometimes', async () => {
+      expect(await nftDescriptor.isRare(2, `0x${'b'.repeat(40)}`)).to.eq(false)
+    })
+  })
+
   function constructTokenMetadata(
     tokenId: number,
     quoteTokenAddress: string,
