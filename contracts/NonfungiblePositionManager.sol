@@ -314,6 +314,9 @@ contract NonfungiblePositionManager is
         returns (uint256 amount0, uint256 amount1)
     {
         require(params.amount0Max > 0 || params.amount1Max > 0);
+        // allow collecting to the nft position manager address with address 0
+        address recipient = params.recipient == address(0) ? address(this) : params.recipient;
+
         Position storage position = _positions[params.tokenId];
 
         PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
@@ -356,7 +359,7 @@ contract NonfungiblePositionManager is
 
         // the actual amounts collected are returned
         (amount0, amount1) = pool.collect(
-            params.recipient,
+            recipient,
             position.tickLower,
             position.tickUpper,
             amount0Collect,
@@ -367,7 +370,7 @@ contract NonfungiblePositionManager is
         // instead of the actual amount so we can burn the token
         (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - amount0Collect, tokensOwed1 - amount1Collect);
 
-        emit Collect(params.tokenId, params.recipient, amount0Collect, amount1Collect);
+        emit Collect(params.tokenId, recipient, amount0Collect, amount1Collect);
     }
 
     /// @inheritdoc INonfungiblePositionManager

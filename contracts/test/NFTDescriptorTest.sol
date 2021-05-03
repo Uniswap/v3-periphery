@@ -3,6 +3,7 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 import '../libraries/NFTDescriptor.sol';
+import '../libraries/NFTSVG.sol';
 import '../libraries/HexStrings.sol';
 
 contract NFTDescriptorTest {
@@ -52,11 +53,19 @@ contract NFTDescriptorTest {
         return NFTDescriptor.addressToString(_address);
     }
 
-    function svgImage(address token0, address token1) public pure returns (string memory) {
-        return NFTDescriptor.svgImage(token0, token1);
+    function generateSVGImage(NFTDescriptor.ConstructTokenURIParams memory params) public pure returns (string memory) {
+        return NFTDescriptor.generateSVGImage(params);
     }
 
-    function tokenToColorHex(address token) public pure returns (string memory) {
-        return NFTDescriptor.tokenToColorHex(uint256(token));
+    function tokenToColorHex(address token, uint256 offset) public pure returns (string memory) {
+        return NFTDescriptor.tokenToColorHex(uint256(token), offset);
+    }
+
+    function sliceTokenHex(address token, uint256 offset) public pure returns (uint256) {
+        return NFTDescriptor.sliceTokenHex(uint256(token), offset);
+    }
+
+    function rangeLocation(int24 tickLower, int24 tickUpper) public pure returns (string memory, string memory) {
+        return NFTSVG.rangeLocation(tickLower, tickUpper);
     }
 }

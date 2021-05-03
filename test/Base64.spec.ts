@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat'
-import { base64Encode } from './shared/base64encode'
+import { base64Encode } from './shared/base64'
 import { expect } from './shared/expect'
 import { Base64Test } from '../typechain'
 import { randomBytes } from 'crypto'
@@ -44,6 +44,22 @@ describe('Base64', () => {
         await snapshotGasCost(base64.getGasCostOfEncode(stringToHex(example)))
       })
     }
+
+    describe('max size string (24kB)', () => {
+      let str: string
+      before(() => {
+        str = Array<null>(24 * 1024)
+          .fill(null)
+          .map((_, i) => String.fromCharCode(i % 1024))
+          .join('')
+      })
+      it('correctness', async () => {
+        expect(await base64.encode(stringToHex(str))).to.eq(base64Encode(str))
+      })
+      it('gas cost', async () => {
+        await snapshotGasCost(base64.getGasCostOfEncode(stringToHex(str)))
+      })
+    })
 
     it('tiny fuzzing', async () => {
       const inputs = []

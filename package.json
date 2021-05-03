@@ -5,7 +5,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.0.0-beta.22",
+  "version": "1.0.0-beta.23",
   "homepage": "https://uniswap.org",
   "keywords": [
     "uniswap",
@@ -31,7 +31,8 @@
     "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
     "@uniswap/lib": "^4.0.1-alpha",
     "@uniswap/v2-core": "1.0.1",
-    "@uniswap/v3-core": "1.0.0-rc.2"
+    "@uniswap/v3-core": "1.0.0-rc.2",
+    "base64-sol": "1.0.1"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
@@ -46,6 +47,7 @@
     "ethers": "^5.0.8",
     "hardhat": "^2.2.0",
     "hardhat-typechain": "^0.3.5",
+    "is-svg": "^4.3.1",
     "mocha": "^6.2.2",
     "mocha-chai-jest-snapshot": "^1.1.0",
     "prettier": "^2.0.5",

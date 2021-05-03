@@ -60,6 +60,9 @@ export default {
     overrides: {
       'contracts/NonfungiblePositionManager.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
       'contracts/test/MockTimeNonfungiblePositionManager.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
+      'contracts/test/NFTDescriptorTest.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
+      'contracts/NonfungibleTokenPositionDescriptor.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
+      'contracts/libraries/NFTDescriptor.sol': LOW_OPTIMIZER_COMPILER_SETTINGS,
     },
   },
 }

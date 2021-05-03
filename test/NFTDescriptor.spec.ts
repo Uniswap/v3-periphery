@@ -6,11 +6,11 @@ import { TestERC20Metadata, NFTDescriptorTest } from '../typechain'
 import { Fixture } from 'ethereum-waffle'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import snapshotGasCost from './shared/snapshotGasCost'
-import { base64Encode } from './shared/base64encode'
 import { formatSqrtRatioX96 } from './shared/formatSqrtRatioX96'
 import { getMaxTick, getMinTick } from './shared/ticks'
-import Decimal from 'decimal.js'
 import { randomBytes } from 'crypto'
+import fs from 'fs'
+import isSvg from 'is-svg'
 
 const TEN = BigNumber.from(10)
 const LOWEST_SQRT_RATIO = 4310618292
@@ -20,16 +20,25 @@ describe('NFTDescriptor', () => {
   const wallets = waffle.provider.getWallets()
 
   const nftDescriptorFixture: Fixture<{
-    tokens: [TestERC20Metadata, TestERC20Metadata]
+    tokens: [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
     nftDescriptor: NFTDescriptorTest
   }> = async (wallets, provider) => {
+    const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
+    const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
+
     const tokenFactory = await ethers.getContractFactory('TestERC20Metadata')
-    const NFTDescriptorFactory = await ethers.getContractFactory('NFTDescriptorTest')
+    const NFTDescriptorFactory = await ethers.getContractFactory('NFTDescriptorTest', {
+      libraries: {
+        NFTDescriptor: nftDescriptorLibrary.address,
+      },
+    })
     const nftDescriptor = (await NFTDescriptorFactory.deploy()) as NFTDescriptorTest
     const tokens = (await Promise.all([
       tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1'), // do not use maxu256 to avoid overflowing
       tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST2'),
-    ])) as [TestERC20Metadata, TestERC20Metadata]
+      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST3'),
+      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST4'),
+    ])) as [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
     return {
       nftDescriptor,
@@ -38,7 +47,7 @@ describe('NFTDescriptor', () => {
   }
 
   let nftDescriptor: NFTDescriptorTest
-  let tokens: [TestERC20Metadata, TestERC20Metadata]
+  let tokens: [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
@@ -61,6 +70,7 @@ describe('NFTDescriptor', () => {
     let flipRatio: boolean
     let tickLower: number
     let tickUpper: number
+    let tickCurrent: number
     let tickSpacing: number
     let fee: number
     let poolAddress: string
@@ -76,40 +86,55 @@ describe('NFTDescriptor', () => {
       flipRatio = false
       tickLower = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
       tickUpper = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
+      tickCurrent = 0
       tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
       fee = 3000
       poolAddress = `0x${'b'.repeat(40)}`
     })
 
+    function extractURIJson(uri: string): { name: string; description: string; image: string } {
+      const encodedJSON = uri.substr('data:application/json;base64,'.length)
+      const decodedJSON = Buffer.from(encodedJSON, 'base64').toString('utf8')
+      return JSON.parse(decodedJSON)
+    }
+
     it('returns the valid JSON string with min and max ticks', async () => {
-      const uri = await nftDescriptor.constructTokenURI({
-        tokenId,
-        baseTokenAddress,
-        quoteTokenAddress,
-        baseTokenSymbol,
-        quoteTokenSymbol,
-        baseTokenDecimals,
-        quoteTokenDecimals,
-        flipRatio,
-        tickLower,
-        tickUpper,
-        tickSpacing,
-        fee,
-        poolAddress,
-      })
-      expect(uri).to.equal(
-        tokenURI(
+      const json = extractURIJson(
+        await nftDescriptor.constructTokenURI({
           tokenId,
           baseTokenAddress,
           quoteTokenAddress,
-          poolAddress,
           baseTokenSymbol,
           quoteTokenSymbol,
+          baseTokenDecimals,
+          quoteTokenDecimals,
           flipRatio,
-          '0.3%',
-          'MIN<>MAX'
-        )
+          tickLower,
+          tickUpper,
+          tickCurrent,
+          tickSpacing,
+          fee,
+          poolAddress,
+        })
       )
+
+      const tokenUri = constructTokenMetadata(
+        tokenId,
+        quoteTokenAddress,
+        baseTokenAddress,
+        poolAddress,
+        quoteTokenSymbol,
+        baseTokenSymbol,
+        flipRatio,
+        tickLower,
+        tickUpper,
+        tickCurrent,
+        '0.3%',
+        'MIN<>MAX'
+      )
+
+      expect(json.description).to.equal(tokenUri.description)
+      expect(json.name).to.equal(tokenUri.name)
     })
 
     it('returns the valid JSON string with mid ticks', async () => {
@@ -118,66 +143,82 @@ describe('NFTDescriptor', () => {
       tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
       fee = 3000
 
-      const uri = await nftDescriptor.constructTokenURI({
-        tokenId,
-        baseTokenAddress,
-        quoteTokenAddress,
-        baseTokenSymbol,
-        quoteTokenSymbol,
-        baseTokenDecimals,
-        quoteTokenDecimals,
-        flipRatio,
-        tickLower,
-        tickUpper,
-        tickSpacing,
-        fee,
-        poolAddress,
-      })
-      expect(uri).to.equal(
-        tokenURI(
+      const json = extractURIJson(
+        await nftDescriptor.constructTokenURI({
           tokenId,
           baseTokenAddress,
           quoteTokenAddress,
-          poolAddress,
           baseTokenSymbol,
           quoteTokenSymbol,
+          baseTokenDecimals,
+          quoteTokenDecimals,
           flipRatio,
-          '0.3%',
-          '0.99900<>1.0010'
-        )
+          tickLower,
+          tickUpper,
+          tickCurrent,
+          tickSpacing,
+          fee,
+          poolAddress,
+        })
       )
+
+      const tokenMetadata = constructTokenMetadata(
+        tokenId,
+        quoteTokenAddress,
+        baseTokenAddress,
+        poolAddress,
+        quoteTokenSymbol,
+        baseTokenSymbol,
+        flipRatio,
+        tickLower,
+        tickUpper,
+        tickCurrent,
+        '0.3%',
+        '0.99900<>1.0010'
+      )
+
+      expect(json.description).to.equal(tokenMetadata.description)
+      expect(json.name).to.equal(tokenMetadata.name)
     })
 
     it('returns valid JSON when token symbols contain quotes', async () => {
       quoteTokenSymbol = '"TES"T1"'
-      const uri = await nftDescriptor.constructTokenURI({
-        tokenId,
-        baseTokenAddress,
-        quoteTokenAddress,
-        baseTokenSymbol,
-        quoteTokenSymbol,
-        baseTokenDecimals,
-        quoteTokenDecimals,
-        flipRatio,
-        tickLower,
-        tickUpper,
-        tickSpacing,
-        fee,
-        poolAddress,
-      })
-      expect(uri).to.equal(
-        tokenURI(
+      const json = extractURIJson(
+        await nftDescriptor.constructTokenURI({
           tokenId,
           baseTokenAddress,
           quoteTokenAddress,
-          poolAddress,
           baseTokenSymbol,
           quoteTokenSymbol,
+          baseTokenDecimals,
+          quoteTokenDecimals,
           flipRatio,
-          '0.3%',
-          'MIN<>MAX'
-        )
+          tickLower,
+          tickUpper,
+          tickCurrent,
+          tickSpacing,
+          fee,
+          poolAddress,
+        })
       )
+
+      const tokenMetadata = constructTokenMetadata(
+        tokenId,
+        quoteTokenAddress,
+        baseTokenAddress,
+        poolAddress,
+        quoteTokenSymbol,
+        baseTokenSymbol,
+        flipRatio,
+        tickLower,
+        tickUpper,
+        tickCurrent,
+        '0.3%',
+        'MIN<>MAX'
+      )
+
+      expect(json.description).to.equal(tokenMetadata.description)
+      expect(json.name).to.equal(tokenMetadata.name)
     })
 
     describe('when the token ratio is flipped', () => {
@@ -186,67 +227,83 @@ describe('NFTDescriptor', () => {
         tickLower = -10
         tickUpper = 10
 
-        const uri = await nftDescriptor.constructTokenURI({
-          tokenId,
-          baseTokenAddress,
-          quoteTokenAddress,
-          baseTokenSymbol,
-          quoteTokenSymbol,
-          baseTokenDecimals,
-          quoteTokenDecimals,
-          flipRatio,
-          tickLower,
-          tickUpper,
-          tickSpacing,
-          fee,
-          poolAddress,
-        })
-        expect(uri).to.equal(
-          tokenURI(
+        const json = extractURIJson(
+          await nftDescriptor.constructTokenURI({
             tokenId,
             baseTokenAddress,
             quoteTokenAddress,
-            poolAddress,
             baseTokenSymbol,
             quoteTokenSymbol,
+            baseTokenDecimals,
+            quoteTokenDecimals,
             flipRatio,
-            '0.3%',
-            '0.99900<>1.0010'
-          )
+            tickLower,
+            tickUpper,
+            tickCurrent,
+            tickSpacing,
+            fee,
+            poolAddress,
+          })
         )
+
+        const tokenMetadata = constructTokenMetadata(
+          tokenId,
+          quoteTokenAddress,
+          baseTokenAddress,
+          poolAddress,
+          quoteTokenSymbol,
+          baseTokenSymbol,
+          flipRatio,
+          tickLower,
+          tickUpper,
+          tickCurrent,
+          '0.3%',
+          '0.99900<>1.0010'
+        )
+
+        expect(json.description).to.equal(tokenMetadata.description)
+        expect(json.name).to.equal(tokenMetadata.name)
       })
 
       it('returns the valid JSON for min/max ticks', async () => {
         flipRatio = true
 
-        const uri = await nftDescriptor.constructTokenURI({
-          tokenId,
-          baseTokenAddress,
-          quoteTokenAddress,
-          baseTokenSymbol,
-          quoteTokenSymbol,
-          baseTokenDecimals,
-          quoteTokenDecimals,
-          flipRatio,
-          tickLower,
-          tickUpper,
-          tickSpacing,
-          fee,
-          poolAddress,
-        })
-        expect(uri).to.equal(
-          tokenURI(
+        const json = extractURIJson(
+          await nftDescriptor.constructTokenURI({
             tokenId,
             baseTokenAddress,
             quoteTokenAddress,
-            poolAddress,
             baseTokenSymbol,
             quoteTokenSymbol,
+            baseTokenDecimals,
+            quoteTokenDecimals,
             flipRatio,
-            '0.3%',
-            'MIN<>MAX'
-          )
+            tickLower,
+            tickUpper,
+            tickCurrent,
+            tickSpacing,
+            fee,
+            poolAddress,
+          })
         )
+
+        const tokenMetadata = constructTokenMetadata(
+          tokenId,
+          quoteTokenAddress,
+          baseTokenAddress,
+          poolAddress,
+          quoteTokenSymbol,
+          baseTokenSymbol,
+          flipRatio,
+          tickLower,
+          tickUpper,
+          tickCurrent,
+          '0.3%',
+          'MIN<>MAX'
+        )
+
+        expect(json.description).to.equal(tokenMetadata.description)
+        expect(json.name).to.equal(tokenMetadata.name)
       })
     })
 
@@ -263,11 +320,39 @@ describe('NFTDescriptor', () => {
           flipRatio,
           tickLower,
           tickUpper,
+          tickCurrent,
           tickSpacing,
           fee,
           poolAddress,
         })
       )
+    })
+
+    it('snapshot matches', async () => {
+      // get a snapshot with svg fade
+      tickCurrent = -1
+      tickLower = 0
+      tickUpper = 1000
+      tickSpacing = TICK_SPACINGS[FeeAmount.LOW]
+      fee = FeeAmount.LOW
+      expect(
+        await nftDescriptor.constructTokenURI({
+          tokenId,
+          quoteTokenAddress: '0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf',
+          baseTokenAddress: '0x1234567890123456789123456789012345678901',
+          quoteTokenSymbol: 'UNI',
+          baseTokenSymbol: 'WETH',
+          baseTokenDecimals,
+          quoteTokenDecimals,
+          flipRatio,
+          tickLower,
+          tickUpper,
+          tickCurrent,
+          tickSpacing,
+          fee,
+          poolAddress,
+        })
+      ).toMatchSnapshot()
     })
   })
 
@@ -396,6 +481,18 @@ describe('NFTDescriptor', () => {
         expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 18, 18, true)).to.eq('0.90484')
         expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 18, 10, true)).to.eq('90484000')
         expect(await nftDescriptor.tickToDecimalString(1000, tickSpacing, 10, 18, true)).to.eq('0.0000000090484')
+      })
+
+      it('returns MIN for highest tick', async () => {
+        const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        const lowestTick = getMinTick(TICK_SPACINGS[FeeAmount.HIGH])
+        expect(await nftDescriptor.tickToDecimalString(lowestTick, tickSpacing, 18, 18, true)).to.eq('MAX')
+      })
+
+      it('returns MAX for lowest tick', async () => {
+        const tickSpacing = TICK_SPACINGS[FeeAmount.HIGH]
+        const highestTick = getMaxTick(TICK_SPACINGS[FeeAmount.HIGH])
+        expect(await nftDescriptor.tickToDecimalString(highestTick, tickSpacing, 18, 18, true)).to.eq('MIN')
       })
     })
   })
@@ -609,56 +706,187 @@ describe('NFTDescriptor', () => {
   })
 
   describe('#tokenToColorHex', () => {
-    it('returns a string with a hash symbol and the first 3 bytes of the token', async () => {
-      expect(await nftDescriptor.tokenToColorHex(tokens[0].address)).to.eq(tokenToColorHex(tokens[0].address))
-      expect(await nftDescriptor.tokenToColorHex(tokens[1].address)).to.eq(tokenToColorHex(tokens[1].address))
+    function tokenToColorHex(tokenAddress: string, startIndex: number): string {
+      return `${tokenAddress.slice(startIndex, startIndex + 6).toLowerCase()}`
+    }
+
+    it('returns the correct hash for the first 3 bytes of the token address', async () => {
+      expect(await nftDescriptor.tokenToColorHex(tokens[0].address, 136)).to.eq(tokenToColorHex(tokens[0].address, 2))
+      expect(await nftDescriptor.tokenToColorHex(tokens[1].address, 136)).to.eq(tokenToColorHex(tokens[1].address, 2))
+    })
+
+    it('returns the correct hash for the last 3 bytes of the address', async () => {
+      expect(await nftDescriptor.tokenToColorHex(tokens[0].address, 0)).to.eq(tokenToColorHex(tokens[0].address, 36))
+      expect(await nftDescriptor.tokenToColorHex(tokens[1].address, 0)).to.eq(tokenToColorHex(tokens[1].address, 36))
+    })
+  })
+
+  describe('#rangeLocation', () => {
+    it('returns the correct coordinates when range midpoint under -100_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(-887_272, -887_100)
+      expect(coords[0]).to.eq('8')
+      expect(coords[1]).to.eq('7')
+    })
+
+    it('returns the correct coordinates when range midpoint is between -100_000 and -50_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(-100_000, -90_000)
+      expect(coords[0]).to.eq('8')
+      expect(coords[1]).to.eq('10.5')
+    })
+
+    it('returns the correct coordinates when range midpoint is between -50_000 and -10_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(-50_000, -20_000)
+      expect(coords[0]).to.eq('8')
+      expect(coords[1]).to.eq('14.25')
+    })
+
+    it('returns the correct coordinates when range midpoint is between -10_000 and -100', async () => {
+      const coords = await nftDescriptor.rangeLocation(-10_000, -5_000)
+      expect(coords[0]).to.eq('10')
+      expect(coords[1]).to.eq('18')
+    })
+
+    it('returns the correct coordinates when range midpoint is between -100 and 0', async () => {
+      const coords = await nftDescriptor.rangeLocation(-5, -1)
+      expect(coords[0]).to.eq('11')
+      expect(coords[1]).to.eq('21')
+    })
+
+    it('returns the correct coordinates when range midpoint is between 0 and 100', async () => {
+      const coords = await nftDescriptor.rangeLocation(1, 100)
+      expect(coords[0]).to.eq('13')
+      expect(coords[1]).to.eq('23')
+    })
+
+    it('returns the correct coordinates when range midpoint is between 100 and 10_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(500, 100)
+      expect(coords[0]).to.eq('15')
+      expect(coords[1]).to.eq('25')
+    })
+
+    it('returns the correct coordinates when range midpoint is between 10_000 and 50_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(10_000, 30_000)
+      expect(coords[0]).to.eq('18')
+      expect(coords[1]).to.eq('26')
+    })
+
+    it('returns the correct coordinates when range midpoint is between 50_000 and 100_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(100_000, 99_500)
+      expect(coords[0]).to.eq('21')
+      expect(coords[1]).to.eq('27')
+    })
+
+    it('returns the correct coordinates when range midpoint is above 100_000', async () => {
+      const coords = await nftDescriptor.rangeLocation(200_000, 100_000)
+      expect(coords[0]).to.eq('24')
+      expect(coords[1]).to.eq('27')
+    })
+
+    it('math does not overflow on max value', async () => {
+      const coords = await nftDescriptor.rangeLocation(887_272, 887_272)
+      expect(coords[0]).to.eq('24')
+      expect(coords[1]).to.eq('27')
     })
   })
 
   describe('#svgImage', () => {
-    it('returns the svgImage', async () => {
-      expect(await nftDescriptor.svgImage(tokens[0].address, tokens[1].address)).to.eq(
-        svgImage(tokens[0].address, tokens[1].address)
-      )
+    let tokenId: number
+    let baseTokenAddress: string
+    let quoteTokenAddress: string
+    let baseTokenSymbol: string
+    let quoteTokenSymbol: string
+    let baseTokenDecimals: number
+    let quoteTokenDecimals: number
+    let flipRatio: boolean
+    let tickLower: number
+    let tickUpper: number
+    let tickCurrent: number
+    let tickSpacing: number
+    let fee: number
+    let poolAddress: string
+
+    beforeEach(async () => {
+      tokenId = 123
+      quoteTokenAddress = '0x1234567890123456789123456789012345678901'
+      baseTokenAddress = '0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf'
+      quoteTokenSymbol = 'UNI'
+      baseTokenSymbol = 'WETH'
+      tickLower = -1000
+      tickUpper = 2000
+      tickCurrent = 40
+      fee = 500
+      baseTokenDecimals = await tokens[0].decimals()
+      quoteTokenDecimals = await tokens[1].decimals()
+      flipRatio = false
+      tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
+      poolAddress = `0x${'b'.repeat(40)}`
+    })
+
+    it('matches the current snapshot', async () => {
+      const svg = await nftDescriptor.generateSVGImage({
+        tokenId,
+        baseTokenAddress,
+        quoteTokenAddress,
+        baseTokenSymbol,
+        quoteTokenSymbol,
+        baseTokenDecimals,
+        quoteTokenDecimals,
+        flipRatio,
+        tickLower,
+        tickUpper,
+        tickCurrent,
+        tickSpacing,
+        fee,
+        poolAddress,
+      })
+
+      expect(svg).toMatchSnapshot()
+      fs.writeFileSync('./test/__snapshots__/NFTDescriptor.svg', svg)
+    })
+
+    it('returns a valid SVG', async () => {
+      const svg = await nftDescriptor.generateSVGImage({
+        tokenId,
+        baseTokenAddress,
+        quoteTokenAddress,
+        baseTokenSymbol,
+        quoteTokenSymbol,
+        baseTokenDecimals,
+        quoteTokenDecimals,
+        flipRatio,
+        tickLower,
+        tickUpper,
+        tickCurrent,
+        tickSpacing,
+        fee,
+        poolAddress,
+      })
+      expect(isSvg(svg)).to.eq(true)
     })
   })
 
-  function tokenToColorHex(tokenAddress: string): string {
-    return `#${tokenAddress.slice(2, 8).toLowerCase()}`
-  }
-
-  function svgImage(quoteTokenAddress: string, baseTokenAddress: string): string {
-    const quoteTokenColor = tokenToColorHex(quoteTokenAddress)
-    const baseTokenColor = tokenToColorHex(baseTokenAddress)
-    return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">\
-<circle cx="12" cy="12" r="12" fill=${quoteTokenColor} stroke="white"/><g clip-path=url(#beta-${quoteTokenColor})>\
-<circle cx="12" cy="12" r="12" fill=${baseTokenColor} stroke="white"/></g><circle cx="12" cy="12" r="4" style=mix-blend-mode:\
-overlay fill="white" /><circle cx="12" cy="12" r="8" style=mix-blend-mode:overlay fill="white" />\<defs><clipPath id=\
-beta-${quoteTokenColor}><rect width=12 height="24" fill="white"/></clipPath></defs></svg>`
-  }
-
-  function encodedSvgImage(baseTokenAddress: string, quoteTokenAddress: string): string {
-    return `data:image/svg+xml;base64,${base64Encode(svgImage(baseTokenAddress, quoteTokenAddress))}`
-  }
-
-  function tokenURI(
+  function constructTokenMetadata(
     tokenId: number,
-    baseTokenAddress: string,
     quoteTokenAddress: string,
+    baseTokenAddress: string,
     poolAddress: string,
-    baseTokenSymbol: string,
     quoteTokenSymbol: string,
+    baseTokenSymbol: string,
     flipRatio: boolean,
-    fee: string,
+    tickLower: number,
+    tickUpper: number,
+    tickCurrent: number,
+    feeTier: string,
     prices: string
-  ): string {
-    baseTokenSymbol = baseTokenSymbol.replace(/"/gi, '\\"')
-    quoteTokenSymbol = quoteTokenSymbol.replace(/"/gi, '\\"')
-    return `data:application/json,{\
-"name":"Uniswap - ${fee} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}", \
-"description":"This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\\n\
-\\nPool Address: ${poolAddress}\\n${quoteTokenSymbol} Address: ${quoteTokenAddress.toLowerCase()}\\n${baseTokenSymbol} Address: ${baseTokenAddress.toLowerCase()}\\n\
-Fee Tier: ${fee}\\nToken ID: ${tokenId}\\n\\n⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
-token symbols may be imitated.", "image": "${encodedSvgImage(quoteTokenAddress, baseTokenAddress)}"}`
+  ): { name: string; description: string } {
+    quoteTokenSymbol = quoteTokenSymbol.replace(/"/gi, '"')
+    baseTokenSymbol = baseTokenSymbol.replace(/"/gi, '"')
+    return {
+      name: `Uniswap - ${feeTier} - ${quoteTokenSymbol}/${baseTokenSymbol} - ${prices}`,
+      description: `This NFT represents a liquidity position in a Uniswap V3 ${quoteTokenSymbol}-${baseTokenSymbol} pool. The owner of this NFT can modify or redeem the position.\n\
+\nPool Address: ${poolAddress}\n${quoteTokenSymbol} Address: ${quoteTokenAddress.toLowerCase()}\n${baseTokenSymbol} Address: ${baseTokenAddress.toLowerCase()}\n\
+Fee Tier: ${feeTier}\nToken ID: ${tokenId}\n\n⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as \
+token symbols may be imitated.`,
+    }
   }
 })
