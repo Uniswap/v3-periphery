@@ -783,7 +783,7 @@ describe('NFTDescriptor', () => {
     })
 
     it('math does not overflow on max value', async () => {
-      const coords = await nftDescriptor.rangeLocation(887_271, 887_272)
+      const coords = await nftDescriptor.rangeLocation(887_272, 887_272)
       expect(coords[0]).to.eq('24')
       expect(coords[1]).to.eq('27')
     })
