@@ -69,7 +69,7 @@ contract NFTDescriptorTest {
         return NFTSVG.rangeLocation(tickLower, tickUpper);
     }
 
-    function isRare(uint256 tokenId) public pure returns (bool) {
-        return NFTSVG.isRare(tokenId);
+    function isRare(uint256 tokenId, address poolAddress) public pure returns (bool) {
+        return NFTSVG.isRare(tokenId, poolAddress);
     }
 }

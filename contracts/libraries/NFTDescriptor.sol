@@ -411,6 +411,7 @@ library NFTDescriptor {
             NFTSVG.SVGParams({
                 quoteToken: addressToString(params.quoteTokenAddress),
                 baseToken: addressToString(params.baseTokenAddress),
+                poolAddress: params.poolAddress,
                 quoteTokenSymbol: params.quoteTokenSymbol,
                 baseTokenSymbol: params.baseTokenSymbol,
                 feeTier: feeToPercentString(params.fee),

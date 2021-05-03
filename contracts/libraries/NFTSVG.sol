@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.5.0;
+pragma solidity >=0.7.6;
 
 import '@openzeppelin/contracts/utils/Strings.sol';
+import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
 import 'base64-sol/base64.sol';
 
 /// @title NFTSVG
@@ -21,6 +22,7 @@ library NFTSVG {
     struct SVGParams {
         string quoteToken;
         string baseToken;
+        address poolAddress;
         string quoteTokenSymbol;
         string baseTokenSymbol;
         string feeTier;
@@ -59,7 +61,7 @@ library NFTSVG {
                         params.tickLower,
                         params.tickUpper
                     ),
-                    generateSVGRareSparkle(params.tokenId),
+                    generateSVGRareSparkle(params.tokenId, params.poolAddress),
                     '</svg>'
                 )
             );
@@ -375,8 +377,8 @@ library NFTSVG {
         }
     }
 
-    function generateSVGRareSparkle(uint256 tokenId) private pure returns (string memory svg) {
-        if (isRare(tokenId)) {
+    function generateSVGRareSparkle(uint256 tokenId, address poolAddress) private pure returns (string memory svg) {
+        if (isRare(tokenId, poolAddress)) {
             svg = string(
                 abi.encodePacked(
                     '<g style="transform:translate(226px, 392px)"><rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
@@ -390,46 +392,12 @@ library NFTSVG {
         }
     }
 
-    function isRare(uint256 tokenId) internal pure returns (bool) {
-        return hashAndCondense(tokenId) < 0x80000000 / logTwo(tokenId);
+    function isRare(uint256 tokenId, address poolAddress) internal pure returns (bool) {
+        return getHash(tokenId, poolAddress) < type(uint256).max / (1 + BitMath.mostSignificantBit(tokenId) * 2);
     }
 
-    function hashAndCondense(uint256 tokenId) internal pure returns (uint256) {
-        bytes32 h = sha256(abi.encodePacked(tokenId)) & bytes32(uint256(0xffffffff));
+    function getHash(uint256 tokenId, address poolAddress) internal pure returns (uint256) {
+        bytes32 h = sha256(abi.encodePacked(tokenId, poolAddress));
         return uint256(h);
-    }
-
-    function logTwo(uint256 tokenId) internal pure returns (uint256) {
-        {
-            uint256 l2 = 1;
-            if (tokenId >= 18446744073709552000) {
-                tokenId = tokenId >> 64;
-                l2 += 64;
-            }
-            if (tokenId >= 4294967296) {
-                tokenId = tokenId >> 32;
-                l2 += 32;
-            }
-            if (tokenId >= 65536) {
-                tokenId = tokenId >> 16;
-                l2 += 16;
-            }
-            if (tokenId >= 256) {
-                tokenId = tokenId >> 8;
-                l2 += 8;
-            }
-            if (tokenId >= 16) {
-                tokenId = tokenId >> 4;
-                l2 += 4;
-            }
-            if (tokenId >= 4) {
-                tokenId = tokenId >> 2;
-                l2 += 2;
-            }
-            if (tokenId >= 2) {
-                l2 += 1;
-            }
-            return l2;
-        }
     }
 }
