@@ -66,6 +66,6 @@ contract NFTDescriptorTest {
     }
 
     function rangeLocation(int24 tickLower, int24 tickUpper) public pure returns (string memory, string memory) {
-      return NFTSVG.rangeLocation(tickLower, tickUpper);
+        return NFTSVG.rangeLocation(tickLower, tickUpper);
     }
 }
