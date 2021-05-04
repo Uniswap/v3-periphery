@@ -411,6 +411,7 @@ library NFTDescriptor {
             NFTSVG.SVGParams({
                 quoteToken: addressToString(params.quoteTokenAddress),
                 baseToken: addressToString(params.baseTokenAddress),
+                poolAddress: params.poolAddress,
                 quoteTokenSymbol: params.quoteTokenSymbol,
                 baseTokenSymbol: params.baseTokenSymbol,
                 feeTier: feeToPercentString(params.fee),
@@ -418,7 +419,7 @@ library NFTDescriptor {
                 tickUpper: params.tickUpper,
                 tickSpacing: params.tickSpacing,
                 overRange: overRange(params.tickLower, params.tickUpper, params.tickCurrent),
-                tokenId: params.tokenId.toString(),
+                tokenId: params.tokenId,
                 color0: tokenToColorHex(uint256(params.quoteTokenAddress), 136),
                 color1: tokenToColorHex(uint256(params.baseTokenAddress), 136),
                 color2: tokenToColorHex(uint256(params.quoteTokenAddress), 0),

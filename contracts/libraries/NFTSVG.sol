@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.5.0;
+pragma solidity >=0.7.6;
 
 import '@openzeppelin/contracts/utils/Strings.sol';
+import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
 import 'base64-sol/base64.sol';
 
 /// @title NFTSVG
@@ -21,6 +22,7 @@ library NFTSVG {
     struct SVGParams {
         string quoteToken;
         string baseToken;
+        address poolAddress;
         string quoteTokenSymbol;
         string baseTokenSymbol;
         string feeTier;
@@ -28,7 +30,7 @@ library NFTSVG {
         int24 tickUpper;
         int24 tickSpacing;
         int8 overRange;
-        string tokenId;
+        uint256 tokenId;
         string color0;
         string color1;
         string color2;
@@ -54,7 +56,12 @@ library NFTSVG {
                     ),
                     generateSVGCardMantle(params.quoteTokenSymbol, params.baseTokenSymbol, params.feeTier),
                     generageSvgCurve(params.tickLower, params.tickUpper, params.tickSpacing, params.overRange),
-                    generateSVGPositionDataAndLocationCurve(params.tokenId, params.tickLower, params.tickUpper),
+                    generateSVGPositionDataAndLocationCurve(
+                        params.tokenId.toString(),
+                        params.tickLower,
+                        params.tickUpper
+                    ),
+                    generateSVGRareSparkle(params.tokenId, params.poolAddress),
                     '</svg>'
                 )
             );
@@ -368,5 +375,25 @@ library NFTSVG {
         } else {
             return ('24', '27');
         }
+    }
+
+    function generateSVGRareSparkle(uint256 tokenId, address poolAddress) private pure returns (string memory svg) {
+        if (isRare(tokenId, poolAddress)) {
+            svg = string(
+                abi.encodePacked(
+                    '<g style="transform:translate(226px, 392px)"><rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
+                    '<path style="transform:translate(6px,6px)" d="M12 0L12.6522 9.56587L18 1.6077L13.7819 10.2181L22.3923 6L14.4341 ',
+                    '11.3478L24 12L14.4341 12.6522L22.3923 18L13.7819 13.7819L18 22.3923L12.6522 14.4341L12 24L11.3478 14.4341L6 22.39',
+                    '23L10.2181 13.7819L1.6077 18L9.56587 12.6522L0 12L9.56587 11.3478L1.6077 6L10.2181 10.2181L6 1.6077L11.3478 9.56587L12 0Z" fill="white"/></g>'
+                )
+            );
+        } else {
+            svg = '';
+        }
+    }
+
+    function isRare(uint256 tokenId, address poolAddress) internal pure returns (bool) {
+        bytes32 h = keccak256(abi.encodePacked(tokenId, poolAddress));
+        return uint256(h) < type(uint256).max / (1 + BitMath.mostSignificantBit(tokenId) * 2);
     }
 }

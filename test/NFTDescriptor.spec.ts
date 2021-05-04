@@ -329,6 +329,9 @@ describe('NFTDescriptor', () => {
     })
 
     it('snapshot matches', async () => {
+      // get snapshot with super rare special sparkle
+      tokenId = 1
+      poolAddress = `0x${'b'.repeat(40)}`
       // get a snapshot with svg fade
       tickCurrent = -1
       tickLower = 0
@@ -862,6 +865,16 @@ describe('NFTDescriptor', () => {
         poolAddress,
       })
       expect(isSvg(svg)).to.eq(true)
+    })
+  })
+
+  describe('#isRare', () => {
+    it('returns true sometimes', async () => {
+      expect(await nftDescriptor.isRare(1, `0x${'b'.repeat(40)}`)).to.eq(true)
+    })
+
+    it('returns false sometimes', async () => {
+      expect(await nftDescriptor.isRare(2, `0x${'b'.repeat(40)}`)).to.eq(false)
     })
   })
 
