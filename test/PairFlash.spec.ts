@@ -22,6 +22,7 @@ describe('PairFlash test', () => {
     let token0: TestERC20
     let token1: TestERC20
     let factory: Contract
+    let weth9: IWETH9
 
   async function createPool(tokenAddressA: string, tokenAddressB: string, fee: FeeAmount) {
     if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
@@ -54,12 +55,12 @@ describe('PairFlash test', () => {
   const flashFixture = async() => {
 
     
-    const {router, tokens, factory} = await completeFixture(wallets, provider)
+    const {router, tokens, factory, weth9} = await completeFixture(wallets, provider)
     const token0 = tokens[0]
     const token1 = tokens[1]
     
     const flashContractFactory = await ethers.getContractFactory('PairFlash')
-    const flash = await flashContractFactory.deploy(router) as PairFlash
+    const flash = await flashContractFactory.deploy(router, factory.address, weth9.address ) as PairFlash
 
     await createPool(token0.address, token1.address, FeeAmount.LOW)
     await createPool(token0.address, token1.address, FeeAmount.MEDIUM)
@@ -70,6 +71,7 @@ describe('PairFlash test', () => {
       token1,
       flash: flash as PairFlash,
       factory,
+      weth9,
     }
   }
 
@@ -80,19 +82,25 @@ describe('PairFlash test', () => {
   })
 
   beforeEach('load fixture', async () => {
+    ;({ weth9, factory, token0, token1, flash } = await loadFixture(flashFixture))
+  })
 
-    const fixtures = await loadFixture(flashFixture)
-    token0 = fixtures['token0']
-    token1 = fixtures['token1']
-    flash = fixtures['flash']
-    factory = fixtures['factory']
+//   beforeEach('load fixture', async () => {
+
+//     const fixtures = await loadFixture(flashFixture)
+//     token0 = fixtures['token0']
+//     token1 = fixtures['token1']
+//     flash = fixtures['flash']
+//     factory = fixtures['factory']
+//     weth9 = fixtures['weth9']
     
-    
-   })
+//    })
 
     describe.only('flash', () => {
 
-        // computePoolAddress
+        beforeEach('load fixture', async () => {
+            ;({ weth9, factory, token0, token1, flash } = await loadFixture(flashFixture))
+          })
       
         it('test correct transfer events', async () => {
             const flashParams = {
