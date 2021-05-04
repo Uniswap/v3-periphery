@@ -328,7 +328,7 @@ describe('NFTDescriptor', () => {
       )
     })
 
-    it.only('snapshot matches', async () => {
+    it('snapshot matches', async () => {
       // get snapshot with super rare special sparkle
       tokenId = 1
       poolAddress = `0x${'b'.repeat(40)}`
