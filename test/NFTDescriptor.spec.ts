@@ -338,13 +338,17 @@ describe('NFTDescriptor', () => {
       tickUpper = 1000
       tickSpacing = TICK_SPACINGS[FeeAmount.LOW]
       fee = FeeAmount.LOW
+      quoteTokenAddress = '0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf'
+      baseTokenAddress = '0x1234567890123456789123456789012345678901'
+      quoteTokenSymbol = 'UNI'
+      baseTokenSymbol = 'WETH'
       expect(
         await nftDescriptor.constructTokenURI({
           tokenId,
-          quoteTokenAddress: '0xabcdeabcdefabcdefabcdefabcdefabcdefabcdf',
-          baseTokenAddress: '0x1234567890123456789123456789012345678901',
-          quoteTokenSymbol: 'UNI',
-          baseTokenSymbol: 'WETH',
+          quoteTokenAddress,
+          baseTokenAddress,
+          quoteTokenSymbol,
+          baseTokenSymbol,
           baseTokenDecimals,
           quoteTokenDecimals,
           flipRatio,
