@@ -2,6 +2,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import 'hardhat/console.sol';
+
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol';
 import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
 
@@ -19,7 +21,12 @@ abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState,
     using LowGasSafeMath for uint256;
 
     ISwapRouter swapRouter;
-    
+
+    constructor(ISwapRouter _swapRouter) {
+       
+        swapRouter = _swapRouter;
+    }
+
     // fee0 is the fee from calling flash for token0
     // fee1 is the fee from calling flash for token1
     function uniswapV3FlashCallback(
@@ -27,6 +34,7 @@ abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState,
         uint256 fee1,
         bytes calldata data
     ) external override {
+        console.log("starting the flash callback");
         FlashCallbackData memory decoded = abi.decode(data, (FlashCallbackData));
         // more explicit decoding to get token variables
         CallbackValidation.verifyCallback(factory, decoded.poolKey);
@@ -45,25 +53,30 @@ abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState,
         
         // call exactInputSingle for swapping token1 for token0 in pool w/fee1
         uint256 amountOut0 = swapRouter.exactInputSingle(ExactInputSingleParams({tokenIn: decoded.poolKey.token1, tokenOut: decoded.poolKey.token0, fee: decoded.poolFee1, recipient: address(this), deadline: block.timestamp + 200, amountIn: decoded.amount1, amountOutMinimum: amount0Min, sqrtPriceLimitX96: 0 }));
+            console.log("executed first swap");
 
         // call exactInputSingle for swapping token0 for token 1 in pool w/fee2
         uint256 amountOut1 = swapRouter.exactInputSingle(ExactInputSingleParams({tokenIn: decoded.poolKey.token0, tokenOut: decoded.poolKey.token1, fee: decoded.poolFee2, recipient: address(this), deadline: block.timestamp + 200, amountIn: decoded.amount0, amountOutMinimum: amount1Min, sqrtPriceLimitX96: 0 }));
+            console.log("executed second swap");
 
         // end up with amountOut0 of token0 from first swap and amountOut1 of token1 from second swap
-
+        
         uint256 amount0Owed = LowGasSafeMath.add(decoded.amount0, fee0);
         uint256 amount1Owed = LowGasSafeMath.add(decoded.amount1, fee1);
 
         // require profitable (amountOut0 - fee0 > amount0 && amountOut1 - fee1 > amount1)
-        require(amountOut0 > amount0Owed);
-        require(amountOut1 > amount1Owed);
+        // require(amountOut0 > amount0Owed);
+        // require(amountOut1 > amount1Owed);
 
         // pay back amount0 + fee0 and amount1 + fee1 to original pool (poolKey) and keep profits
 
         // pay original pool (msg.sender) the amount of token0 plus fees and amount of token1 plus fees
 
         if (amount0Owed > 0) pay(decoded.poolKey.token0, address(this), msg.sender, amount0Owed);
+            console.log("first pay");
         if (amount1Owed > 0) pay(decoded.poolKey.token1, address(this), msg.sender, amount1Owed);
+            console.log("second pay");
+
 
         uint256 profit0 = LowGasSafeMath.sub(amountOut0, amount0Owed);
         uint256 profit1 = LowGasSafeMath.sub(amountOut1, amount1Owed);
@@ -78,7 +91,6 @@ abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState,
         address token0;
         address token1;
         uint24 fee;
-        address recipient;
         uint256 amount0;
         uint256 amount1;
         uint24 fee1;
@@ -95,6 +107,8 @@ abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState,
     }
 
     function initFlash(FlashParams memory params) external {
+        console.log("starting init flash");
+
 
         PoolAddress.PoolKey memory poolKey = PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
@@ -102,8 +116,9 @@ abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState,
         // amount of token0 requested to borrow
         // amount of token1 requested to borrow
         // need amount 0 and amount1 in callback to pay back pool
+        // recipient of flash should be THIS contract
         pool.flash(
-            params.recipient,
+            address(this),
             params.amount0,
             params.amount1,
             abi.encode(FlashCallbackData({amount0: params.amount0, amount1: params.amount1, payer: msg.sender, poolKey: poolKey, poolFee1: params.fee1, poolFee2: params.fee2}))
