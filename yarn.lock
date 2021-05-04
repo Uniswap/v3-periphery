@@ -1004,10 +1004,10 @@
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@uniswap/v2-core/-/v2-core-1.0.1.tgz#af8f508bf183204779938969e2e54043e147d425"
 
-"@uniswap/v3-core@1.0.0-rc.2":
-  version "1.0.0-rc.2"
-  resolved "https://registry.yarnpkg.com/@uniswap/v3-core/-/v3-core-1.0.0-rc.2.tgz#a1afb3253a7295bec6165ad1d960121e6851a576"
-  integrity sha512-vsqkqAHPCKsVi0nWwWeX+mHnSTJ8ZUdu1zAVXB9Mj9A+aeBQGV9foRKs9ufDGJq7S1nqmz+7FdjSOcVoeiUqgQ==
+"@uniswap/v3-core@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@uniswap/v3-core/-/v3-core-1.0.0.tgz#6c24adacc4c25dceee0ba3ca142b35adbd7e359d"
+  integrity sha512-kSC4djMGKMHj7sLMYVnn61k9nu+lHjMIxgg9CDQT+s2QYLoA56GbSK9Oxr+qJXzzygbkrmuY6cwgP6cW2JXPFA==
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
