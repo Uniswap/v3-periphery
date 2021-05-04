@@ -17,13 +17,13 @@ import '../libraries/TransferHelper.sol';
 import '../SwapRouter.sol';
 import '../interfaces/ISwapRouter.sol';
 
-abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState, PeripheryPayments, ISwapRouter {
+contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState, PeripheryPayments {
     using LowGasSafeMath for uint256;
 
     ISwapRouter swapRouter;
-
-    constructor(ISwapRouter _swapRouter) {
-       
+    
+    constructor(ISwapRouter _swapRouter, address _factory, address _WETH9) PeripheryImmutableState(_factory, _WETH9) {
+        
         swapRouter = _swapRouter;
     }
 
@@ -52,11 +52,11 @@ abstract contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState,
         //ExactInputSingleParams inputSingleParams1 = ExactInputSingleParams({tokenIn: decoded.token0, tokenOut: decoded.token1, fee: decoded.poolFee2, recipient: decoded.payer, deadline: block.timestamp + 200, amountIn: decoded.amount0, amountOutMinimum: amount1Min, sqrtPriceLimitX96: 0 });
         
         // call exactInputSingle for swapping token1 for token0 in pool w/fee1
-        uint256 amountOut0 = swapRouter.exactInputSingle(ExactInputSingleParams({tokenIn: decoded.poolKey.token1, tokenOut: decoded.poolKey.token0, fee: decoded.poolFee1, recipient: address(this), deadline: block.timestamp + 200, amountIn: decoded.amount1, amountOutMinimum: amount0Min, sqrtPriceLimitX96: 0 }));
+        uint256 amountOut0 = swapRouter.exactInputSingle(ISwapRouter.ExactInputSingleParams({tokenIn: decoded.poolKey.token1, tokenOut: decoded.poolKey.token0, fee: decoded.poolFee1, recipient: address(this), deadline: block.timestamp + 200, amountIn: decoded.amount1, amountOutMinimum: amount0Min, sqrtPriceLimitX96: 0 }));
             console.log("executed first swap");
 
         // call exactInputSingle for swapping token0 for token 1 in pool w/fee2
-        uint256 amountOut1 = swapRouter.exactInputSingle(ExactInputSingleParams({tokenIn: decoded.poolKey.token0, tokenOut: decoded.poolKey.token1, fee: decoded.poolFee2, recipient: address(this), deadline: block.timestamp + 200, amountIn: decoded.amount0, amountOutMinimum: amount1Min, sqrtPriceLimitX96: 0 }));
+        uint256 amountOut1 = swapRouter.exactInputSingle(ISwapRouter.ExactInputSingleParams({tokenIn: decoded.poolKey.token0, tokenOut: decoded.poolKey.token1, fee: decoded.poolFee2, recipient: address(this), deadline: block.timestamp + 200, amountIn: decoded.amount0, amountOutMinimum: amount1Min, sqrtPriceLimitX96: 0 }));
             console.log("executed second swap");
 
         // end up with amountOut0 of token0 from first swap and amountOut1 of token1 from second swap
