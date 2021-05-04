@@ -393,11 +393,7 @@ library NFTSVG {
     }
 
     function isRare(uint256 tokenId, address poolAddress) internal pure returns (bool) {
-        return getHash(tokenId, poolAddress) < type(uint256).max / (1 + BitMath.mostSignificantBit(tokenId) * 2);
-    }
-
-    function getHash(uint256 tokenId, address poolAddress) internal pure returns (uint256) {
         bytes32 h = keccak256(abi.encodePacked(tokenId, poolAddress));
-        return uint256(h);
+        return uint256(h) < type(uint256).max / (1 + BitMath.mostSignificantBit(tokenId) * 2);
     }
 }
