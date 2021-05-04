@@ -44,6 +44,12 @@ library NFTSVG {
     }
 
     function generateSVG(SVGParams memory params) internal pure returns (string memory svg) {
+        /*
+        address: "0xe8ab59d3bcde16a29912de83a90eb39628cfc163",
+        msg: "Forged in SVG for Uniswap in 2021 by 0xe8ab59d3bcde16a29912de83a90eb39628cfc163",
+        sig: "0x2df0e99d9cbfec33a705d83f75666d98b22dea7c1af412c584f7d626d83f02875993df740dc87563b9c73378f8462426da572d7989de88079a382ad96c57b68d1b",
+        version: "2"
+        */
         return
             string(
                 abi.encodePacked(
@@ -72,9 +78,6 @@ library NFTSVG {
             abi.encodePacked(
                 '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"',
                 " xmlns:xlink='http://www.w3.org/1999/xlink'>",
-                '<!-- {"address": "0xe8ab59d3bcde16a29912de83a90eb39628cfc163","msg": "Forged in SVG for Uniswap in 2021 by',
-                '0xe8ab59d3bcde16a29912de83a90eb39628cfc163","sig": "0x2df0e99d9cbfec33a705d83f75666d98b22dea7c1af412c584f7d6',
-                '26d83f02875993df740dc87563b9c73378f8462426da572d7989de88079a382ad96c57b68d1b", "version": "2"} -->',
                 '<defs>',
                 '<filter id="f1"><feImage result="p0" xlink:href="data:image/svg+xml;base64,',
                 Base64.encode(

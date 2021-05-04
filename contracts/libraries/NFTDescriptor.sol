@@ -468,7 +468,7 @@ library NFTDescriptor {
         uint256 offset,
         uint256 tokenId
     ) internal pure returns (uint256) {
-        return (sliceTokenHex(tokenAddress, offset) * tokenId) % 256;
+        return (sliceTokenHex(tokenAddress, offset) * tokenId) % 255;
     }
 
     function sliceTokenHex(uint256 token, uint256 offset) internal pure returns (uint256) {
