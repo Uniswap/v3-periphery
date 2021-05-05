@@ -35,7 +35,9 @@ const completeFixture: Fixture<{
       NFTDescriptor: nftDescriptorLibrary.address,
     },
   })
-  const nftDescriptor = await positionDescriptorFactory.deploy(tokens[0].address) as NonfungibleTokenPositionDescriptor
+  const nftDescriptor = (await positionDescriptorFactory.deploy(
+    tokens[0].address
+  )) as NonfungibleTokenPositionDescriptor
 
   const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')
   const nft = (await positionManagerFactory.deploy(
@@ -52,7 +54,7 @@ const completeFixture: Fixture<{
     router,
     tokens,
     nft,
-    nftDescriptor
+    nftDescriptor,
   }
 }
 

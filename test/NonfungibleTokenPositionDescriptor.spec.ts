@@ -52,7 +52,7 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     return {
       nftPositionDescriptor,
       tokens,
-      positionManager: nft
+      positionManager: nft,
     }
   }
 
@@ -122,7 +122,6 @@ describe('NonfungibleTokenPositionDescriptor', () => {
   })
 
   describe('#tokenURI', () => {
-
     let nftDescriptor: NonfungibleTokenPositionDescriptor
     let tokens: [TestERC20, TestERC20, TestERC20]
     let nft: MockTimeNonfungiblePositionManager
