@@ -23,6 +23,7 @@ describe('PairFlash test', () => {
     let token1: TestERC20
     let factory: Contract
     let weth9: IWETH9
+    
 
   async function createPool(tokenAddressA: string, tokenAddressB: string, fee: FeeAmount) {
     if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
@@ -55,16 +56,13 @@ describe('PairFlash test', () => {
   const flashFixture = async() => {
 
     
-    const {router, tokens, factory, weth9} = await completeFixture(wallets, provider)
+    const {router, tokens, factory, weth9, nft} = await completeFixture(wallets, provider)
     const token0 = tokens[0]
     const token1 = tokens[1]
     
     const flashContractFactory = await ethers.getContractFactory('PairFlash')
-    const flash = await flashContractFactory.deploy(router, factory.address, weth9.address ) as PairFlash
+    const flash = await flashContractFactory.deploy(router.address, factory.address, weth9.address ) as PairFlash
 
-    await createPool(token0.address, token1.address, FeeAmount.LOW)
-    await createPool(token0.address, token1.address, FeeAmount.MEDIUM)
-    await createPool(token0.address, token1.address, FeeAmount.HIGH)
 
     return {
       token0,
@@ -72,6 +70,7 @@ describe('PairFlash test', () => {
       flash: flash as PairFlash,
       factory,
       weth9,
+      nft,
     }
   }
 
@@ -82,7 +81,12 @@ describe('PairFlash test', () => {
   })
 
   beforeEach('load fixture', async () => {
-    ;({ weth9, factory, token0, token1, flash } = await loadFixture(flashFixture))
+    ;({ weth9, factory, token0, token1, flash, nft } = await loadFixture(flashFixture))
+    console.log("hello world")
+    console.log(token0.address<token1.address)
+    await createPool(token0.address, token1.address, FeeAmount.LOW)
+    await createPool(token0.address, token1.address, FeeAmount.MEDIUM)
+    await createPool(token0.address, token1.address, FeeAmount.HIGH)
   })
 
 //   beforeEach('load fixture', async () => {
@@ -97,10 +101,6 @@ describe('PairFlash test', () => {
 //    })
 
     describe.only('flash', () => {
-
-        beforeEach('load fixture', async () => {
-            ;({ weth9, factory, token0, token1, flash } = await loadFixture(flashFixture))
-          })
       
         it('test correct transfer events', async () => {
             const flashParams = {
