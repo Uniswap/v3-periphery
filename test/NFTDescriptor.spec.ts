@@ -9,6 +9,7 @@ import snapshotGasCost from './shared/snapshotGasCost'
 import { formatSqrtRatioX96 } from './shared/formatSqrtRatioX96'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { randomBytes } from 'crypto'
+import { extractJSONFromURI } from './shared/extractJSONFromURI'
 import fs from 'fs'
 import isSvg from 'is-svg'
 
@@ -92,14 +93,8 @@ describe('NFTDescriptor', () => {
       poolAddress = `0x${'b'.repeat(40)}`
     })
 
-    function extractURIJson(uri: string): { name: string; description: string; image: string } {
-      const encodedJSON = uri.substr('data:application/json;base64,'.length)
-      const decodedJSON = Buffer.from(encodedJSON, 'base64').toString('utf8')
-      return JSON.parse(decodedJSON)
-    }
-
     it('returns the valid JSON string with min and max ticks', async () => {
-      const json = extractURIJson(
+      const json = extractJSONFromURI(
         await nftDescriptor.constructTokenURI({
           tokenId,
           baseTokenAddress,
@@ -143,7 +138,7 @@ describe('NFTDescriptor', () => {
       tickSpacing = TICK_SPACINGS[FeeAmount.MEDIUM]
       fee = 3000
 
-      const json = extractURIJson(
+      const json = extractJSONFromURI(
         await nftDescriptor.constructTokenURI({
           tokenId,
           baseTokenAddress,
@@ -183,7 +178,7 @@ describe('NFTDescriptor', () => {
 
     it('returns valid JSON when token symbols contain quotes', async () => {
       quoteTokenSymbol = '"TES"T1"'
-      const json = extractURIJson(
+      const json = extractJSONFromURI(
         await nftDescriptor.constructTokenURI({
           tokenId,
           baseTokenAddress,
@@ -227,7 +222,7 @@ describe('NFTDescriptor', () => {
         tickLower = -10
         tickUpper = 10
 
-        const json = extractURIJson(
+        const json = extractJSONFromURI(
           await nftDescriptor.constructTokenURI({
             tokenId,
             baseTokenAddress,
@@ -268,7 +263,7 @@ describe('NFTDescriptor', () => {
       it('returns the valid JSON for min/max ticks', async () => {
         flipRatio = true
 
-        const json = extractURIJson(
+        const json = extractJSONFromURI(
           await nftDescriptor.constructTokenURI({
             tokenId,
             baseTokenAddress,

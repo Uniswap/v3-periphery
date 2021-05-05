@@ -22,6 +22,7 @@ import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { sortedTokens } from './shared/tokenSort'
+import { extractJSONFromURI } from './shared/extractJSONFromURI'
 
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
@@ -1157,9 +1158,7 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('content is valid JSON and structure', async () => {
-      const encodedJSON = (await nft.tokenURI(tokenId)).substr('data:application/json;base64,'.length)
-      const decodedJSON = Buffer.from(encodedJSON, 'base64').toString('utf8')
-      const content = JSON.parse(decodedJSON)
+      const content = extractJSONFromURI(await nft.tokenURI(tokenId))
       expect(content).to.haveOwnProperty('name').is.a('string')
       expect(content).to.haveOwnProperty('description').is.a('string')
       expect(content).to.haveOwnProperty('image').is.a('string')

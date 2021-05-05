@@ -2,7 +2,13 @@ import { constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 import { expect } from './shared/expect'
 import { Fixture } from 'ethereum-waffle'
-import { NonfungibleTokenPositionDescriptor, TestERC20 } from '../typechain'
+import { NonfungibleTokenPositionDescriptor, MockTimeNonfungiblePositionManager, TestERC20, IWETH9 } from '../typechain'
+import completeFixture from './shared/completeFixture'
+import { encodePriceSqrt } from './shared/encodePriceSqrt'
+import { FeeAmount, TICK_SPACINGS } from './shared/constants'
+import { getMaxTick, getMinTick } from './shared/ticks'
+import { sortedTokens } from './shared/tokenSort'
+import { extractJSONFromURI } from './shared/extractJSONFromURI'
 
 const DAI = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
@@ -16,7 +22,9 @@ describe('NonfungibleTokenPositionDescriptor', () => {
   const nftPositionDescriptorCompleteFixture: Fixture<{
     tokens: [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
     nftPositionDescriptor: NonfungibleTokenPositionDescriptor
+    positionManager: MockTimeNonfungiblePositionManager
   }> = async (wallets, provider) => {
+    const { weth9, factory, nft, router } = await completeFixture(wallets, provider)
     const tokenFactory = await ethers.getContractFactory('TestERC20')
     const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
     const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
@@ -44,6 +52,7 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     return {
       nftPositionDescriptor,
       tokens,
+      positionManager: nft
     }
   }
 
@@ -109,6 +118,58 @@ describe('NonfungibleTokenPositionDescriptor', () => {
 
     it('returns false if token1 is a numerator and token0 is a denominator', async () => {
       expect(await nftPositionDescriptor.flipRatio(WBTC, DAI, 1)).to.eq(false)
+    })
+  })
+
+  describe('#tokenURI', () => {
+
+    let nftDescriptor: NonfungibleTokenPositionDescriptor
+    let tokens: [TestERC20, TestERC20, TestERC20]
+    let nft: MockTimeNonfungiblePositionManager
+
+    const nftPositionFixture: Fixture<{
+      tokens: [TestERC20, TestERC20, TestERC20]
+      nftDescriptor: NonfungibleTokenPositionDescriptor
+      nft: MockTimeNonfungiblePositionManager
+    }> = async (wallets, provider) => {
+      const { factory, tokens, nft, router, nftDescriptor } = await completeFixture(wallets, provider)
+      return { tokens, nft, nftDescriptor }
+    }
+
+    beforeEach(async () => {
+      ;({ tokens, nft, nftDescriptor } = await loadFixture(nftPositionFixture))
+    })
+
+    it('displays ETH as token symbol for WETH token', async () => {
+      const tokenFactory = await ethers.getContractFactory('TestERC20')
+      const weth9 = tokenFactory.attach(await nftDescriptor.WETH9())
+      const [token0, token1] = sortedTokens(weth9, tokens[1])
+      await nft.createAndInitializePoolIfNecessary(
+        token0.address,
+        token1.address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+      await weth9.approve(nft.address, 100)
+      await tokens[1].approve(nft.address, 100)
+      await nft.mint({
+        token0: token0.address,
+        token1: token1.address,
+        fee: FeeAmount.MEDIUM,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: wallets[0].address,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 1,
+      })
+
+      const metadata = extractJSONFromURI(await nft.tokenURI(1))
+      expect(metadata.name).to.match(/(\sETH\/TEST|TEST\/ETH)/)
+      expect(metadata.description).to.match(/(TEST-ETH|\sETH-TEST)/)
+      expect(metadata.description).to.match(/(\nETH\sAddress)/)
     })
   })
 })
