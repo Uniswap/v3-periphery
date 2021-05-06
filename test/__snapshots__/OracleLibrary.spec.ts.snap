@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OracleLibrary #consult when token0 is base token gas cost 1`] = `29218`;
+
+exports[`OracleLibrary #consult when token1 is base token gas cost 1`] = `29238`;

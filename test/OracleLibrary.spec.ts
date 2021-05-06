@@ -16,6 +16,7 @@ import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import completeFixture from './shared/completeFixture'
 import poolAtAddress from './shared/poolAtAddress'
+import snapshotGasCost from './shared/snapshotGasCost'
 
 interface SwapExact0For1TestCase {
   zeroForOne: true
@@ -252,6 +253,20 @@ describe('OracleLibrary', () => {
 
         expect(oracleQuoteAmount).to.equal(calculatedQuoteAmount)
       })
+
+      it('gas cost', async () => {
+        const secondsAgo = BigNumber.from(5)
+        await snapshotGasCost(
+          oracle.getGasCostOfConsult(
+            factory.address,
+            token0.address,
+            token1.address,
+            FeeAmount.MEDIUM,
+            BASE_AMOUNT,
+            secondsAgo
+          )
+        )
+      })
     })
 
     describe('when token1 is base token', async () => {
@@ -329,6 +344,20 @@ describe('OracleLibrary', () => {
         )
 
         expect(oracleQuoteAmount).to.equal(calculatedQuoteAmount)
+      })
+
+      it('gas cost', async () => {
+        const secondsAgo = BigNumber.from(5)
+        await snapshotGasCost(
+          oracle.getGasCostOfConsult(
+            factory.address,
+            token1.address,
+            token0.address,
+            FeeAmount.MEDIUM,
+            BASE_AMOUNT,
+            secondsAgo
+          )
+        )
       })
     })
   })

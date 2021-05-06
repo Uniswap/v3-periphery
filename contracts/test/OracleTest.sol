@@ -18,14 +18,16 @@ contract OracleTest {
     }
 
     // For gas snapshot test
-    function consultNonView(
+    function getGasCostOfConsult(
         address factory,
         address baseToken,
         address quoteToken,
         uint24 fee,
         uint256 baseAmount,
         uint32 period
-    ) public {
-        temp = OracleLibrary.consult(factory, baseToken, quoteToken, fee, baseAmount, period);
+    ) public view returns (uint256) {
+        uint256 gasBefore = gasleft();
+        OracleLibrary.consult(factory, baseToken, quoteToken, fee, baseAmount, period);
+        return gasBefore - gasleft();
     }
 }
