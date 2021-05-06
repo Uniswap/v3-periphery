@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity =0.7.6;
+pragma solidity >=0.5.0;
 
 import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
@@ -43,7 +43,10 @@ library OracleLibrary {
         tick = (tick < 0 && (tickCumulativesDelta % period != 0)) ? tick - 1 : tick;
 
         uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
-        uint256 ratioX192 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1);
+        uint256 ratioX192 =
+            sqrtRatioX96 <= type(uint128).max
+                ? FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1)
+                : FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
 
         quoteAmount = baseToken < quoteToken
             ? FullMath.mulDiv(ratioX192, baseAmount, 1 << 192)
