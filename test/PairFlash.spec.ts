@@ -4,6 +4,7 @@ import { IWETH9, MockTimeNonfungiblePositionManager, MockTimeSwapRouter, PairFla
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
+import snapshotGasCost from './shared/snapshotGasCost'
 
 import { expect } from './shared/expect'
 import { getMaxTick, getMinTick } from './shared/ticks'
@@ -129,7 +130,24 @@ describe('PairFlash test', () => {
           to.emit(token1, 'Transfer').withArgs(pool3, flash.address, expectedAmountOut1).
           to.emit(token0, 'Transfer').withArgs(flash.address, wallet.address, expectedAmountOut0.toNumber() - amount0In - fee0).
           to.emit(token1, 'Transfer').withArgs(flash.address, wallet.address, expectedAmountOut1.toNumber() - amount1In - fee1)
-        }
-     )
+        })
+
+        it('gas', async () => {
+            const amount0In = 1000
+            const amount1In = 1000
+
+            const flashParams = {
+                token0: token0.address,
+                token1: token1.address,
+                fee1: FeeAmount.MEDIUM,
+                amount0: amount0In,
+                amount1: amount1In,
+                fee2: FeeAmount.LOW,
+                fee3: FeeAmount.HIGH,
+            }
+            await snapshotGasCost(
+              flash.initFlash(flashParams)
+            )
+          })
+        })
     })
-})
