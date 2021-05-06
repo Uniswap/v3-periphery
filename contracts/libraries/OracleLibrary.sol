@@ -43,13 +43,17 @@ library OracleLibrary {
         tick = (tick < 0 && (tickCumulativesDelta % period != 0)) ? tick - 1 : tick;
 
         uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
-        uint256 ratioX192 =
-            sqrtRatioX96 <= type(uint128).max
-                ? FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1)
-                : FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
 
-        quoteAmount = baseToken < quoteToken
-            ? FullMath.mulDiv(ratioX192, baseAmount, 1 << 192)
-            : FullMath.mulDiv(1 << 192, baseAmount, ratioX192);
+        if (sqrtRatioX96 <= type(uint128).max) {
+            uint256 ratioX192 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1);
+            quoteAmount = baseToken < quoteToken
+                ? FullMath.mulDiv(ratioX192, baseAmount, 1 << 192)
+                : FullMath.mulDiv(1 << 192, baseAmount, ratioX192);
+        } else {
+            uint256 ratioX128 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
+            quoteAmount = baseToken < quoteToken
+                ? FullMath.mulDiv(ratioX128, baseAmount, 1 << 128)
+                : FullMath.mulDiv(1 << 128, baseAmount, ratioX128);
+        }
     }
 }
