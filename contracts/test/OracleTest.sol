@@ -12,9 +12,9 @@ contract OracleTest {
         address quoteToken,
         uint24 fee,
         uint256 baseAmount,
-        uint32 period
+        uint32 secondsAgo
     ) public view returns (uint256 quoteAmount) {
-        quoteAmount = OracleLibrary.consult(factory, baseToken, quoteToken, fee, baseAmount, period);
+        quoteAmount = OracleLibrary.consult(factory, baseToken, quoteToken, fee, baseAmount, secondsAgo);
     }
 
     // For gas snapshot test
@@ -24,10 +24,10 @@ contract OracleTest {
         address quoteToken,
         uint24 fee,
         uint256 baseAmount,
-        uint32 period
+        uint32 secondsAgo
     ) public view returns (uint256) {
         uint256 gasBefore = gasleft();
-        OracleLibrary.consult(factory, baseToken, quoteToken, fee, baseAmount, period);
+        OracleLibrary.consult(factory, baseToken, quoteToken, fee, baseAmount, secondsAgo);
         return gasBefore - gasleft();
     }
 }
