@@ -52,7 +52,7 @@ contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState, Peripher
         uint256 amount1Min = LowGasSafeMath.add(decoded.amount1, fee1);
         uint256 amount0Min = LowGasSafeMath.add(decoded.amount0, fee0);
 
-        // call exactInputSingle for swapping token1 for token0 in pool w/fee1
+        // call exactInputSingle for swapping token1 for token0 in pool w/fee2
         uint256 amountOut0 =
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -67,7 +67,7 @@ contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState, Peripher
                 })
             );
 
-        // call exactInputSingle for swapping token0 for token 1 in pool w/fee2
+        // call exactInputSingle for swapping token0 for token 1 in pool w/fee3
         uint256 amountOut1 =
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({

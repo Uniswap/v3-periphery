@@ -99,7 +99,7 @@ describe('PairFlash test', () => {
     await token1.transfer(flash.address, MaxUint128)
   })
 
-  describe.only('flash', () => {
+  describe('flash', () => {
     it('test correct transfer events', async () => {
       //choose amountIn to test
       const amount0In = 1000
