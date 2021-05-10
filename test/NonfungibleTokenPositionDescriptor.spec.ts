@@ -170,6 +170,5 @@ describe('NonfungibleTokenPositionDescriptor', () => {
       expect(metadata.name).to.match(/TEST\/TEST/)
       expect(metadata.description).to.match(/TEST-TEST/)
     })
-
   })
 })
