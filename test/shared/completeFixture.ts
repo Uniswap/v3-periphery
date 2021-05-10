@@ -36,7 +36,7 @@ const completeFixture: Fixture<{
     },
   })
   const nftDescriptor = (await positionDescriptorFactory.deploy(
-    tokens[0].address
+    weth9.address
   )) as NonfungibleTokenPositionDescriptor
 
   const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')
