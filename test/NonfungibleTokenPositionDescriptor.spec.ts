@@ -20,8 +20,8 @@ describe('NonfungibleTokenPositionDescriptor', () => {
   const [...wallets] = waffle.provider.getWallets()
 
   const nftPositionDescriptorCompleteFixture: Fixture<{
-    tokens: [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
     nftPositionDescriptor: NonfungibleTokenPositionDescriptor
+    tokens: [TestERC20, TestERC20, TestERC20]
     nft: MockTimeNonfungiblePositionManager
   }> = async (wallets, provider) => {
     const { factory, nft, router, nftDescriptor } = await completeFixture(wallets, provider)
@@ -30,20 +30,18 @@ describe('NonfungibleTokenPositionDescriptor', () => {
       tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu25e6 to avoid overflowing
       tokenFactory.deploy(constants.MaxUint256.div(2)),
       tokenFactory.deploy(constants.MaxUint256.div(2)),
-      tokenFactory.deploy(constants.MaxUint256.div(2)),
-      tokenFactory.deploy(constants.MaxUint256.div(2)),
-    ])) as [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
+    ])) as [TestERC20, TestERC20, TestERC20]
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
     return {
       nftPositionDescriptor: nftDescriptor,
       tokens,
-      positionManager: nft,
+      nft,
     }
   }
 
   let nftPositionDescriptor: NonfungibleTokenPositionDescriptor
-  let tokens: [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
+  let tokens: [TestERC20, TestERC20, TestERC20]
   let nft: MockTimeNonfungiblePositionManager
   let weth9: TestERC20
 
