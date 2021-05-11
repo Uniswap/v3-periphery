@@ -360,23 +360,23 @@ library NFTSVG {
 
     function rangeLocation(int24 tickLower, int24 tickUpper) internal pure returns (string memory, string memory) {
         int24 midPoint = (tickLower + tickUpper) / 2;
-        if (midPoint < -100_000) {
+        if (midPoint < -125_000) {
             return ('8', '7');
-        } else if (midPoint < -50_000) {
+        } else if (midPoint < -75_000) {
             return ('8', '10.5');
-        } else if (midPoint < -10_000) {
+        } else if (midPoint < -25_000) {
             return ('8', '14.25');
-        } else if (midPoint < -100) {
+        } else if (midPoint < -5_000) {
             return ('10', '18');
         } else if (midPoint < 0) {
             return ('11', '21');
-        } else if (midPoint < 100) {
+        } else if (midPoint < 5_000) {
             return ('13', '23');
-        } else if (midPoint < 10_000) {
+        } else if (midPoint < 25_000) {
             return ('15', '25');
-        } else if (midPoint < 50_000) {
+        } else if (midPoint < 75_000) {
             return ('18', '26');
-        } else if (midPoint < 100_000) {
+        } else if (midPoint < 125_000) {
             return ('21', '27');
         } else {
             return ('24', '27');
