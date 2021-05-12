@@ -4,8 +4,6 @@ import { TestERC20 } from '../../typechain/TestERC20'
 import { IUniswapV3Pool } from '../../typechain'
 import { MockProvider } from 'ethereum-waffle'
 
-const SWAP_RECIPIENT_ADDRESS = constants.AddressZero.slice(0, -1) + '1'
-
 interface SwapExact0For1TestCase {
   zeroForOne: true
   exactOut: false
@@ -156,35 +154,25 @@ export const getNearestTick = async (period: BigNumberish, pool: IUniswapV3Pool)
   return tick.lt(0) && !tickCumulativesDelta.mod(period).eq(0) ? tick.sub(1) : tick
 }
 
-export const initializePool = async (
-  poolCase: PoolTestCase,
+export const createSwaps = async (
+  swapTests: SwapTestCase[],
   provider: MockProvider,
-  wallets: Wallet[],
-  tokens: TestERC20[],
-  pool: IUniswapV3Pool,
-  swapTarget: TestUniswapV3Callee
-): Promise<void> => {
-  const { swapExact0For1, swapExact1For0, mint } = createPoolFunctions({
-    swapTarget: swapTarget,
-    token0: tokens[0],
-    token1: tokens[1],
-    pool: pool,
-  })
-
-  await pool.initialize(poolCase.startingPrice)
-  await pool.increaseObservationCardinalityNext(5)
-
-  for (const position of poolCase.positions) {
-    await mint(wallets[0].address, position.tickLower, position.tickUpper, position.liquidity)
-  }
-
-  for (const testCase of poolCase.swapTests) {
+  swapExact0For1: SwapFunction,
+  swapExact1For0: SwapFunction
+) => {
+  for (const testCase of swapTests) {
     await provider.send('evm_increaseTime', [testCase.increaseTime])
 
     if (testCase.zeroForOne) {
-      await swapExact0For1(testCase.amount0, SWAP_RECIPIENT_ADDRESS, testCase.sqrtPriceLimit)
+      await swapExact0For1(testCase.amount0, constants.AddressZero.slice(0, -1) + '1', testCase.sqrtPriceLimit)
     } else {
-      await swapExact1For0(testCase.amount1, SWAP_RECIPIENT_ADDRESS, testCase.sqrtPriceLimit)
+      await swapExact1For0(testCase.amount1, constants.AddressZero.slice(0, -1) + '1', testCase.sqrtPriceLimit)
     }
+  }
+}
+
+export const createPositions = async (positions: Position[], walletAddress: string, mint: MintFunction) => {
+  for (const position of positions) {
+    await mint(walletAddress, position.tickLower, position.tickUpper, position.liquidity)
   }
 }

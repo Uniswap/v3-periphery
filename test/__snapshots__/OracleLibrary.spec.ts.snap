@@ -1,13 +1,3 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`OracleLibrary medium fee, 1:1 price, 2e18 max range liquidity, negative tick token0: gas test 1`] = `28021`;
-
-exports[`OracleLibrary medium fee, 1:1 price, 2e18 max range liquidity, negative tick token1: gas test 1`] = `28021`;
-
-exports[`OracleLibrary medium fee, 1:1 price, 2e18 max range liquidity, positive tick token0: gas test 1`] = `28060`;
-
-exports[`OracleLibrary medium fee, 1:1 price, 2e18 max range liquidity, positive tick token1: gas test 1`] = `28060`;
-
-exports[`OracleLibrary medium fee, sqrtRatio overflow uint128, 2eb18 max range liquidity token0: gas test 1`] = `18931`;
-
-exports[`OracleLibrary medium fee, sqrtRatio overflow uint128, 2eb18 max range liquidity token1: gas test 1`] = `18931`;
+exports[`OracleLibrary #consult gas test 1`] = `24373`;

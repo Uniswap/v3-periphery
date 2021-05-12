@@ -1,244 +1,199 @@
 import { expect } from 'chai'
 import { ethers, waffle } from 'hardhat'
 import { BigNumber } from 'ethers'
+import { IUniswapV3Factory, OracleTest, TestUniswapV3Callee, TestERC20 } from '../typechain'
 import {
-  IUniswapV3Pool,
-  IUniswapV3Factory,
-  TickMathTest,
-  OracleTest,
-  TestUniswapV3Callee,
-  TestERC20,
-} from '../typechain'
-import { getNearestTick, initializePool, PoolTestCase, SwapTestCase } from './shared/poolUtilities'
+  createPoolFunctions,
+  createPositions,
+  createSwaps,
+  PoolTestCase,
+  SwapFunction,
+  SwapTestCase,
+} from './shared/poolUtilities'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
-import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
+import { FeeAmount, TICK_SPACINGS } from './shared/constants'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { computePoolAddress } from './shared/computePoolAddress'
 import completeFixture from './shared/completeFixture'
 import poolAtAddress from './shared/poolAtAddress'
 import snapshotGasCost from './shared/snapshotGasCost'
 
-const ONE_FOR_ZERO_SWAP_TESTS: SwapTestCase[] = [
-  {
-    zeroForOne: false,
-    exactOut: false,
-    amount1: expandTo18Decimals(5),
-    increaseTime: 3,
-  },
-  {
-    zeroForOne: false,
-    exactOut: false,
-    amount1: expandTo18Decimals(5),
-    increaseTime: 5,
-  },
-]
-
-const ZERO_FOR_ONE_SWAP_TESTS: SwapTestCase[] = [
-  {
-    zeroForOne: true,
-    exactOut: false,
-    amount0: expandTo18Decimals(5),
-    increaseTime: 3,
-  },
-  {
-    zeroForOne: true,
-    exactOut: false,
-    amount0: expandTo18Decimals(5),
-    increaseTime: 5,
-  },
-]
-
-const TEST_POOLS: PoolTestCase[] = [
-  {
-    description: 'medium fee, 1:1 price, 2e18 max range liquidity, positive tick',
-    feeAmount: FeeAmount.MEDIUM,
-    tickSpacing: TICK_SPACINGS[FeeAmount.MEDIUM],
-    startingPrice: encodePriceSqrt(1, 1),
-    positions: [
-      {
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        liquidity: expandTo18Decimals(2),
-      },
-    ],
-    swapTests: ONE_FOR_ZERO_SWAP_TESTS,
-  },
-  {
-    description: 'medium fee, 1:1 price, 2e18 max range liquidity, negative tick',
-    feeAmount: FeeAmount.MEDIUM,
-    tickSpacing: TICK_SPACINGS[FeeAmount.MEDIUM],
-    startingPrice: encodePriceSqrt(1, 1),
-    positions: [
-      {
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        liquidity: expandTo18Decimals(2),
-      },
-    ],
-    swapTests: ZERO_FOR_ONE_SWAP_TESTS,
-  },
-  {
-    description: 'medium fee, sqrtRatio overflow uint128, 2eb18 max range liquidity',
-    feeAmount: FeeAmount.MEDIUM,
-    tickSpacing: TICK_SPACINGS[FeeAmount.MEDIUM],
-    startingPrice: encodePriceSqrt(BigNumber.from(2).pow(127), 1),
-    positions: [
-      {
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        liquidity: expandTo18Decimals(2),
-      },
-    ],
-    swapTests: ONE_FOR_ZERO_SWAP_TESTS,
-  },
-]
+const TEST_POOL: PoolTestCase = {
+  description: 'medium fee, 1:1 price, 2e18 max range liquidity',
+  feeAmount: FeeAmount.MEDIUM,
+  tickSpacing: TICK_SPACINGS[FeeAmount.MEDIUM],
+  startingPrice: encodePriceSqrt(1, 1),
+  positions: [
+    {
+      tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+      tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+      liquidity: expandTo18Decimals(2),
+    },
+  ],
+  swapTests: [],
+}
 
 describe('OracleLibrary', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
   let factory: IUniswapV3Factory
-  let pool: IUniswapV3Pool
-  let oracle: OracleTest
-  let tickMath: TickMathTest
   let tokens: TestERC20[]
+  let oracle: OracleTest
+  let swapExact0For1: SwapFunction
+  let swapExact1For0: SwapFunction
 
   const provider = waffle.provider
   const wallets = waffle.provider.getWallets()
 
-  for (const poolCase of TEST_POOLS) {
-    const BASE_AMOUNT = expandTo18Decimals(1)
-    const SECONDS_AGO = BigNumber.from(7)
+  const ONE_FOR_ZERO_SWAPS: SwapTestCase[] = [
+    {
+      zeroForOne: false,
+      exactOut: false,
+      amount1: expandTo18Decimals(3),
+      increaseTime: 4,
+    },
+    {
+      zeroForOne: false,
+      exactOut: false,
+      amount1: expandTo18Decimals(6),
+      increaseTime: 9,
+    },
+    {
+      zeroForOne: false,
+      exactOut: false,
+      amount1: expandTo18Decimals(2),
+      increaseTime: 6,
+    },
+  ]
 
-    describe(poolCase.description, () => {
-      const oracleTestFixture = async () => {
-        const { factory, tokens } = await completeFixture(wallets, provider)
+  const ZERO_FOR_ONE_SWAPS: SwapTestCase[] = [
+    {
+      zeroForOne: true,
+      exactOut: false,
+      amount0: expandTo18Decimals(3),
+      increaseTime: 4,
+    },
+    {
+      zeroForOne: true,
+      exactOut: false,
+      amount0: expandTo18Decimals(6),
+      increaseTime: 9,
+    },
+    {
+      zeroForOne: true,
+      exactOut: false,
+      amount0: expandTo18Decimals(2),
+      increaseTime: 6,
+    },
+  ]
 
-        const tickMathTestFactory = await ethers.getContractFactory('TickMathTest')
-        const tickMath = await tickMathTestFactory.deploy()
+  describe('#consult', () => {
+    const oracleTestFixture = async () => {
+      const { factory, tokens } = await completeFixture(wallets, provider)
 
-        const oracleFactory = await ethers.getContractFactory('OracleTest')
-        const oracle = await oracleFactory.deploy()
+      const oracleFactory = await ethers.getContractFactory('OracleTest')
+      const oracle = await oracleFactory.deploy()
 
-        const calleeFactory = await ethers.getContractFactory('TestUniswapV3Callee')
-        const swapTarget = (await calleeFactory.deploy()) as TestUniswapV3Callee
+      const calleeFactory = await ethers.getContractFactory('TestUniswapV3Callee')
+      const swapTarget = (await calleeFactory.deploy()) as TestUniswapV3Callee
 
-        await factory.createPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
-        const pool = poolAtAddress(
-          computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
-          wallets[0]
-        )
+      await factory.createPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+      const pool = poolAtAddress(
+        computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+        wallets[0]
+      )
 
-        await initializePool(poolCase, provider, wallets, tokens, pool, swapTarget)
+      const { swapExact0For1, swapExact1For0, mint } = createPoolFunctions({
+        swapTarget: swapTarget,
+        token0: tokens[0],
+        token1: tokens[1],
+        pool: pool,
+      })
 
-        return {
-          factory: factory as IUniswapV3Factory,
-          tokens: tokens as TestERC20[],
-          pool: pool as IUniswapV3Pool,
-          oracle: oracle as OracleTest,
-          tickMath: tickMath as TickMathTest,
-        }
+      await pool.initialize(TEST_POOL.startingPrice)
+      await pool.increaseObservationCardinalityNext(5)
+      await createPositions(TEST_POOL.positions, wallets[0].address, mint)
+
+      return {
+        factory: factory as IUniswapV3Factory,
+        tokens: tokens as TestERC20[],
+        oracle: oracle as OracleTest,
+        swapExact0For1: swapExact0For1 as SwapFunction,
+        swapExact1For0: swapExact1For0 as SwapFunction,
       }
+    }
 
-      before('create fixture loader', async () => {
-        loadFixture = waffle.createFixtureLoader(wallets)
-      })
-
-      beforeEach('deploy fixture', async () => {
-        const fixtures = await loadFixture(oracleTestFixture)
-        factory = fixtures['factory']
-        tokens = fixtures['tokens']
-        pool = fixtures['pool']
-        oracle = fixtures['oracle']
-        tickMath = fixtures['tickMath']
-      })
-
-      const testConsult = async (
-        baseToken: string,
-        quoteToken: string,
-        getCalculatedQuoteAmount: (period: BigNumber) => Promise<BigNumber>
-      ) => {
-        const secondsAgo = BigNumber.from(SECONDS_AGO)
-        const calculatedQuoteAmount = await getCalculatedQuoteAmount(secondsAgo)
-        const oracleQuoteAmount = await oracle.consult(
-          factory.address,
-          baseToken,
-          quoteToken,
-          poolCase.feeAmount,
-          BASE_AMOUNT,
-          secondsAgo
-        )
-
-        expect(oracleQuoteAmount).to.equal(calculatedQuoteAmount)
-      }
-
-      const testConsultGas = async (baseToken: string, quoteToken: string) => {
-        const secondsAgo = BigNumber.from(SECONDS_AGO)
-        await snapshotGasCost(
-          oracle.getGasCostOfConsult(
-            factory.address,
-            baseToken,
-            quoteToken,
-            poolCase.feeAmount,
-            BASE_AMOUNT,
-            secondsAgo
-          )
-        )
-      }
-
-      it('reverts when period is 0', async () => {
-        await expect(
-          oracle.consult(
-            factory.address,
-            tokens[0].address,
-            tokens[1].address,
-            poolCase.feeAmount,
-            BASE_AMOUNT,
-            BigNumber.from(0)
-          )
-        ).to.be.revertedWith('BP')
-      })
-
-      it('token0: output correct quote', async () => {
-        const getCalculatedQuoteAmount = async (period: BigNumber) => {
-          const tick = await getNearestTick(period, pool)
-          const sqrtRatioX96 = await tickMath.getSqrtRatioAtTick(tick)
-
-          if (sqrtRatioX96.lte(MaxUint128)) {
-            const ratioX192 = sqrtRatioX96.pow(2)
-            return ratioX192.mul(BASE_AMOUNT).div(BigNumber.from(2).pow(192))
-          } else {
-            const ratioX128 = sqrtRatioX96.pow(2).div(BigNumber.from(2).pow(64))
-            return ratioX128.mul(BASE_AMOUNT).div(BigNumber.from(2).pow(128))
-          }
-        }
-
-        await testConsult(tokens[0].address, tokens[1].address, getCalculatedQuoteAmount)
-      })
-
-      it('token0: gas test', async () => {
-        await testConsultGas(tokens[0].address, tokens[1].address)
-      })
-
-      it('token1: output correct quote', async () => {
-        const getCalculatedQuoteAmount = async (period: BigNumber) => {
-          const tick = await getNearestTick(period, pool)
-          const sqrtRatioX96 = await tickMath.getSqrtRatioAtTick(tick)
-
-          if (sqrtRatioX96.lte(MaxUint128)) {
-            const ratioX192 = sqrtRatioX96.pow(2)
-            return BigNumber.from(2).pow(192).mul(BASE_AMOUNT).div(ratioX192)
-          } else {
-            const ratioX128 = sqrtRatioX96.pow(2).div(BigNumber.from(2).pow(64))
-            return BigNumber.from(2).pow(128).mul(BASE_AMOUNT).div(ratioX128)
-          }
-        }
-
-        await testConsult(tokens[1].address, tokens[0].address, getCalculatedQuoteAmount)
-      })
-
-      it('token1: gas test', async () => {
-        await testConsultGas(tokens[0].address, tokens[1].address)
-      })
+    before('create fixture loader', async () => {
+      loadFixture = waffle.createFixtureLoader(wallets)
     })
-  }
+
+    beforeEach('deploy fixture', async () => {
+      const fixtures = await loadFixture(oracleTestFixture)
+      factory = fixtures['factory']
+      tokens = fixtures['tokens']
+      oracle = fixtures['oracle']
+      swapExact0For1 = fixtures['swapExact0For1']
+      swapExact1For0 = fixtures['swapExact1For0']
+    })
+
+    it('reverts when period is 0', async () => {
+      await expect(
+        oracle.consult(factory.address, tokens[0].address, tokens[1].address, TEST_POOL.feeAmount, BigNumber.from(0))
+      ).to.be.revertedWith('BP')
+    })
+
+    it('correct output tick when tick is positve', async () => {
+      const PERIOD = BigNumber.from(11)
+
+      await createSwaps(ONE_FOR_ZERO_SWAPS, provider, swapExact0For1, swapExact1For0)
+
+      // Always round to negative infinity
+      const tickCumulatives = [BigNumber.from(109740), BigNumber.from(421229)]
+      const calculatedTick = tickCumulatives[1].sub(tickCumulatives[0]).div(BigNumber.from(PERIOD))
+
+      const oracleTick = await oracle.consult(
+        factory.address,
+        tokens[0].address,
+        tokens[1].address,
+        TEST_POOL.feeAmount,
+        PERIOD
+      )
+
+      expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
+    })
+
+    it('correct output when tick is negative', async () => {
+      const PERIOD = BigNumber.from(11)
+
+      await createSwaps(ZERO_FOR_ONE_SWAPS, provider, swapExact0For1, swapExact1For0)
+
+      // Always round to negative infinity
+      // In this case, we need to subtract one because integer division rounds to 0
+      const tickCumulatives = [BigNumber.from(-109746), BigNumber.from(-421246)]
+      const calculatedTick = tickCumulatives[1]
+        .sub(tickCumulatives[0])
+        .div(BigNumber.from(PERIOD))
+        .sub(BigNumber.from(1))
+
+      const oracleTick = await oracle.consult(
+        factory.address,
+        tokens[0].address,
+        tokens[1].address,
+        TEST_POOL.feeAmount,
+        PERIOD
+      )
+
+      expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
+    })
+
+    it('gas test', async () => {
+      const PERIOD = BigNumber.from(11)
+
+      await createSwaps(ZERO_FOR_ONE_SWAPS, provider, swapExact0For1, swapExact1For0)
+
+      await snapshotGasCost(
+        oracle.getGasCostOfConsult(factory.address, tokens[0].address, tokens[1].address, TEST_POOL.feeAmount, PERIOD)
+      )
+    })
+  })
 })
