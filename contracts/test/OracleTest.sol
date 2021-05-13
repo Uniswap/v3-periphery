@@ -10,8 +10,8 @@ contract OracleTest {
         address token1,
         uint24 fee,
         uint32 period
-    ) public view returns (int24 tick) {
-        tick = OracleLibrary.consult(factory, token0, token1, fee, period);
+    ) public view returns (int24 timeWeightedAverageTick) {
+        timeWeightedAverageTick = OracleLibrary.consult(factory, token0, token1, fee, period);
     }
 
     function getQuoteAtTick(

@@ -40,29 +40,6 @@ export type SwapTestCase = SwapExact0For1TestCase | SwapExact1For0TestCase
 export const MIN_SQRT_RATIO = BigNumber.from('4295128739')
 export const MAX_SQRT_RATIO = BigNumber.from('1461446703485210103287273052203988822378723970342')
 
-export function getCreate2Address(
-  factoryAddress: string,
-  [tokenA, tokenB]: [string, string],
-  fee: number,
-  bytecode: string
-): string {
-  const [token0, token1] = tokenA.toLowerCase() < tokenB.toLowerCase() ? [tokenA, tokenB] : [tokenB, tokenA]
-  const constructorArgumentsEncoded = utils.defaultAbiCoder.encode(
-    ['address', 'address', 'uint24'],
-    [token0, token1, fee]
-  )
-  const create2Inputs = [
-    '0xff',
-    factoryAddress,
-    // salt
-    utils.keccak256(constructorArgumentsEncoded),
-    // init code. bytecode + constructor arguments
-    utils.keccak256(bytecode),
-  ]
-  const sanitizedInputs = `0x${create2Inputs.map((i) => i.slice(2)).join('')}`
-  return utils.getAddress(`0x${utils.keccak256(sanitizedInputs).slice(-40)}`)
-}
-
 export type SwapFunction = (
   amount: BigNumberish,
   to: Wallet | string,

@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { ethers, waffle } from 'hardhat'
 import { BigNumber } from 'ethers'
-import { IUniswapV3Factory, OracleTest, TestUniswapV3Callee, TestERC20, TickMathTest } from '../typechain'
+import { IUniswapV3Factory, OracleTest, TestUniswapV3Callee, TestERC20 } from '../typechain'
 import {
   createPoolFunctions,
   createPositions,
@@ -210,7 +210,7 @@ describe('OracleLibrary', () => {
     })
 
     // sanity check
-    it('token0: returns correct value when tick = 0', async () => {
+    it('token1: returns correct value when tick = 0', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(0),
         expandTo18Decimals(1),
@@ -222,7 +222,7 @@ describe('OracleLibrary', () => {
     })
 
     // sanity check
-    it('token1: returns correct value when tick = 0', async () => {
+    it('token0: returns correct value when tick = 0', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(0),
         expandTo18Decimals(1),
@@ -233,7 +233,7 @@ describe('OracleLibrary', () => {
       expect(quoteAmount).to.equal(expandTo18Decimals(1))
     })
 
-    it('token0: returns correct value when 0 < sqrtRatioX96 <= type(uint128).max', async () => {
+    it('token1: returns correct value when 0 < sqrtRatioX96 <= type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(10),
         expandTo18Decimals(1),
@@ -243,7 +243,7 @@ describe('OracleLibrary', () => {
       expect(quoteAmount).to.equal(BigNumber.from('1001000450120021002'))
     })
 
-    it('token1: returns correct value when 0 < sqrtRatioX96 <= type(uint128).max', async () => {
+    it('token0: returns correct value when 0 < sqrtRatioX96 <= type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(10),
         expandTo18Decimals(1),
@@ -253,7 +253,7 @@ describe('OracleLibrary', () => {
       expect(quoteAmount).to.equal(BigNumber.from('999000549780071479'))
     })
 
-    it('token0: returns correct value when sqrtRatioX96 > type(uint128).max', async () => {
+    it('token1: returns correct value when sqrtRatioX96 > type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(getMaxTick(TEST_POOL.feeAmount)),
         expandTo18Decimals(1),
@@ -263,7 +263,7 @@ describe('OracleLibrary', () => {
       expect(quoteAmount).to.equal(BigNumber.from('271106558174734753828546514948592044174000833692526031838'))
     })
 
-    it('token1: returns correct value when sqrtRatioX96 > type(uint128).max', async () => {
+    it('token0: returns correct value when sqrtRatioX96 > type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(443637),
         expandTo18Decimals(10000000),

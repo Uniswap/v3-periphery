@@ -16,14 +16,14 @@ library OracleLibrary {
     /// @param token1 Address of an ERC20 token contract
     /// @param fee Fee amount that correspond to the pool that we want to observe
     /// @param period Number of seconds in the past to start calculating time-weighted average
-    /// @return tick The time-weighted average tick from (block.timestamp - period) to block.timestamp
+    /// @return timeWeightedAverageTick The time-weighted average tick from (block.timestamp - period) to block.timestamp
     function consult(
         address factory,
         address token0,
         address token1,
         uint24 fee,
         uint32 period
-    ) internal view returns (int24 tick) {
+    ) internal view returns (int24 timeWeightedAverageTick) {
         require(period != 0, 'BP');
         IUniswapV3Pool oracle =
             IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(token0, token1, fee)));
@@ -35,10 +35,10 @@ library OracleLibrary {
         (int56[] memory tickCumulatives, ) = oracle.observe(secondAgos);
         int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
 
-        tick = int24(tickCumulativesDelta / period);
+        timeWeightedAverageTick = int24(tickCumulativesDelta / period);
 
         // Always round to negative infinity
-        tick = (tick < 0 && (tickCumulativesDelta % period != 0)) ? tick - 1 : tick;
+        if (tickCumulativesDelta < 0 && (tickCumulativesDelta % period != 0)) timeWeightedAverageTick--;
     }
 
     /// @notice Given a tick and a token amount, calculates the amount of token received in exchange
