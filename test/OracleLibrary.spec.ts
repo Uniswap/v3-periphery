@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { ethers, waffle } from 'hardhat'
 import { BigNumber } from 'ethers'
-import { IUniswapV3Factory, OracleTest, TestUniswapV3Callee, TestERC20 } from '../typechain'
+import { IUniswapV3Factory, OracleTest, TestUniswapV3Callee, TestERC20, TickMathTest } from '../typechain'
 import {
   createPoolFunctions,
   createPositions,
@@ -87,42 +87,42 @@ describe('OracleLibrary', () => {
     },
   ]
 
-  describe('#consult', () => {
-    const oracleTestFixture = async () => {
-      const { factory, tokens } = await completeFixture(wallets, provider)
+  const oracleTestFixture = async () => {
+    const { factory, tokens } = await completeFixture(wallets, provider)
 
-      const oracleFactory = await ethers.getContractFactory('OracleTest')
-      const oracle = await oracleFactory.deploy()
+    const oracleFactory = await ethers.getContractFactory('OracleTest')
+    const oracle = await oracleFactory.deploy()
 
-      const calleeFactory = await ethers.getContractFactory('TestUniswapV3Callee')
-      const swapTarget = (await calleeFactory.deploy()) as TestUniswapV3Callee
+    const calleeFactory = await ethers.getContractFactory('TestUniswapV3Callee')
+    const swapTarget = (await calleeFactory.deploy()) as TestUniswapV3Callee
 
-      await factory.createPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
-      const pool = poolAtAddress(
-        computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
-        wallets[0]
-      )
+    await factory.createPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+    const pool = poolAtAddress(
+      computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+      wallets[0]
+    )
 
-      const { swapExact0For1, swapExact1For0, mint } = createPoolFunctions({
-        swapTarget: swapTarget,
-        token0: tokens[0],
-        token1: tokens[1],
-        pool: pool,
-      })
+    const { swapExact0For1, swapExact1For0, mint } = createPoolFunctions({
+      swapTarget: swapTarget,
+      token0: tokens[0],
+      token1: tokens[1],
+      pool: pool,
+    })
 
-      await pool.initialize(TEST_POOL.startingPrice)
-      await pool.increaseObservationCardinalityNext(5)
-      await createPositions(TEST_POOL.positions, wallets[0].address, mint)
+    await pool.initialize(TEST_POOL.startingPrice)
+    await pool.increaseObservationCardinalityNext(5)
+    await createPositions(TEST_POOL.positions, wallets[0].address, mint)
 
-      return {
-        factory: factory as IUniswapV3Factory,
-        tokens: tokens as TestERC20[],
-        oracle: oracle as OracleTest,
-        swapExact0For1: swapExact0For1 as SwapFunction,
-        swapExact1For0: swapExact1For0 as SwapFunction,
-      }
+    return {
+      factory: factory as IUniswapV3Factory,
+      tokens: tokens as TestERC20[],
+      oracle: oracle as OracleTest,
+      swapExact0For1: swapExact0For1 as SwapFunction,
+      swapExact1For0: swapExact1For0 as SwapFunction,
     }
+  }
 
+  describe('#consult', () => {
     before('create fixture loader', async () => {
       loadFixture = waffle.createFixtureLoader(wallets)
     })
@@ -148,6 +148,7 @@ describe('OracleLibrary', () => {
       await createSwaps(ONE_FOR_ZERO_SWAPS, provider, swapExact0For1, swapExact1For0)
 
       // Always round to negative infinity
+      // In this case, we don't have do anything
       const tickCumulatives = [BigNumber.from(109740), BigNumber.from(421229)]
       const calculatedTick = tickCumulatives[1].sub(tickCumulatives[0]).div(BigNumber.from(PERIOD))
 
@@ -193,6 +194,93 @@ describe('OracleLibrary', () => {
 
       await snapshotGasCost(
         oracle.getGasCostOfConsult(factory.address, tokens[0].address, tokens[1].address, TEST_POOL.feeAmount, PERIOD)
+      )
+    })
+  })
+
+  describe('#getQuoteAtTick', () => {
+    before('create fixture loader', async () => {
+      loadFixture = waffle.createFixtureLoader(wallets)
+    })
+
+    beforeEach('deploy fixture', async () => {
+      const fixtures = await loadFixture(oracleTestFixture)
+      tokens = fixtures['tokens']
+      oracle = fixtures['oracle']
+    })
+
+    // sanity check
+    it('token0: returns correct value when tick = 0', async () => {
+      const quoteAmount = await oracle.getQuoteAtTick(
+        BigNumber.from(0),
+        expandTo18Decimals(1),
+        tokens[0].address,
+        tokens[1].address
+      )
+
+      expect(quoteAmount).to.equal(expandTo18Decimals(1))
+    })
+
+    // sanity check
+    it('token1: returns correct value when tick = 0', async () => {
+      const quoteAmount = await oracle.getQuoteAtTick(
+        BigNumber.from(0),
+        expandTo18Decimals(1),
+        tokens[1].address,
+        tokens[0].address
+      )
+
+      expect(quoteAmount).to.equal(expandTo18Decimals(1))
+    })
+
+    it('token0: returns correct value when 0 < sqrtRatioX96 <= type(uint128).max', async () => {
+      const quoteAmount = await oracle.getQuoteAtTick(
+        BigNumber.from(10),
+        expandTo18Decimals(1),
+        tokens[0].address,
+        tokens[1].address
+      )
+      expect(quoteAmount).to.equal(BigNumber.from('1001000450120021002'))
+    })
+
+    it('token1: returns correct value when 0 < sqrtRatioX96 <= type(uint128).max', async () => {
+      const quoteAmount = await oracle.getQuoteAtTick(
+        BigNumber.from(10),
+        expandTo18Decimals(1),
+        tokens[1].address,
+        tokens[0].address
+      )
+      expect(quoteAmount).to.equal(BigNumber.from('999000549780071479'))
+    })
+
+    it('token0: returns correct value when sqrtRatioX96 > type(uint128).max', async () => {
+      const quoteAmount = await oracle.getQuoteAtTick(
+        BigNumber.from(getMaxTick(TEST_POOL.feeAmount)),
+        expandTo18Decimals(1),
+        tokens[0].address,
+        tokens[1].address
+      )
+      expect(quoteAmount).to.equal(BigNumber.from('271106558174734753828546514948592044174000833692526031838'))
+    })
+
+    it('token1: returns correct value when sqrtRatioX96 > type(uint128).max', async () => {
+      const quoteAmount = await oracle.getQuoteAtTick(
+        BigNumber.from(443637),
+        expandTo18Decimals(10000000),
+        tokens[1].address,
+        tokens[0].address
+      )
+      expect(quoteAmount).to.equal(BigNumber.from('542067'))
+    })
+
+    it('gas test', async () => {
+      await snapshotGasCost(
+        oracle.getGasCostOfGetQuoteAtTick(
+          BigNumber.from(10),
+          expandTo18Decimals(1),
+          tokens[0].address,
+          tokens[1].address
+        )
       )
     })
   })
