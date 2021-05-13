@@ -16,7 +16,7 @@ contract OracleTest {
 
     function getQuoteAtTick(
         int24 tick,
-        uint256 baseAmount,
+        uint128 baseAmount,
         address baseToken,
         address quoteToken
     ) public pure returns (uint256 quoteAmount) {
@@ -38,7 +38,7 @@ contract OracleTest {
 
     function getGasCostOfGetQuoteAtTick(
         int24 tick,
-        uint256 baseAmount,
+        uint128 baseAmount,
         address baseToken,
         address quoteToken
     ) public view returns (uint256) {

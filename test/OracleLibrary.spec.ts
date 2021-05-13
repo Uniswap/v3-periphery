@@ -142,7 +142,7 @@ describe('OracleLibrary', () => {
       ).to.be.revertedWith('BP')
     })
 
-    it('correct output tick when tick is positve', async () => {
+    it('correct output when tick is positve', async () => {
       const PERIOD = BigNumber.from(11)
 
       await createSwaps(ONE_FOR_ZERO_SWAPS, provider, swapExact0For1, swapExact1For0)
@@ -210,7 +210,7 @@ describe('OracleLibrary', () => {
     })
 
     // sanity check
-    it('token1: returns correct value when tick = 0', async () => {
+    it('token0: returns correct value when tick = 0', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(0),
         expandTo18Decimals(1),
@@ -222,7 +222,7 @@ describe('OracleLibrary', () => {
     })
 
     // sanity check
-    it('token0: returns correct value when tick = 0', async () => {
+    it('token1: returns correct value when tick = 0', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(0),
         expandTo18Decimals(1),
@@ -233,44 +233,48 @@ describe('OracleLibrary', () => {
       expect(quoteAmount).to.equal(expandTo18Decimals(1))
     })
 
-    it('token1: returns correct value when 0 < sqrtRatioX96 <= type(uint128).max', async () => {
+    it('token0: returns correct value when at min tick | 0 < sqrtRatioX96 <= type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
-        BigNumber.from(10),
-        expandTo18Decimals(1),
+        BigNumber.from(getMinTick(TEST_POOL.feeAmount)),
+        BigNumber.from(2).pow(128).sub(1),
         tokens[0].address,
         tokens[1].address
       )
-      expect(quoteAmount).to.equal(BigNumber.from('1001000450120021002'))
+      expect(quoteAmount).to.equal(BigNumber.from('1'))
     })
 
-    it('token0: returns correct value when 0 < sqrtRatioX96 <= type(uint128).max', async () => {
+    it('token1: returns correct value when at min tick | 0 < sqrtRatioX96 <= type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
-        BigNumber.from(10),
-        expandTo18Decimals(1),
+        BigNumber.from(getMinTick(TEST_POOL.feeAmount)),
+        BigNumber.from(2).pow(128).sub(1),
         tokens[1].address,
         tokens[0].address
       )
-      expect(quoteAmount).to.equal(BigNumber.from('999000549780071479'))
+      expect(quoteAmount).to.equal(
+        BigNumber.from('92252781291700498937204549452667720836827086935960705402076732007916912115530')
+      )
     })
 
-    it('token1: returns correct value when sqrtRatioX96 > type(uint128).max', async () => {
+    it('token0: returns correct value when at max tick | sqrtRatioX96 > type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(getMaxTick(TEST_POOL.feeAmount)),
-        expandTo18Decimals(1),
+        BigNumber.from(2).pow(128).sub(1),
         tokens[0].address,
         tokens[1].address
       )
-      expect(quoteAmount).to.equal(BigNumber.from('271106558174734753828546514948592044174000833692526031838'))
+      expect(quoteAmount).to.equal(
+        BigNumber.from('92252781303487840575489571037701809782439021325602413126085498571520800050278')
+      )
     })
 
-    it('token0: returns correct value when sqrtRatioX96 > type(uint128).max', async () => {
+    it('token1: returns correct value when at max tick | sqrtRatioX96 > type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
-        BigNumber.from(443637),
-        expandTo18Decimals(10000000),
+        BigNumber.from(getMaxTick(TEST_POOL.feeAmount)),
+        BigNumber.from(2).pow(128).sub(1),
         tokens[1].address,
         tokens[0].address
       )
-      expect(quoteAmount).to.equal(BigNumber.from('542067'))
+      expect(quoteAmount).to.equal(BigNumber.from('1'))
     })
 
     it('gas test', async () => {

@@ -2,4 +2,4 @@
 
 exports[`OracleLibrary #consult gas test 1`] = `24379`;
 
-exports[`OracleLibrary #getQuoteAtTick gas test 1`] = `1199`;
+exports[`OracleLibrary #getQuoteAtTick gas test 1`] = `1205`;

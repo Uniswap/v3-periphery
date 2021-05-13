@@ -49,7 +49,7 @@ library OracleLibrary {
     /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
     function getQuoteAtTick(
         int24 tick,
-        uint256 baseAmount,
+        uint128 baseAmount,
         address baseToken,
         address quoteToken
     ) internal pure returns (uint256 quoteAmount) {
