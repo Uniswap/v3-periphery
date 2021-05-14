@@ -30,17 +30,17 @@ describe('OracleLibrary', () => {
     }
   }
 
+  before('create fixture loader', async () => {
+    loadFixture = waffle.createFixtureLoader(wallets)
+  })
+
+  beforeEach('deploy fixture', async () => {
+    const fixtures = await loadFixture(oracleTestFixture)
+    tokens = fixtures['tokens']
+    oracle = fixtures['oracle']
+  })
+
   describe('#consult', () => {
-    before('create fixture loader', async () => {
-      loadFixture = waffle.createFixtureLoader(wallets)
-    })
-
-    beforeEach('deploy fixture', async () => {
-      const fixtures = await loadFixture(oracleTestFixture)
-      tokens = fixtures['tokens']
-      oracle = fixtures['oracle']
-    })
-
     it('reverts when period is 0', async () => {
       await expect(oracle.consult(oracle.address, BigNumber.from(0))).to.be.revertedWith('BP')
     })
@@ -82,16 +82,6 @@ describe('OracleLibrary', () => {
   })
 
   describe('#getQuoteAtTick', () => {
-    before('create fixture loader', async () => {
-      loadFixture = waffle.createFixtureLoader(wallets)
-    })
-
-    beforeEach('deploy fixture', async () => {
-      const fixtures = await loadFixture(oracleTestFixture)
-      tokens = fixtures['tokens']
-      oracle = fixtures['oracle']
-    })
-
     // sanity check
     it('token0: returns correct value when tick = 0', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
@@ -118,7 +108,7 @@ describe('OracleLibrary', () => {
 
     it('token0: returns correct value when at min tick | 0 < sqrtRatioX96 <= type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
-        BigNumber.from(getMinTick(FeeAmount.MEDIUM)),
+        BigNumber.from(-887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[0].address,
         tokens[1].address
@@ -128,31 +118,31 @@ describe('OracleLibrary', () => {
 
     it('token1: returns correct value when at min tick | 0 < sqrtRatioX96 <= type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
-        BigNumber.from(getMinTick(FeeAmount.MEDIUM)),
+        BigNumber.from(-887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[1].address,
         tokens[0].address
       )
       expect(quoteAmount).to.equal(
-        BigNumber.from('92252781291700498937204549452667720836827086935960705402076732007916912115530')
+        BigNumber.from('115783384738768196242144082653949453838306988932806144552194799290216044976282')
       )
     })
 
     it('token0: returns correct value when at max tick | sqrtRatioX96 > type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
-        BigNumber.from(getMaxTick(FeeAmount.MEDIUM)),
+        BigNumber.from(887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[0].address,
         tokens[1].address
       )
       expect(quoteAmount).to.equal(
-        BigNumber.from('92252781303487840575489571037701809782439021325602413126085498571520800050278')
+        BigNumber.from('115783384785599357996676985412062652720342362943929506828539444553934033845703')
       )
     })
 
     it('token1: returns correct value when at max tick | sqrtRatioX96 > type(uint128).max', async () => {
       const quoteAmount = await oracle.getQuoteAtTick(
-        BigNumber.from(getMaxTick(FeeAmount.MEDIUM)),
+        BigNumber.from(887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[1].address,
         tokens[0].address
