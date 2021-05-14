@@ -11,22 +11,12 @@ import '../libraries/PoolAddress.sol';
 /// @notice Provides functions to integrate with V3 pool oracle
 library OracleLibrary {
     /// @notice Fetches time-weighted average tick using Uniswap V3 oracle
-    /// @param factory Address of Uniswap V3 factory contract
-    /// @param token0 Address of an ERC20 token contract
-    /// @param token1 Address of an ERC20 token contract
-    /// @param fee Fee amount that correspond to the pool that we want to observe
+    /// @param pool Address of Uniswap V3 pool that we want to observe
     /// @param period Number of seconds in the past to start calculating time-weighted average
     /// @return timeWeightedAverageTick The time-weighted average tick from (block.timestamp - period) to block.timestamp
-    function consult(
-        address factory,
-        address token0,
-        address token1,
-        uint24 fee,
-        uint32 period
-    ) internal view returns (int24 timeWeightedAverageTick) {
+    function consult(address pool, uint32 period) internal view returns (int24 timeWeightedAverageTick) {
         require(period != 0, 'BP');
-        IUniswapV3Pool oracle =
-            IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(token0, token1, fee)));
+        IUniswapV3Pool oracle = IUniswapV3Pool(pool);
 
         uint32[] memory secondAgos = new uint32[](2);
         secondAgos[0] = period;
