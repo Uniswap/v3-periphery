@@ -3,16 +3,18 @@ import { ethers, waffle } from 'hardhat'
 import { BigNumber, constants } from 'ethers'
 import { OracleTest, TestERC20 } from '../typechain'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
-import { getMaxTick, getMinTick } from './shared/ticks'
 import snapshotGasCost from './shared/snapshotGasCost'
-import { FeeAmount } from './shared/constants'
 
 describe('OracleLibrary', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
   let tokens: TestERC20[]
-  let oracle: OracleTest
+  let oracles: OracleTest[]
 
   const wallets = waffle.provider.getWallets()
+
+  const PERIOD = 11
+  const POSITIVE_TICK_CUMULATIVES = [BigNumber.from(109740), BigNumber.from(421229)]
+  const NEGATIVE_TICK_CUMULATIVES = [BigNumber.from(-109746), BigNumber.from(-421229)]
 
   const oracleTestFixture = async () => {
     const tokenFactory = await ethers.getContractFactory('TestERC20')
@@ -24,11 +26,14 @@ describe('OracleLibrary', () => {
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
     const oracleFactory = await ethers.getContractFactory('OracleTest')
-    const oracle = await oracleFactory.deploy()
+    const oracles = (await Promise.all([
+      oracleFactory.deploy([PERIOD, 0], POSITIVE_TICK_CUMULATIVES, [0, 0]), // do not use maxu256 to avoid overflowing
+      oracleFactory.deploy([PERIOD, 0], NEGATIVE_TICK_CUMULATIVES, [0, 0]),
+    ])) as [OracleTest, OracleTest]
 
     return {
       tokens: tokens as TestERC20[],
-      oracle: oracle as OracleTest,
+      oracles: oracles as OracleTest[],
     }
   }
 
@@ -39,54 +44,41 @@ describe('OracleLibrary', () => {
   beforeEach('deploy fixture', async () => {
     const fixtures = await loadFixture(oracleTestFixture)
     tokens = fixtures['tokens']
-    oracle = fixtures['oracle']
+    oracles = fixtures['oracles']
   })
 
   describe('#consult', () => {
     it('reverts when period is 0', async () => {
-      await expect(oracle.consult(oracle.address, BigNumber.from(0))).to.be.revertedWith('BP')
+      await expect(oracles[0].consult(oracles[0].address, 0)).to.be.revertedWith('BP')
     })
 
     it('correct output when tick is positve', async () => {
-      const PERIOD = BigNumber.from(11)
-
       // Always round to negative infinity
       // In this case, we don't have do anything
-      const tickCumulatives = [BigNumber.from(109740), BigNumber.from(421229)]
-      const calculatedTick = tickCumulatives[1].sub(tickCumulatives[0]).div(BigNumber.from(PERIOD))
-
-      const oracleTick = await oracle.consult(oracle.address, PERIOD)
+      const calculatedTick = POSITIVE_TICK_CUMULATIVES[1].sub(POSITIVE_TICK_CUMULATIVES[0]).div(PERIOD)
+      const oracleTick = await oracles[0].consult(oracles[0].address, PERIOD)
 
       expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
     })
 
     it('correct output when tick is negative', async () => {
-      const PERIOD = BigNumber.from(22)
-
       // Always round to negative infinity
       // In this case, we need to subtract one because integer division rounds to 0
-      const tickCumulatives = [BigNumber.from(-109746), BigNumber.from(-421246)]
-      const calculatedTick = tickCumulatives[1]
-        .sub(tickCumulatives[0])
-        .div(BigNumber.from(PERIOD))
-        .sub(BigNumber.from(1))
-
-      const oracleTick = await oracle.consult(oracle.address, PERIOD)
+      const calculatedTick = NEGATIVE_TICK_CUMULATIVES[1].sub(NEGATIVE_TICK_CUMULATIVES[0]).div(PERIOD).sub(1)
+      const oracleTick = await oracles[1].consult(oracles[1].address, PERIOD)
 
       expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
     })
 
     it('gas test', async () => {
-      const PERIOD = BigNumber.from(11)
-
-      await snapshotGasCost(oracle.getGasCostOfConsult(oracle.address, PERIOD))
+      await snapshotGasCost(oracles[1].getGasCostOfConsult(oracles[1].address, PERIOD))
     })
   })
 
   describe('#getQuoteAtTick', () => {
     // sanity check
     it('token0: returns correct value when tick = 0', async () => {
-      const quoteAmount = await oracle.getQuoteAtTick(
+      const quoteAmount = await oracles[0].getQuoteAtTick(
         BigNumber.from(0),
         expandTo18Decimals(1),
         tokens[0].address,
@@ -98,7 +90,7 @@ describe('OracleLibrary', () => {
 
     // sanity check
     it('token1: returns correct value when tick = 0', async () => {
-      const quoteAmount = await oracle.getQuoteAtTick(
+      const quoteAmount = await oracles[0].getQuoteAtTick(
         BigNumber.from(0),
         expandTo18Decimals(1),
         tokens[1].address,
@@ -109,7 +101,7 @@ describe('OracleLibrary', () => {
     })
 
     it('token0: returns correct value when at min tick | 0 < sqrtRatioX96 <= type(uint128).max', async () => {
-      const quoteAmount = await oracle.getQuoteAtTick(
+      const quoteAmount = await oracles[0].getQuoteAtTick(
         BigNumber.from(-887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[0].address,
@@ -119,7 +111,7 @@ describe('OracleLibrary', () => {
     })
 
     it('token1: returns correct value when at min tick | 0 < sqrtRatioX96 <= type(uint128).max', async () => {
-      const quoteAmount = await oracle.getQuoteAtTick(
+      const quoteAmount = await oracles[0].getQuoteAtTick(
         BigNumber.from(-887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[1].address,
@@ -131,7 +123,7 @@ describe('OracleLibrary', () => {
     })
 
     it('token0: returns correct value when at max tick | sqrtRatioX96 > type(uint128).max', async () => {
-      const quoteAmount = await oracle.getQuoteAtTick(
+      const quoteAmount = await oracles[0].getQuoteAtTick(
         BigNumber.from(887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[0].address,
@@ -143,7 +135,7 @@ describe('OracleLibrary', () => {
     })
 
     it('token1: returns correct value when at max tick | sqrtRatioX96 > type(uint128).max', async () => {
-      const quoteAmount = await oracle.getQuoteAtTick(
+      const quoteAmount = await oracles[0].getQuoteAtTick(
         BigNumber.from(887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[1].address,
@@ -154,7 +146,7 @@ describe('OracleLibrary', () => {
 
     it('gas test', async () => {
       await snapshotGasCost(
-        oracle.getGasCostOfGetQuoteAtTick(
+        oracles[0].getGasCostOfGetQuoteAtTick(
           BigNumber.from(10),
           expandTo18Decimals(1),
           tokens[0].address,

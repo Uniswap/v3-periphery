@@ -16,13 +16,12 @@ library OracleLibrary {
     /// @return timeWeightedAverageTick The time-weighted average tick from (block.timestamp - period) to block.timestamp
     function consult(address pool, uint32 period) internal view returns (int24 timeWeightedAverageTick) {
         require(period != 0, 'BP');
-        IUniswapV3Pool oracle = IUniswapV3Pool(pool);
 
         uint32[] memory secondAgos = new uint32[](2);
         secondAgos[0] = period;
         secondAgos[1] = 0;
 
-        (int56[] memory tickCumulatives, ) = oracle.observe(secondAgos);
+        (int56[] memory tickCumulatives, ) = IUniswapV3Pool(pool).observe(secondAgos);
         int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
 
         timeWeightedAverageTick = int24(tickCumulativesDelta / period);
