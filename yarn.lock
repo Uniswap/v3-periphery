@@ -1004,10 +1004,9 @@
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@uniswap/v2-core/-/v2-core-1.0.1.tgz#af8f508bf183204779938969e2e54043e147d425"
 
-"@uniswap/v3-core@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@uniswap/v3-core/-/v3-core-1.0.0.tgz#6c24adacc4c25dceee0ba3ca142b35adbd7e359d"
-  integrity sha512-kSC4djMGKMHj7sLMYVnn61k9nu+lHjMIxgg9CDQT+s2QYLoA56GbSK9Oxr+qJXzzygbkrmuY6cwgP6cW2JXPFA==
+"@uniswap/v3-core@https://github.com/ScopeLift/uniswap-v3-core-ovm.git#get-ovm-contracts-deployed":
+  version "1.0.0-rc.1"
+  resolved "https://github.com/ScopeLift/uniswap-v3-core-ovm.git#7b0d933bab1c683652acc05a91766b9917164159"
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
