@@ -47,6 +47,10 @@ export default {
     hardhat: {
       allowUnlimitedContractSize: false,
     },
+    optimism: {
+      url: 'http://localhost:8545',
+      ovm: true,
+    },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
     },
