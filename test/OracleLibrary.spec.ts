@@ -8,13 +8,9 @@ import snapshotGasCost from './shared/snapshotGasCost'
 describe('OracleLibrary', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
   let tokens: TestERC20[]
-  let oracles: OracleTest[]
+  let oracle: OracleTest
 
   const wallets = waffle.provider.getWallets()
-
-  const PERIOD = 11
-  const POSITIVE_TICK_CUMULATIVES = [BigNumber.from(109740), BigNumber.from(421229)]
-  const NEGATIVE_TICK_CUMULATIVES = [BigNumber.from(-109746), BigNumber.from(-421229)]
 
   const oracleTestFixture = async () => {
     const tokenFactory = await ethers.getContractFactory('TestERC20')
@@ -26,14 +22,11 @@ describe('OracleLibrary', () => {
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
     const oracleFactory = await ethers.getContractFactory('OracleTest')
-    const oracles = (await Promise.all([
-      oracleFactory.deploy([PERIOD, 0], POSITIVE_TICK_CUMULATIVES, [0, 0]), // do not use maxu256 to avoid overflowing
-      oracleFactory.deploy([PERIOD, 0], NEGATIVE_TICK_CUMULATIVES, [0, 0]),
-    ])) as [OracleTest, OracleTest]
+    const oracle = await oracleFactory.deploy()
 
     return {
       tokens: tokens as TestERC20[],
-      oracles: oracles as OracleTest[],
+      oracle: oracle as OracleTest,
     }
   }
 
@@ -44,41 +37,82 @@ describe('OracleLibrary', () => {
   beforeEach('deploy fixture', async () => {
     const fixtures = await loadFixture(oracleTestFixture)
     tokens = fixtures['tokens']
-    oracles = fixtures['oracles']
+    oracle = fixtures['oracle']
   })
 
   describe('#consult', () => {
     it('reverts when period is 0', async () => {
-      await expect(oracles[0].consult(oracles[0].address, 0)).to.be.revertedWith('BP')
+      await expect(oracle.consult(oracle.address, 0)).to.be.revertedWith('BP')
     })
 
-    it('correct output when tick is positve', async () => {
-      // Always round to negative infinity
-      // In this case, we don't have do anything
-      const calculatedTick = POSITIVE_TICK_CUMULATIVES[1].sub(POSITIVE_TICK_CUMULATIVES[0]).div(PERIOD)
-      const oracleTick = await oracles[0].consult(oracles[0].address, PERIOD)
+    it('correct output when tick is 0', async () => {
+      const period = 3
+      const tickCumulatives = [BigNumber.from(12), BigNumber.from(12)]
+      const mockObservableFactory = await ethers.getContractFactory('MockObservable')
+      const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
+
+      const calculatedTick = tickCumulatives[1].sub(tickCumulatives[0])
+      const oracleTick = await oracle.consult(mockObservable.address, period)
 
       expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
     })
 
-    it('correct output when tick is negative', async () => {
+    it('correct output for positive tick', async () => {
+      const period = 3
+      const tickCumulatives = [BigNumber.from(7), BigNumber.from(12)]
+      const mockObservableFactory = await ethers.getContractFactory('MockObservable')
+      const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
+
+      // Always round to negative infinity
+      // In this case, we don't have do anything
+      const calculatedTick = tickCumulatives[1].sub(tickCumulatives[0]).div(period)
+      const oracleTick = await oracle.consult(mockObservable.address, period)
+
+      expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
+    })
+
+    it('correct output for negative tick', async () => {
+      const period = 3
+      const tickCumulatives = [BigNumber.from(-7), BigNumber.from(-12)]
+      const mockObservableFactory = await ethers.getContractFactory('MockObservable')
+      const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
+
       // Always round to negative infinity
       // In this case, we need to subtract one because integer division rounds to 0
-      const calculatedTick = NEGATIVE_TICK_CUMULATIVES[1].sub(NEGATIVE_TICK_CUMULATIVES[0]).div(PERIOD).sub(1)
-      const oracleTick = await oracles[1].consult(oracles[1].address, PERIOD)
+      const calculatedTick = tickCumulatives[1].sub(tickCumulatives[0]).div(period).sub(1)
+      const oracleTick = await oracle.consult(mockObservable.address, period)
+
+      expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
+    })
+
+    it('correct rounding for .5 negative tick', async () => {
+      const period = 4
+      const tickCumulatives = [BigNumber.from(-10), BigNumber.from(-12)]
+      const mockObservableFactory = await ethers.getContractFactory('MockObservable')
+      const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
+
+      // Always round to negative infinity
+      // In this case, we need to subtract one because integer division rounds to 0
+      const calculatedTick = tickCumulatives[1].sub(tickCumulatives[0]).div(period).sub(1)
+      const oracleTick = await oracle.consult(mockObservable.address, period)
 
       expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
     })
 
     it('gas test', async () => {
-      await snapshotGasCost(oracles[1].getGasCostOfConsult(oracles[1].address, PERIOD))
+      const period = 11
+      const tickCumulatives = [BigNumber.from(109740), BigNumber.from(421229)]
+      const mockObservableFactory = await ethers.getContractFactory('MockObservable')
+      const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
+
+      await snapshotGasCost(oracle.getGasCostOfConsult(mockObservable.address, period))
     })
   })
 
   describe('#getQuoteAtTick', () => {
     // sanity check
     it('token0: returns correct value when tick = 0', async () => {
-      const quoteAmount = await oracles[0].getQuoteAtTick(
+      const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(0),
         expandTo18Decimals(1),
         tokens[0].address,
@@ -90,7 +124,7 @@ describe('OracleLibrary', () => {
 
     // sanity check
     it('token1: returns correct value when tick = 0', async () => {
-      const quoteAmount = await oracles[0].getQuoteAtTick(
+      const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(0),
         expandTo18Decimals(1),
         tokens[1].address,
@@ -101,7 +135,7 @@ describe('OracleLibrary', () => {
     })
 
     it('token0: returns correct value when at min tick | 0 < sqrtRatioX96 <= type(uint128).max', async () => {
-      const quoteAmount = await oracles[0].getQuoteAtTick(
+      const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(-887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[0].address,
@@ -111,7 +145,7 @@ describe('OracleLibrary', () => {
     })
 
     it('token1: returns correct value when at min tick | 0 < sqrtRatioX96 <= type(uint128).max', async () => {
-      const quoteAmount = await oracles[0].getQuoteAtTick(
+      const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(-887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[1].address,
@@ -123,7 +157,7 @@ describe('OracleLibrary', () => {
     })
 
     it('token0: returns correct value when at max tick | sqrtRatioX96 > type(uint128).max', async () => {
-      const quoteAmount = await oracles[0].getQuoteAtTick(
+      const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[0].address,
@@ -135,7 +169,7 @@ describe('OracleLibrary', () => {
     })
 
     it('token1: returns correct value when at max tick | sqrtRatioX96 > type(uint128).max', async () => {
-      const quoteAmount = await oracles[0].getQuoteAtTick(
+      const quoteAmount = await oracle.getQuoteAtTick(
         BigNumber.from(887272),
         BigNumber.from(2).pow(128).sub(1),
         tokens[1].address,
@@ -146,7 +180,7 @@ describe('OracleLibrary', () => {
 
     it('gas test', async () => {
       await snapshotGasCost(
-        oracles[0].getGasCostOfGetQuoteAtTick(
+        oracle.getGasCostOfGetQuoteAtTick(
           BigNumber.from(10),
           expandTo18Decimals(1),
           tokens[0].address,
