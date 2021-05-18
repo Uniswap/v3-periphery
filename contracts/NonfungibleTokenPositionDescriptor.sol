@@ -57,8 +57,10 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                     tokenId: tokenId,
                     quoteTokenAddress: quoteTokenAddress,
                     baseTokenAddress: baseTokenAddress,
-                    quoteTokenSymbol: SafeERC20Namer.tokenSymbol(quoteTokenAddress),
-                    baseTokenSymbol: SafeERC20Namer.tokenSymbol(baseTokenAddress),
+                    quoteTokenSymbol: quoteTokenAddress == WETH9
+                        ? 'ETH'
+                        : SafeERC20Namer.tokenSymbol(quoteTokenAddress),
+                    baseTokenSymbol: baseTokenAddress == WETH9 ? 'ETH' : SafeERC20Namer.tokenSymbol(baseTokenAddress),
                     quoteTokenDecimals: IERC20Metadata(quoteTokenAddress).decimals(),
                     baseTokenDecimals: IERC20Metadata(baseTokenAddress).decimals(),
                     flipRatio: _flipRatio,

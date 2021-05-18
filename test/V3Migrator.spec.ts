@@ -17,6 +17,7 @@ import { expect } from 'chai'
 import { FeeAmount } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import snapshotGasCost from './shared/snapshotGasCost'
+import { sortedTokens } from './shared/tokenSort'
 import { getMaxTick, getMinTick } from './shared/ticks'
 
 describe('V3Migrator', () => {
@@ -140,9 +141,10 @@ describe('V3Migrator', () => {
     })
 
     it('works once v3 pool is initialized', async () => {
+      const [token0, token1] = sortedTokens(weth9, token)
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(1, 1)
       )
@@ -173,9 +175,10 @@ describe('V3Migrator', () => {
     })
 
     it('works for partial', async () => {
+      const [token0, token1] = sortedTokens(weth9, token)
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(1, 1)
       )
@@ -215,9 +218,10 @@ describe('V3Migrator', () => {
     })
 
     it('double the price', async () => {
+      const [token0, token1] = sortedTokens(weth9, token)
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(2, 1)
       )
@@ -263,9 +267,10 @@ describe('V3Migrator', () => {
     })
 
     it('half the price', async () => {
+      const [token0, token1] = sortedTokens(weth9, token)
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(1, 2)
       )
@@ -311,9 +316,10 @@ describe('V3Migrator', () => {
     })
 
     it('double the price - as ETH', async () => {
+      const [token0, token1] = sortedTokens(weth9, token)
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(2, 1)
       )
@@ -359,9 +365,10 @@ describe('V3Migrator', () => {
     })
 
     it('half the price - as ETH', async () => {
+      const [token0, token1] = sortedTokens(weth9, token)
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(1, 2)
       )
@@ -407,9 +414,10 @@ describe('V3Migrator', () => {
     })
 
     it('gas', async () => {
+      const [token0, token1] = sortedTokens(weth9, token)
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(1, 1)
       )
