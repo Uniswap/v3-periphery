@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { ethers, waffle } from 'hardhat'
-import { BigNumber, constants } from 'ethers'
+import { BigNumber, constants, ContractFactory } from 'ethers'
 import { OracleTest, TestERC20 } from '../typechain'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import snapshotGasCost from './shared/snapshotGasCost'
@@ -41,6 +41,12 @@ describe('OracleLibrary', () => {
   })
 
   describe('#consult', () => {
+    let mockObservableFactory: ContractFactory
+
+    before('create mockObservableFactory', async () => {
+      mockObservableFactory = await ethers.getContractFactory('MockObservable')
+    })
+
     it('reverts when period is 0', async () => {
       await expect(oracle.consult(oracle.address, 0)).to.be.revertedWith('BP')
     })
@@ -48,61 +54,70 @@ describe('OracleLibrary', () => {
     it('correct output when tick is 0', async () => {
       const period = 3
       const tickCumulatives = [BigNumber.from(12), BigNumber.from(12)]
-      const mockObservableFactory = await ethers.getContractFactory('MockObservable')
       const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
-
-      const calculatedTick = tickCumulatives[1].sub(tickCumulatives[0])
       const oracleTick = await oracle.consult(mockObservable.address, period)
 
-      expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
+      expect(oracleTick).to.equal(BigNumber.from(0))
     })
 
     it('correct output for positive tick', async () => {
       const period = 3
       const tickCumulatives = [BigNumber.from(7), BigNumber.from(12)]
-      const mockObservableFactory = await ethers.getContractFactory('MockObservable')
       const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
+      const oracleTick = await oracle.consult(mockObservable.address, period)
 
       // Always round to negative infinity
       // In this case, we don't have do anything
-      const calculatedTick = tickCumulatives[1].sub(tickCumulatives[0]).div(period)
-      const oracleTick = await oracle.consult(mockObservable.address, period)
-
-      expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
+      expect(oracleTick).to.equal(BigNumber.from(1))
     })
 
     it('correct output for negative tick', async () => {
       const period = 3
       const tickCumulatives = [BigNumber.from(-7), BigNumber.from(-12)]
-      const mockObservableFactory = await ethers.getContractFactory('MockObservable')
       const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
+      const oracleTick = await oracle.consult(mockObservable.address, period)
 
       // Always round to negative infinity
       // In this case, we need to subtract one because integer division rounds to 0
-      const calculatedTick = tickCumulatives[1].sub(tickCumulatives[0]).div(period).sub(1)
-      const oracleTick = await oracle.consult(mockObservable.address, period)
-
-      expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
+      expect(oracleTick).to.equal(BigNumber.from(-2))
     })
 
     it('correct rounding for .5 negative tick', async () => {
       const period = 4
       const tickCumulatives = [BigNumber.from(-10), BigNumber.from(-12)]
-      const mockObservableFactory = await ethers.getContractFactory('MockObservable')
       const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
+      const oracleTick = await oracle.consult(mockObservable.address, period)
 
       // Always round to negative infinity
       // In this case, we need to subtract one because integer division rounds to 0
-      const calculatedTick = tickCumulatives[1].sub(tickCumulatives[0]).div(period).sub(1)
+      expect(oracleTick).to.equal(BigNumber.from(-1))
+    })
+
+    it('correct output for tick cumulatives across overflow boundaries', async () => {
+      const period = 4
+      const tickCumulatives = [BigNumber.from(-100), BigNumber.from('36028797018963967')]
+      const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
       const oracleTick = await oracle.consult(mockObservable.address, period)
 
-      expect(oracleTick).to.equal(BigNumber.from(calculatedTick))
+      // Always round to negative infinity
+      // In this case, we don't have do anything
+      expect(oracleTick).to.equal(BigNumber.from(24))
+    })
+
+    it('correct output for tick cumulatives across underflow boundaries', async () => {
+      const period = 4
+      const tickCumulatives = [BigNumber.from(100), BigNumber.from('-36028797018963967')]
+      const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
+      const oracleTick = await oracle.consult(mockObservable.address, period)
+
+      // Always round to negative infinity
+      // In this case, we need to subtract one because integer division rounds to 0
+      expect(oracleTick).to.equal(BigNumber.from(-25))
     })
 
     it('gas test', async () => {
-      const period = 11
-      const tickCumulatives = [BigNumber.from(109740), BigNumber.from(421229)]
-      const mockObservableFactory = await ethers.getContractFactory('MockObservable')
+      const period = 3
+      const tickCumulatives = [BigNumber.from(7), BigNumber.from(12)]
       const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives, [0, 0])
 
       await snapshotGasCost(oracle.getGasCostOfConsult(mockObservable.address, period))
