@@ -17,6 +17,7 @@
     "url": "https://github.com/Uniswap/uniswap-v3-periphery"
   },
   "files": [
+    "contracts/base",
     "contracts/interfaces",
     "contracts/libraries",
     "artifacts/contracts/**/*.json",
