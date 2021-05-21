@@ -42,7 +42,8 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
 
     /// @inheritdoc IPeripheryPayments
     function refundETH() external payable override {
-        if (address(this).balance > 0) TransferHelper.safeTransferETH(msg.sender, address(this).balance);
+        uint256 wethBalance = IWETH9(WETH9).balanceOf(address(this));
+        if (wethBalance > 0) IWETH9(WETH9).transfer(msg.sender, wethBalance);
     }
 
     /// @param token The token to pay
