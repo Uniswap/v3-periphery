@@ -1,7 +1,3 @@
-import {
-  abi as FACTORY_ABI,
-  bytecode as FACTORY_BYTECODE,
-} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
 import { abi as FACTORY_V2_ABI, bytecode as FACTORY_V2_BYTECODE } from '@uniswap/v2-core/build/UniswapV2Factory.json'
 import { Fixture } from 'ethereum-waffle'
 import { ethers, waffle } from 'hardhat'
@@ -33,11 +29,39 @@ export const v2FactoryFixture: Fixture<{ factory: Contract }> = async ([wallet])
   return { factory }
 }
 
+const deployLib = async (name: string, libraries?: any): Promise<string> => {
+  const lib = await (await ethers.getContractFactory(name, { libraries })).deploy()
+  return lib.address
+}
+
 const v3CoreFactoryFixture: Fixture<IUniswapV3Factory> = async ([wallet]) => {
-  return (await waffle.deployContract(wallet, {
-    bytecode: FACTORY_BYTECODE,
-    abi: FACTORY_ABI,
-  })) as IUniswapV3Factory
+  const position = await deployLib('Position')
+  const oracle = await deployLib('Oracle')
+  const tick = await deployLib('Tick')
+  const tickBitmap = await deployLib('TickBitmap')
+  const tickMath = await deployLib('TickMath')
+  const stateLibs = {
+    Oracle: oracle,
+    TickBitmap: tickBitmap,
+    TickMath: tickMath,
+  }
+  const stateMath = await deployLib('StateMath', stateLibs)
+
+  const libraries = {
+    Position: position,
+    Oracle: oracle,
+    StateMath: stateMath,
+    Tick: tick,
+    TickMath: tickMath,
+  }
+
+  const factoryFactory = await ethers.getContractFactory('UniswapV3Factory', {
+    libraries: {
+      UniswapV3PoolDeployer: await deployLib('UniswapV3PoolDeployer', libraries),
+    },
+  })
+  const factory = (await factoryFactory.deploy()) as IUniswapV3Factory
+  return factory.connect(wallet)
 }
 
 export const v3RouterFixture: Fixture<{

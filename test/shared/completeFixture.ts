@@ -26,7 +26,12 @@ const completeFixture: Fixture<{
     tokenFactory.deploy(constants.MaxUint256.div(2)),
   ])) as [TestERC20, TestERC20, TestERC20]
 
-  const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
+  const tickMath = await (await ethers.getContractFactory('TickMath')).deploy()
+  const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor', {
+    libraries: {
+      TickMath: tickMath.address,
+    },
+  })
   const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
   const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor', {
     libraries: {
@@ -35,7 +40,11 @@ const completeFixture: Fixture<{
   })
   const positionDescriptor = await positionDescriptorFactory.deploy(tokens[0].address)
 
-  const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager')
+  const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager', {
+    libraries: {
+      TickMath: tickMath.address,
+    },
+  })
   const nft = (await positionManagerFactory.deploy(
     factory.address,
     weth9.address,

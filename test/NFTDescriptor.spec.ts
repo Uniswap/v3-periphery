@@ -23,13 +23,19 @@ describe('NFTDescriptor', () => {
     tokens: [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
     nftDescriptor: NFTDescriptorTest
   }> = async (wallets, provider) => {
-    const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
+    const tickMath = await (await ethers.getContractFactory('TickMath')).deploy()
+    const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor', {
+      libraries: {
+        TickMath: tickMath.address,
+      },
+    })
     const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
 
     const tokenFactory = await ethers.getContractFactory('TestERC20Metadata')
     const NFTDescriptorFactory = await ethers.getContractFactory('NFTDescriptorTest', {
       libraries: {
         NFTDescriptor: nftDescriptorLibrary.address,
+        TickMath: tickMath.address,
       },
     })
     const nftDescriptor = (await NFTDescriptorFactory.deploy()) as NFTDescriptorTest

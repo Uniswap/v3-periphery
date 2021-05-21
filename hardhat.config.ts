@@ -4,6 +4,7 @@ import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-etherscan'
 import 'hardhat-contract-sizer'
 import '@eth-optimism/hardhat-ovm'
+import 'hardhat-dependency-compiler'
 
 const LOW_OPTIMIZER_COMPILER_SETTINGS = {
   version: '0.7.6',
@@ -83,5 +84,18 @@ export default {
       'contracts/NonfungibleTokenPositionDescriptor.sol': LOWEST_OPTIMIZER_COMPILER_SETTINGS,
       'contracts/libraries/NFTDescriptor.sol': LOWEST_OPTIMIZER_COMPILER_SETTINGS,
     },
+  },
+  // We use the Hardhat Dependency Compiler plugin to get the artifacts for the Uniswap V3 core contracts. This is
+  // required since converting the V3 Core contracts to be OVM-compatible required introducing additional libraries
+  // (to reduce contract size) which do not get compiled here by default. This plugin compiles the specified contracts
+  // and places them in the `artifacts` folder so they can be referenced by name, as if they existed at the project
+  // root instead of in node_modules. See more at https://hardhat.org/plugins/hardhat-dependency-compiler.html
+  dependencyCompiler: {
+    paths: [
+      '@uniswap/v3-core/contracts/libraries/Position.sol',
+      '@uniswap/v3-core/contracts/libraries/StateMath.sol',
+      '@uniswap/v3-core/contracts/UniswapV3PoolDeployer.sol',
+      '@uniswap/v3-core/contracts/UniswapV3Factory.sol',
+    ],
   },
 }

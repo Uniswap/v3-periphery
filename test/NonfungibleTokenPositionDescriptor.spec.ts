@@ -18,7 +18,12 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     nftPositionDescriptor: NonfungibleTokenPositionDescriptor
   }> = async (wallets, provider) => {
     const tokenFactory = await ethers.getContractFactory('TestERC20')
-    const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
+    const tickMath = await (await ethers.getContractFactory('TickMath')).deploy()
+    const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor', {
+      libraries: {
+        TickMath: tickMath.address,
+      },
+    })
     const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
     const NonfungibleTokenPositionDescriptorFactory = await ethers.getContractFactory(
       'NonfungibleTokenPositionDescriptor',
