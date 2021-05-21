@@ -47,6 +47,7 @@
     "ethereum-waffle": "^3.0.2",
     "ethers": "^5.0.8",
     "hardhat": "^2.2.0",
+    "hardhat-contract-sizer": "^2.0.3",
     "hardhat-typechain": "^0.3.5",
     "is-svg": "^4.3.1",
     "mocha": "^6.2.2",
