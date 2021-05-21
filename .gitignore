@@ -4,3 +4,6 @@ crytic-export/
 node_modules/
 typechain/
 optimism
+
+artifacts-ovm/
+cache-ovm/
