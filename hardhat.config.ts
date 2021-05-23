@@ -11,7 +11,7 @@ const LOW_OPTIMIZER_COMPILER_SETTINGS = {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 2_000,
+      runs: 1,
     },
     metadata: {
       bytecodeHash: 'none',
@@ -24,7 +24,7 @@ const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
   settings: {
     optimizer: {
       enabled: true,
-      runs: 1_000,
+      runs: 1,
     },
     metadata: {
       bytecodeHash: 'none',
