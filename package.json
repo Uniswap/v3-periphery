@@ -53,6 +53,8 @@
     "is-svg": "^4.3.1",
     "mocha": "^6.2.2",
     "mocha-chai-jest-snapshot": "^1.1.0",
+    "patch-package": "^6.4.7",
+    "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.0.5",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "solhint": "^3.2.1",
@@ -68,6 +70,7 @@
     "compile:ovm": "hardhat compile --network optimism",
     "test:ovm": "hardhat test --network optimism",
     "optimism-up": "./scripts/run-optimism.sh",
-    "optimism-down": "cd optimism/ops && docker-compose down -v"
+    "optimism-down": "cd optimism/ops && docker-compose down -v",
+    "postinstall": "patch-package"
   }
 }
