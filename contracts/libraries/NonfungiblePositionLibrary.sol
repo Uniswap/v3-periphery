@@ -117,4 +117,35 @@ library NonfungiblePositionLibrary {
         // subtraction is safe because we checked positionLiquidity is gte params.liquidity
         position.liquidity = positionLiquidity - params.liquidity;
     }
+
+    function increaseLiquidity(
+      INonfungiblePositionManager.Position storage position,
+      IUniswapV3Pool pool,
+      uint128 liquidity)
+      public
+    {
+        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
+
+        // this is now updated to the current transaction
+        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
+
+        position.tokensOwed0 += uint128(
+            FullMath.mulDiv(
+                feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,
+                position.liquidity,
+                FixedPoint128.Q128
+            )
+        );
+        position.tokensOwed1 += uint128(
+            FullMath.mulDiv(
+                feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,
+                position.liquidity,
+                FixedPoint128.Q128
+            )
+        );
+
+        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
+        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
+        position.liquidity += liquidity;
+    }
 }
