@@ -128,17 +128,16 @@ contract NonfungiblePositionManager is
         Position storage position = positions[tokenId];
 
         require(position.poolId != 0, 'Invalid token ID');
-        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
 
         IUniswapV3Pool pool =
             IUniswapV3Pool(
                 PoolAddress.computeAddress(
                     factory,
-                    poolKey
+                    _poolIdToPoolKey[position.poolId]
                 )
             );
 
-        return pool.tokenURI(poolKey, tokenId, position.tickLower, position.tickUpper);
+        return pool.tokenURI(_poolIdToPoolKey[position.poolId], tokenId, position.tickLower, position.tickUpper);
     }
 
     // save bytecode by removing implementation of unused method
@@ -158,11 +157,9 @@ contract NonfungiblePositionManager is
     {
         Position storage position = positions[params.tokenId];
 
-        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, _poolIdToPoolKey[position.poolId]));
 
-         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
-
-        (liquidity, amount0, amount1) = pool.addLiquidity(poolKey,
+        (liquidity, amount0, amount1) = pool.addLiquidity(_poolIdToPoolKey[position.poolId],
             AddLiquidityParams({
                 tickLower: position.tickLower,
                 tickUpper: position.tickUpper,
@@ -190,10 +187,9 @@ contract NonfungiblePositionManager is
     {
         require(params.liquidity > 0);
         Position storage position = positions[params.tokenId];
-        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, _poolIdToPoolKey[position.poolId]));
         
-        (amount0, amount1) = position.decreaseLiquidity(poolKey, pool, params);
+        (amount0, amount1) = position.decreaseLiquidity(_poolIdToPoolKey[position.poolId], pool, params);
         emit DecreaseLiquidity(params.tokenId, params.liquidity, amount0, amount1);
     }
 
@@ -208,11 +204,10 @@ contract NonfungiblePositionManager is
         require(params.amount0Max > 0 || params.amount1Max > 0);
 
         Position storage position = positions[params.tokenId];
-        PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
         
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, _poolIdToPoolKey[position.poolId]));
 
-        (amount0, amount1) = position.collect(poolKey, params, pool);
+        (amount0, amount1) = position.collect(_poolIdToPoolKey[position.poolId], params, pool);
     }
 
     /// @inheritdoc INonfungiblePositionManager
