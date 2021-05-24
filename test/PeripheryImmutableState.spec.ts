@@ -46,7 +46,12 @@ describe('PeripheryImmutableState', () => {
 
   describe('#WETH9', () => {
     it('points to WETH9', async () => {
-      expect(await state.WETH9()).to.eq(weth9.address)
+      // In commit de5a8d0 the WETH address was removed as an input and hardcoded as a constant. This was done
+      // to reduce contract size, so as a result this test would fail because the hardcoded address returned from
+      // `State.WETH9()` will not match the address of WETH that was deployed here. As a result, we modified this
+      // test to hardcode the OVM WETH address here as well, to verify that the contract's WETH address is correct
+      // https://github.com/ScopeLift/uniswap-v3-periphery-ovm/commit/de5a8d08c686471c1d5c29e9632bbe083ca88188
+      expect(await state.WETH9()).to.eq('0x4200000000000000000000000000000000000006')
     })
   })
 
