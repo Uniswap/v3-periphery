@@ -42,7 +42,6 @@ contract NonfungiblePositionManager is
     /// @dev The ID of the next pool that is used for the first time. Skips 0
     uint80 private _nextPoolId = 1;
 
-    using NonfungiblePositionLibrary for Position;
     using NonfungiblePositionLibrary for IUniswapV3Pool;
 
     constructor(
@@ -170,7 +169,7 @@ contract NonfungiblePositionManager is
             })
         );
         
-        position.increaseLiquidity(pool, liquidity);
+        pool.increaseLiquidity(position, liquidity);
 
         emit IncreaseLiquidity(params.tokenId, liquidity, amount0, amount1);
     }
@@ -188,7 +187,7 @@ contract NonfungiblePositionManager is
         Position storage position = positions[params.tokenId];
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, _poolIdToPoolKey[position.poolId]));
         
-        (amount0, amount1) = position.decreaseLiquidity(_poolIdToPoolKey[position.poolId], pool, params);
+        (amount0, amount1) = pool.decreaseLiquidity(position, _poolIdToPoolKey[position.poolId], params);
         emit DecreaseLiquidity(params.tokenId, params.liquidity, amount0, amount1);
     }
 

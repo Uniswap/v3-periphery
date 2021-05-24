@@ -164,9 +164,9 @@ library NonfungiblePositionLibrary {
     }
 
     function decreaseLiquidity(
+      IUniswapV3Pool pool,
       INonfungiblePositionManager.Position storage position,
       PoolAddress.PoolKey memory poolKey,
-      IUniswapV3Pool pool,
       INonfungiblePositionManager.DecreaseLiquidityParams calldata params)
     public 
     returns (uint256 amount0, uint256 amount1) 
@@ -245,8 +245,8 @@ library NonfungiblePositionLibrary {
     }
 
     function increaseLiquidity(
-      INonfungiblePositionManager.Position storage position,
       IUniswapV3Pool pool,
+      INonfungiblePositionManager.Position storage position,
       uint128 liquidity)
       public
     {
