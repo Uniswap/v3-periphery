@@ -98,7 +98,7 @@ contract NonfungiblePositionManager is
         uint80 poolId =
             cachePoolKey(
                 address(pool),
-                PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee})
+                poolKey
             );
 
         positions[tokenId] = Position({
