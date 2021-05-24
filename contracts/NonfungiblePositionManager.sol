@@ -201,13 +201,11 @@ contract NonfungiblePositionManager is
         isAuthorizedForToken(params.tokenId)
         returns (uint256 amount0, uint256 amount1)
     {
-        require(params.amount0Max > 0 || params.amount1Max > 0);
-
         Position storage position = positions[params.tokenId];
         
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, _poolIdToPoolKey[position.poolId]));
 
-        (amount0, amount1) = position.collect(_poolIdToPoolKey[position.poolId], params, pool);
+        (amount0, amount1) = pool.collect(position, _poolIdToPoolKey[position.poolId], params);
     }
 
     /// @inheritdoc INonfungiblePositionManager

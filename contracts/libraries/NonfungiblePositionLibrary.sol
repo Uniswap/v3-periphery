@@ -101,13 +101,15 @@ library NonfungiblePositionLibrary {
     }
 
     function collect(
+      IUniswapV3Pool pool,
       INonfungiblePositionManager.Position storage position,
       PoolAddress.PoolKey memory poolKey,
-      INonfungiblePositionManager.CollectParams calldata params,
-      IUniswapV3Pool pool)
+      INonfungiblePositionManager.CollectParams calldata params)
     public 
     returns (uint256 amount0, uint256 amount1) 
     {
+        require(params.amount0Max > 0 || params.amount1Max > 0);
+
         // allow collecting to the nft position manager address with address 0
         address recipient = params.recipient == address(0) ? address(this) : params.recipient;
 
