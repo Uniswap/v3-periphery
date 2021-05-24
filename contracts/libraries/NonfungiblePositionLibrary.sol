@@ -5,13 +5,20 @@ pragma abicoder v2;
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/FixedPoint128.sol';
 import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
+import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 
 import '../interfaces/INonfungiblePositionManager.sol';
+import '../libraries/LiquidityAmounts.sol';
 import './PositionKey.sol';
 
 /// @title Function for getting the current chain ID
 library NonfungiblePositionLibrary {
     event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1);
+
+    struct MintCallbackData {
+        PoolAddress.PoolKey poolKey;
+        address payer;
+    }
 
     function collect(
       INonfungiblePositionManager.Position storage position,
@@ -116,6 +123,43 @@ library NonfungiblePositionLibrary {
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
         // subtraction is safe because we checked positionLiquidity is gte params.liquidity
         position.liquidity = positionLiquidity - params.liquidity;
+    }
+
+    /// @notice Add liquidity to an initialized pool
+    function addLiquidity(
+      IUniswapV3Pool pool,
+      PoolAddress.PoolKey memory poolKey,
+      INonfungiblePositionManager.AddLiquidityParams memory params)
+        public
+        returns (
+            uint128 liquidity,
+            uint256 amount0,
+            uint256 amount1)
+    {
+        // compute the liquidity amount
+        {
+            (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+            uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(params.tickLower);
+            uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(params.tickUpper);
+
+            liquidity = LiquidityAmounts.getLiquidityForAmounts(
+                sqrtPriceX96,
+                sqrtRatioAX96,
+                sqrtRatioBX96,
+                params.amount0Desired,
+                params.amount1Desired
+            );
+        }
+
+        (amount0, amount1) = pool.mint(
+            params.recipient,
+            params.tickLower,
+            params.tickUpper,
+            liquidity,
+            abi.encode(MintCallbackData({poolKey: poolKey, payer: msg.sender}))
+        );
+
+        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, 'Price slippage check');
     }
 
     function increaseLiquidity(

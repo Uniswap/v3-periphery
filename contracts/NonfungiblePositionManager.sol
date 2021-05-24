@@ -47,6 +47,7 @@ contract NonfungiblePositionManager is
     address private immutable _tokenDescriptor;
 
     using NonfungiblePositionLibrary for Position;
+    using NonfungiblePositionLibrary for IUniswapV3Pool;
 
     constructor(
         address _factory,
@@ -117,12 +118,12 @@ contract NonfungiblePositionManager is
             uint256 amount1
         )
     {
-        IUniswapV3Pool pool;
-        (liquidity, amount0, amount1, pool) = addLiquidity(
+        PoolAddress.PoolKey memory poolKey = PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
+
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
+
+        (liquidity, amount0, amount1) = pool.addLiquidity(poolKey,
             AddLiquidityParams({
-                token0: params.token0,
-                token1: params.token1,
-                fee: params.fee,
                 recipient: address(this),
                 tickLower: params.tickLower,
                 tickUpper: params.tickUpper,
@@ -189,13 +190,13 @@ contract NonfungiblePositionManager is
         Position storage position = _positions[params.tokenId];
 
         PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
+        // PoolAddress.PoolKey memory poolKey =
+        //     PoolAddress.PoolKey({token0: poolKey.token0, token1: poolKey.token1, fee: poolKey.fee});
 
-        IUniswapV3Pool pool;
-        (liquidity, amount0, amount1, pool) = addLiquidity(
+         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
+
+        (liquidity, amount0, amount1) = pool.addLiquidity(poolKey,
             AddLiquidityParams({
-                token0: poolKey.token0,
-                token1: poolKey.token1,
-                fee: poolKey.fee,
                 tickLower: position.tickLower,
                 tickUpper: position.tickUpper,
                 amount0Desired: params.amount0Desired,

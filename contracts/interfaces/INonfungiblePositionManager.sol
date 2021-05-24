@@ -128,6 +128,16 @@ interface INonfungiblePositionManager is
             uint256 amount0,
             uint256 amount1
         );
+    
+    struct AddLiquidityParams {
+        address recipient;
+        int24 tickLower;
+        int24 tickUpper;
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+        uint256 amount0Min;
+        uint256 amount1Min;
+    }
 
     struct IncreaseLiquidityParams {
         uint256 tokenId;
