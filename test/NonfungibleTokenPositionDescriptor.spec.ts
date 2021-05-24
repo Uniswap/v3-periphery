@@ -1,8 +1,9 @@
 import { constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 import { expect } from './shared/expect'
+import { v3RouterFixture } from './shared/externalFixtures'
 import { Fixture } from 'ethereum-waffle'
-import { NonfungibleTokenPositionDescriptor, TestERC20 } from '../typechain'
+import { NonfungiblePositionManager, TestERC20 } from '../typechain'
 
 const DAI = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
@@ -15,8 +16,9 @@ describe('NonfungibleTokenPositionDescriptor', () => {
 
   const nftPositionDescriptorCompleteFixture: Fixture<{
     tokens: [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
-    nftPositionDescriptor: NonfungibleTokenPositionDescriptor
+    nftPositionDescriptor: NonfungiblePositionManager
   }> = async (wallets, provider) => {
+    const { factory } = await v3RouterFixture(wallets, provider)
     const tokenFactory = await ethers.getContractFactory('TestERC20')
     const tickMath = await (await ethers.getContractFactory('TickMath')).deploy()
     const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor', {
@@ -25,14 +27,19 @@ describe('NonfungibleTokenPositionDescriptor', () => {
       },
     })
     const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
-    const NonfungibleTokenPositionDescriptorFactory = await ethers.getContractFactory(
-      'NonfungibleTokenPositionDescriptor',
-      {
-        libraries: {
-          NFTDescriptor: nftDescriptorLibrary.address,
-        },
-      }
-    )
+    const nonfungiblePositionLibraryFactory = await ethers.getContractFactory('NonfungiblePositionLibrary', {
+      libraries: {
+        NFTDescriptor: nftDescriptorLibrary.address,
+        TickMath: tickMath.address,
+      },
+    })
+    const nonfungiblePositionLibrary = await nonfungiblePositionLibraryFactory.deploy()
+
+    const nonfungiblePositionManagerFactory = await ethers.getContractFactory('NonfungiblePositionManager', {
+      libraries: {
+        NonfungiblePositionLibrary: nonfungiblePositionLibrary.address,
+      },
+    })
     const tokens = (await Promise.all([
       tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu25e6 to avoid overflowing
       tokenFactory.deploy(constants.MaxUint256.div(2)),
@@ -42,9 +49,9 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     ])) as [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
-    const nftPositionDescriptor = (await NonfungibleTokenPositionDescriptorFactory.deploy(
-      weth.address
-    )) as NonfungibleTokenPositionDescriptor
+    const nftPositionDescriptor = (await nonfungiblePositionManagerFactory.deploy(
+      factory.address
+    )) as NonfungiblePositionManager
 
     return {
       nftPositionDescriptor,
@@ -52,7 +59,7 @@ describe('NonfungibleTokenPositionDescriptor', () => {
     }
   }
 
-  let nftPositionDescriptor: NonfungibleTokenPositionDescriptor
+  let nftPositionDescriptor: NonfungiblePositionManager
   let tokens: [TestERC20, TestERC20, TestERC20, TestERC20, TestERC20]
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
