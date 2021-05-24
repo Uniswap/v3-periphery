@@ -183,11 +183,9 @@ contract NonfungiblePositionManager is
         checkDeadline(params.deadline)
         returns (uint256 amount0, uint256 amount1)
     {
-        require(params.liquidity > 0);
-        Position storage position = positions[params.tokenId];
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, _poolIdToPoolKey[position.poolId]));
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, _poolIdToPoolKey[positions[params.tokenId].poolId]));
         
-        (amount0, amount1) = pool.decreaseLiquidity(position, _poolIdToPoolKey[position.poolId], params);
+        (amount0, amount1) = pool.decreaseLiquidity(positions[params.tokenId], params);
         emit DecreaseLiquidity(params.tokenId, params.liquidity, amount0, amount1);
     }
 

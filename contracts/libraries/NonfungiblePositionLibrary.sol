@@ -166,11 +166,11 @@ library NonfungiblePositionLibrary {
     function decreaseLiquidity(
       IUniswapV3Pool pool,
       INonfungiblePositionManager.Position storage position,
-      PoolAddress.PoolKey memory poolKey,
       INonfungiblePositionManager.DecreaseLiquidityParams calldata params)
     public 
     returns (uint256 amount0, uint256 amount1) 
     {
+        require(params.liquidity > 0);
         uint128 positionLiquidity = position.liquidity;
         require(positionLiquidity >= params.liquidity);
   
