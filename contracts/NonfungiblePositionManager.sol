@@ -246,44 +246,10 @@ contract NonfungiblePositionManager is
     {
         require(params.liquidity > 0);
         Position storage position = _positions[params.tokenId];
-
-        uint128 positionLiquidity = position.liquidity;
-        require(positionLiquidity >= params.liquidity);
-
         PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
-        (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, params.liquidity);
-
-        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, 'Price slippage check');
-
-        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
-        // this is now updated to the current transaction
-        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
-
-        position.tokensOwed0 +=
-            uint128(amount0) +
-            uint128(
-                FullMath.mulDiv(
-                    feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,
-                    positionLiquidity,
-                    FixedPoint128.Q128
-                )
-            );
-        position.tokensOwed1 +=
-            uint128(amount1) +
-            uint128(
-                FullMath.mulDiv(
-                    feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,
-                    positionLiquidity,
-                    FixedPoint128.Q128
-                )
-            );
-
-        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
-        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
-        // subtraction is safe because we checked positionLiquidity is gte params.liquidity
-        position.liquidity = positionLiquidity - params.liquidity;
-
+        
+        (amount0, amount1) = position.decreaseLiquidity(poolKey, pool, params);
         emit DecreaseLiquidity(params.tokenId, params.liquidity, amount0, amount1);
     }
 

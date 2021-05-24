@@ -13,7 +13,14 @@ import './PositionKey.sol';
 library NonfungiblePositionLibrary {
     event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1);
 
-    function collect(INonfungiblePositionManager.Position storage position, PoolAddress.PoolKey memory poolKey, INonfungiblePositionManager.CollectParams calldata params, IUniswapV3Pool pool) public returns (uint256 amount0, uint256 amount1) {
+    function collect(
+      INonfungiblePositionManager.Position storage position,
+      PoolAddress.PoolKey memory poolKey,
+      INonfungiblePositionManager.CollectParams calldata params,
+      IUniswapV3Pool pool)
+    public 
+    returns (uint256 amount0, uint256 amount1) 
+    {
         // allow collecting to the nft position manager address with address 0
         address recipient = params.recipient == address(0) ? address(this) : params.recipient;
 
@@ -65,5 +72,49 @@ library NonfungiblePositionLibrary {
         (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - amount0Collect, tokensOwed1 - amount1Collect);
 
         emit Collect(params.tokenId, recipient, amount0Collect, amount1Collect);
+    }
+
+    function decreaseLiquidity(
+      INonfungiblePositionManager.Position storage position,
+      PoolAddress.PoolKey memory poolKey,
+      IUniswapV3Pool pool,
+      INonfungiblePositionManager.DecreaseLiquidityParams calldata params)
+    public 
+    returns (uint256 amount0, uint256 amount1) 
+    {
+        uint128 positionLiquidity = position.liquidity;
+        require(positionLiquidity >= params.liquidity);
+  
+        (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, params.liquidity);
+
+        require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, 'Price slippage check');
+
+        bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
+        // this is now updated to the current transaction
+        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
+
+        position.tokensOwed0 +=
+            uint128(amount0) +
+            uint128(
+                FullMath.mulDiv(
+                    feeGrowthInside0LastX128 - position.feeGrowthInside0LastX128,
+                    positionLiquidity,
+                    FixedPoint128.Q128
+                )
+            );
+        position.tokensOwed1 +=
+            uint128(amount1) +
+            uint128(
+                FullMath.mulDiv(
+                    feeGrowthInside1LastX128 - position.feeGrowthInside1LastX128,
+                    positionLiquidity,
+                    FixedPoint128.Q128
+                )
+            );
+
+        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
+        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
+        // subtraction is safe because we checked positionLiquidity is gte params.liquidity
+        position.liquidity = positionLiquidity - params.liquidity;
     }
 }
