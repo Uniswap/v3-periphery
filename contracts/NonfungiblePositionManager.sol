@@ -134,7 +134,7 @@ contract NonfungiblePositionManager is
             IUniswapV3Pool(
                 PoolAddress.computeAddress(
                     factory,
-                    PoolAddress.PoolKey({token0: poolKey.token0, token1: poolKey.token1, fee: poolKey.fee})
+                    poolKey
                 )
             );
 
@@ -159,8 +159,6 @@ contract NonfungiblePositionManager is
         Position storage position = positions[params.tokenId];
 
         PoolAddress.PoolKey memory poolKey = _poolIdToPoolKey[position.poolId];
-        // PoolAddress.PoolKey memory poolKey =
-        //     PoolAddress.PoolKey({token0: poolKey.token0, token1: poolKey.token1, fee: poolKey.fee});
 
          IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
 
