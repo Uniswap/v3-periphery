@@ -26,7 +26,7 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, PoolInitializer, Mu
         address _factory,
         address _WETH9,
         address _nonfungiblePositionManager
-    ) PeripheryImmutableState(_factory, _WETH9) {
+    ) PeripheryImmutableState(_factory) {
         nonfungiblePositionManager = _nonfungiblePositionManager;
     }
 
