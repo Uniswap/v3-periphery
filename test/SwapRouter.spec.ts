@@ -253,24 +253,24 @@ describe('SwapRouter', () => {
             .to.emit(tokens[0], 'Transfer')
             .withArgs(
               trader.address,
-              computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
               5
             )
             .to.emit(tokens[1], 'Transfer')
             .withArgs(
-              computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
               router.address,
               3
             )
             .to.emit(tokens[1], 'Transfer')
             .withArgs(
               router.address,
-              computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
               3
             )
             .to.emit(tokens[2], 'Transfer')
             .withArgs(
-              computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
               trader.address,
               1
             )
@@ -614,20 +614,20 @@ describe('SwapRouter', () => {
           )
             .to.emit(tokens[2], 'Transfer')
             .withArgs(
-              computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
               trader.address,
               1
             )
             .to.emit(tokens[1], 'Transfer')
             .withArgs(
-              computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
-              computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
               3
             )
             .to.emit(tokens[0], 'Transfer')
             .withArgs(
               trader.address,
-              computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
               5
             )
         })

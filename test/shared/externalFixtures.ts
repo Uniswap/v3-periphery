@@ -6,6 +6,7 @@ import { IUniswapV3Factory, IWETH9, MockTimeSwapRouter } from '../../typechain'
 import WETH9 from '../contracts/WETH9.json'
 import { Contract } from '@ethersproject/contracts'
 import { constants } from 'ethers'
+import { v3CoreFactoryFixtureSetup } from './setup'
 
 const wethFixture: Fixture<{ weth9: IWETH9 }> = async ([wallet]) => {
   const weth9 = (await waffle.deployContract(wallet, {
@@ -29,39 +30,9 @@ export const v2FactoryFixture: Fixture<{ factory: Contract }> = async ([wallet])
   return { factory }
 }
 
-const deployLib = async (name: string, libraries?: any): Promise<string> => {
-  const lib = await (await ethers.getContractFactory(name, { libraries })).deploy()
-  return lib.address
-}
-
 const v3CoreFactoryFixture: Fixture<IUniswapV3Factory> = async ([wallet]) => {
-  const position = await deployLib('Position')
-  const oracle = await deployLib('Oracle')
-  const tick = await deployLib('Tick')
-  const tickBitmap = await deployLib('TickBitmap')
-  const tickMath = await deployLib('TickMath')
-  const stateLibs = {
-    Oracle: oracle,
-    TickBitmap: tickBitmap,
-    TickMath: tickMath,
-  }
-  const stateMath = await deployLib('StateMath', stateLibs)
-
-  const libraries = {
-    Position: position,
-    Oracle: oracle,
-    StateMath: stateMath,
-    Tick: tick,
-    TickMath: tickMath,
-  }
-
-  const factoryFactory = await ethers.getContractFactory('UniswapV3Factory', {
-    libraries: {
-      UniswapV3PoolDeployer: await deployLib('UniswapV3PoolDeployer', libraries),
-    },
-  })
-  const factory = (await factoryFactory.deploy()) as IUniswapV3Factory
-  return factory.connect(wallet)
+  // @ts-expect-error We don't need to pass the standard fixture inputs since v3CoreFactoryFixtureSetup has defaults
+  return v3CoreFactoryFixtureSetup()
 }
 
 export const v3RouterFixture: Fixture<{

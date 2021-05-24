@@ -100,7 +100,7 @@ describe('TickLens', () => {
 
     beforeEach(async () => {
       await createPool(tokens[0].address, tokens[1].address)
-      poolAddress = computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM)
+      poolAddress = await computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM)
     })
 
     beforeEach(async () => {

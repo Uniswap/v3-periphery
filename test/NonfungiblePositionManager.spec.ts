@@ -76,7 +76,7 @@ describe('NonfungiblePositionManager', () => {
 
   describe('#createAndInitializePoolIfNecessary', () => {
     it('creates the pool at the expected address', async () => {
-      const expectedAddress = computePoolAddress(
+      const expectedAddress = await computePoolAddress(
         factory.address,
         [tokens[0].address, tokens[1].address],
         FeeAmount.MEDIUM
@@ -104,7 +104,7 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('works if pool is created but not initialized', async () => {
-      const expectedAddress = computePoolAddress(
+      const expectedAddress = await computePoolAddress(
         factory.address,
         [tokens[0].address, tokens[1].address],
         FeeAmount.MEDIUM
@@ -121,7 +121,7 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('works if pool is created and initialized', async () => {
-      const expectedAddress = computePoolAddress(
+      const expectedAddress = await computePoolAddress(
         factory.address,
         [tokens[0].address, tokens[1].address],
         FeeAmount.MEDIUM
@@ -732,7 +732,11 @@ describe('NonfungiblePositionManager', () => {
 
     it('transfers tokens owed from burn', async () => {
       await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0, deadline: 1 })
-      const poolAddress = computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM)
+      const poolAddress = await computePoolAddress(
+        factory.address,
+        [tokens[0].address, tokens[1].address],
+        FeeAmount.MEDIUM
+      )
       await expect(
         nft.connect(other).collect({
           tokenId,
@@ -1092,7 +1096,7 @@ describe('NonfungiblePositionManager', () => {
 
     it('executes all the actions', async () => {
       const pool = poolAtAddress(
-        computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+        await computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
         wallet
       )
       await expect(
@@ -1237,7 +1241,7 @@ describe('NonfungiblePositionManager', () => {
       })
 
       it('actually collected', async () => {
-        const poolAddress = computePoolAddress(
+        const poolAddress = await computePoolAddress(
           factory.address,
           [tokens[0].address, tokens[1].address],
           FeeAmount.MEDIUM
