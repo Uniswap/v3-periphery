@@ -6,13 +6,93 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/FixedPoint128.sol';
 import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+import '@uniswap/lib/contracts/libraries/SafeERC20Namer.sol';
 
+import '../interfaces/IERC20Metadata.sol';
 import '../interfaces/INonfungiblePositionManager.sol';
-import '../libraries/LiquidityAmounts.sol';
+import './LiquidityAmounts.sol';
+import './PoolAddress.sol';
 import './PositionKey.sol';
+
+import './ChainId.sol';
+import './NFTDescriptor.sol';
+import './TokenRatioSortOrder.sol';
 
 /// @title Function for getting the current chain ID
 library NonfungiblePositionLibrary {
+
+    address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    address public constant TBTC = 0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa;
+    address public constant WBTC = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address public constant WETH9 = 0x4200000000000000000000000000000000000006;
+
+     /// @notice Produces the URI describing a particular token ID for a position manager
+    /// @dev Note this URI may be a data: URI with the JSON contents directly inlined
+    /// @param tokenId The ID of the token for which to produce a description, which may not be valid
+    /// @return The URI of the ERC721-compliant metadata
+    function tokenURI(IUniswapV3Pool pool, PoolAddress.PoolKey memory poolKey, uint256 tokenId, int24 tickLower, int24 tickUpper)
+        public
+        view
+        returns (string memory)
+    {
+        bool _flipRatio = flipRatio(poolKey.token0, poolKey.token1, ChainId.get());
+        address quoteTokenAddress = !_flipRatio ? poolKey.token1 : poolKey.token0;
+        address baseTokenAddress = !_flipRatio ? poolKey.token0 : poolKey.token1;
+        (, int24 tick, , , , , ) = pool.slot0();
+
+        return
+            NFTDescriptor.constructTokenURI(
+                NFTDescriptor.ConstructTokenURIParams({
+                    tokenId: tokenId,
+                    quoteTokenAddress: quoteTokenAddress,
+                    baseTokenAddress: baseTokenAddress,
+                    quoteTokenSymbol: SafeERC20Namer.tokenSymbol(quoteTokenAddress),
+                    baseTokenSymbol: SafeERC20Namer.tokenSymbol(baseTokenAddress),
+                    quoteTokenDecimals: IERC20Metadata(quoteTokenAddress).decimals(),
+                    baseTokenDecimals: IERC20Metadata(baseTokenAddress).decimals(),
+                    flipRatio: _flipRatio,
+                    tickLower: tickLower,
+                    tickUpper: tickUpper,
+                    tickCurrent: tick,
+                    tickSpacing: pool.tickSpacing(),
+                    fee: poolKey.fee,
+                    poolAddress: address(pool)
+                })
+            );
+    }
+
+    function flipRatio(
+        address token0,
+        address token1,
+        uint256 chainId
+    ) public view returns (bool) {
+        return tokenRatioPriority(token0, chainId) > tokenRatioPriority(token1, chainId);
+    }
+
+    function tokenRatioPriority(address token, uint256 chainId) public view returns (int256) {
+        if (token == WETH9) {
+            return TokenRatioSortOrder.DENOMINATOR;
+        }
+        if (chainId == 1) {
+            if (token == USDC) {
+                return TokenRatioSortOrder.NUMERATOR_MOST;
+            } else if (token == USDT) {
+                return TokenRatioSortOrder.NUMERATOR_MORE;
+            } else if (token == DAI) {
+                return TokenRatioSortOrder.NUMERATOR;
+            } else if (token == TBTC) {
+                return TokenRatioSortOrder.DENOMINATOR_MORE;
+            } else if (token == WBTC) {
+                return TokenRatioSortOrder.DENOMINATOR_MOST;
+            } else {
+                return 0;
+            }
+        }
+        return 0;
+    }
+
     event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1);
 
     struct MintCallbackData {
