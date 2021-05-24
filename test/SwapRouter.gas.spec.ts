@@ -1,6 +1,6 @@
 import { Fixture } from 'ethereum-waffle'
 import { BigNumber, constants, ContractTransaction } from 'ethers'
-import { ethers, waffle } from 'hardhat'
+import { artifacts, ethers, waffle } from 'hardhat'
 import { IUniswapV3Pool, IWETH9, MockTimeSwapRouter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
@@ -11,7 +11,7 @@ import { encodePath } from './shared/path'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
 
-import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
+const IUniswapV3PoolABI = artifacts.readArtifactSync('UniswapV3Pool').abi
 
 describe('SwapRouter gas tests', () => {
   const wallets = waffle.provider.getWallets()

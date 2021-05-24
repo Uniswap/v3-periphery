@@ -1,5 +1,5 @@
 import { BigNumberish, constants } from 'ethers'
-import { waffle, ethers } from 'hardhat'
+import { artifacts, waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
 import {
@@ -23,7 +23,7 @@ import { getMaxTick, getMinTick } from './shared/ticks'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { sortedTokens } from './shared/tokenSort'
 
-import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
+const IUniswapV3PoolABI = artifacts.readArtifactSync('UniswapV3Pool').abi
 
 describe('NonfungiblePositionManager', () => {
   const wallets = waffle.provider.getWallets()
