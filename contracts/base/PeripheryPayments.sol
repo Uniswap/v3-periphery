@@ -56,9 +56,8 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
         address recipient,
         uint256 value
     ) internal {
-        if (token == WETH9 && address(this).balance >= value) {
+        if (token == WETH9 && IWETH9(WETH9).balanceOf(address(this)) >= value) {
             // pay with WETH9
-            IWETH9(WETH9).deposit{value: value}(); // wrap only what is needed to pay
             IWETH9(WETH9).transfer(recipient, value);
         } else if (payer == address(this)) {
             // pay with tokens already in the contract (for the exact input multihop case)
