@@ -33,23 +33,20 @@ const completeFixture: Fixture<{
     },
   })
   const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
-  const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor', {
+  const nonfungiblePositionLibraryFactory = await ethers.getContractFactory('NonfungiblePositionLibrary', {
     libraries: {
       NFTDescriptor: nftDescriptorLibrary.address,
-    },
-  })
-  const positionDescriptor = await positionDescriptorFactory.deploy(tokens[0].address)
-
-  const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager', {
-    libraries: {
       TickMath: tickMath.address,
     },
   })
-  const nft = (await positionManagerFactory.deploy(
-    factory.address,
-    weth9.address,
-    positionDescriptor.address
-  )) as MockTimeNonfungiblePositionManager
+  const nonfungiblePositionLibrary = await nonfungiblePositionLibraryFactory.deploy()
+
+  const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager', {
+    libraries: {
+      NonfungiblePositionLibrary: nonfungiblePositionLibrary.address,
+    },
+  })
+  const nft = (await positionManagerFactory.deploy(factory.address)) as MockTimeNonfungiblePositionManager
 
   tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
