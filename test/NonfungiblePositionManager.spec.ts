@@ -231,9 +231,7 @@ describe('NonfungiblePositionManager', () => {
       expect(await nft.balanceOf(other.address)).to.eq(1)
       expect(await nft.tokenOfOwnerByIndex(other.address, 0)).to.eq(1)
       const {
-        fee,
-        token0,
-        token1,
+        poolId,
         tickLower,
         tickUpper,
         liquidity,
@@ -242,6 +240,11 @@ describe('NonfungiblePositionManager', () => {
         feeGrowthInside0LastX128,
         feeGrowthInside1LastX128,
       } = await nft.positions(1)
+      const {
+        fee,
+        token0,
+        token1
+      } = await nft.poolIdToPoolKey(poolId)
       expect(token0).to.eq(tokens[0].address)
       expect(token1).to.eq(tokens[1].address)
       expect(fee).to.eq(FeeAmount.MEDIUM)

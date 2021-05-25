@@ -32,7 +32,7 @@ contract NonfungiblePositionManager is
     mapping(address => uint80) private _poolIds;
 
     /// @dev Pool keys by pool ID, to save on SSTOREs for position data
-    mapping(uint80 => PoolAddress.PoolKey) private _poolIdToPoolKey;
+    mapping(uint80 => PoolAddress.PoolKey) public poolIdToPoolKey;
 
     /// @dev The token ID position data
     mapping(uint256 => Position) public positions;
@@ -54,7 +54,7 @@ contract NonfungiblePositionManager is
         poolId = _poolIds[pool];
         if (poolId == 0) {
             _poolIds[pool] = (poolId = _nextPoolId++);
-            _poolIdToPoolKey[poolId] = poolKey;
+            poolIdToPoolKey[poolId] = poolKey;
         }
     }
 
@@ -131,11 +131,11 @@ contract NonfungiblePositionManager is
             IUniswapV3Pool(
                 PoolAddress.computeAddress(
                     factory,
-                    _poolIdToPoolKey[position.poolId]
+                    poolIdToPoolKey[position.poolId]
                 )
             );
 
-        return pool.tokenURI(_poolIdToPoolKey[position.poolId], tokenId, position.tickLower, position.tickUpper);
+        return pool.tokenURI(poolIdToPoolKey[position.poolId], tokenId, position.tickLower, position.tickUpper);
     }
 
     // save bytecode by removing implementation of unused method
@@ -155,9 +155,9 @@ contract NonfungiblePositionManager is
     {
         Position storage position = positions[params.tokenId];
 
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, _poolIdToPoolKey[position.poolId]));
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[position.poolId]));
 
-        (liquidity, amount0, amount1) = pool.addLiquidity(_poolIdToPoolKey[position.poolId],
+        (liquidity, amount0, amount1) = pool.addLiquidity(poolIdToPoolKey[position.poolId],
             AddLiquidityParams({
                 tickLower: position.tickLower,
                 tickUpper: position.tickUpper,
@@ -183,7 +183,7 @@ contract NonfungiblePositionManager is
         checkDeadline(params.deadline)
         returns (uint256 amount0, uint256 amount1)
     {
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, _poolIdToPoolKey[positions[params.tokenId].poolId]));
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[positions[params.tokenId].poolId]));
         
         (amount0, amount1) = pool.decreaseLiquidity(positions[params.tokenId], params);
         emit DecreaseLiquidity(params.tokenId, params.liquidity, amount0, amount1);
@@ -199,9 +199,9 @@ contract NonfungiblePositionManager is
     {
         Position storage position = positions[params.tokenId];
         
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, _poolIdToPoolKey[position.poolId]));
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[position.poolId]));
 
-        (amount0, amount1) = pool.collect(position, _poolIdToPoolKey[position.poolId], params);
+        (amount0, amount1) = pool.collect(position, poolIdToPoolKey[position.poolId], params);
     }
 
     /// @inheritdoc INonfungiblePositionManager
