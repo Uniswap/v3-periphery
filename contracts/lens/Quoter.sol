@@ -103,7 +103,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
     }
 
     /// @inheritdoc IQuoter
-    function quoteExactInput(bytes memory path, uint256 amountIn) external override returns (uint256 amountOut) {
+    function quoteExactInput(bytes memory path, uint256 amountIn) public override returns (uint256 amountOut) {
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
 
@@ -150,7 +150,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
     }
 
     /// @inheritdoc IQuoter
-    function quoteExactOutput(bytes memory path, uint256 amountOut) external override returns (uint256 amountIn) {
+    function quoteExactOutput(bytes memory path, uint256 amountOut) public override returns (uint256 amountIn) {
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
 
