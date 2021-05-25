@@ -11,6 +11,7 @@ interface IQuoterWithGas {
     /// @param path The path of the swap, i.e. each token pair and the pool fee
     /// @param amountIn The amount of the first token to swap
     /// @return amountOut The amount of the last token that would be received
+    /// @return gasUsed The estimate for the gas used by the swap
     function quoteExactInputWithGas(bytes memory path, uint256 amountIn) external returns (uint256 amountOut, uint256 gasUsed);
 
     /// @notice Returns the amount out received for a given exact input but for a swap of a single pool
@@ -20,6 +21,7 @@ interface IQuoterWithGas {
     /// @param amountIn The desired input amount
     /// @param sqrtPriceLimitX96 The price limit of the pool that cannot be exceeded by the swap
     /// @return amountOut The amount of `tokenOut` that would be received
+    /// @return gasUsed The estimate for the gas used by the swap
     function quoteExactInputSingleWithGas(
         address tokenIn,
         address tokenOut,
@@ -32,6 +34,7 @@ interface IQuoterWithGas {
     /// @param path The path of the swap, i.e. each token pair and the pool fee
     /// @param amountOut The amount of the last token to receive
     /// @return amountIn The amount of first token required to be paid
+    /// @return gasUsed The estimate for the gas used by the swap
     function quoteExactOutputWithGas(bytes memory path, uint256 amountOut) external returns (uint256 amountIn, uint256 gasUsed);
 
     /// @notice Returns the amount in required to receive the given exact output amount but for a swap of a single pool
@@ -41,6 +44,7 @@ interface IQuoterWithGas {
     /// @param amountOut The desired output amount
     /// @param sqrtPriceLimitX96 The price limit of the pool that cannot be exceeded by the swap
     /// @return amountIn The amount required as the input for the swap in order to receive `amountOut`
+    /// @return gasUsed The estimate for the gas used by the swap
     function quoteExactOutputSingleWithGas(
         address tokenIn,
         address tokenOut,

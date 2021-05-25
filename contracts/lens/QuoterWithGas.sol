@@ -7,7 +7,7 @@ import './Quoter.sol';
 
 
 /// @title Provides quotes for swaps and an estimate for gas usage.
-/// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
+/// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap. Also provides a gas usage estimate for the swap.
 /// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
 /// the swap and check the amounts in the callback.
 contract QuoterWithGas is Quoter, IQuoterWithGas {
