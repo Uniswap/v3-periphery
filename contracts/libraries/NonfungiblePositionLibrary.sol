@@ -28,7 +28,28 @@ library NonfungiblePositionLibrary {
     address public constant WBTC = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
     address public constant WETH9 = 0x4200000000000000000000000000000000000006;
 
-     /// @notice Produces the URI describing a particular token ID for a position manager
+    /// @notice Emitted when liquidity is increased for a position NFT
+    /// @dev Also emitted when a token is minted
+    /// @param tokenId The ID of the token for which liquidity was increased
+    /// @param liquidity The amount by which liquidity for the NFT position was increased
+    /// @param amount0 The amount of token0 that was paid for the increase in liquidity
+    /// @param amount1 The amount of token1 that was paid for the increase in liquidity
+    event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
+    /// @notice Emitted when liquidity is decreased for a position NFT
+    /// @param tokenId The ID of the token for which liquidity was decreased
+    /// @param liquidity The amount by which liquidity for the NFT position was decreased
+    /// @param amount0 The amount of token0 that was accounted for the decrease in liquidity
+    /// @param amount1 The amount of token1 that was accounted for the decrease in liquidity
+    event DecreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
+    /// @notice Emitted when tokens are collected for a position NFT
+    /// @dev The amounts reported may not be exactly equivalent to the amounts transferred, due to rounding behavior
+    /// @param tokenId The ID of the token for which underlying tokens were collected
+    /// @param recipient The address of the account that received the collected tokens
+    /// @param amount0 The amount of token0 owed to the position that was collected
+    /// @param amount1 The amount of token1 owed to the position that was collected
+    event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1);
+
+    /// @notice Produces the URI describing a particular token ID for a position manager
     /// @dev Note this URI may be a data: URI with the JSON contents directly inlined
     /// @param tokenId The ID of the token for which to produce a description, which may not be valid
     /// @return The URI of the ERC721-compliant metadata
@@ -92,9 +113,6 @@ library NonfungiblePositionLibrary {
         }
         return 0;
     }
-
-    event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1);
-    event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
 
     struct MintCallbackData {
         PoolAddress.PoolKey poolKey;
@@ -206,6 +224,8 @@ library NonfungiblePositionLibrary {
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
         // subtraction is safe because we checked positionLiquidity is gte params.liquidity
         position.liquidity = positionLiquidity - params.liquidity;
+
+        emit DecreaseLiquidity(params.tokenId, params.liquidity, amount0, amount1);
     }
 
     /// @notice Add liquidity to an initialized pool

@@ -112,7 +112,7 @@ contract NonfungiblePositionManager is
             tokensOwed1: 0
         });
 
-        emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);
+        // emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);
     }
 
     modifier isAuthorizedForToken(uint256 tokenId) {
@@ -172,7 +172,6 @@ contract NonfungiblePositionManager is
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[positions[params.tokenId].poolId]));
         
         (amount0, amount1) = pool.decreaseLiquidity(positions[params.tokenId], params);
-        emit DecreaseLiquidity(params.tokenId, params.liquidity, amount0, amount1);
     }
 
     /// @inheritdoc INonfungiblePositionManager
