@@ -94,6 +94,7 @@ library NonfungiblePositionLibrary {
     }
 
     event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1);
+    event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
 
     struct MintCallbackData {
         PoolAddress.PoolKey poolKey;
@@ -246,10 +247,24 @@ library NonfungiblePositionLibrary {
 
     function increaseLiquidity(
       IUniswapV3Pool pool,
+      PoolAddress.PoolKey memory poolKey,
       INonfungiblePositionManager.Position storage position,
-      uint128 liquidity)
+      INonfungiblePositionManager.IncreaseLiquidityParams calldata params)
       public
     {
+        (uint128 liquidity, uint256 amount0, uint256 amount1) = addLiquidity(pool,
+            poolKey,
+            INonfungiblePositionManager.AddLiquidityParams({
+                tickLower: position.tickLower,
+                tickUpper: position.tickUpper,
+                amount0Desired: params.amount0Desired,
+                amount1Desired: params.amount1Desired,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min,
+                recipient: address(this)
+            })
+        );
+
         bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
 
         // this is now updated to the current transaction
@@ -273,5 +288,7 @@ library NonfungiblePositionLibrary {
         position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
         position.liquidity += liquidity;
+
+        emit IncreaseLiquidity(params.tokenId, liquidity, amount0, amount1);
     }
 }

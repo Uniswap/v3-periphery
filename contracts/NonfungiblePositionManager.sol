@@ -156,22 +156,8 @@ contract NonfungiblePositionManager is
         Position storage position = positions[params.tokenId];
 
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[position.poolId]));
-
-        (liquidity, amount0, amount1) = pool.addLiquidity(poolIdToPoolKey[position.poolId],
-            AddLiquidityParams({
-                tickLower: position.tickLower,
-                tickUpper: position.tickUpper,
-                amount0Desired: params.amount0Desired,
-                amount1Desired: params.amount1Desired,
-                amount0Min: params.amount0Min,
-                amount1Min: params.amount1Min,
-                recipient: address(this)
-            })
-        );
         
-        pool.increaseLiquidity(position, liquidity);
-
-        emit IncreaseLiquidity(params.tokenId, liquidity, amount0, amount1);
+        pool.increaseLiquidity(poolIdToPoolKey[position.poolId], position, params);
     }
 
     /// @inheritdoc INonfungiblePositionManager
