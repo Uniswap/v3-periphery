@@ -296,7 +296,6 @@ export default {
   dependencyCompiler: {
     paths: [
       '@uniswap/v3-core/contracts/libraries/Position.sol',
-      '@uniswap/v3-core/contracts/libraries/StateMath.sol',
       '@uniswap/v3-core/contracts/UniswapV3PoolDeployer.sol',
       '@uniswap/v3-core/contracts/UniswapV3Factory.sol',
     ],

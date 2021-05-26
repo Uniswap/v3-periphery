@@ -38,19 +38,15 @@ export const v3CoreFactoryFixtureSetup: Fixture<IUniswapV3Factory> = async () =>
   const tick = await deployLib('Tick')
   const tickBitmap = await deployLib('TickBitmap')
   const tickMath = await deployLib('TickMath')
-  const stateLibs = {
-    Oracle: oracle,
-    TickBitmap: tickBitmap,
-    TickMath: tickMath,
-  }
-  const stateMath = await deployLib('StateMath', stateLibs)
+  const swapMath = await deployLib('SwapMath')
 
   const libraries = {
     Position: position,
     Oracle: oracle,
-    StateMath: stateMath,
     Tick: tick,
     TickMath: tickMath,
+    TickBitmap: tickBitmap,
+    SwapMath: swapMath,
   }
 
   const poolFactory = await ethers.getContractFactory('UniswapV3Pool', { libraries })

@@ -1013,7 +1013,7 @@
 
 "@uniswap/v3-core@https://github.com/ScopeLift/uniswap-v3-core-ovm.git#get-ovm-contracts-deployed":
   version "1.0.0"
-  resolved "https://github.com/ScopeLift/uniswap-v3-core-ovm.git#a30ce7236a210712be575e37798995f39fdcb1e3"
+  resolved "https://github.com/ScopeLift/uniswap-v3-core-ovm.git#b42f49b90c6195aabcc2ced477620feb9b075819"
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
