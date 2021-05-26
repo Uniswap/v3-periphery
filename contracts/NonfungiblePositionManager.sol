@@ -89,9 +89,6 @@ contract NonfungiblePositionManager is
 
         _mint(params.recipient, (tokenId = _nextId++));
 
-        bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);
-        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
-
         // idempotent set
         uint80 poolId =
             cachePoolKey(
@@ -99,20 +96,8 @@ contract NonfungiblePositionManager is
                 poolKey
             );
 
-        positions[tokenId] = Position({
-            nonce: 0,
-            operator: address(0),
-            poolId: poolId,
-            tickLower: params.tickLower,
-            tickUpper: params.tickUpper,
-            liquidity: liquidity,
-            feeGrowthInside0LastX128: feeGrowthInside0LastX128,
-            feeGrowthInside1LastX128: feeGrowthInside1LastX128,
-            tokensOwed0: 0,
-            tokensOwed1: 0
-        });
-
-        // emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);
+        Position storage position = positions[tokenId];
+        pool.updatePosition(params, position, tokenId, liquidity, amount0, amount1, poolId);
     }
 
     function isAuthorizedForToken(uint256 tokenId) private view {

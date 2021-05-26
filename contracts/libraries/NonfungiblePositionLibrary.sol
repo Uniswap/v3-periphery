@@ -311,4 +311,32 @@ library NonfungiblePositionLibrary {
 
         emit IncreaseLiquidity(params.tokenId, liquidity, amount0, amount1);
     }
+
+    function updatePosition(
+        IUniswapV3Pool pool,
+        INonfungiblePositionManager.MintParams calldata params,
+        INonfungiblePositionManager.Position storage position,
+        uint256 tokenId,
+        uint128 liquidity,
+        uint256 amount0,
+        uint256 amount1,
+        uint80 poolId) 
+        public 
+    {
+        bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);
+        (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
+
+        position.nonce = 0;
+        position.operator = address(0);
+        position.poolId = poolId;
+        position.tickLower = params.tickLower;
+        position.tickUpper = params.tickUpper;
+        position.liquidity = liquidity;
+        position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
+        position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
+        position.tokensOwed0 = 0;
+        position.tokensOwed1 = 0;
+
+        emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);
+    }
 }
