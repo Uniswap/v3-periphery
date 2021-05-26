@@ -115,9 +115,8 @@ contract NonfungiblePositionManager is
         // emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);
     }
 
-    modifier isAuthorizedForToken(uint256 tokenId) {
+    function isAuthorizedForToken(uint256 tokenId) private view {
         require(_isApprovedOrOwner(msg.sender, tokenId), 'Not approved');
-        _;
     }
 
     function tokenURI(uint256 tokenId) public view override(ERC721, IERC721Metadata) returns (string memory) {
@@ -165,10 +164,11 @@ contract NonfungiblePositionManager is
         external
         payable
         override
-        isAuthorizedForToken(params.tokenId)
         checkDeadline(params.deadline)
         returns (uint256 amount0, uint256 amount1)
     {
+        isAuthorizedForToken(params.tokenId);
+
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[positions[params.tokenId].poolId]));
         
         (amount0, amount1) = pool.decreaseLiquidity(positions[params.tokenId], params);
@@ -179,9 +179,10 @@ contract NonfungiblePositionManager is
         external
         payable
         override
-        isAuthorizedForToken(params.tokenId)
         returns (uint256 amount0, uint256 amount1)
     {
+        isAuthorizedForToken(params.tokenId);
+
         Position storage position = positions[params.tokenId];
         
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[position.poolId]));
@@ -190,7 +191,9 @@ contract NonfungiblePositionManager is
     }
 
     /// @inheritdoc INonfungiblePositionManager
-    function burn(uint256 tokenId) external payable override isAuthorizedForToken(tokenId) {
+    function burn(uint256 tokenId) external payable override {
+        isAuthorizedForToken(tokenId);
+
         Position storage position = positions[tokenId];
         require(position.liquidity == 0 && position.tokensOwed0 == 0 && position.tokensOwed1 == 0, 'Not cleared');
         delete positions[tokenId];
