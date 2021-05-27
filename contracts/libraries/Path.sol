@@ -2,7 +2,6 @@
 pragma solidity >=0.6.0;
 
 import './BytesLib.sol';
-import "hardhat/console.sol";
 
 /// @title Functions for manipulating path data for multihop swaps
 library Path {
@@ -27,7 +26,11 @@ library Path {
         return path.length >= MULTIPLE_POOLS_MIN_LENGTH;
     }
 
+    /// @notice Returns the number of pools in the path
+    /// @param path The encoded swap path
+    /// @return The number of pools in the path
     function numPools(bytes memory path) internal pure returns (uint256) {
+        // Ignore the first token address. From then on every fee and token offset indicates a pool.
         return ((path.length - ADDR_SIZE) / NEXT_OFFSET);
     }
 

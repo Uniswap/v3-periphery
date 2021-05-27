@@ -95,12 +95,19 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         return abi.decode(reason, (uint256, uint160, int24));
     }
 
-    function handleRevert(bytes memory reason, IUniswapV3Pool pool) private view returns (uint256 amount, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed) {
+    function handleRevert(bytes memory reason, IUniswapV3Pool pool) private view returns (
+        uint256 amount, 
+        uint160 sqrtPriceX96After, 
+        uint32 initializedTicksCrossed
+    ) {
         int24 tickBefore;
         int24 tickAfter;
         (,tickBefore,,,,,) = pool.slot0();
         (amount, sqrtPriceX96After, tickAfter) = parseRevertReason(reason);
 
+        // Count the number of initialized ticks crossed by iterating through the tick bitmap.
+
+        // Get the key and offset in the tick bitmap before and after the swap.
         int24 compressedBefore = tickBefore / pool.tickSpacing();
         int16 wordPos = int16(compressedBefore >> 8);
         uint8 bitPos = uint8(compressedBefore % 256);
@@ -122,6 +129,7 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
                 uint256 masked = pool.tickBitmap(wordPos) & mask;
                 initializedTicksCrossed += countBits(masked);
                 wordPos++;
+                // Reset our mask so we consider all bits on the next iteration.
                 mask = ~(uint256(0));
             }
         } else {
@@ -137,6 +145,7 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
                 uint256 masked = pool.tickBitmap(wordPos) & mask;
                 initializedTicksCrossed += countBits(masked);
                 wordPos--;
+                // Reset our mask so we consider all bits on the next iteration.
                 mask = ~(uint256(0));
             }
         }

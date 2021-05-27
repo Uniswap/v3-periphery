@@ -4,6 +4,8 @@ pragma abicoder v2;
 
 /// @title Quoter Interface
 /// @notice Supports quoting the calculated amounts from exact input or exact output swaps
+/// @notice For each pool also tells you the number of initialized ticks crossed and the sqrt price of the pool after the swap.
+/// @notice Also provides an estimate of the gas used by the swap.
 /// @dev These functions are not marked view because they rely on calling non-view functions and reverting
 /// to compute the result. They are also not gas efficient and should not be called on-chain.
 interface IQuoterWithGas {
@@ -69,7 +71,7 @@ interface IQuoterWithGas {
     );
 
     /// @notice Returns the amount in required for a given exact output swap without executing the swap
-    /// @param path The path of the swap, i.e. each token pair and the pool fee
+    /// @param path The path of the swap, i.e. each token pair and the pool fee. Path must be provided in reverse order
     /// @param amountOut The amount of the last token to receive
     /// @return amountIn The amount of first token required to be paid
     /// @return sqrtPriceX96AfterList List of the sqrt price after the swap for each pool in the path

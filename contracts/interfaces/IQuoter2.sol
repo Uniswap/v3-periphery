@@ -43,7 +43,7 @@ interface IQuoter2 {
     ) external returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed);
 
     /// @notice Returns the amount in required for a given exact output swap without executing the swap
-    /// @param path The path of the swap, i.e. each token pair and the pool fee
+    /// @param path The path of the swap, i.e. each token pair and the pool fee. Path must be provided in reverse order
     /// @param amountOut The amount of the last token to receive
     /// @return amountIn The amount of first token required to be paid
     /// @return sqrtPriceX96AfterList List of the sqrt price after the swap for each pool in the path
