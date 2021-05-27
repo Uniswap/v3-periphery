@@ -3,12 +3,12 @@ import { constants } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { MockTimeNonfungiblePositionManager, QuoterWithGas, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
-import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
+import { FeeAmount, MaxUint128 } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
-import { getMaxTick, getMinTick } from './shared/ticks'
+import { createPool, createPoolWithMultiplePositions } from './shared/quoter'
 
 describe('QuoterWithGas', () => {
   const wallets = waffle.provider.getWallets()
@@ -57,184 +57,83 @@ describe('QuoterWithGas', () => {
   })
 
   describe('quotes', () => {
-    async function createPool(tokenAddressA: string, tokenAddressB: string) {
-      if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
-        [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
-
-      await nft.createAndInitializePoolIfNecessary(
-        tokenAddressA,
-        tokenAddressB,
-        FeeAmount.MEDIUM,
-        encodePriceSqrt(1, 1)
-      )
-
-      const liquidityParams = {
-        token0: tokenAddressA,
-        token1: tokenAddressB,
-        fee: FeeAmount.MEDIUM,
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: wallet.address,
-        amount0Desired: 1000000,
-        amount1Desired: 1000000,
-        amount0Min: 0,
-        amount1Min: 0,
-        deadline: 1,
-      }
-
-      return nft.mint(liquidityParams)
-    }
-
     beforeEach(async () => {
-      await createPool(tokens[0].address, tokens[1].address)
-      await createPool(tokens[1].address, tokens[2].address)
+      await createPool(nft, wallet, tokens[0].address, tokens[1].address)
+      await createPool(nft, wallet, tokens[1].address, tokens[2].address)
+      await createPoolWithMultiplePositions(nft, wallet, tokens[0].address, tokens[2].address)
     })
 
     describe('#quoteExactInputWithGas', () => {
-      it('0 -> 1', async () => {
-        const { amountOut, gasUsed } = await quoter.callStatic.quoteExactInputWithGas(
-          encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
-          3
-        )
-
-        expect(amountOut).to.eq(1)
-        expect(gasUsed).to.eq(103507);
-      })
-
-      it('1 -> 0', async () => {
-        const { amountOut, gasUsed } = await quoter.callStatic.quoteExactInputWithGas(
-          encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
-          3
-        )
-
-        expect(amountOut).to.eq(1)
-        expect(gasUsed).to.eq(89600);
-      })
-
-      it('0 -> 1 -> 2', async () => {
-        const { amountOut, gasUsed } = await quoter.callStatic.quoteExactInputWithGas(
+      it('0 -> 2 -> 1 includes gas', async () => {
+        const { amountOut, initializedTicksCrossedList, sqrtPriceX96AfterList, gasUsed } = await quoter.callStatic.quoteExactInputWithGas(
           encodePath(
-            tokens.map((token) => token.address),
+            [tokens[0].address, tokens[2].address, tokens[1].address],
             [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
           ),
-          5
+          10000
         )
 
-        expect(amountOut).to.eq(1)
-        expect(gasUsed).to.eq(201093);
-      })
-
-      it('2 -> 1 -> 0', async () => {
-        const { amountOut, gasUsed } = await quoter.callStatic.quoteExactInputWithGas(
-          encodePath(tokens.map((token) => token.address).reverse(), [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
-          5
-        )
-
-        expect(amountOut).to.eq(1)
-        expect(gasUsed).to.eq(177155);
+        expect(gasUsed).to.eq(294311);
+        expect(sqrtPriceX96AfterList.length).to.eq(2);
+        expect(sqrtPriceX96AfterList[0]).to.eq("78461846509168490764501028180");
+        expect(sqrtPriceX96AfterList[1]).to.eq("80007846861567212939802016351");
+        expect(initializedTicksCrossedList[0]).to.eq(2);
+        expect(initializedTicksCrossedList[1]).to.eq(0);
+        expect(amountOut).to.eq(9745)
       })
     })
 
     describe('#quoteExactInputSingleWithGas', () => {
-      it('0 -> 1', async () => {
-        const { amountOut, gasUsed } = await quoter.callStatic.quoteExactInputSingleWithGas(
+      it('0 -> 2 includes gas', async () => {
+        const { amountOut, gasUsed, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactInputSingleWithGas(
           tokens[0].address,
-          tokens[1].address,
+          tokens[2].address,
           FeeAmount.MEDIUM,
-          MaxUint128,
-          // -2%
+          10000,
           encodePriceSqrt(100, 102)
         )
 
-        expect(amountOut).to.eq(9852)
-        expect(gasUsed).to.eq(101996)
-      })
-
-      it('1 -> 0', async () => {
-        const { amountOut, gasUsed } = await quoter.callStatic.quoteExactInputSingleWithGas(
-          tokens[1].address,
-          tokens[0].address,
-          FeeAmount.MEDIUM,
-          MaxUint128,
-          // +2%
-          encodePriceSqrt(102, 100)
-        )
-
-        expect(amountOut).to.eq(9852)
-        expect(gasUsed).to.eq(95093)
+        expect(gasUsed).to.eq(190287);
+        expect(initializedTicksCrossed).to.eq(2);
+        expect(amountOut).to.eq(9871)
+        expect(sqrtPriceX96After).to.eq("78461846509168490764501028180");
       })
     })
 
     describe('#quoteExactOutputWithGas', () => {
-      it('0 -> 1', async () => {
-        const { amountIn, gasUsed } = await quoter.callStatic.quoteExactOutputWithGas(
-          encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
-          1
-        )
-
-        expect(amountIn).to.eq(3)
-        expect(gasUsed).to.eq(125331)
-      })
-
-      it('1 -> 0', async () => {
-        const { amountIn, gasUsed } = await quoter.callStatic.quoteExactOutputWithGas(
-          encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
-          1
-        )
-
-        expect(amountIn).to.eq(3)
-        expect(gasUsed).to.eq(112439)
-      })
-
-      it('0 -> 1 -> 2', async () => {
-        const { amountIn, gasUsed } = await quoter.callStatic.quoteExactOutputWithGas(
-          encodePath(tokens.map((token) => token.address).reverse(), [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
-          1
-        )
-
-        expect(amountIn).to.eq(5)
-        expect(gasUsed).to.eq(242653)
-      })
-
-      it('2 -> 1 -> 0', async () => {
-        const { amountIn, gasUsed } = await quoter.callStatic.quoteExactOutputWithGas(
+      it('0 -> 2 -> 1 includes gas', async () => {
+        const { gasUsed, amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactOutputWithGas(
           encodePath(
-            tokens.map((token) => token.address),
+            [tokens[0].address, tokens[2].address, tokens[1].address].reverse(),
             [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
           ),
-          1
+          9745
         )
 
-        expect(amountIn).to.eq(5)
-        expect(gasUsed).to.eq(220745)
+        expect(gasUsed).to.eq(336363);
+        expect(sqrtPriceX96AfterList.length).to.eq(2);
+        expect(sqrtPriceX96AfterList[0]).to.eq("80007838904387594703933785072");
+        expect(sqrtPriceX96AfterList[1]).to.eq("78461888503179331029803316753");
+        expect(initializedTicksCrossedList[0]).to.eq(0);
+        expect(initializedTicksCrossedList[1]).to.eq(2);
+        expect(amountIn).to.eq(10000)
       })
     })
 
     describe('#quoteExactOutputSingleWithGas', () => {
-      it('0 -> 1', async () => {
-        const { amountIn, gasUsed } = await quoter.callStatic.quoteExactOutputSingleWithGas(
+      it('0 -> 1 includes gas', async () => {
+        const { gasUsed, amountIn, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactOutputSingleWithGas(
           tokens[0].address,
           tokens[1].address,
           FeeAmount.MEDIUM,
           MaxUint128,
           encodePriceSqrt(100, 102)
         )
-
+        
+        expect(gasUsed).to.eq(113124);
         expect(amountIn).to.eq(9981)
-        expect(gasUsed).to.eq(103666)
-      })
-
-      it('1 -> 0', async () => {
-        const { amountIn, gasUsed } = await quoter.callStatic.quoteExactOutputSingleWithGas(
-          tokens[1].address,
-          tokens[0].address,
-          FeeAmount.MEDIUM,
-          MaxUint128,
-          encodePriceSqrt(102, 100)
-        )
-
-        expect(amountIn).to.eq(9981)
-        expect(gasUsed).to.eq(96995)
+        expect(initializedTicksCrossed).to.eq(0)
+        expect(sqrtPriceX96After).to.eq("78447570448055484695608110440")
       })
     })
   })

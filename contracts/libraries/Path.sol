@@ -2,6 +2,7 @@
 pragma solidity >=0.6.0;
 
 import './BytesLib.sol';
+import "hardhat/console.sol";
 
 /// @title Functions for manipulating path data for multihop swaps
 library Path {
@@ -24,6 +25,10 @@ library Path {
     /// @return True if path contains two or more pools, otherwise false
     function hasMultiplePools(bytes memory path) internal pure returns (bool) {
         return path.length >= MULTIPLE_POOLS_MIN_LENGTH;
+    }
+
+    function numPools(bytes memory path) internal pure returns (uint256) {
+        return ((path.length - ADDR_SIZE) / NEXT_OFFSET);
     }
 
     /// @notice Decodes the first pool in path
