@@ -8,9 +8,10 @@ function build_images() {
 
 current_dir=$(dirname "$0")
 
-git clone https://github.com/ethereum-optimism/optimism.git
+# switch to branch that supports CALLVALUE and SELFBALANCE opcodes: https://github.com/ben-chain/optimism/pull/8
+git clone https://github.com/ben-chain/optimism.git
 cd optimism/ops
-git checkout regenesis/0.4.0
+git checkout feat/OP759/call-with-value 
 
 # enabling the Docker BuildKit is recommended
 export COMPOSE_DOCKER_CLI_BUILD=1

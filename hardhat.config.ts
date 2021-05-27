@@ -288,6 +288,9 @@ export default {
       'contracts/libraries/NFTDescriptor.sol': LOWEST_OPTIMIZER_COMPILER_SETTINGS,
     },
   },
+  ovm: {
+    solcVersion: '0.7.6-experimental_callvalue',
+  },
   // We use the Hardhat Dependency Compiler plugin to get the artifacts for the Uniswap V3 core contracts. This is
   // required since converting the V3 Core contracts to be OVM-compatible required introducing additional libraries
   // (to reduce contract size) which do not get compiled here by default. This plugin compiles the specified contracts
