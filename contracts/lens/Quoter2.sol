@@ -105,9 +105,7 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         (,tickBefore,,,,,) = pool.slot0();
         (amount, sqrtPriceX96After, tickAfter) = parseRevertReason(reason);
 
-        // Count the number of initialized ticks crossed by iterating through the tick bitmap.
-
-        // Get the key and offset in the tick bitmap before and after the swap.
+        // Get the key and offset in the tick bitmap of the active tick before and after the swap.
         int24 compressedBefore = tickBefore / pool.tickSpacing();
         int16 wordPos = int16(compressedBefore >> 8);
         uint8 bitPos = uint8(compressedBefore % 256);
@@ -116,6 +114,7 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         int16 wordPosAfter = int16(compressedAfter >> 8);
         uint8 bitPosAfter = uint8(compressedAfter % 256);
 
+        // Count the number of initialized ticks crossed by iterating through the tick bitmap.
         if (wordPos <= wordPosAfter) {
             // Our first mask should include the starting tick and everything to its left.
             uint256 mask = ~(uint256(0)) << bitPos;
