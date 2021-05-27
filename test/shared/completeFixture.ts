@@ -46,7 +46,10 @@ const completeFixture: Fixture<{
       NonfungiblePositionLibrary: nonfungiblePositionLibrary.address,
     },
   })
-  const nft = (await positionManagerFactory.deploy(factory.address)) as MockTimeNonfungiblePositionManager
+  const nft = (await positionManagerFactory.deploy(
+    factory.address,
+    weth9.address
+  )) as MockTimeNonfungiblePositionManager
 
   tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
