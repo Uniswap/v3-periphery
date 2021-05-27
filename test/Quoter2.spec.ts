@@ -57,7 +57,6 @@ describe('Quoter2', () => {
   })
 
   describe('quotes', () => {
-
     beforeEach(async () => {
       await createPool(nft, wallet, tokens[0].address, tokens[1].address)
       await createPool(nft, wallet, tokens[1].address, tokens[2].address)
@@ -66,278 +65,346 @@ describe('Quoter2', () => {
 
     describe('#quoteExactInput', () => {
       it('0 -> 2', async () => {
-        const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactInput(
+        const {
+          amountOut,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           10000
         )
-        
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("78461846509168490764501028180");
-        expect(initializedTicksCrossedList[0]).to.eq(2);
+
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('78461846509168490764501028180')
+        expect(initializedTicksCrossedList[0]).to.eq(2)
         expect(amountOut).to.eq(9871)
       })
 
       it('0 -> 2 cross 1 tick', async () => {
-        const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactInput(
+        const {
+          amountOut,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           4000
         )
-        
-        expect(initializedTicksCrossedList[0]).to.eq(1);
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("78926452400586371254602774705");
+
+        expect(initializedTicksCrossedList[0]).to.eq(1)
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('78926452400586371254602774705')
         expect(amountOut).to.eq(3971)
       })
 
       it('0 -> 2 where tick after is initialized', async () => {
         // The swap amount is set such that the active tick after the swap is -120.
         // -120 is an initialized tick for this pool. We check that we count it.
-        const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactInput(
+        const {
+          amountOut,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           6200
         )
-        
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("78757224507315167622282810783");
-        expect(initializedTicksCrossedList.length).to.eq(1);
-        expect(initializedTicksCrossedList[0]).to.eq(2);
+
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('78757224507315167622282810783')
+        expect(initializedTicksCrossedList.length).to.eq(1)
+        expect(initializedTicksCrossedList[0]).to.eq(2)
         expect(amountOut).to.eq(6143)
       })
 
       it('2 -> 0', async () => {
-        const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactInput(
+        const {
+          amountOut,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[2].address, tokens[0].address], [FeeAmount.MEDIUM]),
           10000
         )
-        
-        expect(initializedTicksCrossedList[0]).to.eq(2);
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("80001962924147897865541384515");
-        expect(initializedTicksCrossedList.length).to.eq(1);
+
+        expect(initializedTicksCrossedList[0]).to.eq(2)
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('80001962924147897865541384515')
+        expect(initializedTicksCrossedList.length).to.eq(1)
         expect(amountOut).to.eq(9871)
       })
 
       it('2 -> 0 where tick after is initialized', async () => {
         // The swap amount is set such that the active tick after the swap is 120.
         // 120 is an initialized tick for this pool. We check we count it.
-        const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactInput(
+        const {
+          amountOut,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[2].address, tokens[0].address], [FeeAmount.MEDIUM]),
           6250
         )
-        
-        expect(initializedTicksCrossedList[0]).to.eq(2);
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("79705728824507063507279123685");
-        expect(initializedTicksCrossedList.length).to.eq(1);
+
+        expect(initializedTicksCrossedList[0]).to.eq(2)
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('79705728824507063507279123685')
+        expect(initializedTicksCrossedList.length).to.eq(1)
         expect(amountOut).to.eq(6190)
       })
 
       it('2 -> 1', async () => {
-        const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactInput(
+        const {
+          amountOut,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[2].address, tokens[1].address], [FeeAmount.MEDIUM]),
           10000
         )
-        
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("80018067294531553039351583520");
-        expect(initializedTicksCrossedList[0]).to.eq(0);
+
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('80018067294531553039351583520')
+        expect(initializedTicksCrossedList[0]).to.eq(0)
         expect(amountOut).to.eq(9871)
       })
 
       it('0 -> 2 -> 1', async () => {
-        const { amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactInput(
-          encodePath(
-            [tokens[0].address, tokens[2].address, tokens[1].address],
-            [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
-          ),
+        const {
+          amountOut,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactInput(
+          encodePath([tokens[0].address, tokens[2].address, tokens[1].address], [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
           10000
         )
 
-        expect(sqrtPriceX96AfterList.length).to.eq(2);
-        expect(sqrtPriceX96AfterList[0]).to.eq("78461846509168490764501028180");
-        expect(sqrtPriceX96AfterList[1]).to.eq("80007846861567212939802016351");
-        expect(initializedTicksCrossedList[0]).to.eq(2);
-        expect(initializedTicksCrossedList[1]).to.eq(0);
+        expect(sqrtPriceX96AfterList.length).to.eq(2)
+        expect(sqrtPriceX96AfterList[0]).to.eq('78461846509168490764501028180')
+        expect(sqrtPriceX96AfterList[1]).to.eq('80007846861567212939802016351')
+        expect(initializedTicksCrossedList[0]).to.eq(2)
+        expect(initializedTicksCrossedList[1]).to.eq(0)
         expect(amountOut).to.eq(9745)
       })
-      
     })
 
     describe('#quoteExactInputSingle', () => {
       it('0 -> 2', async () => {
-        const { amountOut: quote, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactInputSingle({
+        const {
+          amountOut: quote,
+          sqrtPriceX96After,
+          initializedTicksCrossed,
+        } = await quoter.callStatic.quoteExactInputSingle({
           tokenIn: tokens[0].address,
           tokenOut: tokens[2].address,
           fee: FeeAmount.MEDIUM,
           amountIn: 10000,
           // -2%
-          sqrtPriceLimitX96: encodePriceSqrt(100, 102)
+          sqrtPriceLimitX96: encodePriceSqrt(100, 102),
         })
 
-        expect(initializedTicksCrossed).to.eq(2);
+        expect(initializedTicksCrossed).to.eq(2)
         expect(quote).to.eq(9871)
-        expect(sqrtPriceX96After).to.eq("78461846509168490764501028180");
+        expect(sqrtPriceX96After).to.eq('78461846509168490764501028180')
       })
 
       it('2 -> 0', async () => {
-        const { amountOut: quote, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactInputSingle({
+        const {
+          amountOut: quote,
+          sqrtPriceX96After,
+          initializedTicksCrossed,
+        } = await quoter.callStatic.quoteExactInputSingle({
           tokenIn: tokens[2].address,
           tokenOut: tokens[0].address,
           fee: FeeAmount.MEDIUM,
           amountIn: 10000,
           // +2%
-          sqrtPriceLimitX96: encodePriceSqrt(102, 100)
+          sqrtPriceLimitX96: encodePriceSqrt(102, 100),
         })
 
-        expect(initializedTicksCrossed).to.eq(2);
-        expect(quote).to.eq(9871);
-        expect(sqrtPriceX96After).to.eq("80001962924147897865541384515");
+        expect(initializedTicksCrossed).to.eq(2)
+        expect(quote).to.eq(9871)
+        expect(sqrtPriceX96After).to.eq('80001962924147897865541384515')
       })
     })
 
     describe('#quoteExactOutput', () => {
       it('0 -> 2', async () => {
-        const { amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactOutput(
+        const {
+          amountIn,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[2].address, tokens[0].address], [FeeAmount.MEDIUM]),
           9871
         )
-        
-        expect(initializedTicksCrossedList.length).to.eq(1);
-        expect(initializedTicksCrossedList[0]).to.eq(2);
+
+        expect(initializedTicksCrossedList.length).to.eq(1)
+        expect(initializedTicksCrossedList[0]).to.eq(2)
         expect(amountIn).to.eq(10000)
 
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("78461888503179331029803316753");
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('78461888503179331029803316753')
       })
 
       it('0 -> 2 cross 1 tick', async () => {
-        const { amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactOutput(
+        const {
+          amountIn,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[2].address, tokens[0].address], [FeeAmount.MEDIUM]),
           4000
         )
-        
-        expect(initializedTicksCrossedList.length).to.eq(1);
-        expect(initializedTicksCrossedList[0]).to.eq(1);
+
+        expect(initializedTicksCrossedList.length).to.eq(1)
+        expect(initializedTicksCrossedList[0]).to.eq(1)
         expect(amountIn).to.eq(4029)
 
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("78924219757724709840818372098");
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('78924219757724709840818372098')
       })
 
       it('0 -> 2 where tick after is initialized', async () => {
         // The swap amount is set such that the active tick after the swap is -120.
         // -120 is an initialized tick for this pool. We check that we count it.
-        const { amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactOutput(
+        const {
+          amountIn,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[2].address, tokens[0].address], [FeeAmount.MEDIUM]),
           6143
         )
-        
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("78757225449310403327341205211");
-        expect(initializedTicksCrossedList.length).to.eq(1);
-        expect(initializedTicksCrossedList[0]).to.eq(2);
+
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('78757225449310403327341205211')
+        expect(initializedTicksCrossedList.length).to.eq(1)
+        expect(initializedTicksCrossedList[0]).to.eq(2)
         expect(amountIn).to.eq(6200)
       })
 
       it('2 -> 0', async () => {
-        const { amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactOutput(
+        const {
+          amountIn,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           4000
         )
-        
-        expect(initializedTicksCrossedList.length).to.eq(1);
-        expect(initializedTicksCrossedList[0]).to.eq(1);
+
+        expect(initializedTicksCrossedList.length).to.eq(1)
+        expect(initializedTicksCrossedList[0]).to.eq(1)
         expect(amountIn).to.eq(4029)
 
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("79533275775872453725174597392");
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('79533275775872453725174597392')
       })
 
       it('2 -> 0 cross 1 tick', async () => {
-        const { amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactOutput(
+        const {
+          amountIn,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           6000
         )
-        
-        expect(initializedTicksCrossedList[0]).to.eq(1);
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("79690640184021170956740081887");
-        expect(initializedTicksCrossedList.length).to.eq(1);
+
+        expect(initializedTicksCrossedList[0]).to.eq(1)
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('79690640184021170956740081887')
+        expect(initializedTicksCrossedList.length).to.eq(1)
         expect(amountIn).to.eq(6055)
       })
 
       it('2 -> 0 where tick after is initialized', async () => {
         // The swap amount is set such that the active tick after the swap is 120.
         // 120 is an initialized tick for this pool. We check that we count it.
-        const { amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactOutput(
+        const {
+          amountIn,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           6223
         )
-        
-        expect(initializedTicksCrossedList[0]).to.eq(2);
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("79708304437530892332449657932");
-        expect(initializedTicksCrossedList.length).to.eq(1);
+
+        expect(initializedTicksCrossedList[0]).to.eq(2)
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('79708304437530892332449657932')
+        expect(initializedTicksCrossedList.length).to.eq(1)
         expect(amountIn).to.eq(6283)
       })
 
       it('2 -> 1', async () => {
-        const { amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactOutput(
+        const {
+          amountIn,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[1].address, tokens[2].address], [FeeAmount.MEDIUM]),
           9871
         )
-        
-        expect(sqrtPriceX96AfterList.length).to.eq(1);
-        expect(sqrtPriceX96AfterList[0]).to.eq("80018020393569259756601362385");
-        expect(initializedTicksCrossedList[0]).to.eq(0);
+
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('80018020393569259756601362385')
+        expect(initializedTicksCrossedList[0]).to.eq(0)
         expect(amountIn).to.eq(10000)
       })
 
       it('0 -> 2 -> 1', async () => {
-        const { amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactOutput(
-          encodePath(
-            [tokens[0].address, tokens[2].address, tokens[1].address].reverse(),
-            [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
-          ),
+        const {
+          amountIn,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactOutput(
+          encodePath([tokens[0].address, tokens[2].address, tokens[1].address].reverse(), [
+            FeeAmount.MEDIUM,
+            FeeAmount.MEDIUM,
+          ]),
           9745
         )
 
-        expect(sqrtPriceX96AfterList.length).to.eq(2);
-        expect(sqrtPriceX96AfterList[0]).to.eq("80007838904387594703933785072");
-        expect(sqrtPriceX96AfterList[1]).to.eq("78461888503179331029803316753");
-        expect(initializedTicksCrossedList[0]).to.eq(0);
-        expect(initializedTicksCrossedList[1]).to.eq(2);
+        expect(sqrtPriceX96AfterList.length).to.eq(2)
+        expect(sqrtPriceX96AfterList[0]).to.eq('80007838904387594703933785072')
+        expect(sqrtPriceX96AfterList[1]).to.eq('78461888503179331029803316753')
+        expect(initializedTicksCrossedList[0]).to.eq(0)
+        expect(initializedTicksCrossedList[1]).to.eq(2)
         expect(amountIn).to.eq(10000)
       })
     })
 
     describe('#quoteExactOutputSingle', () => {
       it('0 -> 1', async () => {
-        const { amountIn, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactOutputSingle({
-          tokenIn: tokens[0].address,
-          tokenOut: tokens[1].address,
-          fee: FeeAmount.MEDIUM,
-          amount: MaxUint128,
-          sqrtPriceLimitX96: encodePriceSqrt(100, 102)
-        })
+        const { amountIn, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactOutputSingle(
+          {
+            tokenIn: tokens[0].address,
+            tokenOut: tokens[1].address,
+            fee: FeeAmount.MEDIUM,
+            amount: MaxUint128,
+            sqrtPriceLimitX96: encodePriceSqrt(100, 102),
+          }
+        )
 
         expect(amountIn).to.eq(9981)
         expect(initializedTicksCrossed).to.eq(0)
-        expect(sqrtPriceX96After).to.eq("78447570448055484695608110440")
+        expect(sqrtPriceX96After).to.eq('78447570448055484695608110440')
       })
 
       it('1 -> 0', async () => {
-        const { amountIn, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactOutputSingle({
-          tokenIn: tokens[1].address,
-          tokenOut: tokens[0].address,
-          fee: FeeAmount.MEDIUM,
-          amount: MaxUint128,
-          sqrtPriceLimitX96: encodePriceSqrt(102, 100)
-        })
+        const { amountIn, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactOutputSingle(
+          {
+            tokenIn: tokens[1].address,
+            tokenOut: tokens[0].address,
+            fee: FeeAmount.MEDIUM,
+            amount: MaxUint128,
+            sqrtPriceLimitX96: encodePriceSqrt(102, 100),
+          }
+        )
 
         expect(amountIn).to.eq(9981)
         expect(initializedTicksCrossed).to.eq(0)
-        expect(sqrtPriceX96After).to.eq("80016521857016594389520272648")
+        expect(sqrtPriceX96After).to.eq('80016521857016594389520272648')
       })
     })
   })

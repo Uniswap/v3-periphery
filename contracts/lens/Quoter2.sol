@@ -60,7 +60,7 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
                 : (tokenOut < tokenIn, uint256(amount1Delta), uint256(-amount0Delta));
 
         IUniswapV3Pool pool = getPool(tokenIn, tokenOut, fee);
-        (uint160 sqrtPriceX96After, int24 tickAfter,,,,,) = pool.slot0();
+        (uint160 sqrtPriceX96After, int24 tickAfter, , , , , ) = pool.slot0();
 
         if (isExactInput) {
             assembly {
@@ -84,7 +84,15 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
     }
 
     /// @dev Parses a revert reason that should contain the numeric quote
-    function parseRevertReason(bytes memory reason) private pure returns (uint256 amount, uint160 sqrtPriceX96After, int24 tickAfter) {
+    function parseRevertReason(bytes memory reason)
+        private
+        pure
+        returns (
+            uint256 amount,
+            uint160 sqrtPriceX96After,
+            int24 tickAfter
+        )
+    {
         if (reason.length != 96) {
             if (reason.length < 68) revert('Unexpected error');
             assembly {
@@ -95,14 +103,18 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         return abi.decode(reason, (uint256, uint160, int24));
     }
 
-    function handleRevert(bytes memory reason, IUniswapV3Pool pool) private view returns (
-        uint256 amount, 
-        uint160 sqrtPriceX96After, 
-        uint32 initializedTicksCrossed
-    ) {
+    function handleRevert(bytes memory reason, IUniswapV3Pool pool)
+        private
+        view
+        returns (
+            uint256 amount,
+            uint160 sqrtPriceX96After,
+            uint32 initializedTicksCrossed
+        )
+    {
         int24 tickBefore;
         int24 tickAfter;
-        (,tickBefore,,,,,) = pool.slot0();
+        (, tickBefore, , , , , ) = pool.slot0();
         (amount, sqrtPriceX96After, tickAfter) = parseRevertReason(reason);
 
         // Get the key and offset in the tick bitmap of the active tick before and after the swap.
@@ -122,7 +134,7 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
                 // If we're on the final tick bitmap page, ensure we only count up to our
                 // ending tick.
                 if (wordPos == wordPosAfter) {
-                    mask = mask & (1 << (bitPosAfter + 1)) - 1;
+                    mask = mask & ((1 << (bitPosAfter + 1)) - 1);
                 }
 
                 uint256 masked = pool.tickBitmap(wordPos) & mask;
@@ -133,7 +145,7 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
             }
         } else {
             // Our first mask should include the starting tick, and everything to its right.
-            uint256 mask = (1 << bitPos + 1) - 1;
+            uint256 mask = (1 << (bitPos + 1)) - 1;
             while (wordPos >= wordPosAfter) {
                 // If we're on the final tick bitmap page, ensure we only count up to our
                 // ending tick.
@@ -152,12 +164,18 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         return (amount, sqrtPriceX96After, initializedTicksCrossed);
     }
 
-    function quoteExactInputSingle(
-        QuoteExactInputSingleParams memory params
-    ) public override returns (uint256 amountOut, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed) {
+    function quoteExactInputSingle(QuoteExactInputSingleParams memory params)
+        public
+        override
+        returns (
+            uint256 amountOut,
+            uint160 sqrtPriceX96After,
+            uint32 initializedTicksCrossed
+        )
+    {
         bool zeroForOne = params.tokenIn < params.tokenOut;
         IUniswapV3Pool pool = getPool(params.tokenIn, params.tokenOut, params.fee);
-        
+
         try
             pool.swap(
                 address(this), // address(0) might cause issues with some tokens
@@ -173,27 +191,34 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         }
     }
 
-    function quoteExactInput(bytes memory path, uint256 amountIn) public override returns (
-        uint256 amountOut,
-        uint160[] memory sqrtPriceX96AfterList, 
-        uint32[] memory initializedTicksCrossedList
-    ) {
+    function quoteExactInput(bytes memory path, uint256 amountIn)
+        public
+        override
+        returns (
+            uint256 amountOut,
+            uint160[] memory sqrtPriceX96AfterList,
+            uint32[] memory initializedTicksCrossedList
+        )
+    {
         uint256 numPools = path.numPools();
         sqrtPriceX96AfterList = new uint160[](numPools);
         initializedTicksCrossedList = new uint32[](numPools);
 
-        uint i = 0;
+        uint256 i = 0;
         while (i < numPools) {
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
             // the outputs of prior swaps become the inputs to subsequent ones
-            (uint256 _amountOut, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed) = quoteExactInputSingle(QuoteExactInputSingleParams({ 
-                tokenIn: tokenIn, 
-                tokenOut: tokenOut, 
-                fee: fee, 
-                amountIn: amountIn, 
-                sqrtPriceLimitX96: 0
-            }));
+            (uint256 _amountOut, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed) =
+                quoteExactInputSingle(
+                    QuoteExactInputSingleParams({
+                        tokenIn: tokenIn,
+                        tokenOut: tokenOut,
+                        fee: fee,
+                        amountIn: amountIn,
+                        sqrtPriceLimitX96: 0
+                    })
+                );
 
             sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
             initializedTicksCrossedList[i] = _initializedTicksCrossed;
@@ -209,9 +234,15 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         }
     }
 
-    function quoteExactOutputSingle(
-        QuoteExactOutputSingleParams memory params
-    ) public override returns (uint256 amountIn, uint160 sqrtPriceX96After, uint32 initializedTicksCrossed) {
+    function quoteExactOutputSingle(QuoteExactOutputSingleParams memory params)
+        public
+        override
+        returns (
+            uint256 amountIn,
+            uint160 sqrtPriceX96After,
+            uint32 initializedTicksCrossed
+        )
+    {
         bool zeroForOne = params.tokenIn < params.tokenOut;
         IUniswapV3Pool pool = getPool(params.tokenIn, params.tokenOut, params.fee);
 
@@ -233,31 +264,37 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         }
     }
 
-    function quoteExactOutput(bytes memory path, uint256 amountOut) public override returns (
-        uint256 amountIn,
-        uint160[] memory sqrtPriceX96AfterList, 
-        uint32[] memory initializedTicksCrossedList
-    ) {
+    function quoteExactOutput(bytes memory path, uint256 amountOut)
+        public
+        override
+        returns (
+            uint256 amountIn,
+            uint160[] memory sqrtPriceX96AfterList,
+            uint32[] memory initializedTicksCrossedList
+        )
+    {
         uint256 numPools = path.numPools();
         sqrtPriceX96AfterList = new uint160[](numPools);
         initializedTicksCrossedList = new uint32[](numPools);
 
-        uint i = 0;
+        uint256 i = 0;
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
 
             (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
 
             // the inputs of prior swaps become the outputs of subsequent ones
-            (uint _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed) = quoteExactOutputSingle(
-                QuoteExactOutputSingleParams({
-                    tokenIn: tokenIn, 
-                    tokenOut: tokenOut, 
-                    amount: amountOut, 
-                    fee: fee, 
-                    sqrtPriceLimitX96: 0
-                }));
-            
+            (uint256 _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed) =
+                quoteExactOutputSingle(
+                    QuoteExactOutputSingleParams({
+                        tokenIn: tokenIn,
+                        tokenOut: tokenOut,
+                        amount: amountOut,
+                        fee: fee,
+                        sqrtPriceLimitX96: 0
+                    })
+                );
+
             sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
             initializedTicksCrossedList[i] = _initializedTicksCrossed;
             amountOut = _amountIn;

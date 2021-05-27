@@ -9,7 +9,6 @@ pragma abicoder v2;
 /// @dev These functions are not marked view because they rely on calling non-view functions and reverting
 /// to compute the result. They are also not gas efficient and should not be called on-chain.
 interface IQuoterWithGas {
-
     /// @notice Returns the amount out received for a given exact input but for a swap of a single pool
     /// @param tokenIn The token being swapped in
     /// @param tokenOut The token being swapped out
@@ -26,12 +25,14 @@ interface IQuoterWithGas {
         uint24 fee,
         uint256 amountIn,
         uint160 sqrtPriceLimitX96
-    ) external returns (
-        uint256 amountOut, 
-        uint160 sqrtPriceX96After, 
-        uint32 initializedTicksCrossed, 
-        uint256 gasUsed
-    );
+    )
+        external
+        returns (
+            uint256 amountOut,
+            uint160 sqrtPriceX96After,
+            uint32 initializedTicksCrossed,
+            uint256 gasUsed
+        );
 
     /// @notice Returns the amount out received for a given exact input swap without executing the swap
     /// @param path The path of the swap, i.e. each token pair and the pool fee
@@ -40,12 +41,14 @@ interface IQuoterWithGas {
     /// @return sqrtPriceX96AfterList List of the sqrt price after the swap for each pool in the path
     /// @return initializedTicksCrossedList List of the initialized ticks that the swap crossed for each pool in the path
     /// @return gasUsed An estimate of the gas used by the swap
-    function quoteExactInputWithGas(bytes memory path, uint256 amountIn) external returns (
-        uint256 amountOut,
-        uint160[] memory sqrtPriceX96AfterList, 
-        uint32[] memory initializedTicksCrossedList, 
-        uint256 gasUsed
-    );
+    function quoteExactInputWithGas(bytes memory path, uint256 amountIn)
+        external
+        returns (
+            uint256 amountOut,
+            uint160[] memory sqrtPriceX96AfterList,
+            uint32[] memory initializedTicksCrossedList,
+            uint256 gasUsed
+        );
 
     /// @notice Returns the amount in required to receive the given exact output amount but for a swap of a single pool
     /// @param tokenIn The token being swapped in
@@ -63,12 +66,14 @@ interface IQuoterWithGas {
         uint24 fee,
         uint256 amountOut,
         uint160 sqrtPriceLimitX96
-    ) external returns (
-        uint256 amountIn, 
-        uint160 sqrtPriceX96After, 
-        uint32 initializedTicksCrossed, 
-        uint256 gasUsed
-    );
+    )
+        external
+        returns (
+            uint256 amountIn,
+            uint160 sqrtPriceX96After,
+            uint32 initializedTicksCrossed,
+            uint256 gasUsed
+        );
 
     /// @notice Returns the amount in required for a given exact output swap without executing the swap
     /// @param path The path of the swap, i.e. each token pair and the pool fee. Path must be provided in reverse order
@@ -77,14 +82,12 @@ interface IQuoterWithGas {
     /// @return sqrtPriceX96AfterList List of the sqrt price after the swap for each pool in the path
     /// @return initializedTicksCrossedList List of the initialized ticks that the swap crossed for each pool in the path
     /// @return gasUsed An estimate of the gas used by the swap
-    function quoteExactOutputWithGas(
-        bytes memory path, 
-        uint256 amountOut
-    ) external returns (
-        uint256 amountIn,
-        uint160[] memory sqrtPriceX96AfterList, 
-        uint32[] memory initializedTicksCrossedList, 
-        uint256 gasUsed
-    );
-
+    function quoteExactOutputWithGas(bytes memory path, uint256 amountOut)
+        external
+        returns (
+            uint256 amountIn,
+            uint160[] memory sqrtPriceX96AfterList,
+            uint32[] memory initializedTicksCrossedList,
+            uint256 gasUsed
+        );
 }

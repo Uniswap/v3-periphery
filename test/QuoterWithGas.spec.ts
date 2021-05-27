@@ -65,27 +65,34 @@ describe('QuoterWithGas', () => {
 
     describe('#quoteExactInputWithGas', () => {
       it('0 -> 2 -> 1 includes gas', async () => {
-        const { amountOut, initializedTicksCrossedList, sqrtPriceX96AfterList, gasUsed } = await quoter.callStatic.quoteExactInputWithGas(
-          encodePath(
-            [tokens[0].address, tokens[2].address, tokens[1].address],
-            [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
-          ),
+        const {
+          amountOut,
+          initializedTicksCrossedList,
+          sqrtPriceX96AfterList,
+          gasUsed,
+        } = await quoter.callStatic.quoteExactInputWithGas(
+          encodePath([tokens[0].address, tokens[2].address, tokens[1].address], [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
           10000
         )
 
-        expect(gasUsed).to.eq(294311);
-        expect(sqrtPriceX96AfterList.length).to.eq(2);
-        expect(sqrtPriceX96AfterList[0]).to.eq("78461846509168490764501028180");
-        expect(sqrtPriceX96AfterList[1]).to.eq("80007846861567212939802016351");
-        expect(initializedTicksCrossedList[0]).to.eq(2);
-        expect(initializedTicksCrossedList[1]).to.eq(0);
+        expect(gasUsed).to.eq(294311)
+        expect(sqrtPriceX96AfterList.length).to.eq(2)
+        expect(sqrtPriceX96AfterList[0]).to.eq('78461846509168490764501028180')
+        expect(sqrtPriceX96AfterList[1]).to.eq('80007846861567212939802016351')
+        expect(initializedTicksCrossedList[0]).to.eq(2)
+        expect(initializedTicksCrossedList[1]).to.eq(0)
         expect(amountOut).to.eq(9745)
       })
     })
 
     describe('#quoteExactInputSingleWithGas', () => {
       it('0 -> 2 includes gas', async () => {
-        const { amountOut, gasUsed, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactInputSingleWithGas(
+        const {
+          amountOut,
+          gasUsed,
+          sqrtPriceX96After,
+          initializedTicksCrossed,
+        } = await quoter.callStatic.quoteExactInputSingleWithGas(
           tokens[0].address,
           tokens[2].address,
           FeeAmount.MEDIUM,
@@ -93,47 +100,57 @@ describe('QuoterWithGas', () => {
           encodePriceSqrt(100, 102)
         )
 
-        expect(gasUsed).to.eq(190287);
-        expect(initializedTicksCrossed).to.eq(2);
+        expect(gasUsed).to.eq(190287)
+        expect(initializedTicksCrossed).to.eq(2)
         expect(amountOut).to.eq(9871)
-        expect(sqrtPriceX96After).to.eq("78461846509168490764501028180");
+        expect(sqrtPriceX96After).to.eq('78461846509168490764501028180')
       })
     })
 
     describe('#quoteExactOutputWithGas', () => {
       it('0 -> 2 -> 1 includes gas', async () => {
-        const { gasUsed, amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList } = await quoter.callStatic.quoteExactOutputWithGas(
-          encodePath(
-            [tokens[0].address, tokens[2].address, tokens[1].address].reverse(),
-            [FeeAmount.MEDIUM, FeeAmount.MEDIUM]
-          ),
+        const {
+          gasUsed,
+          amountIn,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+        } = await quoter.callStatic.quoteExactOutputWithGas(
+          encodePath([tokens[0].address, tokens[2].address, tokens[1].address].reverse(), [
+            FeeAmount.MEDIUM,
+            FeeAmount.MEDIUM,
+          ]),
           9745
         )
 
-        expect(gasUsed).to.eq(336363);
-        expect(sqrtPriceX96AfterList.length).to.eq(2);
-        expect(sqrtPriceX96AfterList[0]).to.eq("80007838904387594703933785072");
-        expect(sqrtPriceX96AfterList[1]).to.eq("78461888503179331029803316753");
-        expect(initializedTicksCrossedList[0]).to.eq(0);
-        expect(initializedTicksCrossedList[1]).to.eq(2);
+        expect(gasUsed).to.eq(336363)
+        expect(sqrtPriceX96AfterList.length).to.eq(2)
+        expect(sqrtPriceX96AfterList[0]).to.eq('80007838904387594703933785072')
+        expect(sqrtPriceX96AfterList[1]).to.eq('78461888503179331029803316753')
+        expect(initializedTicksCrossedList[0]).to.eq(0)
+        expect(initializedTicksCrossedList[1]).to.eq(2)
         expect(amountIn).to.eq(10000)
       })
     })
 
     describe('#quoteExactOutputSingleWithGas', () => {
       it('0 -> 1 includes gas', async () => {
-        const { gasUsed, amountIn, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactOutputSingleWithGas(
+        const {
+          gasUsed,
+          amountIn,
+          sqrtPriceX96After,
+          initializedTicksCrossed,
+        } = await quoter.callStatic.quoteExactOutputSingleWithGas(
           tokens[0].address,
           tokens[1].address,
           FeeAmount.MEDIUM,
           MaxUint128,
           encodePriceSqrt(100, 102)
         )
-        
-        expect(gasUsed).to.eq(113124);
+
+        expect(gasUsed).to.eq(113124)
         expect(amountIn).to.eq(9981)
         expect(initializedTicksCrossed).to.eq(0)
-        expect(sqrtPriceX96After).to.eq("78447570448055484695608110440")
+        expect(sqrtPriceX96After).to.eq('78447570448055484695608110440')
       })
     })
   })
