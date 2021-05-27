@@ -96,11 +96,15 @@ describe('V3Migrator', () => {
 
   describe('#migrate', () => {
     let tokenLower: boolean
+    let token0: TestERC20 | IWETH9
+    let token1: TestERC20 | IWETH9
 
     const expectedLiquidity = 10000 - 1000
 
     beforeEach(() => {
       tokenLower = token.address.toLowerCase() < weth9.address.toLowerCase()
+      token0 = tokenLower ? token : weth9
+      token1 = tokenLower ? weth9 : token
     })
 
     beforeEach('add V2 liquidity', async () => {
@@ -141,8 +145,8 @@ describe('V3Migrator', () => {
 
     it('works once v3 pool is initialized', async () => {
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(1, 1)
       )
@@ -174,8 +178,8 @@ describe('V3Migrator', () => {
 
     it('works for partial', async () => {
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(1, 1)
       )
@@ -216,8 +220,8 @@ describe('V3Migrator', () => {
 
     it('double the price', async () => {
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(2, 1)
       )
@@ -264,8 +268,8 @@ describe('V3Migrator', () => {
 
     it('half the price', async () => {
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(1, 2)
       )
@@ -312,8 +316,8 @@ describe('V3Migrator', () => {
 
     it('double the price - as ETH', async () => {
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(2, 1)
       )
@@ -360,8 +364,8 @@ describe('V3Migrator', () => {
 
     it('half the price - as ETH', async () => {
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(1, 2)
       )
@@ -408,8 +412,8 @@ describe('V3Migrator', () => {
 
     it('gas', async () => {
       await migrator.createAndInitializePoolIfNecessary(
-        token.address,
-        weth9.address,
+        token0.address,
+        token1.address,
         FeeAmount.MEDIUM,
         encodePriceSqrt(1, 1)
       )
