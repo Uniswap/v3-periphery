@@ -845,7 +845,19 @@ describe('NonfungiblePositionManager', () => {
         amount1Max: MaxUint128,
       })
       await nft.connect(other).burn(tokenId)
-      await expect(nft.positions(tokenId)).to.be.revertedWith('Invalid token ID')
+      // OVM change: To reduce contract size, `positions` is no longer a method that reverts for invalid token IDs. It
+      // is now a getter that returns a struct, so we check that the returned struct is full of zeros
+      const position = await nft.positions(tokenId)
+      expect(position.nonce).to.equal('0')
+      expect(position.operator).to.equal(constants.AddressZero)
+      expect(position.poolId).to.equal('0')
+      expect(position.tickLower).to.equal(0)
+      expect(position.tickUpper).to.equal(0)
+      expect(position.liquidity).to.equal('0')
+      expect(position.feeGrowthInside0LastX128).to.equal('0')
+      expect(position.feeGrowthInside1LastX128).to.equal('0')
+      expect(position.tokensOwed0).to.equal('0')
+      expect(position.tokensOwed1).to.equal('0')
     })
 
     it('gas', async () => {
