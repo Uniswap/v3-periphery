@@ -45,8 +45,9 @@ contract NonfungiblePositionManager is
     using NonfungiblePositionLibrary for IUniswapV3Pool;
 
     constructor(
-        address _factory
-    ) ERC721Permit('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS', '1') PeripheryImmutableState(_factory) {
+        address _factory,
+        address _WETH9
+    ) ERC721Permit('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS', '1') PeripheryImmutableState(_factory, _WETH9) {
     }
 
     /// @dev Caches a pool key
