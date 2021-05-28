@@ -3,17 +3,12 @@ import { Fixture } from 'ethereum-waffle'
 import { ethers, waffle } from 'hardhat'
 import { IUniswapV3Factory, IWETH9, MockTimeSwapRouter } from '../../typechain'
 
-import WETH9 from '../contracts/WETH9.json'
 import { Contract } from '@ethersproject/contracts'
 import { constants } from 'ethers'
 import { v3CoreFactoryFixtureSetup } from './setup'
 
 const wethFixture: Fixture<{ weth9: IWETH9 }> = async ([wallet]) => {
-  const weth9 = (await waffle.deployContract(wallet, {
-    bytecode: WETH9.bytecode,
-    abi: WETH9.abi,
-  })) as IWETH9
-
+  const weth9 = (await (await ethers.getContractFactory('WETH9', wallet)).deploy()) as IWETH9
   return { weth9 }
 }
 
