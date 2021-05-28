@@ -19,12 +19,13 @@ const completeFixture: Fixture<{
 }> = async (wallets, provider) => {
   const { weth9, factory, router } = await v3RouterFixture(wallets, provider)
 
+  // OVM update: await each token deployment individually instead of awaiting Promise.all() to ensure nonce is properly
+  // incremented on each deploy transaction when testing against l2geth
   const tokenFactory = await ethers.getContractFactory('TestERC20')
-  const tokens = (await Promise.all([
-    tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu256 to avoid overflowing
-    tokenFactory.deploy(constants.MaxUint256.div(2)),
-    tokenFactory.deploy(constants.MaxUint256.div(2)),
-  ])) as [TestERC20, TestERC20, TestERC20]
+  const token0 = await tokenFactory.deploy(constants.MaxUint256.div(2)) // do not use maxu256 to avoid overflowing
+  const token1 = await tokenFactory.deploy(constants.MaxUint256.div(2))
+  const token2 = await tokenFactory.deploy(constants.MaxUint256.div(2))
+  const tokens = [token0, token1, token2] as [TestERC20, TestERC20, TestERC20]
 
   const tickMath = await (await ethers.getContractFactory('TickMath')).deploy()
   const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor', {
