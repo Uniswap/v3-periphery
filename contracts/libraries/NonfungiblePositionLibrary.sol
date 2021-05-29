@@ -49,6 +49,28 @@ library NonfungiblePositionLibrary {
     /// @param amount1 The amount of token1 owed to the position that was collected
     event Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1);
 
+    /**
+     * @dev We emit the IncreaseLiquidity event in this method because otherwise bytecode that results from compiling
+     * this for the OVM (with the optimizer on) results in unsafe opcodes. Details:
+     *   - The final 32 bytes of the bytecode are 3067048beee31b25b2f1681f88dac838c8bba36af25bfb2b7cf7473a5847e35f,
+     *     where 5b is the unsafe opcode
+     *   - That 32 byte value is the event ID of the IncreaseLiquidity event
+     *   - The IncreaseLiquidity event is emitted twice in this contract
+     *   - The optimizer does not want to PUSH this multiple times, so when it sees it emitted twice, it optimizes the
+     *     value into a constant, which is appended to the code
+     *   - Solution: Only emit the event once in a helper function, which results in those 32 bytes being added
+     *     with PUSH32, meaning you cannot JUMP to them. Whereas without this helper function they are added to
+     *     the end with CODECOPY, which you can JUMP to, so the Safety Checker believes it's unsafe 
+     */
+    function _emitIncreaseLiquidity(
+        uint256 tokenId,
+        uint128 liquidity,
+        uint256 amount0,
+        uint256 amount1
+    ) internal {
+        emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);
+    }
+
     /// @notice Produces the URI describing a particular token ID for a position manager
     /// @dev Note this URI may be a data: URI with the JSON contents directly inlined
     /// @param tokenId The ID of the token for which to produce a description, which may not be valid
@@ -309,7 +331,7 @@ library NonfungiblePositionLibrary {
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
         position.liquidity += liquidity;
 
-        emit IncreaseLiquidity(params.tokenId, liquidity, amount0, amount1);
+        _emitIncreaseLiquidity(params.tokenId, liquidity, amount0, amount1);
     }
 
     function updatePosition(
@@ -337,6 +359,6 @@ library NonfungiblePositionLibrary {
         position.tokensOwed0 = 0;
         position.tokensOwed1 = 0;
 
-        emit IncreaseLiquidity(tokenId, liquidity, amount0, amount1);
+        _emitIncreaseLiquidity(tokenId, liquidity, amount0, amount1);
     }
 }
