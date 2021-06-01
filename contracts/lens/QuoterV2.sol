@@ -8,7 +8,7 @@ import '@uniswap/v3-core/contracts/libraries/TickBitmap.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
 
-import '../interfaces/IQuoter2.sol';
+import '../interfaces/IQuoterV2.sol';
 import '../base/PeripheryImmutableState.sol';
 import '../libraries/Path.sol';
 import '../libraries/PoolAddress.sol';
@@ -18,7 +18,7 @@ import '../libraries/CallbackValidation.sol';
 /// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
 /// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
 /// the swap and check the amounts in the callback.
-contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
+contract QuoterV2 is IQuoterV2, IUniswapV3SwapCallback, PeripheryImmutableState {
     using Path for bytes;
     using SafeCast for uint256;
 
@@ -103,13 +103,14 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         return abi.decode(reason, (uint256, uint160, int24));
     }
 
-    function handleRevert(bytes memory reason, IUniswapV3Pool pool)
+    function handleRevert(bytes memory reason, IUniswapV3Pool pool, uint256 gasEstimate)
         private
         view
         returns (
             uint256 amount,
             uint160 sqrtPriceX96After,
-            uint32 initializedTicksCrossed
+            uint32 initializedTicksCrossed,
+            uint256
         )
     {
         int24 tickBefore;
@@ -117,6 +118,12 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         (, tickBefore, , , , , ) = pool.slot0();
         (amount, sqrtPriceX96After, tickAfter) = parseRevertReason(reason);
 
+        initializedTicksCrossed = countInitializedBitsCrossed(pool, tickBefore, tickAfter);
+
+        return (amount, sqrtPriceX96After, initializedTicksCrossed, gasEstimate);
+    }
+    
+    function countInitializedBitsCrossed(IUniswapV3Pool pool, int24 tickBefore, int24 tickAfter) private view returns (uint32 initializedTicksCrossed) {
         // Get the key and offset in the tick bitmap of the active tick before and after the swap.
         int24 compressedBefore = tickBefore / pool.tickSpacing();
         int16 wordPos = int16(compressedBefore >> 8);
@@ -136,7 +143,7 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
                 if (wordPos == wordPosAfter) {
                     mask = mask & ((1 << (bitPosAfter + 1)) - 1);
                 }
-
+                
                 uint256 masked = pool.tickBitmap(wordPos) & mask;
                 initializedTicksCrossed += countBits(masked);
                 wordPos++;
@@ -161,7 +168,7 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
             }
         }
 
-        return (amount, sqrtPriceX96After, initializedTicksCrossed);
+        return initializedTicksCrossed;
     }
 
     function quoteExactInputSingle(QuoteExactInputSingleParams memory params)
@@ -170,12 +177,14 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         returns (
             uint256 amountOut,
             uint160 sqrtPriceX96After,
-            uint32 initializedTicksCrossed
+            uint32 initializedTicksCrossed,
+            uint256 gasEstimate
         )
     {
         bool zeroForOne = params.tokenIn < params.tokenOut;
         IUniswapV3Pool pool = getPool(params.tokenIn, params.tokenOut, params.fee);
 
+        uint256 gasBefore = gasleft();
         try
             pool.swap(
                 address(this), // address(0) might cause issues with some tokens
@@ -187,7 +196,8 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
                 abi.encodePacked(params.tokenIn, params.fee, params.tokenOut)
             )
         {} catch (bytes memory reason) {
-            return handleRevert(reason, pool);
+            gasEstimate = gasBefore - gasleft();
+            return handleRevert(reason, pool, gasEstimate);
         }
     }
 
@@ -197,19 +207,19 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         returns (
             uint256 amountOut,
             uint160[] memory sqrtPriceX96AfterList,
-            uint32[] memory initializedTicksCrossedList
+            uint32[] memory initializedTicksCrossedList,
+            uint256 gasEstimate
         )
     {
-        uint256 numPools = path.numPools();
-        sqrtPriceX96AfterList = new uint160[](numPools);
-        initializedTicksCrossedList = new uint32[](numPools);
+        sqrtPriceX96AfterList = new uint160[](path.numPools());
+        initializedTicksCrossedList = new uint32[](path.numPools());
 
         uint256 i = 0;
-        while (i < numPools) {
+        while (true) {
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
 
             // the outputs of prior swaps become the inputs to subsequent ones
-            (uint256 _amountOut, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed) =
+            (uint256 _amountOut, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
                 quoteExactInputSingle(
                     QuoteExactInputSingleParams({
                         tokenIn: tokenIn,
@@ -223,13 +233,14 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
             sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
             initializedTicksCrossedList[i] = _initializedTicksCrossed;
             amountIn = _amountOut;
+            gasEstimate += _gasEstimate;
             i++;
 
             // decide whether to continue or terminate
             if (path.hasMultiplePools()) {
                 path = path.skipToken();
             } else {
-                return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList);
+                return (amountIn, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
             }
         }
     }
@@ -240,7 +251,8 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         returns (
             uint256 amountIn,
             uint160 sqrtPriceX96After,
-            uint32 initializedTicksCrossed
+            uint32 initializedTicksCrossed,
+            uint256 gasEstimate
         )
     {
         bool zeroForOne = params.tokenIn < params.tokenOut;
@@ -248,6 +260,7 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
 
         // if no price limit has been specified, cache the output amount for comparison in the swap callback
         if (params.sqrtPriceLimitX96 == 0) amountOutCached = params.amount;
+        uint256 gasBefore = gasleft();
         try
             pool.swap(
                 address(this), // address(0) might cause issues with some tokens
@@ -259,8 +272,9 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
                 abi.encodePacked(params.tokenOut, params.fee, params.tokenIn)
             )
         {} catch (bytes memory reason) {
+            gasEstimate = gasBefore - gasleft();
             if (params.sqrtPriceLimitX96 == 0) delete amountOutCached; // clear cache
-            return handleRevert(reason, pool);
+            return handleRevert(reason, pool, gasEstimate);
         }
     }
 
@@ -270,21 +284,19 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
         returns (
             uint256 amountIn,
             uint160[] memory sqrtPriceX96AfterList,
-            uint32[] memory initializedTicksCrossedList
+            uint32[] memory initializedTicksCrossedList,
+            uint256 gasEstimate
         )
     {
-        uint256 numPools = path.numPools();
-        sqrtPriceX96AfterList = new uint160[](numPools);
-        initializedTicksCrossedList = new uint32[](numPools);
+        sqrtPriceX96AfterList = new uint160[](path.numPools());
+        initializedTicksCrossedList = new uint32[](path.numPools());
 
         uint256 i = 0;
         while (true) {
-            bool hasMultiplePools = path.hasMultiplePools();
-
             (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
 
             // the inputs of prior swaps become the outputs of subsequent ones
-            (uint256 _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed) =
+            (uint256 _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
                 quoteExactOutputSingle(
                     QuoteExactOutputSingleParams({
                         tokenIn: tokenIn,
@@ -298,13 +310,14 @@ contract Quoter2 is IQuoter2, IUniswapV3SwapCallback, PeripheryImmutableState {
             sqrtPriceX96AfterList[i] = _sqrtPriceX96After;
             initializedTicksCrossedList[i] = _initializedTicksCrossed;
             amountOut = _amountIn;
+            gasEstimate += _gasEstimate;
             i++;
 
             // decide whether to continue or terminate
-            if (hasMultiplePools) {
+            if (path.hasMultiplePools()) {
                 path = path.skipToken();
             } else {
-                return (amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList);
+                return (amountOut, sqrtPriceX96AfterList, initializedTicksCrossedList, gasEstimate);
             }
         }
     }
