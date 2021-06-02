@@ -13,6 +13,7 @@ import '../base/PeripheryImmutableState.sol';
 import '../libraries/Path.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
+import '../libraries/PoolTicksHelper.sol';
 
 /// @title Provides quotes for swaps
 /// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
@@ -21,6 +22,7 @@ import '../libraries/CallbackValidation.sol';
 contract QuoterV2 is IQuoterV2, IUniswapV3SwapCallback, PeripheryImmutableState {
     using Path for bytes;
     using SafeCast for uint256;
+    using PoolTicksHelper for IUniswapV3Pool;
 
     /// @dev Transient storage variable used to check a safety condition in exact output swaps.
     uint256 private amountOutCached;
@@ -33,15 +35,6 @@ contract QuoterV2 is IQuoterV2, IUniswapV3SwapCallback, PeripheryImmutableState 
         uint24 fee
     ) private view returns (IUniswapV3Pool) {
         return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
-    }
-
-    function countBits(uint256 x) private pure returns (uint16) {
-        uint16 bits = 0;
-        while (x != 0) {
-            bits++;
-            x &= (x - 1);
-        }
-        return bits;
     }
 
     /// @inheritdoc IUniswapV3SwapCallback
@@ -122,61 +115,9 @@ contract QuoterV2 is IQuoterV2, IUniswapV3SwapCallback, PeripheryImmutableState 
         (, tickBefore, , , , , ) = pool.slot0();
         (amount, sqrtPriceX96After, tickAfter) = parseRevertReason(reason);
 
-        initializedTicksCrossed = countInitializedBitsCrossed(pool, tickBefore, tickAfter);
+        initializedTicksCrossed = pool.countInitializedBitsCrossed(tickBefore, tickAfter);
 
         return (amount, sqrtPriceX96After, initializedTicksCrossed, gasEstimate);
-    }
-
-    function countInitializedBitsCrossed(
-        IUniswapV3Pool pool,
-        int24 tickBefore,
-        int24 tickAfter
-    ) private view returns (uint32 initializedTicksCrossed) {
-        // Get the key and offset in the tick bitmap of the active tick before and after the swap.
-        int24 compressedBefore = tickBefore / pool.tickSpacing();
-        int16 wordPos = int16(compressedBefore >> 8);
-        uint8 bitPos = uint8(compressedBefore % 256);
-
-        int24 compressedAfter = tickAfter / pool.tickSpacing();
-        int16 wordPosAfter = int16(compressedAfter >> 8);
-        uint8 bitPosAfter = uint8(compressedAfter % 256);
-
-        // Count the number of initialized ticks crossed by iterating through the tick bitmap.
-        if (wordPos <= wordPosAfter) {
-            // Our first mask should include the starting tick and everything to its left.
-            uint256 mask = ~(uint256(0)) << bitPos;
-            while (wordPos <= wordPosAfter) {
-                // If we're on the final tick bitmap page, ensure we only count up to our
-                // ending tick.
-                if (wordPos == wordPosAfter) {
-                    mask = mask & ((1 << (bitPosAfter + 1)) - 1);
-                }
-
-                uint256 masked = pool.tickBitmap(wordPos) & mask;
-                initializedTicksCrossed += countBits(masked);
-                wordPos++;
-                // Reset our mask so we consider all bits on the next iteration.
-                mask = ~(uint256(0));
-            }
-        } else {
-            // Our first mask should include the starting tick, and everything to its right.
-            uint256 mask = (1 << (bitPos + 1)) - 1;
-            while (wordPos >= wordPosAfter) {
-                // If we're on the final tick bitmap page, ensure we only count up to our
-                // ending tick.
-                if (wordPos == wordPosAfter) {
-                    mask = mask & (~(uint256(0)) << bitPosAfter);
-                }
-
-                uint256 masked = pool.tickBitmap(wordPos) & mask;
-                initializedTicksCrossed += countBits(masked);
-                wordPos--;
-                // Reset our mask so we consider all bits on the next iteration.
-                mask = ~(uint256(0));
-            }
-        }
-
-        return initializedTicksCrossed;
     }
 
     function quoteExactInputSingle(QuoteExactInputSingleParams memory params)

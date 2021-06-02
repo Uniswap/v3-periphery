@@ -30,7 +30,7 @@ describe('QuoterV2', () => {
         token.transfer(trader.address, expandTo18Decimals(1_000_000)),
       ])
     }
-
+    
     const quoterFactory = await ethers.getContractFactory('QuoterV2')
     quoter = (await quoterFactory.deploy(factory.address, weth9.address)) as QuoterV2
 
@@ -69,11 +69,13 @@ describe('QuoterV2', () => {
           amountOut,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate,
         } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           10000
         )
 
+        expect(gasEstimate).to.eq(182321);
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('78461846509168490764501028180')
         expect(initializedTicksCrossedList[0]).to.eq(2)
@@ -85,15 +87,35 @@ describe('QuoterV2', () => {
           amountOut,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           4000
         )
 
+        expect(gasEstimate).to.eq(144724);
         expect(initializedTicksCrossedList[0]).to.eq(1)
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('78926452400586371254602774705')
         expect(amountOut).to.eq(3971)
+      })
+
+      it('0 -> 2 cross 0 tick', async () => {
+        const {
+          amountOut,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+          gasEstimate
+        } = await quoter.callStatic.quoteExactInput(
+          encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
+          10
+        )
+
+        expect(gasEstimate).to.eq(100962);
+        expect(initializedTicksCrossedList[0]).to.eq(0)
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('79227483487511329217250071027')
+        expect(amountOut).to.eq(8)
       })
 
       it('0 -> 2 where tick after is initialized', async () => {
@@ -103,11 +125,13 @@ describe('QuoterV2', () => {
           amountOut,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           6200
         )
 
+        expect(gasEstimate).to.eq(144762);
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('78757224507315167622282810783')
         expect(initializedTicksCrossedList.length).to.eq(1)
@@ -120,11 +144,13 @@ describe('QuoterV2', () => {
           amountOut,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[2].address, tokens[0].address], [FeeAmount.MEDIUM]),
           10000
         )
 
+        expect(gasEstimate).to.eq(175133);
         expect(initializedTicksCrossedList[0]).to.eq(2)
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('80001962924147897865541384515')
@@ -139,11 +165,13 @@ describe('QuoterV2', () => {
           amountOut,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[2].address, tokens[0].address], [FeeAmount.MEDIUM]),
           6250
         )
 
+        expect(gasEstimate).to.eq(175141);
         expect(initializedTicksCrossedList[0]).to.eq(2)
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('79705728824507063507279123685')
@@ -156,11 +184,13 @@ describe('QuoterV2', () => {
           amountOut,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[2].address, tokens[1].address], [FeeAmount.MEDIUM]),
           10000
         )
 
+        expect(gasEstimate).to.eq(97329);
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('80018067294531553039351583520')
         expect(initializedTicksCrossedList[0]).to.eq(0)
@@ -172,11 +202,13 @@ describe('QuoterV2', () => {
           amountOut,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[0].address, tokens[2].address, tokens[1].address], [FeeAmount.MEDIUM, FeeAmount.MEDIUM]),
           10000
         )
 
+        expect(gasEstimate).to.eq(277146);
         expect(sqrtPriceX96AfterList.length).to.eq(2)
         expect(sqrtPriceX96AfterList[0]).to.eq('78461846509168490764501028180')
         expect(sqrtPriceX96AfterList[1]).to.eq('80007846861567212939802016351')
@@ -192,6 +224,7 @@ describe('QuoterV2', () => {
           amountOut: quote,
           sqrtPriceX96After,
           initializedTicksCrossed,
+          gasEstimate
         } = await quoter.callStatic.quoteExactInputSingle({
           tokenIn: tokens[0].address,
           tokenOut: tokens[2].address,
@@ -201,6 +234,7 @@ describe('QuoterV2', () => {
           sqrtPriceLimitX96: encodePriceSqrt(100, 102),
         })
 
+        expect(gasEstimate).to.eq(182303);
         expect(initializedTicksCrossed).to.eq(2)
         expect(quote).to.eq(9871)
         expect(sqrtPriceX96After).to.eq('78461846509168490764501028180')
@@ -211,6 +245,7 @@ describe('QuoterV2', () => {
           amountOut: quote,
           sqrtPriceX96After,
           initializedTicksCrossed,
+          gasEstimate
         } = await quoter.callStatic.quoteExactInputSingle({
           tokenIn: tokens[2].address,
           tokenOut: tokens[0].address,
@@ -220,6 +255,7 @@ describe('QuoterV2', () => {
           sqrtPriceLimitX96: encodePriceSqrt(102, 100),
         })
 
+        expect(gasEstimate).to.eq(175105);
         expect(initializedTicksCrossed).to.eq(2)
         expect(quote).to.eq(9871)
         expect(sqrtPriceX96After).to.eq('80001962924147897865541384515')
@@ -232,17 +268,19 @@ describe('QuoterV2', () => {
           amountIn,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[2].address, tokens[0].address], [FeeAmount.MEDIUM]),
-          9871
+          15000
         )
-
+        
+        expect(gasEstimate).to.eq(181363);
         expect(initializedTicksCrossedList.length).to.eq(1)
         expect(initializedTicksCrossedList[0]).to.eq(2)
-        expect(amountIn).to.eq(10000)
+        expect(amountIn).to.eq(15273)
 
         expect(sqrtPriceX96AfterList.length).to.eq(1)
-        expect(sqrtPriceX96AfterList[0]).to.eq('78461888503179331029803316753')
+        expect(sqrtPriceX96AfterList[0]).to.eq('78055527257643669242286029831')
       })
 
       it('0 -> 2 cross 1 tick', async () => {
@@ -250,11 +288,13 @@ describe('QuoterV2', () => {
           amountIn,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[2].address, tokens[0].address], [FeeAmount.MEDIUM]),
           4000
         )
 
+        expect(gasEstimate).to.eq(144010);
         expect(initializedTicksCrossedList.length).to.eq(1)
         expect(initializedTicksCrossedList[0]).to.eq(1)
         expect(amountIn).to.eq(4029)
@@ -270,11 +310,13 @@ describe('QuoterV2', () => {
           amountIn,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[2].address, tokens[0].address], [FeeAmount.MEDIUM]),
           6143
         )
 
+        expect(gasEstimate).to.eq(144048);
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('78757225449310403327341205211')
         expect(initializedTicksCrossedList.length).to.eq(1)
@@ -287,11 +329,13 @@ describe('QuoterV2', () => {
           amountIn,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           4000
         )
 
+        expect(gasEstimate).to.eq(137838);
         expect(initializedTicksCrossedList.length).to.eq(1)
         expect(initializedTicksCrossedList[0]).to.eq(1)
         expect(amountIn).to.eq(4029)
@@ -305,11 +349,13 @@ describe('QuoterV2', () => {
           amountIn,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           6000
         )
 
+        expect(gasEstimate).to.eq(137858);
         expect(initializedTicksCrossedList[0]).to.eq(1)
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('79690640184021170956740081887')
@@ -324,11 +370,13 @@ describe('QuoterV2', () => {
           amountIn,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
           6223
         )
 
+        expect(gasEstimate).to.eq(175197);
         expect(initializedTicksCrossedList[0]).to.eq(2)
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('79708304437530892332449657932')
@@ -341,11 +389,13 @@ describe('QuoterV2', () => {
           amountIn,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[1].address, tokens[2].address], [FeeAmount.MEDIUM]),
           9871
         )
 
+        expect(gasEstimate).to.eq(97870);
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('80018020393569259756601362385')
         expect(initializedTicksCrossedList[0]).to.eq(0)
@@ -357,6 +407,7 @@ describe('QuoterV2', () => {
           amountIn,
           sqrtPriceX96AfterList,
           initializedTicksCrossedList,
+          gasEstimate
         } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[0].address, tokens[2].address, tokens[1].address].reverse(), [
             FeeAmount.MEDIUM,
@@ -365,6 +416,7 @@ describe('QuoterV2', () => {
           9745
         )
 
+        expect(gasEstimate).to.eq(276746);
         expect(sqrtPriceX96AfterList.length).to.eq(2)
         expect(sqrtPriceX96AfterList[0]).to.eq('80007838904387594703933785072')
         expect(sqrtPriceX96AfterList[1]).to.eq('78461888503179331029803316753')
@@ -376,7 +428,7 @@ describe('QuoterV2', () => {
 
     describe('#quoteExactOutputSingle', () => {
       it('0 -> 1', async () => {
-        const { amountIn, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactOutputSingle(
+        const { amountIn, sqrtPriceX96After, initializedTicksCrossed, gasEstimate } = await quoter.callStatic.quoteExactOutputSingle(
           {
             tokenIn: tokens[0].address,
             tokenOut: tokens[1].address,
@@ -386,13 +438,14 @@ describe('QuoterV2', () => {
           }
         )
 
+        expect(gasEstimate).to.eq(105200);
         expect(amountIn).to.eq(9981)
         expect(initializedTicksCrossed).to.eq(0)
         expect(sqrtPriceX96After).to.eq('78447570448055484695608110440')
       })
 
       it('1 -> 0', async () => {
-        const { amountIn, sqrtPriceX96After, initializedTicksCrossed } = await quoter.callStatic.quoteExactOutputSingle(
+        const { amountIn, sqrtPriceX96After, initializedTicksCrossed, gasEstimate } = await quoter.callStatic.quoteExactOutputSingle(
           {
             tokenIn: tokens[1].address,
             tokenOut: tokens[0].address,
@@ -402,6 +455,7 @@ describe('QuoterV2', () => {
           }
         )
 
+        expect(gasEstimate).to.eq(98511);
         expect(amountIn).to.eq(9981)
         expect(initializedTicksCrossed).to.eq(0)
         expect(sqrtPriceX96After).to.eq('80016521857016594389520272648')
