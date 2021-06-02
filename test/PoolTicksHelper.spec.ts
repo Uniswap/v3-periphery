@@ -7,7 +7,7 @@ import { deployMockContract, Fixture, MockContract } from 'ethereum-waffle'
 import { Artifact } from 'hardhat/types'
 
 
-describe('PoolTicksHelperLibrary', () => {
+describe('PoolTicksHelper', () => {
   const wallets = waffle.provider.getWallets()
 
   let poolTicksHelper: PoolTicksHelperTest;
