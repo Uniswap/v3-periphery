@@ -5,11 +5,11 @@ import { IUniswapV3Factory, IWETH9, MockTimeSwapRouter } from '../../typechain'
 
 import { Contract } from '@ethersproject/contracts'
 import { constants } from 'ethers'
-import { v3CoreFactoryFixtureSetup } from './setup'
+import { v3CoreFactoryFixtureSetup, wethFixtureSetup } from './setup'
 
 const wethFixture: Fixture<{ weth9: IWETH9 }> = async ([wallet]) => {
-  const weth9 = (await (await ethers.getContractFactory('WETH9', wallet)).deploy()) as IWETH9
-  return { weth9 }
+  // @ts-expect-error We don't need to pass the standard fixture inputs since wethFixtureSetup has defaults
+  return wethFixtureSetup()
 }
 
 export const v2FactoryFixture: Fixture<{ factory: Contract }> = async ([wallet]) => {

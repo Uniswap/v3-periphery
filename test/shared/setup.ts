@@ -14,11 +14,13 @@ import { IUniswapV3Factory, IWETH9, MockTimeSwapRouter } from '../../typechain'
 // Default wallet attached to contracts
 const wallet = waffle.provider.getWallets()[0]
 
-// These two variables were previously constant and deterministic, but are now a function of library address. So we
+// The first two variables were previously constant and deterministic, but are now a function of library address. So we
 // initialize them here and define them in v3CoreFactoryFixtureSetup which should only be run one time. After the first
-// run we return the saved values here
+// run we return the saved values here. Similarly, we only want to deploy WETH once because it is a constructor
+// argument and we want to ensure the WETH address is always safe to use as a constructor argument
 let factory: IUniswapV3Factory
 let poolBytecode: string
+let weth: IWETH9
 
 // Helper method for deploying libraries
 const deployLib = async (name: string, libraries?: any): Promise<string> => {
@@ -26,8 +28,7 @@ const deployLib = async (name: string, libraries?: any): Promise<string> => {
   return lib.address
 }
 
-// This method is used within `v3CoreFactoryFixture()` in `test/shared/externalFixture.ts` to ensure the contracts
-// are only deployed once
+// This method is called within _Setup.spec.ts to ensure contracts are only deployed once
 export const v3CoreFactoryFixtureSetup: Fixture<IUniswapV3Factory> = async () => {
   // If factory was already deployed, return it
   if (factory) return factory
@@ -65,4 +66,14 @@ export const getPoolBytecode = async () => {
   // @ts-expect-error We don't pass inputs to v3CoreFactoryFixtureSetup since it has defaults
   if (!poolBytecode) await v3CoreFactoryFixtureSetup() // this sets the poolBytecode variable
   return poolBytecode
+}
+
+// This method is called within _Setup.spec.ts to ensure WETH is only deployed once per test suite run
+export const wethFixtureSetup: Fixture<{ weth9: IWETH9 }> = async () => {
+  // If weth was already deployed, return it
+  if (weth) return { weth9: weth }
+
+  // Otherwise deploy it
+  weth = (await (await ethers.getContractFactory('WETH9', wallet)).deploy()) as IWETH9
+  return { weth9: weth }
 }
