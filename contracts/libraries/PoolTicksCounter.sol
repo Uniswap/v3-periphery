@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-
 pragma solidity >=0.6.0;
 
+import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+
 library PoolTicksCounter {
-    /// @dev This function counts the number of initialized ticks between tickBefore (inclusive) and tickAfter (exclusive).
-    /// Therefore if tickAfter happens to be an initialized tick it is *not* counted. This is because the
-    /// function is intended to be used for gas estimation and the gas cost associated with an intialized tick
-    /// only occurs once the tick has been passed.
+    /// @dev This function counts the number of initialized ticks that would incur a gas cost between tickBefore and tickAfter.
+    /// When tickBefore and/or tickAfter themselves are initialized, the logic over whether we should count them depends on the
+    /// direction of the swap. If we are swapping upwards (tickAfter > tickBefore) we don't want to count tickBefore but we do
+    /// want to count tickAfter. The opposite is true if we are swapping downwards.
     function countInitializedTicksCrossed(
         IUniswapV3Pool self,
         int24 tickBefore,
@@ -17,6 +17,7 @@ library PoolTicksCounter {
         int16 wordPosHigher;
         uint8 bitPosLower;
         uint8 bitPosHigher;
+        bool tickBeforeInitialized;
         bool tickAfterInitialized;
 
         {
@@ -27,11 +28,21 @@ library PoolTicksCounter {
             int16 wordPosAfter = int16((tickAfter / self.tickSpacing()) >> 8);
             uint8 bitPosAfter = uint8((tickAfter / self.tickSpacing()) % 256);
 
-            // If the initializable tick after the swap is initialized, and our original tickAfter is a
-            // multiple of tick spacing, we know that tickAfter is initialized and we shouldn't count it.
+            // In the case where tickAfter is initialized, we only want to count it if we are swapping downwards.
+            // If the initializable tick after the swap is initialized, our original tickAfter is a
+            // multiple of tick spacing, and we are swapping downwards we know that tickAfter is initialized
+            // and we shouldn't count it.
             tickAfterInitialized =
                 ((self.tickBitmap(wordPosAfter) & (1 << bitPosAfter)) > 0) &&
-                ((tickAfter % self.tickSpacing()) == 0);
+                ((tickAfter % self.tickSpacing()) == 0) &&
+                (tickBefore > tickAfter);
+
+            // In the case where tickBefore is initialized, we only want to count it if we are swapping upwards.
+            // Use the same logic as above to decide whether we should count tickBefore or not.
+            tickBeforeInitialized =
+                ((self.tickBitmap(wordPos) & (1 << bitPos)) > 0) &&
+                ((tickBefore % self.tickSpacing()) == 0) &&
+                (tickBefore < tickAfter);
 
             if (wordPos < wordPosAfter || (wordPos == wordPosAfter && bitPos <= bitPosAfter)) {
                 wordPosLower = wordPos;
@@ -64,6 +75,10 @@ library PoolTicksCounter {
         }
 
         if (tickAfterInitialized) {
+            initializedTicksCrossed -= 1;
+        }
+
+        if (tickBeforeInitialized) {
             initializedTicksCrossed -= 1;
         }
 
