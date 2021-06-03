@@ -8,7 +8,7 @@ import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
-import { createPool, createPoolWithMultiplePositions } from './shared/quoter'
+import { createPool, createPoolWithMultiplePositions, createPoolWithZeroTickInitialized } from './shared/quoter'
 
 describe('QuoterV2', () => {
   const wallets = waffle.provider.getWallets()
@@ -64,7 +64,7 @@ describe('QuoterV2', () => {
     })
 
     describe('#quoteExactInput', () => {
-      it('0 -> 2', async () => {
+      it('0 -> 2 cross 2 tick', async () => {
         const {
           amountOut,
           sqrtPriceX96AfterList,
@@ -80,6 +80,27 @@ describe('QuoterV2', () => {
         expect(sqrtPriceX96AfterList[0]).to.eq('78461846509168490764501028180')
         expect(initializedTicksCrossedList[0]).to.eq(2)
         expect(amountOut).to.eq(9871)
+      })
+
+      it('0 -> 2 cross 2 tick where after is initialized', async () => {
+        // The swap amount is set such that the active tick after the swap is -120.
+        // -120 is an initialized tick for this pool. We check that we don't count it.
+        const {
+          amountOut,
+          sqrtPriceX96AfterList,
+          initializedTicksCrossedList,
+          gasEstimate
+        } = await quoter.callStatic.quoteExactInput(
+          encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
+          6200
+        )
+
+        expect(gasEstimate).to.eq(144762);
+        expect(sqrtPriceX96AfterList.length).to.eq(1)
+        expect(sqrtPriceX96AfterList[0]).to.eq('78757224507315167622282810783')
+        expect(initializedTicksCrossedList.length).to.eq(1)
+        expect(initializedTicksCrossedList[0]).to.eq(1)
+        expect(amountOut).to.eq(6143)
       })
 
       it('0 -> 2 cross 1 tick', async () => {
@@ -100,7 +121,8 @@ describe('QuoterV2', () => {
         expect(amountOut).to.eq(3971)
       })
 
-      it('0 -> 2 cross 0 tick', async () => {
+      it('0 -> 2 cross 0 tick, starting tick not initialized', async () => {
+        // Tick before 0, tick after -1.
         const {
           amountOut,
           sqrtPriceX96AfterList,
@@ -118,9 +140,10 @@ describe('QuoterV2', () => {
         expect(amountOut).to.eq(8)
       })
 
-      it('0 -> 2 where tick after is initialized', async () => {
-        // The swap amount is set such that the active tick after the swap is -120.
-        // -120 is an initialized tick for this pool. We check that we count it.
+      it('0 -> 2 cross 0 tick, starting tick initialized', async () => {
+        // Tick before 0, tick after -1. Tick 0 initialized.
+        await createPoolWithZeroTickInitialized(nft, wallet, tokens[0].address, tokens[2].address)
+    
         const {
           amountOut,
           sqrtPriceX96AfterList,
@@ -128,15 +151,14 @@ describe('QuoterV2', () => {
           gasEstimate
         } = await quoter.callStatic.quoteExactInput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
-          6200
+          10
         )
 
-        expect(gasEstimate).to.eq(144762);
+        expect(gasEstimate).to.eq(123797);
+        expect(initializedTicksCrossedList[0]).to.eq(1)
         expect(sqrtPriceX96AfterList.length).to.eq(1)
-        expect(sqrtPriceX96AfterList[0]).to.eq('78757224507315167622282810783')
-        expect(initializedTicksCrossedList.length).to.eq(1)
-        expect(initializedTicksCrossedList[0]).to.eq(2)
-        expect(amountOut).to.eq(6143)
+        expect(sqrtPriceX96AfterList[0]).to.eq('79227817515327498931091950511')
+        expect(amountOut).to.eq(8)
       })
 
       it('2 -> 0', async () => {
@@ -160,7 +182,7 @@ describe('QuoterV2', () => {
 
       it('2 -> 0 where tick after is initialized', async () => {
         // The swap amount is set such that the active tick after the swap is 120.
-        // 120 is an initialized tick for this pool. We check we count it.
+        // 120 is an initialized tick for this pool. We check we don't count it.
         const {
           amountOut,
           sqrtPriceX96AfterList,
@@ -172,7 +194,7 @@ describe('QuoterV2', () => {
         )
 
         expect(gasEstimate).to.eq(175141);
-        expect(initializedTicksCrossedList[0]).to.eq(2)
+        expect(initializedTicksCrossedList[0]).to.eq(1)
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('79705728824507063507279123685')
         expect(initializedTicksCrossedList.length).to.eq(1)
@@ -263,7 +285,7 @@ describe('QuoterV2', () => {
     })
 
     describe('#quoteExactOutput', () => {
-      it('0 -> 2', async () => {
+      it('0 -> 2 cross 2 tick', async () => {
         const {
           amountIn,
           sqrtPriceX96AfterList,
@@ -320,11 +342,11 @@ describe('QuoterV2', () => {
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('78757225449310403327341205211')
         expect(initializedTicksCrossedList.length).to.eq(1)
-        expect(initializedTicksCrossedList[0]).to.eq(2)
+        expect(initializedTicksCrossedList[0]).to.eq(1)
         expect(amountIn).to.eq(6200)
       })
 
-      it('2 -> 0', async () => {
+      it('2 -> 0 cross 2 ticks', async () => {
         const {
           amountIn,
           sqrtPriceX96AfterList,
@@ -332,16 +354,15 @@ describe('QuoterV2', () => {
           gasEstimate
         } = await quoter.callStatic.quoteExactOutput(
           encodePath([tokens[0].address, tokens[2].address], [FeeAmount.MEDIUM]),
-          4000
+          15000
         )
 
-        expect(gasEstimate).to.eq(137838);
+        expect(gasEstimate).to.eq(175203);
         expect(initializedTicksCrossedList.length).to.eq(1)
-        expect(initializedTicksCrossedList[0]).to.eq(1)
-        expect(amountIn).to.eq(4029)
-
+        expect(initializedTicksCrossedList[0]).to.eq(2)
+        expect(amountIn).to.eq(15273)
         expect(sqrtPriceX96AfterList.length).to.eq(1)
-        expect(sqrtPriceX96AfterList[0]).to.eq('79533275775872453725174597392')
+        expect(sqrtPriceX96AfterList[0]).to.eq('80418414376567919517220409857')
       })
 
       it('2 -> 0 cross 1 tick', async () => {
@@ -365,7 +386,7 @@ describe('QuoterV2', () => {
 
       it('2 -> 0 where tick after is initialized', async () => {
         // The swap amount is set such that the active tick after the swap is 120.
-        // 120 is an initialized tick for this pool. We check that we count it.
+        // 120 is an initialized tick for this pool. We check that we don't count it.
         const {
           amountIn,
           sqrtPriceX96AfterList,
@@ -377,7 +398,7 @@ describe('QuoterV2', () => {
         )
 
         expect(gasEstimate).to.eq(175197);
-        expect(initializedTicksCrossedList[0]).to.eq(2)
+        expect(initializedTicksCrossedList[0]).to.eq(1)
         expect(sqrtPriceX96AfterList.length).to.eq(1)
         expect(sqrtPriceX96AfterList[0]).to.eq('79708304437530892332449657932')
         expect(initializedTicksCrossedList.length).to.eq(1)

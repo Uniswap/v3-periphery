@@ -31,6 +31,18 @@ describe('PoolTicksHelper', () => {
   })
 
   describe('tick after is bigger', async () => {
+    it('same tick initialized', async () => {
+      await pool.mock.tickBitmap.withArgs(0).returns(0xc); // 1100
+      const result = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(2));
+      expect(result).to.be.eq(0);
+    })
+
+    it('same tick not-initialized', async () => {
+      await pool.mock.tickBitmap.withArgs(0).returns(0xc); // 1100
+      const result = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(1), bitIdxToTick(1));
+      expect(result).to.be.eq(0);
+    })
+    
     it('same page', async () => {
       await pool.mock.tickBitmap.withArgs(0).returns(0xc); // 1100
       const result = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(0), bitIdxToTick(255));
@@ -44,7 +56,7 @@ describe('PoolTicksHelper', () => {
       expect(result).to.be.eq(5);
     })
 
-    it('counts last tick in same page', async () => {
+    it('counts all ticks in a page', async () => {
       await pool.mock.tickBitmap.withArgs(0).returns(ethers.constants.MaxUint256); // 1100
       await pool.mock.tickBitmap.withArgs(1).returns(0x0); 
       const result = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(0), bitIdxToTick(255, 1));
@@ -61,28 +73,28 @@ describe('PoolTicksHelper', () => {
       await pool.mock.tickBitmap.withArgs(0).returns(0xf10f); // 1111000100001111
       await pool.mock.tickBitmap.withArgs(1).returns(0xf10f); // 1111000100001111
       const result = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(8), bitIdxToTick(8, 1));
-      expect(result).to.be.eq(10);
+      expect(result).to.be.eq(9);
     })
 
     it('counts ticks when before and after are initialized on same page', async () => {
       await pool.mock.tickBitmap.withArgs(0).returns(0xfc); // 11111100
-      const countStartingTick = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(255));
-      expect(countStartingTick).to.be.eq(6);
-      const countEndingTick = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(0), bitIdxToTick(3));
-      expect(countEndingTick).to.be.eq(2);
-      const countBoth = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(5));
-      expect(countBoth).to.be.eq(4);
+      const startingTickInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(255));
+      expect(startingTickInit).to.be.eq(6);
+      const endingTickInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(0), bitIdxToTick(3));
+      expect(endingTickInit).to.be.eq(1);
+      const bothInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(5));
+      expect(bothInit).to.be.eq(3);
     })
 
     it('counts ticks when before and after are initialized on multiple page', async () => {
       await pool.mock.tickBitmap.withArgs(0).returns(0xfc); // 11111100
       await pool.mock.tickBitmap.withArgs(1).returns(0xfc); // 11111100
-      const countStartingTick = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(255));
-      expect(countStartingTick).to.be.eq(6);
-      const countEndingTick = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(0), bitIdxToTick(3, 1));
-      expect(countEndingTick).to.be.eq(8);
-      const countBoth = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(5, 1));
-      expect(countBoth).to.be.eq(10);
+      const startingTickInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(255));
+      expect(startingTickInit).to.be.eq(6);
+      const endingTickInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(0), bitIdxToTick(3, 1));
+      expect(endingTickInit).to.be.eq(7);
+      const bothInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(5, 1));
+      expect(bothInit).to.be.eq(9);
     })
 
     it('counts ticks with lots of pages', async () => {
@@ -92,8 +104,8 @@ describe('PoolTicksHelper', () => {
       await pool.mock.tickBitmap.withArgs(3).returns(0x0); // 00000000
       await pool.mock.tickBitmap.withArgs(4).returns(0xfc); // 11[111100
       
-      const countBoth = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(4), bitIdxToTick(5, 4));
-      expect(countBoth).to.be.eq(16);
+      const bothInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(4), bitIdxToTick(5, 4));
+      expect(bothInit).to.be.eq(15);
     })
   })
 
@@ -106,50 +118,50 @@ describe('PoolTicksHelper', () => {
 
     it('multiple pages', async () => {
       await pool.mock.tickBitmap.withArgs(0).returns(0xc); // 1100
-      await pool.mock.tickBitmap.withArgs(-1).returns(0xd); // 1101
+      await pool.mock.tickBitmap.withArgs(-1).returns(0xc); // 1100
       const result = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(255), bitIdxToTick(0, -1));
-      expect(result).to.be.eq(5);
+      expect(result).to.be.eq(4);
     })
 
-    it('counts last tick in same page', async () => {
+    it('counts all ticks in a page', async () => {
       await pool.mock.tickBitmap.withArgs(0).returns(ethers.constants.MaxUint256); 
-      await pool.mock.tickBitmap.withArgs(1).returns(0x0); 
-      const result = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(255), bitIdxToTick(0));
+      await pool.mock.tickBitmap.withArgs(-1).returns(0x0); 
+      const result = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(255), bitIdxToTick(0, -1));
       expect(result).to.be.eq(256);
     })
 
     it('counts ticks to right of start and left of end on same page', async () => {
       await pool.mock.tickBitmap.withArgs(0).returns(0xf10f); // 1111000100001111
       const result = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(255), bitIdxToTick(8));
-      expect(result).to.be.eq(5);
+      expect(result).to.be.eq(4);
     })
 
     it('counts ticks to right of start and left of end on multiple pages', async () => {
       await pool.mock.tickBitmap.withArgs(0).returns(0xf10f); // 1111000100001111
       await pool.mock.tickBitmap.withArgs(-1).returns(0xf10f); // 1111000100001111
       const result = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(8), bitIdxToTick(8, -1));
-      expect(result).to.be.eq(10);
+      expect(result).to.be.eq(9);
     })
 
     it('counts ticks when before and after are initialized on same page', async () => {
       await pool.mock.tickBitmap.withArgs(0).returns(0xfc); // 11111100
-      const countStartingTick = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(3), bitIdxToTick(0));
-      expect(countStartingTick).to.be.eq(2);
-      const countEndingTick = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(255), bitIdxToTick(2));
-      expect(countEndingTick).to.be.eq(6);
-      const countBoth = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(5), bitIdxToTick(2));
-      expect(countBoth).to.be.eq(4);
+      const startingTickInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(3), bitIdxToTick(0));
+      expect(startingTickInit).to.be.eq(2);
+      const endingTickInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(255), bitIdxToTick(2));
+      expect(endingTickInit).to.be.eq(5);
+      const bothInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(5), bitIdxToTick(2));
+      expect(bothInit).to.be.eq(3);
     })
 
     it('counts ticks when before and after are initialized on multiple page', async () => {
       await pool.mock.tickBitmap.withArgs(0).returns(0xfc); // 11111100
       await pool.mock.tickBitmap.withArgs(-1).returns(0xfc); // 11111100
-      const countStartingTick = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(0), bitIdxToTick(3, -1));
-      expect(countStartingTick).to.be.eq(5);
-      const countEndingTick = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(5), bitIdxToTick(255, -1));
-      expect(countEndingTick).to.be.eq(4);
-      const countBoth = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(5, -1));
-      expect(countBoth).to.be.eq(4);
+      const startingTickInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(3, -1));
+      expect(startingTickInit).to.be.eq(5);
+      const endingTickInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(5), bitIdxToTick(255, -1));
+      expect(endingTickInit).to.be.eq(4);
+      const bothInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(2), bitIdxToTick(5, -1));
+      expect(bothInit).to.be.eq(3);
     })
 
     it('counts ticks with lots of pages', async () => {
@@ -158,8 +170,8 @@ describe('PoolTicksHelper', () => {
       await pool.mock.tickBitmap.withArgs(-2).returns(0x0); // 00000000
       await pool.mock.tickBitmap.withArgs(-3).returns(0x0); // 00000000
       await pool.mock.tickBitmap.withArgs(-4).returns(0xfc); // 11]111100
-      const countBoth = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(3), bitIdxToTick(6, -4));
-      expect(countBoth).to.be.eq(12);
+      const bothInit = await poolTicksHelper.countInitializedBitsCrossed(bitIdxToTick(3), bitIdxToTick(6, -4));
+      expect(bothInit).to.be.eq(11);
     })
   })
 })
