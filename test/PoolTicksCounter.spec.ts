@@ -12,12 +12,13 @@ describe('PoolTicksCounter', () => {
 
   const TICK_SPACINGS = [ 200, 60, 10 ];
   
-  // Bit index to tick
+  
   TICK_SPACINGS.forEach(TICK_SPACING => {
     let PoolTicksCounter: PoolTicksCounterTest;
     let pool: MockContract;
     let PoolAbi: Artifact;
 
+    // Bit index to tick
     const bitIdxToTick = (idx: number, page = 0) => {
       return (idx * TICK_SPACING) + (page * 256 * TICK_SPACING);
     }
