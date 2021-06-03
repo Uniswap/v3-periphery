@@ -115,7 +115,7 @@ contract QuoterV2 is IQuoterV2, IUniswapV3SwapCallback, PeripheryImmutableState 
         (, tickBefore, , , , , ) = pool.slot0();
         (amount, sqrtPriceX96After, tickAfter) = parseRevertReason(reason);
 
-        initializedTicksCrossed = pool.countInitializedBitsCrossed(tickBefore, tickAfter);
+        initializedTicksCrossed = pool.countInitializedTicksCrossed(tickBefore, tickAfter);
 
         return (amount, sqrtPriceX96After, initializedTicksCrossed, gasEstimate);
     }

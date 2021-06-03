@@ -4,15 +4,12 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 pragma solidity >=0.6.0;
 
 library PoolTicksCounter {
-    /// @dev This function counts the number of initialized ticks 't' such that tickBefore <= t < tickAfter.
-    /// Therefore if tickAfter happens to be an initialized tick it is *not* counted. This is because the
-    /// function is intended to be used for gas estimation and the cost associated with an intialized tick
-    /// only occurs once the initialized tick is passed.
-    function countInitializedBitsCrossed(
-        IUniswapV3Pool self,
-        int24 tickBefore,
-        int24 tickAfter
-    ) internal view returns (uint32 initializedTicksCrossed) {
+
+    /// @dev This function counts the number of initialized ticks between tickBefore (inclusive) and tickAfter (exclusive).
+    /// Therefore if tickAfter happens to be an initialized tick it is *not* counted. This is because the 
+    /// function is intended to be used for gas estimation and the gas cost associated with an intialized tick
+    /// only occurs once the tick has been passed.
+    function countInitializedTicksCrossed(IUniswapV3Pool self, int24 tickBefore, int24 tickAfter) internal view returns (uint32 initializedTicksCrossed) {
         int16 wordPosLower;
         int16 wordPosHigher;
         uint8 bitPosLower;

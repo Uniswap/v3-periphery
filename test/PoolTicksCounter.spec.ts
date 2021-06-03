@@ -32,7 +32,7 @@ describe('PoolTicksCounter', () => {
     describe(`[Tick Spacing: ${TICK_SPACING}]: tick after is bigger`, async () => {
       it('same tick initialized', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b1100) // 1100
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(2),
           bitIdxToTick(2)
@@ -42,7 +42,7 @@ describe('PoolTicksCounter', () => {
 
       it('same tick not-initialized', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b1100) // 1100
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(1),
           bitIdxToTick(1)
@@ -52,7 +52,7 @@ describe('PoolTicksCounter', () => {
 
       it('same page', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b1100) // 1100
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(0),
           bitIdxToTick(255)
@@ -63,7 +63,7 @@ describe('PoolTicksCounter', () => {
       it('multiple pages', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b1100) // 1100
         await pool.mock.tickBitmap.withArgs(1).returns(0b1101) // 1101
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(0),
           bitIdxToTick(255, 1)
@@ -74,7 +74,7 @@ describe('PoolTicksCounter', () => {
       it('counts all ticks in a page', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(ethers.constants.MaxUint256)
         await pool.mock.tickBitmap.withArgs(1).returns(0x0)
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(0),
           bitIdxToTick(255, 1)
@@ -84,7 +84,7 @@ describe('PoolTicksCounter', () => {
 
       it('counts ticks to left of start and right of end on same page', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b1111000100001111)
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(8),
           bitIdxToTick(255)
@@ -95,7 +95,7 @@ describe('PoolTicksCounter', () => {
       it('counts ticks to left of start and right of end across on multiple pages', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b1111000100001111)
         await pool.mock.tickBitmap.withArgs(1).returns(0b1111000100001111)
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(8),
           bitIdxToTick(8, 1)
@@ -105,19 +105,19 @@ describe('PoolTicksCounter', () => {
 
       it('counts ticks when before and after are initialized on same page', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b11111100)
-        const startingTickInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const startingTickInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(2),
           bitIdxToTick(255)
         )
         expect(startingTickInit).to.be.eq(6)
-        const endingTickInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const endingTickInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(0),
           bitIdxToTick(3)
         )
         expect(endingTickInit).to.be.eq(1)
-        const bothInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const bothInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(2),
           bitIdxToTick(5)
@@ -128,19 +128,19 @@ describe('PoolTicksCounter', () => {
       it('counts ticks when before and after are initialized on multiple page', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b11111100)
         await pool.mock.tickBitmap.withArgs(1).returns(0b11111100)
-        const startingTickInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const startingTickInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(2),
           bitIdxToTick(255)
         )
         expect(startingTickInit).to.be.eq(6)
-        const endingTickInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const endingTickInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(0),
           bitIdxToTick(3, 1)
         )
         expect(endingTickInit).to.be.eq(7)
-        const bothInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const bothInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(2),
           bitIdxToTick(5, 1)
@@ -155,7 +155,7 @@ describe('PoolTicksCounter', () => {
         await pool.mock.tickBitmap.withArgs(3).returns(0x0)
         await pool.mock.tickBitmap.withArgs(4).returns(0b11111100)
 
-        const bothInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const bothInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(4),
           bitIdxToTick(5, 4)
@@ -167,7 +167,7 @@ describe('PoolTicksCounter', () => {
     describe(`[Tick Spacing: ${TICK_SPACING}]: tick after is smaller`, async () => {
       it('same page', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b1100)
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(255),
           bitIdxToTick(0)
@@ -178,7 +178,7 @@ describe('PoolTicksCounter', () => {
       it('multiple pages', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b1100)
         await pool.mock.tickBitmap.withArgs(-1).returns(0b1100)
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(255),
           bitIdxToTick(0, -1)
@@ -189,7 +189,7 @@ describe('PoolTicksCounter', () => {
       it('counts all ticks in a page', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(ethers.constants.MaxUint256)
         await pool.mock.tickBitmap.withArgs(-1).returns(0x0)
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(255),
           bitIdxToTick(0, -1)
@@ -199,7 +199,7 @@ describe('PoolTicksCounter', () => {
 
       it('counts ticks to right of start and left of end on same page', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b1111000100001111)
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(255),
           bitIdxToTick(8)
@@ -210,7 +210,7 @@ describe('PoolTicksCounter', () => {
       it('counts ticks to right of start and left of end on multiple pages', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b1111000100001111)
         await pool.mock.tickBitmap.withArgs(-1).returns(0b1111000100001111)
-        const result = await PoolTicksCounter.countInitializedBitsCrossed(
+        const result = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(8),
           bitIdxToTick(8, -1)
@@ -220,19 +220,19 @@ describe('PoolTicksCounter', () => {
 
       it('counts ticks when before and after are initialized on same page', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b11111100)
-        const startingTickInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const startingTickInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(3),
           bitIdxToTick(0)
         )
         expect(startingTickInit).to.be.eq(2)
-        const endingTickInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const endingTickInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(255),
           bitIdxToTick(2)
         )
         expect(endingTickInit).to.be.eq(5)
-        const bothInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const bothInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(5),
           bitIdxToTick(2)
@@ -243,19 +243,19 @@ describe('PoolTicksCounter', () => {
       it('counts ticks when before and after are initialized on multiple page', async () => {
         await pool.mock.tickBitmap.withArgs(0).returns(0b11111100)
         await pool.mock.tickBitmap.withArgs(-1).returns(0b11111100)
-        const startingTickInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const startingTickInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(2),
           bitIdxToTick(3, -1)
         )
         expect(startingTickInit).to.be.eq(5)
-        const endingTickInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const endingTickInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(5),
           bitIdxToTick(255, -1)
         )
         expect(endingTickInit).to.be.eq(4)
-        const bothInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const bothInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(2),
           bitIdxToTick(5, -1)
@@ -269,7 +269,7 @@ describe('PoolTicksCounter', () => {
         await pool.mock.tickBitmap.withArgs(-2).returns(0x0)
         await pool.mock.tickBitmap.withArgs(-3).returns(0x0)
         await pool.mock.tickBitmap.withArgs(-4).returns(0b11111100)
-        const bothInit = await PoolTicksCounter.countInitializedBitsCrossed(
+        const bothInit = await PoolTicksCounter.countInitializedTicksCrossed(
           pool.address,
           bitIdxToTick(3),
           bitIdxToTick(6, -4)
