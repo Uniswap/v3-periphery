@@ -91,7 +91,7 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
             getPool(tokenIn, tokenOut, fee).swap(
                 address(this), // address(0) might cause issues with some tokens
                 zeroForOne,
-                amountIn.toInt256(),    
+                amountIn.toInt256(),
                 sqrtPriceLimitX96 == 0
                     ? (zeroForOne ? TickMath.MIN_SQRT_RATIO + 1 : TickMath.MAX_SQRT_RATIO - 1)
                     : sqrtPriceLimitX96,
