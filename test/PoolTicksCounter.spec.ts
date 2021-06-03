@@ -9,7 +9,7 @@ import { Artifact } from 'hardhat/types'
 describe('PoolTicksCounter', () => {
   const wallets = waffle.provider.getWallets()
 
-  const TICK_SPACINGS = [200/** , 60, 10*/]
+  const TICK_SPACINGS = [200, 60, 10]
 
   TICK_SPACINGS.forEach((TICK_SPACING) => {
     let PoolTicksCounter: PoolTicksCounterTest
