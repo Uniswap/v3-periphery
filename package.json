@@ -33,7 +33,8 @@
     "@uniswap/lib": "^4.0.1-alpha",
     "@uniswap/v2-core": "1.0.1",
     "@uniswap/v3-core": "1.0.0",
-    "base64-sol": "1.0.1"
+    "base64-sol": "1.0.1",
+    "hardhat-watcher": "^2.1.1"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",

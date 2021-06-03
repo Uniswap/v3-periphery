@@ -29,7 +29,7 @@ interface IQuoter {
     ) external returns (uint256 amountOut);
 
     /// @notice Returns the amount in required for a given exact output swap without executing the swap
-    /// @param path The path of the swap, i.e. each token pair and the pool fee
+    /// @param path The path of the swap, i.e. each token pair and the pool fee. Path must be provided in reverse order
     /// @param amountOut The amount of the last token to receive
     /// @return amountIn The amount of first token required to be paid
     function quoteExactOutput(bytes memory path, uint256 amountOut) external returns (uint256 amountIn);

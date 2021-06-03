@@ -26,6 +26,14 @@ library Path {
         return path.length >= MULTIPLE_POOLS_MIN_LENGTH;
     }
 
+    /// @notice Returns the number of pools in the path
+    /// @param path The encoded swap path
+    /// @return The number of pools in the path
+    function numPools(bytes memory path) internal pure returns (uint256) {
+        // Ignore the first token address. From then on every fee and token offset indicates a pool.
+        return ((path.length - ADDR_SIZE) / NEXT_OFFSET);
+    }
+
     /// @notice Decodes the first pool in path
     /// @param path The bytes encoded swap path
     /// @return tokenA The first token of the given pool
