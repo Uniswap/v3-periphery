@@ -13,7 +13,7 @@ import '../base/PeripheryImmutableState.sol';
 import '../libraries/Path.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
-import '../libraries/PoolTicksHelper.sol';
+import '../libraries/PoolTicksCounter.sol';
 
 /// @title Provides quotes for swaps
 /// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
@@ -22,7 +22,7 @@ import '../libraries/PoolTicksHelper.sol';
 contract QuoterV2 is IQuoterV2, IUniswapV3SwapCallback, PeripheryImmutableState {
     using Path for bytes;
     using SafeCast for uint256;
-    using PoolTicksHelper for IUniswapV3Pool;
+    using PoolTicksCounter for IUniswapV3Pool;
 
     /// @dev Transient storage variable used to check a safety condition in exact output swaps.
     uint256 private amountOutCached;

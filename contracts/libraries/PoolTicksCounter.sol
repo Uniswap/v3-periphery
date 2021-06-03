@@ -3,8 +3,7 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 pragma solidity >=0.6.0;
 
-
-library PoolTicksHelper {
+library PoolTicksCounter {
     /// @dev This function counts the number of initialized ticks 't' such that tickBefore <= t < tickAfter.
     /// Therefore if tickAfter happens to be an initialized tick it is *not* counted. This is because the 
     /// function is intended to be used for gas estimation and the cost associated with an intialized tick
