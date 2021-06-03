@@ -723,7 +723,7 @@ describe('NFTDescriptor', () => {
     })
   })
 
-  describe.only('#rangeLocation', () => {
+  describe('#rangeLocation', () => {
     it('returns the correct coordinates when range midpoint under -125_000', async () => {
       const coords = await nftDescriptor.rangeLocation(-887_272, -887_100)
       expect(coords[0]).to.eq('8')
