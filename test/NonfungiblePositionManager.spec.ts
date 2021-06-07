@@ -928,7 +928,8 @@ describe('NonfungiblePositionManager', () => {
   describe('#permit', () => {
     it('emits an event')
 
-    describe('owned by eoa', () => {
+    // These tests are skipped since there are no EOAs on the OVM, so they would fail if ran
+    describe.skip('owned by eoa', () => {
       const tokenId = 1
       beforeEach('create a position', async () => {
         await nft.createAndInitializePoolIfNecessary(
