@@ -201,11 +201,12 @@ describe('TickLens', () => {
 
     it('fully populated ticks', async () => {
       // fully populate a word
-      await Promise.all(
-        new Array(128)
-          .fill(0)
-          .map((_, i) => mint(i * TICK_SPACINGS[FeeAmount.MEDIUM], (255 - i) * TICK_SPACINGS[FeeAmount.MEDIUM], 100))
-      )
+      // OVM update: await each mint call individually instead of awaiting Promise.all() to ensure nonce is
+      // properly incremented on each deploy transaction when testing against l2geth
+      const array = new Array(128).fill(0).map((_, i) => i)
+      for (const i of array) {
+        await mint(i * TICK_SPACINGS[FeeAmount.MEDIUM], (255 - i) * TICK_SPACINGS[FeeAmount.MEDIUM], 100)
+      }
 
       const ticks = await tickLens.getPopulatedTicksInWord(
         poolAddress,
