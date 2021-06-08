@@ -200,6 +200,20 @@ describe('TickLens', () => {
     })
 
     it('fully populated ticks', async () => {
+      // OVM: A call to getPopulatedTicksInWord for a fully populated work on the OVM uses ~38.5M gas. This is too much
+      // for l2geth so the call reverts. As a result we use this helper function to break that into 4 separate calls
+      // and aggregate the results
+      async function getPopulatedTicksInWordFromPartials() {
+        const tickBitMapIndex = getTickBitmapIndex(0, TICK_SPACINGS[FeeAmount.MEDIUM])
+        const [partialTicks1, partialTicks2, partialTicks3, partialTicks4] = await Promise.all([
+          tickLens.getPopulatedTicksInPartialWord(poolAddress, tickBitMapIndex, 0, 64),
+          tickLens.getPopulatedTicksInPartialWord(poolAddress, tickBitMapIndex, 64, 128),
+          tickLens.getPopulatedTicksInPartialWord(poolAddress, tickBitMapIndex, 128, 192),
+          tickLens.getPopulatedTicksInPartialWord(poolAddress, tickBitMapIndex, 192, 256),
+        ])
+        return [...partialTicks1, ...partialTicks2, ...partialTicks3, ...partialTicks4]
+      }
+
       // fully populate a word
       // OVM update: await each mint call individually instead of awaiting Promise.all() to ensure nonce is
       // properly incremented on each deploy transaction when testing against l2geth
@@ -208,16 +222,17 @@ describe('TickLens', () => {
         await mint(i * TICK_SPACINGS[FeeAmount.MEDIUM], (255 - i) * TICK_SPACINGS[FeeAmount.MEDIUM], 100)
       }
 
-      const ticks = await tickLens.getPopulatedTicksInWord(
-        poolAddress,
-        getTickBitmapIndex(0, TICK_SPACINGS[FeeAmount.MEDIUM])
-      )
+      const ticks = await getPopulatedTicksInWordFromPartials()
       expect(ticks.length).to.be.eq(256)
 
+      // OVM: This snapshot was changed to only snapshot the gas cost of a partial word to avoid gas limit issues
+      // during the call
       await snapshotGasCost(
-        tickLens.getGasCostOfGetPopulatedTicksInWord(
+        tickLens.getGasCostOfGetPopulatedTicksInPartialWord(
           poolAddress,
-          getTickBitmapIndex(0, TICK_SPACINGS[FeeAmount.MEDIUM])
+          getTickBitmapIndex(0, TICK_SPACINGS[FeeAmount.MEDIUM]),
+          0,
+          64
         )
       )
     }).timeout(300_000)
