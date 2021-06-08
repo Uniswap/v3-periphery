@@ -30,6 +30,8 @@ exports[`NonfungiblePositionManager #permit owned by eoa gas 1`] = `64528`;
 
 exports[`NonfungiblePositionManager #permit owned by verifying contract gas 1`] = `68325`;
 
+exports[`NonfungiblePositionManager #positions gas 1`] = `19890`;
+
 exports[`NonfungiblePositionManager #transferFrom gas 1`] = `79091`;
 
 exports[`NonfungiblePositionManager #transferFrom gas comes from approved 1`] = `67491`;
