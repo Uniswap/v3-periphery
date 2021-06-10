@@ -42,7 +42,11 @@ contract WETH9 {
     function withdraw(uint256 wad) public {
         require(balanceOf[msg.sender] >= wad);
         balanceOf[msg.sender] -= wad;
-        msg.sender.transfer(wad);
+        // OVM: The EVM version of WETH9 uses `msg.sender.transfer(wad)`. The current OVM implementation of `transfer`
+        // only forwards 2300 gas, which is not enough to execute the transfer, so it would revert. This will likely be
+        // updated in the future, but for now we can work around this by replacing `transfer` with `call` to forward
+        // all gas
+        msg.sender.call{value: wad}('');
         emit Withdrawal(msg.sender, wad);
     }
 
