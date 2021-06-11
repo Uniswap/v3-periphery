@@ -9,6 +9,7 @@ import {
   IWETH9,
   IUniswapV3Factory,
   SwapRouter,
+  NonfungiblePositionManagerPositionsGasTest,
 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { computePoolAddress } from './shared/computePoolAddress'
@@ -22,6 +23,7 @@ import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { sortedTokens } from './shared/tokenSort'
+import { extractJSONFromURI } from './shared/extractJSONFromURI'
 
 const IUniswapV3PoolABI = artifacts.readArtifactSync('UniswapV3Pool').abi
 
@@ -1179,12 +1181,42 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('content is valid JSON and structure', async () => {
-      const encodedJSON = (await nft.tokenURI(tokenId)).substr('data:application/json;base64,'.length)
-      const decodedJSON = Buffer.from(encodedJSON, 'base64').toString('utf8')
-      const content = JSON.parse(decodedJSON)
+      const content = extractJSONFromURI(await nft.tokenURI(tokenId))
       expect(content).to.haveOwnProperty('name').is.a('string')
       expect(content).to.haveOwnProperty('description').is.a('string')
       expect(content).to.haveOwnProperty('image').is.a('string')
+    })
+  })
+
+  describe('#positions', async () => {
+    it('gas', async () => {
+      const positionsGasTestFactory = await ethers.getContractFactory('NonfungiblePositionManagerPositionsGasTest')
+      const positionsGasTest = (await positionsGasTestFactory.deploy(
+        nft.address
+      )) as NonfungiblePositionManagerPositionsGasTest
+
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
+        recipient: other.address,
+        amount0Desired: 15,
+        amount1Desired: 15,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 10,
+      })
+
+      await snapshotGasCost(positionsGasTest.getGasCostOfPositions(1))
     })
   })
 

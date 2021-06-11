@@ -5,7 +5,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.0.0",
+  "version": "1.1.0",
   "homepage": "https://uniswap.org",
   "keywords": [
     "uniswap",
@@ -17,6 +17,7 @@
     "url": "https://github.com/Uniswap/uniswap-v3-periphery"
   },
   "files": [
+    "contracts/base",
     "contracts/interfaces",
     "contracts/libraries",
     "artifacts/contracts/**/*.json",
@@ -33,7 +34,8 @@
     "@uniswap/lib": "^4.0.1-alpha",
     "@uniswap/v2-core": "1.0.1",
     "@uniswap/v3-core": "https://github.com/ScopeLift/uniswap-v3-core-ovm.git#get-ovm-contracts-deployed",
-    "base64-sol": "1.0.1"
+    "base64-sol": "1.0.1",
+    "hardhat-watcher": "^2.1.1"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",

@@ -5,6 +5,7 @@ import '@nomiclabs/hardhat-etherscan'
 import 'hardhat-contract-sizer'
 import '@eth-optimism/hardhat-ovm'
 import 'hardhat-dependency-compiler'
+import 'hardhat-watcher'
 
 import { BigNumber, Contract, Wallet, Signer } from 'ethers'
 import { Deferrable } from '@ethersproject/properties'
@@ -301,5 +302,12 @@ export default {
       '@uniswap/v3-core/contracts/UniswapV3PoolDeployer.sol',
       '@uniswap/v3-core/contracts/UniswapV3Factory.sol',
     ],
+  },
+  watcher: {
+    test: {
+      tasks: [{ command: 'test', params: { testFiles: ['{path}'] } }],
+      files: ['./test/**/*'],
+      verbose: true,
+    },
   },
 }
