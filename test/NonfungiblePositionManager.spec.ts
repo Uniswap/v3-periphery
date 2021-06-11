@@ -969,7 +969,9 @@ describe('NonfungiblePositionManager', () => {
 
       it('fails with invalid signature', async () => {
         const { v, r, s } = await getPermitNFTSignature(wallet, nft, wallet.address, tokenId, 1)
-        await expect(nft.permit(wallet.address, tokenId, 1, v + 3, r, s)).to.be.revertedWith('Invalid signature')
+        await expect(nft.permit(wallet.address, tokenId, 1, v + 3, r, s)).to.be.revertedWith(
+          "ECDSA: invalid signature 'v' value"
+        )
       })
 
       it('fails with signature not from owner', async () => {
