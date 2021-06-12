@@ -1,5 +1,5 @@
 import { BigNumberish, constants } from 'ethers'
-import { artifacts, waffle, ethers } from 'hardhat'
+import { artifacts, waffle, ethers, network } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
 import {
@@ -26,6 +26,8 @@ import { sortedTokens } from './shared/tokenSort'
 import { extractJSONFromURI } from './shared/extractJSONFromURI'
 
 const IUniswapV3PoolABI = artifacts.readArtifactSync('UniswapV3Pool').abi
+const isOVM = network.name === 'optimism'
+const describeOVM = isOVM ? describe : describe.skip; 
 
 describe('NonfungiblePositionManager', () => {
   const wallets = waffle.provider.getWallets()
@@ -930,8 +932,8 @@ describe('NonfungiblePositionManager', () => {
   describe('#permit', () => {
     it('emits an event')
 
-    // These tests are skipped since there are no EOAs on the OVM, so they would fail if ran
-    describe.skip('owned by eoa', () => {
+    // These tests are skipped on the EVM since they require the EOA to implement EIP-1271
+    describeOVM('owned by eoa', () => {
       const tokenId = 1
       beforeEach('create a position', async () => {
         await nft.createAndInitializePoolIfNecessary(
