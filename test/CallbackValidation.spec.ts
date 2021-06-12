@@ -1,4 +1,4 @@
-import { Contract, constants } from 'ethers'
+import { Contract, constants, Wallet } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 import { Fixture } from 'ethereum-waffle'
 import completeFixture from './shared/completeFixture'
@@ -7,7 +7,8 @@ import { TestERC20, TestCallbackValidation } from '../typechain'
 import { FeeAmount } from './shared/constants'
 
 describe('CallbackValidation', () => {
-  const [nonpairAddr, ...wallets] = waffle.provider.getWallets()
+  let nonpairAddr: Wallet, wallets: Wallet[]
+
   const callbackValidationFixture: Fixture<{
     callbackValidation: TestCallbackValidation
     tokens: [TestERC20, TestERC20]
@@ -36,6 +37,8 @@ describe('CallbackValidation', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    ;[nonpairAddr, ...wallets] = await (ethers as any).getSigners()
+
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 

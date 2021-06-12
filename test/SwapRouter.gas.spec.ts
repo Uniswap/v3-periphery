@@ -1,5 +1,5 @@
 import { Fixture } from 'ethereum-waffle'
-import { BigNumber, constants, ContractTransaction } from 'ethers'
+import { BigNumber, constants, ContractTransaction, Wallet } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { IUniswapV3Pool, IWETH9, MockTimeSwapRouter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
@@ -14,8 +14,8 @@ import { getMaxTick, getMinTick } from './shared/ticks'
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
 describe('SwapRouter gas tests', () => {
-  const wallets = waffle.provider.getWallets()
-  const [wallet, trader] = wallets
+  let wallet: Wallet
+  let trader: Wallet
 
   const swapRouterFixture: Fixture<{
     weth9: IWETH9
@@ -103,6 +103,9 @@ describe('SwapRouter gas tests', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    const wallets = await (ethers as any).getSigners()
+    ;[wallet, trader] = wallets
+
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 

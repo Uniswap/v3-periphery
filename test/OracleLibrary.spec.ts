@@ -10,8 +10,6 @@ describe('OracleLibrary', () => {
   let tokens: TestERC20[]
   let oracle: OracleTest
 
-  const wallets = waffle.provider.getWallets()
-
   const oracleTestFixture = async () => {
     const tokenFactory = await ethers.getContractFactory('TestERC20')
     const tokens = (await Promise.all([
@@ -31,7 +29,7 @@ describe('OracleLibrary', () => {
   }
 
   before('create fixture loader', async () => {
-    loadFixture = waffle.createFixtureLoader(wallets)
+    loadFixture = waffle.createFixtureLoader(await (ethers as any).getSigners())
   })
 
   beforeEach('deploy fixture', async () => {

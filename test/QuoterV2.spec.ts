@@ -1,5 +1,5 @@
 import { Fixture } from 'ethereum-waffle'
-import { constants } from 'ethers'
+import { constants, Wallet } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { MockTimeNonfungiblePositionManager, QuoterV2, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
@@ -11,8 +11,8 @@ import { encodePath } from './shared/path'
 import { createPool, createPoolWithMultiplePositions, createPoolWithZeroTickInitialized } from './shared/quoter'
 
 describe('QuoterV2', () => {
-  const wallets = waffle.provider.getWallets()
-  const [wallet, trader] = wallets
+  let wallet: Wallet
+  let trader: Wallet
 
   const swapRouterFixture: Fixture<{
     nft: MockTimeNonfungiblePositionManager
@@ -48,6 +48,8 @@ describe('QuoterV2', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    const wallets = await (ethers as any).getSigners()
+    ;[wallet, trader] = wallets
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 

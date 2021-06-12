@@ -1,4 +1,4 @@
-import { BigNumberish, constants } from 'ethers'
+import { BigNumberish, constants, Wallet } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
@@ -28,8 +28,8 @@ import { extractJSONFromURI } from './shared/extractJSONFromURI'
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
 describe('NonfungiblePositionManager', () => {
-  const wallets = waffle.provider.getWallets()
-  const [wallet, other] = wallets
+  let wallets: Wallet[]
+  let wallet: Wallet, other: Wallet
 
   const nftFixture: Fixture<{
     nft: MockTimeNonfungiblePositionManager
@@ -65,6 +65,9 @@ describe('NonfungiblePositionManager', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    wallets = await (ethers as any).getSigners()
+    ;[wallet, other] = wallets
+
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 

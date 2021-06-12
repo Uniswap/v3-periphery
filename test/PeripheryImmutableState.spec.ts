@@ -7,8 +7,6 @@ import { expect } from './shared/expect'
 import { v3RouterFixture } from './shared/externalFixtures'
 
 describe('PeripheryImmutableState', () => {
-  const wallets = waffle.provider.getWallets()
-
   const nonfungiblePositionManagerFixture: Fixture<{
     weth9: IWETH9
     factory: Contract
@@ -33,7 +31,7 @@ describe('PeripheryImmutableState', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
-    loadFixture = waffle.createFixtureLoader(wallets)
+    loadFixture = waffle.createFixtureLoader(await (ethers as any).getSigners())
   })
 
   beforeEach('load fixture', async () => {

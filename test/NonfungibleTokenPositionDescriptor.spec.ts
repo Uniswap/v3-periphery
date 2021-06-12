@@ -1,4 +1,4 @@
-import { constants } from 'ethers'
+import { constants, Wallet } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 import { expect } from './shared/expect'
 import { Fixture } from 'ethereum-waffle'
@@ -17,7 +17,7 @@ const TBTC = '0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa'
 const WBTC = '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'
 
 describe('NonfungibleTokenPositionDescriptor', () => {
-  const [...wallets] = waffle.provider.getWallets()
+  let wallets: Wallet[]
 
   const nftPositionDescriptorCompleteFixture: Fixture<{
     nftPositionDescriptor: NonfungibleTokenPositionDescriptor
@@ -48,6 +48,8 @@ describe('NonfungibleTokenPositionDescriptor', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    wallets = await (ethers as any).getSigners()
+
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 
