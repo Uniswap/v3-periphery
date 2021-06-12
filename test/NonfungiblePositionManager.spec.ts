@@ -293,7 +293,8 @@ describe('NonfungiblePositionManager', () => {
       const refundETHData = nft.interface.encodeFunctionData('refundETH')
 
       const balanceBefore = await wallet.getBalance()
-      await nft.multicall([createAndInitializeData, mintData, refundETHData], {
+      await nft.multicall([createAndInitializeData], { gasPrice: 0 })
+      await nft.multicall([mintData, refundETHData], {
         value: expandTo18Decimals(1),
         gasPrice: 0, // necessary so the balance doesn't change by anything that's not spent
       })
