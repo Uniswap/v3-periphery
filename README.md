@@ -16,14 +16,14 @@ Because these contracts and tests are modified for OVM support, there are some c
 3. In Uniswap V3 Core and Periphery contracts some logic was pulled out into library contracts to reduce contract size. The original EVM contracts had deterministic bytecode, so a bytecode hash can be easily hardcoded in `PoolAddress.sol`, but this is no longer true. The contracts now require linking libraries, and therefore the bytecode and bytecode hash is dependent on the library addresses, which are dependent on the deployer account and nonce
 
 Therefore, we must follow the steps below to run EVM tests in this repo:
-1. Open `PoolAddress.sol` and set `POOL_INIT_CODE_HASH` to `0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836`
-2. Run `yarn postinstall` to apply a patch that adds OVM mock contract support to Waffle
-3. Run `UPDATE_SNAPSHOT=1 yarn test` which will ensure gas costs snapshots are updated (i.e. tests will not fail for gas cost reasons)
+1. Run `UPDATE_SNAPSHOT=1 yarn test` which will ensure gas costs snapshots are updated (i.e. tests will not fail for gas cost reasons)
 
 And to run OVM tests:
-1. Open `PoolAddress.sol` and set `POOL_INIT_CODE_HASH` to `0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca`
-2. Run `UPDATE_SNAPSHOT=1 yarn test` which will ensure gas costs snapshots are updated (i.e. tests will not fail for gas cost reasons)
+1. Run `yarn postinstall` to apply a patch that adds OVM mock contract support to Waffle
+2. Run `UPDATE_SNAPSHOT=1 yarn test:ovm` which will ensure gas costs snapshots are updated (i.e. tests will not fail for gas cost reasons)
 3. On subsequent test runs, run `yarn optimism-down && yarn optimism-up && UPDATE_SNAPSHOT=1 yarn test:ovm`. This is required so the deployer account nonce is reset to zero, which is necessary to get the above bytecode hash when deploying contracts
+
+Both test commands (`yarn test` and `yarn test:ovm`) will automatically update the `POOL_INIT_CODE_HASH` in `PoolAddress.sol` as needed for testing.
 
 ## Bug bounty
 
