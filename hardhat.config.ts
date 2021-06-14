@@ -289,7 +289,7 @@ export default {
     },
   },
   ovm: {
-    solcVersion: '0.7.6-experimental_callvalue',
+    solcVersion: '0.7.6+commit.3b061308',
   },
   // We use the Hardhat Dependency Compiler plugin to get the artifacts for the Uniswap V3 core contracts. This is
   // required since converting the V3 Core contracts to be OVM-compatible required introducing additional libraries
