@@ -17,7 +17,8 @@ Because these contracts and tests are modified for OVM support, there are some c
 
 Therefore, we must follow the steps below to run EVM tests in this repo:
 1. Open `PoolAddress.sol` and set `POOL_INIT_CODE_HASH` to `0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836`
-2. Run `UPDATE_SNAPSHOT=1 yarn test` which will ensure gas costs snapshots are updated (i.e. tests will not fail for gas cost reasons)
+2. Run `yarn postinstall` to apply a patch that adds OVM mock contract support to Waffle
+3. Run `UPDATE_SNAPSHOT=1 yarn test` which will ensure gas costs snapshots are updated (i.e. tests will not fail for gas cost reasons)
 
 And to run OVM tests:
 1. Open `PoolAddress.sol` and set `POOL_INIT_CODE_HASH` to `0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca`
