@@ -20,7 +20,6 @@ import './TokenRatioSortOrder.sol';
 
 /// @title Function for getting the current chain ID
 library NonfungiblePositionLibrary {
-
     address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
@@ -60,7 +59,7 @@ library NonfungiblePositionLibrary {
      *     value into a constant, which is appended to the code
      *   - Solution: Only emit the event once in a helper function, which results in those 32 bytes being added
      *     with PUSH32, meaning you cannot JUMP to them. Whereas without this helper function they are added to
-     *     the end with CODECOPY, which you can JUMP to, so the Safety Checker believes it's unsafe 
+     *     the end with CODECOPY, which you can JUMP to, so the Safety Checker believes it's unsafe
      */
     function _emitIncreaseLiquidity(
         uint256 tokenId,
@@ -75,11 +74,13 @@ library NonfungiblePositionLibrary {
     /// @dev Note this URI may be a data: URI with the JSON contents directly inlined
     /// @param tokenId The ID of the token for which to produce a description, which may not be valid
     /// @return The URI of the ERC721-compliant metadata
-    function tokenURI(IUniswapV3Pool pool, PoolAddress.PoolKey memory poolKey, uint256 tokenId, int24 tickLower, int24 tickUpper)
-        public
-        view
-        returns (string memory)
-    {
+    function tokenURI(
+        IUniswapV3Pool pool,
+        PoolAddress.PoolKey memory poolKey,
+        uint256 tokenId,
+        int24 tickLower,
+        int24 tickUpper
+    ) public view returns (string memory) {
         bool _flipRatio = flipRatio(poolKey.token0, poolKey.token1, ChainId.get());
         address quoteTokenAddress = !_flipRatio ? poolKey.token1 : poolKey.token0;
         address baseTokenAddress = !_flipRatio ? poolKey.token0 : poolKey.token1;
@@ -144,13 +145,11 @@ library NonfungiblePositionLibrary {
     }
 
     function collect(
-      IUniswapV3Pool pool,
-      INonfungiblePositionManager.Position storage position,
-      PoolAddress.PoolKey memory poolKey,
-      INonfungiblePositionManager.CollectParams calldata params)
-    public 
-    returns (uint256 amount0, uint256 amount1) 
-    {
+        IUniswapV3Pool pool,
+        INonfungiblePositionManager.Position storage position,
+        PoolAddress.PoolKey memory poolKey,
+        INonfungiblePositionManager.CollectParams calldata params
+    ) public returns (uint256 amount0, uint256 amount1) {
         require(params.amount0Max > 0 || params.amount1Max > 0);
 
         // allow collecting to the nft position manager address with address 0
@@ -207,16 +206,14 @@ library NonfungiblePositionLibrary {
     }
 
     function decreaseLiquidity(
-      IUniswapV3Pool pool,
-      INonfungiblePositionManager.Position storage position,
-      INonfungiblePositionManager.DecreaseLiquidityParams calldata params)
-    public 
-    returns (uint256 amount0, uint256 amount1) 
-    {
+        IUniswapV3Pool pool,
+        INonfungiblePositionManager.Position storage position,
+        INonfungiblePositionManager.DecreaseLiquidityParams calldata params
+    ) public returns (uint256 amount0, uint256 amount1) {
         require(params.liquidity > 0);
         uint128 positionLiquidity = position.liquidity;
         require(positionLiquidity >= params.liquidity);
-  
+
         (amount0, amount1) = pool.burn(position.tickLower, position.tickUpper, params.liquidity);
 
         require(amount0 >= params.amount0Min && amount1 >= params.amount1Min, 'Price slippage check');
@@ -254,14 +251,16 @@ library NonfungiblePositionLibrary {
 
     /// @notice Add liquidity to an initialized pool
     function addLiquidity(
-      IUniswapV3Pool pool,
-      PoolAddress.PoolKey memory poolKey,
-      INonfungiblePositionManager.AddLiquidityParams memory params)
+        IUniswapV3Pool pool,
+        PoolAddress.PoolKey memory poolKey,
+        INonfungiblePositionManager.AddLiquidityParams memory params
+    )
         public
         returns (
             uint128 liquidity,
             uint256 amount0,
-            uint256 amount1)
+            uint256 amount1
+        )
     {
         // compute the liquidity amount
         {
@@ -290,24 +289,25 @@ library NonfungiblePositionLibrary {
     }
 
     function increaseLiquidity(
-      IUniswapV3Pool pool,
-      PoolAddress.PoolKey memory poolKey,
-      INonfungiblePositionManager.Position storage position,
-      INonfungiblePositionManager.IncreaseLiquidityParams calldata params)
-      public
-    {
-        (uint128 liquidity, uint256 amount0, uint256 amount1) = addLiquidity(pool,
-            poolKey,
-            INonfungiblePositionManager.AddLiquidityParams({
-                tickLower: position.tickLower,
-                tickUpper: position.tickUpper,
-                amount0Desired: params.amount0Desired,
-                amount1Desired: params.amount1Desired,
-                amount0Min: params.amount0Min,
-                amount1Min: params.amount1Min,
-                recipient: address(this)
-            })
-        );
+        IUniswapV3Pool pool,
+        PoolAddress.PoolKey memory poolKey,
+        INonfungiblePositionManager.Position storage position,
+        INonfungiblePositionManager.IncreaseLiquidityParams calldata params
+    ) public {
+        (uint128 liquidity, uint256 amount0, uint256 amount1) =
+            addLiquidity(
+                pool,
+                poolKey,
+                INonfungiblePositionManager.AddLiquidityParams({
+                    tickLower: position.tickLower,
+                    tickUpper: position.tickUpper,
+                    amount0Desired: params.amount0Desired,
+                    amount1Desired: params.amount1Desired,
+                    amount0Min: params.amount0Min,
+                    amount1Min: params.amount1Min,
+                    recipient: address(this)
+                })
+            );
 
         bytes32 positionKey = PositionKey.compute(address(this), position.tickLower, position.tickUpper);
 
@@ -344,9 +344,8 @@ library NonfungiblePositionLibrary {
         uint128 liquidity,
         uint256 amount0,
         uint256 amount1,
-        uint80 poolId) 
-        public 
-    {
+        uint80 poolId
+    ) public {
         bytes32 positionKey = PositionKey.compute(address(this), params.tickLower, params.tickUpper);
         (, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, , ) = pool.positions(positionKey);
 

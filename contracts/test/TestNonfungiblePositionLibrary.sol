@@ -8,11 +8,15 @@ contract TestNonfungiblePositionLibrary {
         return NonfungiblePositionLibrary.tokenRatioPriority(token, chainId);
     }
 
-    function flipRatio(address token0, address token1, uint256 chainId) public view returns (bool) {
-      return NonfungiblePositionLibrary.flipRatio(token0, token1, chainId);
+    function flipRatio(
+        address token0,
+        address token1,
+        uint256 chainId
+    ) public view returns (bool) {
+        return NonfungiblePositionLibrary.flipRatio(token0, token1, chainId);
     }
 
-    function WETH9() public view returns(address) {
-      return NonfungiblePositionLibrary.WETH9;
+    function WETH9() public view returns (address) {
+        return NonfungiblePositionLibrary.WETH9;
     }
 }

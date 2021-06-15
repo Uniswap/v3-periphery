@@ -44,11 +44,10 @@ contract NonfungiblePositionManager is
 
     using NonfungiblePositionLibrary for IUniswapV3Pool;
 
-    constructor(
-        address _factory,
-        address _WETH9
-    ) ERC721Permit('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS', '1') PeripheryImmutableState(_factory, _WETH9) {
-    }
+    constructor(address _factory, address _WETH9)
+        ERC721Permit('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS', '1')
+        PeripheryImmutableState(_factory, _WETH9)
+    {}
 
     /// @dev Caches a pool key
     function cachePoolKey(address pool, PoolAddress.PoolKey memory poolKey) private returns (uint80 poolId) {
@@ -72,11 +71,13 @@ contract NonfungiblePositionManager is
             uint256 amount1
         )
     {
-        PoolAddress.PoolKey memory poolKey = PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
+        PoolAddress.PoolKey memory poolKey =
+            PoolAddress.PoolKey({token0: params.token0, token1: params.token1, fee: params.fee});
 
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
 
-        (liquidity, amount0, amount1) = pool.addLiquidity(poolKey,
+        (liquidity, amount0, amount1) = pool.addLiquidity(
+            poolKey,
             AddLiquidityParams({
                 recipient: address(this),
                 tickLower: params.tickLower,
@@ -91,11 +92,7 @@ contract NonfungiblePositionManager is
         _mint(params.recipient, (tokenId = _nextId++));
 
         // idempotent set
-        uint80 poolId =
-            cachePoolKey(
-                address(pool),
-                poolKey
-            );
+        uint80 poolId = cachePoolKey(address(pool), poolKey);
 
         Position storage position = positions[tokenId];
         pool.updatePosition(params, position, tokenId, liquidity, amount0, amount1, poolId);
@@ -112,13 +109,7 @@ contract NonfungiblePositionManager is
 
         require(position.poolId != 0, 'Invalid token ID');
 
-        IUniswapV3Pool pool =
-            IUniswapV3Pool(
-                PoolAddress.computeAddress(
-                    factory,
-                    poolIdToPoolKey[position.poolId]
-                )
-            );
+        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[position.poolId]));
 
         return pool.tokenURI(poolIdToPoolKey[position.poolId], tokenId, position.tickLower, position.tickUpper);
     }
@@ -141,7 +132,7 @@ contract NonfungiblePositionManager is
         Position storage position = positions[params.tokenId];
 
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[position.poolId]));
-        
+
         pool.increaseLiquidity(poolIdToPoolKey[position.poolId], position, params);
     }
 
@@ -155,8 +146,9 @@ contract NonfungiblePositionManager is
     {
         isAuthorizedForToken(params.tokenId);
 
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[positions[params.tokenId].poolId]));
-        
+        IUniswapV3Pool pool =
+            IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[positions[params.tokenId].poolId]));
+
         (amount0, amount1) = pool.decreaseLiquidity(positions[params.tokenId], params);
     }
 
@@ -170,7 +162,7 @@ contract NonfungiblePositionManager is
         isAuthorizedForToken(params.tokenId);
 
         Position storage position = positions[params.tokenId];
-        
+
         IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[position.poolId]));
 
         (amount0, amount1) = pool.collect(position, poolIdToPoolKey[position.poolId], params);

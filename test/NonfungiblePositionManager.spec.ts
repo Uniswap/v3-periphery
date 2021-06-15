@@ -27,7 +27,7 @@ import { extractJSONFromURI } from './shared/extractJSONFromURI'
 
 const IUniswapV3PoolABI = artifacts.readArtifactSync('UniswapV3Pool').abi
 const isOVM = network.name === 'optimism'
-const describeOVM = isOVM ? describe : describe.skip; 
+const describeOVM = isOVM ? describe : describe.skip
 
 describe('NonfungiblePositionManager', () => {
   const wallets = waffle.provider.getWallets()
@@ -244,11 +244,7 @@ describe('NonfungiblePositionManager', () => {
         feeGrowthInside0LastX128,
         feeGrowthInside1LastX128,
       } = await nft.positions(1)
-      const {
-        fee,
-        token0,
-        token1
-      } = await nft.poolIdToPoolKey(poolId)
+      const { fee, token0, token1 } = await nft.poolIdToPoolKey(poolId)
       expect(token0).to.eq(tokens[0].address)
       expect(token1).to.eq(tokens[1].address)
       expect(fee).to.eq(FeeAmount.MEDIUM)

@@ -74,7 +74,7 @@ interface INonfungiblePositionManager is
             uint256 amount0,
             uint256 amount1
         );
-    
+
     struct AddLiquidityParams {
         address recipient;
         int24 tickLower;
