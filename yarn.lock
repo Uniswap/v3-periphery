@@ -1011,9 +1011,9 @@
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@uniswap/v2-core/-/v2-core-1.0.1.tgz#af8f508bf183204779938969e2e54043e147d425"
 
-"@uniswap/v3-core@https://github.com/ScopeLift/uniswap-v3-core-ovm.git#get-ovm-contracts-deployed":
-  version "1.0.0"
-  resolved "https://github.com/ScopeLift/uniswap-v3-core-ovm.git#95b598a2c6e5ac0a8c2496fa7e0078c190f450af"
+"@uniswap/v3-core@https://github.com/Uniswap/uniswap-v3-core.git#optimism":
+  version "1.0.0-alpha.1"
+  resolved "https://github.com/Uniswap/uniswap-v3-core.git#709c25db4ef6b29be23e842405b49096db44f0c5"
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
