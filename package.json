@@ -71,8 +71,8 @@
     "test": "yarn set-hash:evm && hardhat test",
     "compile:ovm": "hardhat compile --network optimism",
     "test:ovm": "yarn set-hash:ovm && yarn postinstall && hardhat test --network optimism",
-    "set-hash:evm": "sed -i -e 's/0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca/0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836/g' ./contracts/libraries/PoolAddress.sol && rm contracts/libraries/PoolAddress.sol-e",
-    "set-hash:ovm": "sed -i -e 's/0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836/0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca/g' ./contracts/libraries/PoolAddress.sol && rm contracts/libraries/PoolAddress.sol-e",
+    "set-hash:evm": "sed -i -e 's/0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca/0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836/g' ./contracts/libraries/PoolAddress.sol && rm -f contracts/libraries/PoolAddress.sol-e",
+    "set-hash:ovm": "sed -i -e 's/0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836/0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca/g' ./contracts/libraries/PoolAddress.sol && rm -f contracts/libraries/PoolAddress.sol-e",
     "optimism-up": "./scripts/run-optimism.sh",
     "optimism-down": "cd optimism/ops && docker-compose down -v",
     "postinstall": "patch-package"
