@@ -67,13 +67,3 @@ export const getPoolBytecode = async () => {
   if (!poolBytecode) await v3CoreFactoryFixtureSetup() // this sets the poolBytecode variable
   return poolBytecode
 }
-
-// This method is called within _Setup.spec.ts to ensure WETH is only deployed once per test suite run
-export const wethFixtureSetup: Fixture<{ weth9: IWETH9 }> = async () => {
-  // If weth was already deployed, return it
-  if (weth) return { weth9: weth }
-
-  // Otherwise deploy it
-  weth = (await (await ethers.getContractFactory('WETH9', wallet)).deploy()) as IWETH9
-  return { weth9: weth }
-}

@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat'
 import { expect } from './shared/expect'
-import { v3CoreFactoryFixtureSetup, wethFixtureSetup } from './shared/setup'
+import { v3CoreFactoryFixtureSetup } from './shared/setup'
 import { POOL_BYTECODE_HASH } from './shared/computePoolAddress'
 import { Contract } from 'ethers'
 import { PoolAddressTest } from '../typechain'
@@ -17,21 +17,16 @@ import { PoolAddressTest } from '../typechain'
 
 describe('Setup', () => {
   let factory: Contract
-  let weth9: Contract
 
   before('setup fixtures', async () => {
     // @ts-expect-error We don't need to pass the standard fixture inputs since v3CoreFactoryFixtureSetup has defaults
     factory = await v3CoreFactoryFixtureSetup()
-    // @ts-expect-error We don't need to pass the standard fixture inputs since wethFixtureSetup has defaults
-    ;({ weth9 } = await wethFixtureSetup())
   })
 
   it('is setup', async () => {
-    // Verify factory and WETH
+    // Verify factory
     expect(Boolean(factory)).to.be.true
     expect(factory.address.length).to.equal(42)
-    expect(Boolean(weth9)).to.be.true
-    expect(weth9.address.length).to.equal(42)
 
     // Verify pool
     const poolAddressTestFactory = await ethers.getContractFactory('PoolAddressTest')

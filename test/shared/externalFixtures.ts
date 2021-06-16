@@ -1,15 +1,25 @@
 import { abi as FACTORY_V2_ABI, bytecode as FACTORY_V2_BYTECODE } from '@uniswap/v2-core/build/UniswapV2Factory.json'
 import { Fixture } from 'ethereum-waffle'
-import { ethers, waffle } from 'hardhat'
+import { ethers, waffle, network } from 'hardhat'
 import { IUniswapV3Factory, IWETH9, MockTimeSwapRouter } from '../../typechain'
 
+import WETH9 from '../contracts/WETH9.json'
 import { Contract } from '@ethersproject/contracts'
 import { constants } from 'ethers'
-import { v3CoreFactoryFixtureSetup, wethFixtureSetup } from './setup'
+import { v3CoreFactoryFixtureSetup } from './setup'
 
 const wethFixture: Fixture<{ weth9: IWETH9 }> = async ([wallet]) => {
-  // @ts-expect-error We don't need to pass the standard fixture inputs since wethFixtureSetup has defaults
-  return wethFixtureSetup()
+  const weth9 = network.name === 'optimism' ?
+    new Contract(
+      '0x4200000000000000000000000000000000000006',
+      WETH9.abi,
+      wallet
+    ) as IWETH9 :
+    (await waffle.deployContract(wallet, {
+      bytecode: WETH9.bytecode,
+      abi: WETH9.abi,
+    })) as IWETH9
+  return { weth9 }
 }
 
 export const v2FactoryFixture: Fixture<{ factory: Contract }> = async ([wallet]) => {
