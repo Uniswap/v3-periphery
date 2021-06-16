@@ -1,6 +1,6 @@
 import { Fixture } from 'ethereum-waffle'
 import { constants, Contract } from 'ethers'
-import { ethers, waffle } from 'hardhat'
+import { ethers, network, waffle } from 'hardhat'
 import {
   IUniswapV2Pair,
   IUniswapV3Factory,
@@ -20,7 +20,10 @@ import snapshotGasCost from './shared/snapshotGasCost'
 import { sortedTokens } from './shared/tokenSort'
 import { getMaxTick, getMinTick } from './shared/ticks'
 
-describe('V3Migrator', () => {
+const isOVM = network.name === 'optimism'
+const describeEVM = isOVM ? describe.skip : describe
+
+describeEVM('V3Migrator', () => {
   const wallets = waffle.provider.getWallets()
   const wallet = wallets[0]
 
