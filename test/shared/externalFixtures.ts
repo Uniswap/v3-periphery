@@ -9,16 +9,13 @@ import { constants } from 'ethers'
 import { v3CoreFactoryFixtureSetup } from './setup'
 
 const wethFixture: Fixture<{ weth9: IWETH9 }> = async ([wallet]) => {
-  const weth9 = network.name === 'optimism' ?
-    new Contract(
-      '0x4200000000000000000000000000000000000006',
-      WETH9.abi,
-      wallet
-    ) as IWETH9 :
-    (await waffle.deployContract(wallet, {
-      bytecode: WETH9.bytecode,
-      abi: WETH9.abi,
-    })) as IWETH9
+  const weth9 =
+    network.name === 'optimism'
+      ? (new Contract('0x4200000000000000000000000000000000000006', WETH9.abi, wallet) as IWETH9)
+      : ((await waffle.deployContract(wallet, {
+          bytecode: WETH9.bytecode,
+          abi: WETH9.abi,
+        })) as IWETH9)
   return { weth9 }
 }
 
