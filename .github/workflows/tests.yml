@@ -8,7 +8,7 @@ on:
 
 jobs:
   unit-tests:
-    name: Unit Tests
+    name: Unit Tests (EVM)
     runs-on: ubuntu-latest
 
     steps:
@@ -39,7 +39,7 @@ jobs:
         run: yarn test
 
   ovm-unit-tests:
-    name: Unit Tests
+    name: Unit Tests (OVM)
     runs-on: ubuntu-latest
 
     steps:
@@ -60,6 +60,10 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+
+      # Not sure if this is required
+      - name: Compile
+        run: yarn compile
 
       # This is required separately from yarn test because it generates the typechain definitions
       - name: Compile

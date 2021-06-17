@@ -1011,7 +1011,7 @@
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@uniswap/v2-core/-/v2-core-1.0.1.tgz#af8f508bf183204779938969e2e54043e147d425"
 
-"@uniswap/v3-core@https://github.com/Uniswap/uniswap-v3-core.git#optimism":
+"@uniswap/v3-core@https://github.com/Uniswap/uniswap-v3-core.git#709c25db4ef6b29be23e842405b49096db44f0c5":
   version "1.0.0-alpha.1"
   resolved "https://github.com/Uniswap/uniswap-v3-core.git#709c25db4ef6b29be23e842405b49096db44f0c5"
 
