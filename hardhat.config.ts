@@ -310,4 +310,7 @@ export default {
       verbose: true,
     },
   },
+  mocha: {
+    timeout: 90000,
+  },
 }

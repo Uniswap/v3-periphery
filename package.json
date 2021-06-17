@@ -1,11 +1,11 @@
 {
-  "name": "@uniswap/v3-periphery",
+  "name": "@uniswap/v3-periphery-optimism",
   "description": "🎚 Peripheral smart contracts for interacting with Uniswap V3",
   "license": "GPL-2.0-or-later",
   "publishConfig": {
-    "access": "public"
+    "access": "restricted"
   },
-  "version": "1.1.0",
+  "version": "1.1.0-alpha.1",
   "homepage": "https://uniswap.org",
   "keywords": [
     "uniswap",
@@ -33,7 +33,7 @@
     "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
     "@uniswap/lib": "^4.0.1-alpha",
     "@uniswap/v2-core": "1.0.1",
-    "@uniswap/v3-core": "https://github.com/Uniswap/uniswap-v3-core.git#optimism",
+    "@uniswap/v3-core": "https://github.com/Uniswap/uniswap-v3-core.git#709c25db4ef6b29be23e842405b49096db44f0c5",
     "base64-sol": "1.0.1",
     "hardhat-watcher": "^2.1.1"
   },
@@ -68,11 +68,17 @@
   },
   "scripts": {
     "compile": "hardhat compile",
-    "test": "yarn set-hash:evm && hardhat test",
     "compile:ovm": "hardhat compile --network optimism",
-    "test:ovm": "yarn set-hash:ovm && yarn postinstall && hardhat test --network optimism",
-    "set-hash:evm": "sed -i -e 's/0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca/0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836/g' ./contracts/libraries/PoolAddress.sol && rm -f contracts/libraries/PoolAddress.sol-e",
-    "set-hash:ovm": "sed -i -e 's/0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836/0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca/g' ./contracts/libraries/PoolAddress.sol && rm -f contracts/libraries/PoolAddress.sol-e",
+    "pretest": "yarn set-hash:evm",
+    "test": "hardhat test",
+    "posttest": "yarn set-hash:evm-teardown",
+    "pretest:ovm": "yarn set-hash:ovm",
+    "test:ovm": "hardhat test --network optimism",
+    "posttest:ovm": "yarn set-hash:ovm-teardown",
+    "set-hash:evm": "sed -i -e 's/0x1fc830513acbdb1608b8c18fd3cf4a4bee3329c69bb41d56400401c40fe02fd0/0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836/g' ./contracts/libraries/PoolAddress.sol && rm -f contracts/libraries/PoolAddress.sol-e",
+    "set-hash:evm-teardown": "sed -i -e 's/0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836/0x1fc830513acbdb1608b8c18fd3cf4a4bee3329c69bb41d56400401c40fe02fd0/g' ./contracts/libraries/PoolAddress.sol && rm -f contracts/libraries/PoolAddress.sol-e",
+    "set-hash:ovm": "sed -i -e 's/0x1fc830513acbdb1608b8c18fd3cf4a4bee3329c69bb41d56400401c40fe02fd0/0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca/g' ./contracts/libraries/PoolAddress.sol && rm -f contracts/libraries/PoolAddress.sol-e",
+    "set-hash:ovm-teardown": "sed -i -E -e 's/0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca/0x1fc830513acbdb1608b8c18fd3cf4a4bee3329c69bb41d56400401c40fe02fd0/g' ./contracts/libraries/PoolAddress.sol && rm -f contracts/libraries/PoolAddress.sol-e",
     "optimism-up": "./scripts/run-optimism.sh",
     "optimism-down": "cd optimism/ops && docker-compose down -v",
     "postinstall": "patch-package"
