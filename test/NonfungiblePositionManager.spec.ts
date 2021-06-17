@@ -1,5 +1,5 @@
 import { BigNumberish, constants } from 'ethers'
-import { waffle, ethers } from 'hardhat'
+import { artifacts, waffle, ethers, network } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
 import {
@@ -25,7 +25,9 @@ import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { sortedTokens } from './shared/tokenSort'
 import { extractJSONFromURI } from './shared/extractJSONFromURI'
 
-import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
+const IUniswapV3PoolABI = artifacts.readArtifactSync('UniswapV3Pool').abi
+const isOVM = network.name === 'optimism'
+const describeOVM = isOVM ? describe : describe.skip
 
 describe('NonfungiblePositionManager', () => {
   const wallets = waffle.provider.getWallets()
@@ -78,7 +80,7 @@ describe('NonfungiblePositionManager', () => {
 
   describe('#createAndInitializePoolIfNecessary', () => {
     it('creates the pool at the expected address', async () => {
-      const expectedAddress = computePoolAddress(
+      const expectedAddress = await computePoolAddress(
         factory.address,
         [tokens[0].address, tokens[1].address],
         FeeAmount.MEDIUM
@@ -106,7 +108,7 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('works if pool is created but not initialized', async () => {
-      const expectedAddress = computePoolAddress(
+      const expectedAddress = await computePoolAddress(
         factory.address,
         [tokens[0].address, tokens[1].address],
         FeeAmount.MEDIUM
@@ -123,7 +125,7 @@ describe('NonfungiblePositionManager', () => {
     })
 
     it('works if pool is created and initialized', async () => {
-      const expectedAddress = computePoolAddress(
+      const expectedAddress = await computePoolAddress(
         factory.address,
         [tokens[0].address, tokens[1].address],
         FeeAmount.MEDIUM
@@ -233,9 +235,7 @@ describe('NonfungiblePositionManager', () => {
       expect(await nft.balanceOf(other.address)).to.eq(1)
       expect(await nft.tokenOfOwnerByIndex(other.address, 0)).to.eq(1)
       const {
-        fee,
-        token0,
-        token1,
+        poolId,
         tickLower,
         tickUpper,
         liquidity,
@@ -244,6 +244,7 @@ describe('NonfungiblePositionManager', () => {
         feeGrowthInside0LastX128,
         feeGrowthInside1LastX128,
       } = await nft.positions(1)
+      const { fee, token0, token1 } = await nft.poolIdToPoolKey(poolId)
       expect(token0).to.eq(tokens[0].address)
       expect(token1).to.eq(tokens[1].address)
       expect(fee).to.eq(FeeAmount.MEDIUM)
@@ -288,7 +289,8 @@ describe('NonfungiblePositionManager', () => {
       const refundETHData = nft.interface.encodeFunctionData('refundETH')
 
       const balanceBefore = await wallet.getBalance()
-      await nft.multicall([createAndInitializeData, mintData, refundETHData], {
+      await nft.multicall([createAndInitializeData], { gasPrice: 0 })
+      await nft.multicall([mintData, refundETHData], {
         value: expandTo18Decimals(1),
         gasPrice: 0, // necessary so the balance doesn't change by anything that's not spent
       })
@@ -734,7 +736,11 @@ describe('NonfungiblePositionManager', () => {
 
     it('transfers tokens owed from burn', async () => {
       await nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0, deadline: 1 })
-      const poolAddress = computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM)
+      const poolAddress = await computePoolAddress(
+        factory.address,
+        [tokens[0].address, tokens[1].address],
+        FeeAmount.MEDIUM
+      )
       await expect(
         nft.connect(other).collect({
           tokenId,
@@ -840,7 +846,19 @@ describe('NonfungiblePositionManager', () => {
         amount1Max: MaxUint128,
       })
       await nft.connect(other).burn(tokenId)
-      await expect(nft.positions(tokenId)).to.be.revertedWith('Invalid token ID')
+      // OVM change: To reduce contract size, `positions` is no longer a method that reverts for invalid token IDs. It
+      // is now a getter that returns a struct, so we check that the returned struct is full of zeros
+      const position = await nft.positions(tokenId)
+      expect(position.nonce).to.equal('0')
+      expect(position.operator).to.equal(constants.AddressZero)
+      expect(position.poolId).to.equal('0')
+      expect(position.tickLower).to.equal(0)
+      expect(position.tickUpper).to.equal(0)
+      expect(position.liquidity).to.equal('0')
+      expect(position.feeGrowthInside0LastX128).to.equal('0')
+      expect(position.feeGrowthInside1LastX128).to.equal('0')
+      expect(position.tokensOwed0).to.equal('0')
+      expect(position.tokensOwed1).to.equal('0')
     })
 
     it('gas', async () => {
@@ -911,7 +929,8 @@ describe('NonfungiblePositionManager', () => {
   describe('#permit', () => {
     it('emits an event')
 
-    describe('owned by eoa', () => {
+    // These tests are skipped on the EVM since they require the EOA to implement EIP-1271
+    describeOVM('owned by eoa', () => {
       const tokenId = 1
       beforeEach('create a position', async () => {
         await nft.createAndInitializePoolIfNecessary(
@@ -951,7 +970,9 @@ describe('NonfungiblePositionManager', () => {
 
       it('fails with invalid signature', async () => {
         const { v, r, s } = await getPermitNFTSignature(wallet, nft, wallet.address, tokenId, 1)
-        await expect(nft.permit(wallet.address, tokenId, 1, v + 3, r, s)).to.be.revertedWith('Invalid signature')
+        await expect(nft.permit(wallet.address, tokenId, 1, v + 3, r, s)).to.be.revertedWith(
+          "ECDSA: invalid signature 'v' value"
+        )
       })
 
       it('fails with signature not from owner', async () => {
@@ -1094,7 +1115,7 @@ describe('NonfungiblePositionManager', () => {
 
     it('executes all the actions', async () => {
       const pool = poolAtAddress(
-        computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+        await computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
         wallet
       )
       await expect(
@@ -1269,7 +1290,7 @@ describe('NonfungiblePositionManager', () => {
       })
 
       it('actually collected', async () => {
-        const poolAddress = computePoolAddress(
+        const poolAddress = await computePoolAddress(
           factory.address,
           [tokens[0].address, tokens[1].address],
           FeeAmount.MEDIUM

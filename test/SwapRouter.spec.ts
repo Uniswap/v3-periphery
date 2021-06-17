@@ -26,12 +26,12 @@ describe('SwapRouter', () => {
 
     // approve & fund wallets
     for (const token of tokens) {
-      await Promise.all([
-        token.approve(router.address, constants.MaxUint256),
-        token.approve(nft.address, constants.MaxUint256),
-        token.connect(trader).approve(router.address, constants.MaxUint256),
-        token.transfer(trader.address, expandTo18Decimals(1_000_000)),
-      ])
+      // OVM update: await each token deployment individually instead of awaiting Promise.all() to ensure nonce is
+      // properly incremented on each deploy transaction when testing against l2geth
+      await token.approve(router.address, constants.MaxUint256)
+      await token.approve(nft.address, constants.MaxUint256)
+      await token.connect(trader).approve(router.address, constants.MaxUint256)
+      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
     return {
@@ -253,24 +253,24 @@ describe('SwapRouter', () => {
             .to.emit(tokens[0], 'Transfer')
             .withArgs(
               trader.address,
-              computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
               5
             )
             .to.emit(tokens[1], 'Transfer')
             .withArgs(
-              computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
               router.address,
               3
             )
             .to.emit(tokens[1], 'Transfer')
             .withArgs(
               router.address,
-              computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
               3
             )
             .to.emit(tokens[2], 'Transfer')
             .withArgs(
-              computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[1].address, tokens[2].address], FeeAmount.MEDIUM),
               trader.address,
               1
             )
@@ -614,20 +614,20 @@ describe('SwapRouter', () => {
           )
             .to.emit(tokens[2], 'Transfer')
             .withArgs(
-              computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
               trader.address,
               1
             )
             .to.emit(tokens[1], 'Transfer')
             .withArgs(
-              computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
-              computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[2].address, tokens[1].address], FeeAmount.MEDIUM),
               3
             )
             .to.emit(tokens[0], 'Transfer')
             .withArgs(
               trader.address,
-              computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
+              await computePoolAddress(factory.address, [tokens[1].address, tokens[0].address], FeeAmount.MEDIUM),
               5
             )
         })
