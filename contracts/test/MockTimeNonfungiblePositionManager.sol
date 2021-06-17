@@ -7,11 +7,7 @@ import '../NonfungiblePositionManager.sol';
 contract MockTimeNonfungiblePositionManager is NonfungiblePositionManager {
     uint256 time;
 
-    constructor(
-        address _factory,
-        address _WETH9,
-        address _tokenDescriptor
-    ) NonfungiblePositionManager(_factory, _WETH9, _tokenDescriptor) {}
+    constructor(address _factory, address _WETH9) NonfungiblePositionManager(_factory, _WETH9) {}
 
     function _blockTimestamp() internal view override returns (uint256) {
         return time;

@@ -1,6 +1,6 @@
 import { Fixture } from 'ethereum-waffle'
 import { constants, Contract } from 'ethers'
-import { ethers, waffle } from 'hardhat'
+import { ethers, network, waffle } from 'hardhat'
 import {
   IUniswapV2Pair,
   IUniswapV3Factory,
@@ -20,7 +20,10 @@ import snapshotGasCost from './shared/snapshotGasCost'
 import { sortedTokens } from './shared/tokenSort'
 import { getMaxTick, getMinTick } from './shared/ticks'
 
-describe('V3Migrator', () => {
+const isOVM = network.name === 'optimism'
+const describeEVM = isOVM ? describe.skip : describe
+
+describeEVM('V3Migrator', () => {
   const wallets = waffle.provider.getWallets()
   const wallet = wallets[0]
 
@@ -97,11 +100,15 @@ describe('V3Migrator', () => {
 
   describe('#migrate', () => {
     let tokenLower: boolean
+    let token0: TestERC20 | IWETH9
+    let token1: TestERC20 | IWETH9
 
     const expectedLiquidity = 10000 - 1000
 
     beforeEach(() => {
       tokenLower = token.address.toLowerCase() < weth9.address.toLowerCase()
+      token0 = tokenLower ? token : weth9
+      token1 = tokenLower ? weth9 : token
     })
 
     beforeEach('add V2 liquidity', async () => {

@@ -29,10 +29,11 @@
     "node": ">=10"
   },
   "dependencies": {
+    "@eth-optimism/hardhat-ovm": "^0.2.0",
     "@openzeppelin/contracts": "3.4.1-solc-0.7-2",
     "@uniswap/lib": "^4.0.1-alpha",
     "@uniswap/v2-core": "1.0.1",
-    "@uniswap/v3-core": "1.0.0",
+    "@uniswap/v3-core": "https://github.com/Uniswap/uniswap-v3-core.git#optimism",
     "base64-sol": "1.0.1",
     "hardhat-watcher": "^2.1.1"
   },
@@ -48,10 +49,14 @@
     "ethereum-waffle": "^3.0.2",
     "ethers": "^5.0.8",
     "hardhat": "^2.2.0",
+    "hardhat-contract-sizer": "^2.0.3",
+    "hardhat-dependency-compiler": "^1.1.1",
     "hardhat-typechain": "^0.3.5",
     "is-svg": "^4.3.1",
     "mocha": "^6.2.2",
     "mocha-chai-jest-snapshot": "^1.1.0",
+    "patch-package": "^6.4.7",
+    "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.0.5",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "solhint": "^3.2.1",
@@ -63,6 +68,13 @@
   },
   "scripts": {
     "compile": "hardhat compile",
-    "test": "hardhat test"
+    "test": "yarn set-hash:evm && hardhat test",
+    "compile:ovm": "hardhat compile --network optimism",
+    "test:ovm": "yarn set-hash:ovm && yarn postinstall && hardhat test --network optimism",
+    "set-hash:evm": "sed -i -e 's/0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca/0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836/g' ./contracts/libraries/PoolAddress.sol && rm -f contracts/libraries/PoolAddress.sol-e",
+    "set-hash:ovm": "sed -i -e 's/0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836/0x789bbcb4d36a7a15d68e07c192ff256236e3486610523115567871e609a917ca/g' ./contracts/libraries/PoolAddress.sol && rm -f contracts/libraries/PoolAddress.sol-e",
+    "optimism-up": "./scripts/run-optimism.sh",
+    "optimism-down": "cd optimism/ops && docker-compose down -v",
+    "postinstall": "patch-package"
   }
 }

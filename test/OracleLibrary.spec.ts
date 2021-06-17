@@ -14,14 +14,20 @@ describe('OracleLibrary', () => {
 
   const oracleTestFixture = async () => {
     const tokenFactory = await ethers.getContractFactory('TestERC20')
-    const tokens = (await Promise.all([
-      tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu256 to avoid overflowing
-      tokenFactory.deploy(constants.MaxUint256.div(2)),
-    ])) as [TestERC20, TestERC20]
+    // OVM update: await each token deployment individually instead of awaiting Promise.all() to ensure nonce is
+    // properly incremented on each deploy transaction when testing against l2geth
+    const token0 = await tokenFactory.deploy(constants.MaxUint256.div(2)) // do not use maxu256 to avoid overflowing
+    const token1 = await tokenFactory.deploy(constants.MaxUint256.div(2))
+    const tokens = [token0, token1] as [TestERC20, TestERC20]
 
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
-    const oracleFactory = await ethers.getContractFactory('OracleTest')
+    const tickMath = await (await ethers.getContractFactory('TickMath')).deploy()
+    const oracleFactory = await ethers.getContractFactory('OracleTest', {
+      libraries: {
+        TickMath: tickMath.address,
+      },
+    })
     const oracle = await oracleFactory.deploy()
 
     return {

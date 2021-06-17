@@ -15,19 +15,31 @@ contract TickLens is ITickLens {
         override
         returns (PopulatedTick[] memory populatedTicks)
     {
+        return getPopulatedTicksInPartialWord(pool, tickBitmapIndex, 0, 256);
+    }
+
+    function getPopulatedTicksInPartialWord(
+        address pool,
+        int16 tickBitmapIndex,
+        uint256 wordStart,
+        uint256 wordEnd
+    ) public view returns (PopulatedTick[] memory populatedTicks) {
+        // Verify inputs
+        require(wordStart < wordEnd && wordEnd <= 256, 'Bad range');
+
         // fetch bitmap
         uint256 bitmap = IUniswapV3Pool(pool).tickBitmap(tickBitmapIndex);
 
         // calculate the number of populated ticks
         uint256 numberOfPopulatedTicks;
-        for (uint256 i = 0; i < 256; i++) {
+        for (uint256 i = wordStart; i < wordEnd; i++) {
             if (bitmap & (1 << i) > 0) numberOfPopulatedTicks++;
         }
 
         // fetch populated tick data
         int24 tickSpacing = IUniswapV3Pool(pool).tickSpacing();
         populatedTicks = new PopulatedTick[](numberOfPopulatedTicks);
-        for (uint256 i = 0; i < 256; i++) {
+        for (uint256 i = wordStart; i < wordEnd; i++) {
             if (bitmap & (1 << i) > 0) {
                 int24 populatedTick = ((int24(tickBitmapIndex) << 8) + int24(i)) * tickSpacing;
                 (uint128 liquidityGross, int128 liquidityNet, , , , , , ) = IUniswapV3Pool(pool).ticks(populatedTick);

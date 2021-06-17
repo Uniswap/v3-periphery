@@ -24,22 +24,34 @@ describe('NFTDescriptor', () => {
     tokens: [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
     nftDescriptor: NFTDescriptorTest
   }> = async (wallets, provider) => {
-    const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
+    const tickMath = await (await ethers.getContractFactory('TickMath')).deploy()
+    const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor', {
+      libraries: {
+        TickMath: tickMath.address,
+      },
+    })
     const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
 
     const tokenFactory = await ethers.getContractFactory('TestERC20Metadata')
     const NFTDescriptorFactory = await ethers.getContractFactory('NFTDescriptorTest', {
       libraries: {
         NFTDescriptor: nftDescriptorLibrary.address,
+        TickMath: tickMath.address,
       },
     })
     const nftDescriptor = (await NFTDescriptorFactory.deploy()) as NFTDescriptorTest
-    const tokens = (await Promise.all([
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1'), // do not use maxu256 to avoid overflowing
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST2'),
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST3'),
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST4'),
-    ])) as [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
+    // OVM update: await each token deployment individually instead of awaiting Promise.all() to ensure nonce is
+    // properly incremented on each deploy transaction when testing against l2geth
+    const token1 = await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1') // do not use maxu256 to avoid overflowing
+    const token2 = await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST2')
+    const token3 = await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST3')
+    const token4 = await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST4')
+    const tokens = [token1, token2, token3, token4] as [
+      TestERC20Metadata,
+      TestERC20Metadata,
+      TestERC20Metadata,
+      TestERC20Metadata
+    ]
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
     return {
       nftDescriptor,

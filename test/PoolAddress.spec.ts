@@ -28,7 +28,7 @@ describe('PoolAddress', () => {
 
   describe('#POOL_INIT_CODE_HASH', () => {
     it('equals the hash of the pool bytecode', async () => {
-      expect(await poolAddress.POOL_INIT_CODE_HASH()).to.eq(POOL_BYTECODE_HASH)
+      expect(await poolAddress.POOL_INIT_CODE_HASH()).to.eq(await POOL_BYTECODE_HASH())
     })
   })
 

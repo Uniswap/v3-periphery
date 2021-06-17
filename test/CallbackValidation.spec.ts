@@ -16,10 +16,11 @@ describe('CallbackValidation', () => {
     const { factory } = await completeFixture(wallets, provider)
     const tokenFactory = await ethers.getContractFactory('TestERC20')
     const callbackValidationFactory = await ethers.getContractFactory('TestCallbackValidation')
-    const tokens = (await Promise.all([
-      tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu256 to avoid overflowing
-      tokenFactory.deploy(constants.MaxUint256.div(2)),
-    ])) as [TestERC20, TestERC20]
+    // OVM update: await each token deployment individually instead of awaiting Promise.all() to ensure nonce is
+    // properly incremented on each deploy transaction when testing against l2geth
+    const token0 = await tokenFactory.deploy(constants.MaxUint256.div(2)) // do not use maxu256 to avoid overflowing
+    const token1 = await tokenFactory.deploy(constants.MaxUint256.div(2))
+    const tokens = [token0, token1] as [TestERC20, TestERC20]
     const callbackValidation = (await callbackValidationFactory.deploy()) as TestCallbackValidation
 
     return {
