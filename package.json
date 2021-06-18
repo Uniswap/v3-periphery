@@ -72,7 +72,7 @@
     "pretest": "yarn set-hash:evm",
     "test": "hardhat test",
     "posttest": "yarn set-hash:evm-teardown",
-    "pretest:ovm": "yarn set-hash:ovm",
+    "pretest:ovm": "yarn set-hash:ovm && yarn postinstall",
     "test:ovm": "hardhat test --network optimism",
     "posttest:ovm": "yarn set-hash:ovm-teardown",
     "set-hash:evm": "sed -i -e 's/0x1fc830513acbdb1608b8c18fd3cf4a4bee3329c69bb41d56400401c40fe02fd0/0x00ded91a6d45ab1ebbbcb964c55ea9e6aa7bcbb5d83a3888ffb5785f23be9836/g' ./contracts/libraries/PoolAddress.sol && rm -f contracts/libraries/PoolAddress.sol-e",
