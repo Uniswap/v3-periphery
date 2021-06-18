@@ -5,7 +5,7 @@
   "publishConfig": {
     "access": "restricted"
   },
-  "version": "1.1.0-alpha.1",
+  "version": "1.1.0-alpha.0",
   "homepage": "https://uniswap.org",
   "keywords": [
     "uniswap",
@@ -20,10 +20,10 @@
     "contracts/base",
     "contracts/interfaces",
     "contracts/libraries",
-    "artifacts/contracts/**/*.json",
-    "!artifacts/contracts/**/*.dbg.json",
-    "!artifacts/contracts/test/**/*",
-    "!artifacts/contracts/base/**/*"
+    "artifacts-ovm/contracts/**/*.json",
+    "!artifacts-ovm/contracts/**/*.dbg.json",
+    "!artifacts-ovm/contracts/test/**/*",
+    "!artifacts-ovm/contracts/base/**/*"
   ],
   "engines": {
     "node": ">=10"
