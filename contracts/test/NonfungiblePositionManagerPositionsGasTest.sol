@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.7.6;
 
-import '../interfaces/INonfungiblePositionManager.sol';
+import '../NonfungiblePositionManager.sol';
 
 contract NonfungiblePositionManagerPositionsGasTest {
-    INonfungiblePositionManager immutable nonfungiblePositionManager;
+    NonfungiblePositionManager immutable nonfungiblePositionManager;
 
-    constructor(INonfungiblePositionManager _nonfungiblePositionManager) {
+    constructor(NonfungiblePositionManager _nonfungiblePositionManager) {
         nonfungiblePositionManager = _nonfungiblePositionManager;
     }
 
