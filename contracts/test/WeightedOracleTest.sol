@@ -10,8 +10,8 @@ contract WeightedOracleTest {
         observations = WeightedOracleLibrary.consult(pools, period);
     }
 
-    function getArithmeticMeanWeightedTick(WeightedOracleLibrary.TimeWeightedObservation[] memory observations) public pure returns (int24 arithmeticMeanWeightedTick) {
-        arithmeticMeanWeightedTick = WeightedOracleLibrary.getArithmeticMeanWeightedTick(observations);
+    function getArithmeticMeanTickWeightedByLiquidity(WeightedOracleLibrary.TimeWeightedObservation[] memory observations) public pure returns (int24 arithmeticMeanWeightedTick) {
+        arithmeticMeanWeightedTick = WeightedOracleLibrary.getArithmeticMeanTickWeightedByLiquidity(observations);
     }
 
 }
