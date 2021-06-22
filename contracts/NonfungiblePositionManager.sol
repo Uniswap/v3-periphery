@@ -5,6 +5,7 @@ pragma abicoder v2;
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import './interfaces/INonfungiblePositionManager.sol';
+import './interfaces/INonfungibleTokenPositionDescriptor.sol';
 import './libraries/NonfungiblePositionLibrary.sol';
 import './libraries/PositionKey.sol';
 import './libraries/PoolAddress.sol';
@@ -35,19 +36,24 @@ contract NonfungiblePositionManager is
     mapping(uint80 => PoolAddress.PoolKey) public poolIdToPoolKey;
 
     /// @dev The token ID position data
-    mapping(uint256 => Position) public positions;
+    mapping(uint256 => Position) public override positions;
 
     /// @dev The ID of the next token that will be minted. Skips 0
     uint176 private _nextId = 1;
     /// @dev The ID of the next pool that is used for the first time. Skips 0
     uint80 private _nextPoolId = 1;
 
+    /// @dev The address of the token descriptor contract, which handles generating token URIs for position tokens
+    address private immutable _tokenDescriptor;
+
     using NonfungiblePositionLibrary for IUniswapV3Pool;
 
-    constructor(address _factory, address _WETH9)
+    constructor(address _factory, address _WETH9, address _tokenDescriptor_)
         ERC721Permit('Uniswap V3 Positions NFT-V1', 'UNI-V3-POS', '1')
         PeripheryImmutableState(_factory, _WETH9)
-    {}
+    {
+        _tokenDescriptor = _tokenDescriptor_;
+    }
 
     /// @dev Caches a pool key
     function cachePoolKey(address pool, PoolAddress.PoolKey memory poolKey) private returns (uint80 poolId) {
@@ -106,12 +112,11 @@ contract NonfungiblePositionManager is
         require(_exists(tokenId));
 
         Position storage position = positions[tokenId];
-
         require(position.poolId != 0, 'Invalid token ID');
 
-        IUniswapV3Pool pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolIdToPoolKey[position.poolId]));
+        PoolAddress.PoolKey memory poolKey = poolIdToPoolKey[position.poolId];
 
-        return pool.tokenURI(poolIdToPoolKey[position.poolId], tokenId, position.tickLower, position.tickUpper);
+        return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId, poolKey);
     }
 
     // save bytecode by removing implementation of unused method

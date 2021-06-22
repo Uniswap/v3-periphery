@@ -6,6 +6,7 @@ import {
   IWETH9,
   MockTimeNonfungiblePositionManager,
   MockTimeSwapRouter,
+  NonfungibleTokenPositionDescriptor,
   TestERC20,
   IUniswapV3Factory,
 } from '../../typechain'
@@ -15,6 +16,7 @@ const completeFixture: Fixture<{
   factory: IUniswapV3Factory
   router: MockTimeSwapRouter
   nft: MockTimeNonfungiblePositionManager
+  nftDescriptor: NonfungibleTokenPositionDescriptor
   tokens: [TestERC20, TestERC20, TestERC20]
 }> = async (wallets, provider) => {
   const { weth9, factory, router } = await v3RouterFixture(wallets, provider)
@@ -34,14 +36,22 @@ const completeFixture: Fixture<{
     },
   })
   const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
+
+  const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor', {
+    libraries: {
+      NFTDescriptor: nftDescriptorLibrary.address
+    },
+  })
+  const nftDescriptor = (await positionDescriptorFactory.deploy(
+    weth9.address
+  )) as NonfungibleTokenPositionDescriptor
+
   const nonfungiblePositionLibraryFactory = await ethers.getContractFactory('NonfungiblePositionLibrary', {
     libraries: {
-      NFTDescriptor: nftDescriptorLibrary.address,
       TickMath: tickMath.address,
     },
   })
   const nonfungiblePositionLibrary = await nonfungiblePositionLibraryFactory.deploy()
-
   const positionManagerFactory = await ethers.getContractFactory('MockTimeNonfungiblePositionManager', {
     libraries: {
       NonfungiblePositionLibrary: nonfungiblePositionLibrary.address,
@@ -49,7 +59,8 @@ const completeFixture: Fixture<{
   })
   const nft = (await positionManagerFactory.deploy(
     factory.address,
-    weth9.address
+    weth9.address,
+    nftDescriptor.address
   )) as MockTimeNonfungiblePositionManager
 
   tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
@@ -60,6 +71,7 @@ const completeFixture: Fixture<{
     router,
     tokens,
     nft,
+    nftDescriptor
   }
 }
 
