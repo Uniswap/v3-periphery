@@ -49,50 +49,132 @@ describe('WeightedOracleLibrary', () => {
       await expect(oracle.consult([oracle.address], 0)).to.be.revertedWith('BP')
     })
 
-    it('single pool returns average tick', async () => {
+    it('correct output when tick is 0', async () => {
       const period = 3
-      const averageTick = 10
-      const mockObservable = await observableWith({ period, averageTick, liquidityWeight: 10 })
+      const secondsPerLiqCumulatives: [BigNumberish, BigNumberish] = [10, 20]
+      const mockObservable = await observableWith({
+        period,
+        tickCumulatives: [12, 12],
+        secondsPerLiqCumulatives
+      })
+      const [observation] = await oracle.consult([mockObservable.address], period)
 
-      const oracleTick = await oracle.consult([mockObservable.address], period)
+      expect(observation.timeWeightedAverageTick).to.equal(0)
+      expect(observation.timeWeightedHarmonicMeanLiquidity).to.equal(calculateHarmonicMeanLiq(period, secondsPerLiqCumulatives))
+    })
+
+    it('correct rounding for .5 negative tick', async () => {
+      const period = 4
+
+      const secondsPerLiqCumulatives: [BigNumberish, BigNumberish] = [10, 11]
+      const mockObservable = await observableWith({
+        period,
+        tickCumulatives: [-10, -12],
+        secondsPerLiqCumulatives
+      })
+
+      const [observation] = await oracle.consult([mockObservable.address], period)
+
+      // Always round to negative infinity
+      // In this case, we need to subtract one because integer division rounds to 0
+      expect(observation.timeWeightedAverageTick).to.equal(-1)
+      expect(observation.timeWeightedHarmonicMeanLiquidity).to.equal(calculateHarmonicMeanLiq(period, secondsPerLiqCumulatives))
+    })
+
+    it('correct output for multiple pools', async () => {
+      const period = 3
+      const secondsPerLiqCumulatives1: [BigNumberish, BigNumberish] = [10, 100]
+      const secondsPerLiqCumulatives2: [BigNumberish, BigNumberish] = [0, 50]
+
+      const mockObservable1 = await observableWith({
+        period,
+        tickCumulatives: [7, 12],
+        secondsPerLiqCumulatives: secondsPerLiqCumulatives1
+      })
+
+      const mockObservable2 = await observableWith({
+        period,
+        tickCumulatives: [-7, -12],
+        secondsPerLiqCumulatives: secondsPerLiqCumulatives2
+      })
+
+      const [observation1, observation2] = await oracle.consult([mockObservable1.address, mockObservable2.address], period)
+
+      expect(observation1.timeWeightedAverageTick).to.equal(1)
+      expect(observation1.timeWeightedHarmonicMeanLiquidity).to.equal(calculateHarmonicMeanLiq(period, secondsPerLiqCumulatives1))
+
+      // Always round to negative infinity
+      // In this case, we need to subtract one because integer division rounds to 0
+      expect(observation2.timeWeightedAverageTick).to.equal(-2)
+      expect(observation2.timeWeightedHarmonicMeanLiquidity).to.equal(calculateHarmonicMeanLiq(period, secondsPerLiqCumulatives2))
+    })
+
+    function calculateHarmonicMeanLiq(period: number, secondsPerLiqCumulatives: [BigNumberish, BigNumberish]) {
+      const [secondsPerLiq0, secondsPerLiq1] = secondsPerLiqCumulatives.map(BigNumber.from)
+      const delta = secondsPerLiq1.sub(secondsPerLiq0)
+
+      const maxUint160 = BigNumber.from(2).pow(160).sub(1)
+      return maxUint160.mul(period).div(delta.shl(32))
+    }
+
+    function observableWith({
+      period,
+      tickCumulatives,
+      secondsPerLiqCumulatives,
+    }: {
+      period: number
+      tickCumulatives: [BigNumberish, BigNumberish]
+      secondsPerLiqCumulatives: [BigNumberish, BigNumberish]
+    }) {
+      return mockObservableFactory.deploy(
+        [period, 0],
+        tickCumulatives.map(BigNumber.from),
+        secondsPerLiqCumulatives.map(BigNumber.from),
+      )
+    }
+
+  })
+
+  describe('#getArithmeticMeanWeightedTick', () => {
+
+    it('single observation returns average tick', async () => {
+      const averageTick = 10
+      const observation = observationWith({ averageTick, harmonicMeanLiquidity: 10 })
+
+      const oracleTick = await oracle.getArithmeticMeanWeightedTick([observation])
 
       expect(oracleTick).to.equal(averageTick)
     })
 
-    it('multiple pools with same weight result in average across tiers', async () => {
-      const period = 3
-      const mockObservable1 = await observableWith({ period, averageTick: 10, liquidityWeight: 10 })
-      const mockObservable2 = await observableWith({ period, averageTick: 20, liquidityWeight: 10 })
+    it('multiple observations with same weight result in average across tiers', async () => {
+      const observation1 = observationWith({ averageTick: 10, harmonicMeanLiquidity: 10 })
+      const observation2 = observationWith({ averageTick: 20, harmonicMeanLiquidity: 10 })
 
-      const oracleTick = await oracle.consult([mockObservable1.address, mockObservable2.address], period)
+      const oracleTick = await oracle.getArithmeticMeanWeightedTick([observation1, observation2])
 
       expect(oracleTick).to.equal(15)
     })
 
-    it('multiple pools with different weights are weighted correctly', async () => {
-      const period = 3
-      const mockObservable1 = await observableWith({ period, averageTick: 10, liquidityWeight: 10 })
-      const mockObservable2 = await observableWith({ period, averageTick: 20, liquidityWeight: 15 })
+    it('multiple observations with different weights are weighted correctly', async () => {
+      const observation1 = observationWith({ averageTick: 10, harmonicMeanLiquidity: 10 })
+      const observation2 = observationWith({ averageTick: 20, harmonicMeanLiquidity: 15 })
 
-      const oracleTick = await oracle.consult([mockObservable1.address, mockObservable2.address], period)
+      const oracleTick = await oracle.getArithmeticMeanWeightedTick([observation1, observation2])
 
       expect(oracleTick).to.equal(16)
     })
 
-    function observableWith({
-      period,
+    function observationWith({
       averageTick,
-      liquidityWeight,
+      harmonicMeanLiquidity,
     }: {
-      period: number
       averageTick: BigNumberish
-      liquidityWeight: BigNumberish
+      harmonicMeanLiquidity: BigNumberish
     }) {
-      return mockObservableFactory.deploy(
-        [period, 0],
-        [0, BigNumber.from(averageTick).mul(period)],
-        [0, BigNumber.from(period).shl(128).div(liquidityWeight)]
-      )
+      return {
+        timeWeightedAverageTick: averageTick,
+        timeWeightedHarmonicMeanLiquidity: harmonicMeanLiquidity
+      }
     }
   })
 })
