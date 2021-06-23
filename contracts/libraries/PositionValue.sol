@@ -8,17 +8,20 @@ import './LiquidityAmounts.sol';
 import './PoolAddress.sol';
 
 library PositionValue {
-    function principal(
-        address factory,
-        INonfungiblePositionManager nft,
-        uint256 tokenId
-    ) internal view returns (uint256 amount0, uint256 amount1) {
+    function principal(INonfungiblePositionManager nft, uint256 tokenId)
+        internal
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
         (, , address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) =
             nft.positions(tokenId);
 
         (uint160 sqrtRatioX96, , , , , , ) =
             IUniswapV3Pool(
-                PoolAddress.computeAddress(factory, PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee}))
+                PoolAddress.computeAddress(
+                    nft.factory(),
+                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
+                )
             )
                 .slot0();
 
