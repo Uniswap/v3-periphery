@@ -19,17 +19,23 @@ library PositionValue {
     function principal(PrincipalParams calldata params) internal pure returns (uint256 amount0, uint256 amount1) {
         require(params.sqrtRatioX96Lower < params.sqrtRatioX96Upper, 'Bad Range');
 
-        uint256 liquidityX96 = uint256(params.liquidity) << FixedPoint96.RESOLUTION;
-
         if (params.sqrtRatioX96 < params.sqrtRatioX96Lower) {
-            amount0 = calculateAmount0(liquidityX96, params.sqrtRatioX96Lower, params.sqrtRatioX96Upper);
+            amount0 = calculateAmount0(
+                uint256(params.liquidity) << FixedPoint96.RESOLUTION,
+                params.sqrtRatioX96Lower,
+                params.sqrtRatioX96Upper
+            );
             amount1 = 0;
         } else if (params.sqrtRatioX96 < params.sqrtRatioX96Upper) {
-            amount0 = calculateAmount0(liquidityX96, params.sqrtRatioX96, params.sqrtRatioX96Upper);
-            amount1 = calculateAmount1(liquidityX96, params.sqrtRatioX96Lower, params.sqrtRatioX96);
+            amount0 = calculateAmount0(
+                uint256(params.liquidity) << FixedPoint96.RESOLUTION,
+                params.sqrtRatioX96,
+                params.sqrtRatioX96Upper
+            );
+            amount1 = calculateAmount1(params.liquidity, params.sqrtRatioX96Lower, params.sqrtRatioX96);
         } else {
             amount0 = 0;
-            amount1 = calculateAmount1(liquidityX96, params.sqrtRatioX96Lower, params.sqrtRatioX96Upper);
+            amount1 = calculateAmount1(params.liquidity, params.sqrtRatioX96Lower, params.sqrtRatioX96Upper);
         }
     }
 
@@ -42,10 +48,10 @@ library PositionValue {
     }
 
     function calculateAmount1(
-        uint256 liquidityX96,
+        uint256 liquidity,
         uint160 lowerBound,
         uint160 upperBound
     ) private pure returns (uint256 amount1) {
-        amount1 = FullMath.mulDiv(liquidityX96, (upperBound - lowerBound), FixedPoint96.RESOLUTION);
+        amount1 = FullMath.mulDiv(liquidity, (upperBound - lowerBound), FixedPoint96.RESOLUTION);
     }
 }
