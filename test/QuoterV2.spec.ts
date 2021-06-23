@@ -11,7 +11,8 @@ import { encodePath } from './shared/path'
 import { createPool, createPoolWithMultiplePositions, createPoolWithZeroTickInitialized } from './shared/quoter'
 import snapshotGasCost from './shared/snapshotGasCost'
 
-describe('QuoterV2', () => {
+describe('QuoterV2', function () {
+  this.timeout(40000)
   let wallet: Wallet
   let trader: Wallet
 
@@ -24,12 +25,10 @@ describe('QuoterV2', () => {
 
     // approve & fund wallets
     for (const token of tokens) {
-      await Promise.all([
-        token.approve(router.address, constants.MaxUint256),
-        token.approve(nft.address, constants.MaxUint256),
-        token.connect(trader).approve(router.address, constants.MaxUint256),
-        token.transfer(trader.address, expandTo18Decimals(1_000_000)),
-      ])
+      await token.approve(router.address, constants.MaxUint256)
+      await token.approve(nft.address, constants.MaxUint256)
+      await token.connect(trader).approve(router.address, constants.MaxUint256)
+      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
     const quoterFactory = await ethers.getContractFactory('QuoterV2')

@@ -202,11 +202,9 @@ describe('TickLens', () => {
 
     it('fully populated ticks', async () => {
       // fully populate a word
-      await Promise.all(
-        new Array(128)
-          .fill(0)
-          .map((_, i) => mint(i * TICK_SPACINGS[FeeAmount.MEDIUM], (255 - i) * TICK_SPACINGS[FeeAmount.MEDIUM], 100))
-      )
+      for (let i = 0; i < 128; i++) {
+        await mint(i * TICK_SPACINGS[FeeAmount.MEDIUM], (255 - i) * TICK_SPACINGS[FeeAmount.MEDIUM], 100)
+      }
 
       const ticks = await tickLens.getPopulatedTicksInWord(
         poolAddress,

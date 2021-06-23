@@ -34,12 +34,13 @@ describe('NFTDescriptor', () => {
       },
     })
     const nftDescriptor = (await NFTDescriptorFactory.deploy()) as NFTDescriptorTest
-    const tokens = (await Promise.all([
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1'), // do not use maxu256 to avoid overflowing
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST2'),
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST3'),
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST4'),
-    ])) as [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
+    const TestERC20Metadata = tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1')
+    const tokens: [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata] = [
+      (await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1')) as TestERC20Metadata, // do not use maxu256 to avoid overflowing
+      (await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST2')) as TestERC20Metadata,
+      (await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST3')) as TestERC20Metadata,
+      (await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST4')) as TestERC20Metadata,
+    ]
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
     return {
       nftDescriptor,

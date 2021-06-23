@@ -13,7 +13,8 @@ import { getMaxTick, getMinTick } from './shared/ticks'
 
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
-describe('SwapRouter gas tests', () => {
+describe('SwapRouter gas tests', function () {
+  this.timeout(40000)
   let wallet: Wallet
   let trader: Wallet
 
@@ -27,12 +28,10 @@ describe('SwapRouter gas tests', () => {
 
     // approve & fund wallets
     for (const token of tokens) {
-      await Promise.all([
-        token.approve(router.address, constants.MaxUint256),
-        token.approve(nft.address, constants.MaxUint256),
-        token.connect(trader).approve(router.address, constants.MaxUint256),
-        token.transfer(trader.address, expandTo18Decimals(1_000_000)),
-      ])
+      await token.approve(router.address, constants.MaxUint256)
+      await token.approve(nft.address, constants.MaxUint256)
+      await token.connect(trader).approve(router.address, constants.MaxUint256)
+      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
     const liquidity = 1000000

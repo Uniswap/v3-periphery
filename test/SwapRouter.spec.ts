@@ -11,7 +11,8 @@ import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { computePoolAddress } from './shared/computePoolAddress'
 
-describe('SwapRouter', () => {
+describe('SwapRouter', function() {
+  this.timeout(40000)
   let wallet: Wallet
   let trader: Wallet
 
@@ -26,12 +27,10 @@ describe('SwapRouter', () => {
 
     // approve & fund wallets
     for (const token of tokens) {
-      await Promise.all([
-        token.approve(router.address, constants.MaxUint256),
-        token.approve(nft.address, constants.MaxUint256),
-        token.connect(trader).approve(router.address, constants.MaxUint256),
-        token.transfer(trader.address, expandTo18Decimals(1_000_000)),
-      ])
+      await token.approve(router.address, constants.MaxUint256)
+      await token.approve(nft.address, constants.MaxUint256)
+      await token.connect(trader).approve(router.address, constants.MaxUint256)
+      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
     return {
@@ -886,6 +885,7 @@ describe('SwapRouter', () => {
       })
 
       it('#unwrapWETH9WithFee', async () => {
+        const startBalance = await waffle.provider.getBalance(feeRecipient)
         await createPoolWETH9(tokens[0].address)
 
         const amountOutMinimum = 100
@@ -908,9 +908,8 @@ describe('SwapRouter', () => {
         ]
 
         await router.connect(trader).multicall(data)
-
-        const balance = await waffle.provider.getBalance(feeRecipient)
-        expect(balance.eq(1)).to.be.eq(true)
+        const endBalance = await waffle.provider.getBalance(feeRecipient)
+        expect(endBalance.sub(startBalance).eq(1)).to.be.eq(true)
       })
     })
   })

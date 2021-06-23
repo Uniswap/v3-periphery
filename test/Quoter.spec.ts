@@ -23,12 +23,10 @@ describe('Quoter', () => {
 
     // approve & fund wallets
     for (const token of tokens) {
-      await Promise.all([
-        token.approve(router.address, constants.MaxUint256),
-        token.approve(nft.address, constants.MaxUint256),
-        token.connect(trader).approve(router.address, constants.MaxUint256),
-        token.transfer(trader.address, expandTo18Decimals(1_000_000)),
-      ])
+      await token.approve(router.address, constants.MaxUint256)
+      await token.approve(nft.address, constants.MaxUint256)
+      await token.connect(trader).approve(router.address, constants.MaxUint256)
+      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
     const quoterFactory = await ethers.getContractFactory('Quoter')
