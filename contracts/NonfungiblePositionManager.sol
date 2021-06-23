@@ -33,7 +33,7 @@ contract NonfungiblePositionManager is
     mapping(address => uint80) private _poolIds;
 
     /// @dev Pool keys by pool ID, to save on SSTOREs for position data
-    mapping(uint80 => PoolAddress.PoolKey) public poolIdToPoolKey;
+    mapping(uint80 => PoolAddress.PoolKey) public override poolIdToPoolKey;
 
     /// @dev The token ID position data
     mapping(uint256 => Position) public override positions;
@@ -110,13 +110,7 @@ contract NonfungiblePositionManager is
 
     function tokenURI(uint256 tokenId) public view override(ERC721, IERC721Metadata) returns (string memory) {
         require(_exists(tokenId));
-
-        Position storage position = positions[tokenId];
-        require(position.poolId != 0, 'Invalid token ID');
-
-        PoolAddress.PoolKey memory poolKey = poolIdToPoolKey[position.poolId];
-
-        return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId, poolKey);
+        return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId);
     }
 
     // save bytecode by removing implementation of unused method

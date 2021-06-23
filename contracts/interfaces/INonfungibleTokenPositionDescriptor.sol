@@ -11,7 +11,7 @@ interface INonfungibleTokenPositionDescriptor {
     /// @param positionManager The position manager for which to describe the token
     /// @param tokenId The ID of the token for which to produce a description, which may not be valid
     /// @return The URI of the ERC721-compliant metadata
-    function tokenURI(INonfungiblePositionManager positionManager, uint256 tokenId, PoolAddress.PoolKey memory poolKey)
+    function tokenURI(INonfungiblePositionManager positionManager, uint256 tokenId)
         external
         view
         returns (string memory);

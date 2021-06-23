@@ -29,14 +29,16 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
     }
 
     /// @inheritdoc INonfungibleTokenPositionDescriptor
-    function tokenURI(INonfungiblePositionManager positionManager, uint256 tokenId, PoolAddress.PoolKey memory poolKey)
+    function tokenURI(INonfungiblePositionManager positionManager, uint256 tokenId)
         external
         view
         override
         returns (string memory)
     {
-        (, , , int24 tickLower, int24 tickUpper, , , , , ) =
+        (, , uint80 poolId, int24 tickLower, int24 tickUpper, , , , , ) =
             positionManager.positions(tokenId);
+
+        PoolAddress.PoolKey memory poolKey = getPoolKey(positionManager, poolId);
 
         IUniswapV3Pool pool =
             IUniswapV3Pool(
@@ -70,6 +72,11 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                     poolAddress: address(pool)
                 })
             );
+    }
+
+    function getPoolKey(INonfungiblePositionManager positionManager, uint80 poolId) public view returns (PoolAddress.PoolKey memory) {
+      (address token0, address token1, uint24 fee) = positionManager.poolIdToPoolKey(poolId);
+      return PoolAddress.PoolKey({ token0: token0, token1: token1, fee: fee });
     }
 
     function flipRatio(

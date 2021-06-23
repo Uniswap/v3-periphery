@@ -44,8 +44,17 @@ interface INonfungiblePositionManager is
     }
 
     /// @notice Returns the position information associated with a given token ID.
-    /// @dev Throws if the token ID is not valid.
     /// @param tokenId The ID of the token that represents the position
+    /// @return nonce The nonce for permits
+    /// @return operator The address that is approved for spending
+    /// @return poolId ID of the pool with which this token is connected
+    /// @return tickLower The lower end of the tick range for the position
+    /// @return tickUpper The higher end of the tick range for the position
+    /// @return liquidity The liquidity of the position
+    /// @return feeGrowthInside0LastX128 The fee growth of token0 as of the last action on the individual position
+    /// @return feeGrowthInside1LastX128 The fee growth of token1 as of the last action on the individual position
+    /// @return tokensOwed0 The uncollected amount of token0 owed to the position as of the last computation
+    /// @return tokensOwed1 The uncollected amount of token1 owed to the position as of the last computation
     function positions(uint256 tokenId)
         external
         view
@@ -60,6 +69,19 @@ interface INonfungiblePositionManager is
             uint256 feeGrowthInside1LastX128,
             uint128 tokensOwed0,
             uint128 tokensOwed1);
+
+    /// @notice Returns the tokens with the matched fee for a given pool ID.
+    /// @param poolId The ID of the pool
+    /// @return token0 The address of the token0 for the pool
+    /// @return token1 The address of the token1 for the pool
+    /// @return fee The fee associated with the pool
+    function poolIdToPoolKey(uint80 poolId)
+        external
+        view
+        returns (
+            address token0,
+            address token1,
+            uint24 fee);
 
     struct MintParams {
         address token0;
