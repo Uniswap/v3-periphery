@@ -1,6 +1,6 @@
 import { Fixture } from 'ethereum-waffle'
-import { BigNumber, constants, Contract, ContractTransaction } from 'ethers'
-import { waffle } from 'hardhat'
+import { BigNumber, constants, Contract, ContractTransaction, Wallet } from 'ethers'
+import { waffle, ethers } from 'hardhat'
 import { IWETH9, MockTimeNonfungiblePositionManager, MockTimeSwapRouter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { FeeAmount, TICK_SPACINGS } from './shared/constants'
@@ -11,9 +11,10 @@ import { encodePath } from './shared/path'
 import { getMaxTick, getMinTick } from './shared/ticks'
 import { computePoolAddress } from './shared/computePoolAddress'
 
-describe('SwapRouter', () => {
-  const wallets = waffle.provider.getWallets()
-  const [wallet, trader] = wallets
+describe('SwapRouter', function () {
+  this.timeout(40000)
+  let wallet: Wallet
+  let trader: Wallet
 
   const swapRouterFixture: Fixture<{
     weth9: IWETH9
@@ -26,12 +27,10 @@ describe('SwapRouter', () => {
 
     // approve & fund wallets
     for (const token of tokens) {
-      await Promise.all([
-        token.approve(router.address, constants.MaxUint256),
-        token.approve(nft.address, constants.MaxUint256),
-        token.connect(trader).approve(router.address, constants.MaxUint256),
-        token.transfer(trader.address, expandTo18Decimals(1_000_000)),
-      ])
+      await token.approve(router.address, constants.MaxUint256)
+      await token.approve(nft.address, constants.MaxUint256)
+      await token.connect(trader).approve(router.address, constants.MaxUint256)
+      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
     return {
@@ -60,7 +59,8 @@ describe('SwapRouter', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
-    loadFixture = waffle.createFixtureLoader(wallets)
+    ;[wallet, trader] = await (ethers as any).getSigners()
+    loadFixture = waffle.createFixtureLoader([wallet, trader])
   })
 
   // helper for getting weth and token balances
@@ -885,6 +885,7 @@ describe('SwapRouter', () => {
       })
 
       it('#unwrapWETH9WithFee', async () => {
+        const startBalance = await waffle.provider.getBalance(feeRecipient)
         await createPoolWETH9(tokens[0].address)
 
         const amountOutMinimum = 100
@@ -907,9 +908,8 @@ describe('SwapRouter', () => {
         ]
 
         await router.connect(trader).multicall(data)
-
-        const balance = await waffle.provider.getBalance(feeRecipient)
-        expect(balance.eq(1)).to.be.eq(true)
+        const endBalance = await waffle.provider.getBalance(feeRecipient)
+        expect(endBalance.sub(startBalance).eq(1)).to.be.eq(true)
       })
     })
   })

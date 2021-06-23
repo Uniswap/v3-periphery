@@ -1,4 +1,4 @@
-import { BigNumber, constants } from 'ethers'
+import { BigNumber, constants, Wallet } from 'ethers'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { waffle, ethers } from 'hardhat'
 import { expect } from './shared/expect'
@@ -18,7 +18,7 @@ const LOWEST_SQRT_RATIO = 4310618292
 const HIGHEST_SQRT_RATIO = BigNumber.from(33849).mul(TEN.pow(34))
 
 describe('NFTDescriptor', () => {
-  const wallets = waffle.provider.getWallets()
+  let wallets: Wallet[]
 
   const nftDescriptorFixture: Fixture<{
     tokens: [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
@@ -34,12 +34,13 @@ describe('NFTDescriptor', () => {
       },
     })
     const nftDescriptor = (await NFTDescriptorFactory.deploy()) as NFTDescriptorTest
-    const tokens = (await Promise.all([
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1'), // do not use maxu256 to avoid overflowing
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST2'),
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST3'),
-      tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST4'),
-    ])) as [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
+    const TestERC20Metadata = tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1')
+    const tokens: [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata] = [
+      (await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST1')) as TestERC20Metadata, // do not use maxu256 to avoid overflowing
+      (await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST2')) as TestERC20Metadata,
+      (await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST3')) as TestERC20Metadata,
+      (await tokenFactory.deploy(constants.MaxUint256.div(2), 'Test ERC20', 'TEST4')) as TestERC20Metadata,
+    ]
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
     return {
       nftDescriptor,
@@ -53,6 +54,8 @@ describe('NFTDescriptor', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    wallets = await (ethers as any).getSigners()
+
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 

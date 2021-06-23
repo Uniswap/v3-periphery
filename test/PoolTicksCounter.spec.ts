@@ -7,8 +7,6 @@ import { deployMockContract, Fixture, MockContract } from 'ethereum-waffle'
 import { Artifact } from 'hardhat/types'
 
 describe('PoolTicksCounter', () => {
-  const wallets = waffle.provider.getWallets()
-
   const TICK_SPACINGS = [200, 60, 10]
 
   TICK_SPACINGS.forEach((TICK_SPACING) => {
@@ -22,6 +20,7 @@ describe('PoolTicksCounter', () => {
     }
 
     before(async () => {
+      const wallets = await (ethers as any).getSigners()
       PoolAbi = await artifacts.readArtifact('IUniswapV3Pool')
       const poolTicksHelperFactory = await ethers.getContractFactory('PoolTicksCounterTest')
       PoolTicksCounter = (await poolTicksHelperFactory.deploy()) as PoolTicksCounterTest

@@ -1,5 +1,5 @@
 import { Fixture } from 'ethereum-waffle'
-import { constants } from 'ethers'
+import { constants, Wallet } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { MockTimeNonfungiblePositionManager, Quoter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
@@ -9,11 +9,10 @@ import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import { createPool } from './shared/quoter'
-import { getMaxTick, getMinTick } from './shared/ticks'
 
 describe('Quoter', () => {
-  const wallets = waffle.provider.getWallets()
-  const [wallet, trader] = wallets
+  let wallet: Wallet
+  let trader: Wallet
 
   const swapRouterFixture: Fixture<{
     nft: MockTimeNonfungiblePositionManager
@@ -24,12 +23,10 @@ describe('Quoter', () => {
 
     // approve & fund wallets
     for (const token of tokens) {
-      await Promise.all([
-        token.approve(router.address, constants.MaxUint256),
-        token.approve(nft.address, constants.MaxUint256),
-        token.connect(trader).approve(router.address, constants.MaxUint256),
-        token.transfer(trader.address, expandTo18Decimals(1_000_000)),
-      ])
+      await token.approve(router.address, constants.MaxUint256)
+      await token.approve(nft.address, constants.MaxUint256)
+      await token.connect(trader).approve(router.address, constants.MaxUint256)
+      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
     const quoterFactory = await ethers.getContractFactory('Quoter')
@@ -49,6 +46,8 @@ describe('Quoter', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    const wallets = await (ethers as any).getSigners()
+    ;[wallet, trader] = wallets
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 

@@ -7,8 +7,6 @@ import { expect } from './shared/expect'
 import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('PoolAddress', () => {
-  const wallets = waffle.provider.getWallets()
-
   let poolAddress: PoolAddressTest
 
   const poolAddressTestFixture = async () => {
@@ -19,7 +17,7 @@ describe('PoolAddress', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
-    loadFixture = waffle.createFixtureLoader(wallets)
+    loadFixture = waffle.createFixtureLoader(await (ethers as any).getSigners())
   })
 
   beforeEach('deploy PoolAddressTest', async () => {

@@ -9,8 +9,6 @@ import { decodePath, encodePath } from './shared/path'
 import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('Path', () => {
-  const wallets = waffle.provider.getWallets()
-
   let path: PathTest
 
   let tokenAddresses = [
@@ -28,7 +26,7 @@ describe('Path', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
-    loadFixture = waffle.createFixtureLoader(wallets)
+    loadFixture = waffle.createFixtureLoader(await (ethers as any).getSigners())
   })
 
   beforeEach('deploy PathTest', async () => {
