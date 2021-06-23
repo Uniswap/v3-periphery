@@ -39,12 +39,10 @@ const completeFixture: Fixture<{
 
   const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor', {
     libraries: {
-      NFTDescriptor: nftDescriptorLibrary.address
+      NFTDescriptor: nftDescriptorLibrary.address,
     },
   })
-  const nftDescriptor = (await positionDescriptorFactory.deploy(
-    weth9.address
-  )) as NonfungibleTokenPositionDescriptor
+  const nftDescriptor = (await positionDescriptorFactory.deploy(weth9.address)) as NonfungibleTokenPositionDescriptor
 
   const nonfungiblePositionLibraryFactory = await ethers.getContractFactory('NonfungiblePositionLibrary', {
     libraries: {
@@ -71,7 +69,7 @@ const completeFixture: Fixture<{
     router,
     tokens,
     nft,
-    nftDescriptor
+    nftDescriptor,
   }
 }
 

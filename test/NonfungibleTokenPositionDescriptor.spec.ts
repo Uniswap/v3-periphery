@@ -39,7 +39,7 @@ describe('NonfungibleTokenPositionDescriptor', () => {
       nftPositionDescriptor: nftDescriptor,
       tokens,
       nft,
-      weth9
+      weth9,
     }
   }
 

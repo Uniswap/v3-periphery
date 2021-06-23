@@ -68,7 +68,8 @@ interface INonfungiblePositionManager is
             uint256 feeGrowthInside0LastX128,
             uint256 feeGrowthInside1LastX128,
             uint128 tokensOwed0,
-            uint128 tokensOwed1);
+            uint128 tokensOwed1
+        );
 
     /// @notice Returns the tokens with the matched fee for a given pool ID.
     /// @param poolId The ID of the pool
@@ -81,7 +82,8 @@ interface INonfungiblePositionManager is
         returns (
             address token0,
             address token1,
-            uint24 fee);
+            uint24 fee
+        );
 
     struct MintParams {
         address token0;
