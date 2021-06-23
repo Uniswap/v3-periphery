@@ -65,7 +65,7 @@ export default {
     },
     arbitrum: {
       url: `http://localhost:8547`,
-      gas: 8000000
+      gas: 8000000,
     },
   },
   etherscan: {
