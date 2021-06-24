@@ -52,18 +52,12 @@ library PositionValue {
             uint128 liquidity,
             uint256 positionFeeGrowthInside0LastX128,
             uint256 positionFeeGrowthInside1LastX128,
-            uint128 tokensOwed0,
-            uint128 tokensOwed1
+            ,
+
         ) = nft.positions(tokenId);
 
-        (, uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128, , ) =
-            IUniswapV3Pool(
-                PoolAddress.computeAddress(
-                    nft.factory(),
-                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
-                )
-            )
-                .positions(PositionKey.compute(address(nft), tickLower, tickUpper));
+        (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) =
+            getFeeGrowthInside(nft, token0, token1, fee, tickLower, tickUpper);
 
         amount0 = FullMath.mulDiv(
             poolFeeGrowthInside0LastX128 - positionFeeGrowthInside0LastX128,
@@ -76,5 +70,19 @@ library PositionValue {
             liquidity,
             FixedPoint128.Q128
         );
+    }
+
+    function getFeeGrowthInside(
+        INonfungiblePositionManager nft,
+        address token0,
+        address token1,
+        uint24 fee,
+        int24 tickLower,
+        int24 tickUpper
+    ) private view returns (uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128) {
+        (, feeGrowthInside0LastX128, feeGrowthInside1LastX128, , ) = IUniswapV3Pool(
+            PoolAddress.computeAddress(nft.factory(), PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee}))
+        )
+            .positions(PositionKey.compute(address(nft), tickLower, tickUpper));
     }
 }

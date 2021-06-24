@@ -12,4 +12,11 @@ contract PositionValueTest {
     {
         return PositionValue.principal(nft, tokenId);
     }
+
+    function fees(INonfungiblePositionManager nft, uint256 tokenId)
+        external
+        returns (uint256 amount0, uint256 amount1)
+    {
+        return PositionValue.fees(nft, tokenId);
+    }
 }
