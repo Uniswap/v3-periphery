@@ -8,11 +8,11 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 library WeightedOracleLibrary {
 
     struct TimeWeightedObservation {
-        int24 timeWeightedAverageTick;
-        uint128 timeWeightedHarmonicAverageLiquidity;
+        int24 arithmeticMeanTick;
+        uint128 harmonicMeanLiquidity;
     }
 
-    /// @notice Fetches time-weighted observations across different Uniswap V3 pools
+    /// @notice Fetches time-weighted observations across different Uniswap V3 pools. These pools should almost certainly be for the same underlying assets, and differ only in fee tier
     /// @param pools Addresses of different Uniswap V3 pools that we want to observe
     /// @param period Number of seconds in the past to start calculating the time-weighted observations
     /// @return observations An array of obervations that have been time-weighted from (block.timestamp - period) to block.timestamp
@@ -31,12 +31,12 @@ library WeightedOracleLibrary {
             int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
             uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[1] - secondsPerLiquidityCumulativeX128s[0];
 
-            observations[i].timeWeightedAverageTick = int24(tickCumulativesDelta / period);
+            observations[i].arithmeticMeanTick = int24(tickCumulativesDelta / period);
             // Always round to negative infinity
-            if (tickCumulativesDelta < 0 && (tickCumulativesDelta % period != 0)) observations[i].timeWeightedAverageTick--;
+            if (tickCumulativesDelta < 0 && (tickCumulativesDelta % period != 0)) observations[i].arithmeticMeanTick--;
 
             // We are shifting the liquidity delta to ensure that the result doesn't overflow uint128
-            observations[i].timeWeightedHarmonicAverageLiquidity = uint128(periodX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32));
+            observations[i].harmonicMeanLiquidity = uint128(periodX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32));
         }
     }
 
@@ -47,17 +47,20 @@ library WeightedOracleLibrary {
 
         // Accumulates the sum of all observations' products between each their own average tick and harmonic average liquidity
         // Each product can be stored in a int160, so it would take approximatelly 2**96 observations to overflow this accumulator
-        int256 weightedTicksAccumulator;
+        int256 numerator;
 
         // Accumulates the sum of the harmonic average liquidities from the given observations
         // Each average liquidity can be stored in a uint128, so it will take approximatelly 2**128 observations to overflow this accumulator
-        uint256 liquidityWeightAccumulator;
+        uint256 denominator;
 
         for (uint256 i; i < observations.length; i++) {
-            weightedTicksAccumulator += int256(observations[i].timeWeightedHarmonicAverageLiquidity) * observations[i].timeWeightedAverageTick;
-            liquidityWeightAccumulator += observations[i].timeWeightedHarmonicAverageLiquidity;
+            numerator += int256(observations[i].harmonicMeanLiquidity) * observations[i].arithmeticMeanTick;
+            denominator += observations[i].harmonicMeanLiquidity;
         }
 
-        arithmeticMeanWeightedTick = int24(weightedTicksAccumulator / int256(liquidityWeightAccumulator));
+        arithmeticMeanWeightedTick = int24(numerator / int256(denominator));
+
+        // Always round to negative infinity
+        if (numerator < 0 && (numerator % int256(denominator) != 0)) arithmeticMeanWeightedTick--;
     }
 }

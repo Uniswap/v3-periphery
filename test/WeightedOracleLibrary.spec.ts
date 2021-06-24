@@ -59,8 +59,8 @@ describe('WeightedOracleLibrary', () => {
       })
       const [observation] = await oracle.consult([mockObservable.address], period)
 
-      expect(observation.timeWeightedAverageTick).to.equal(0)
-      expect(observation.timeWeightedHarmonicAverageLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives))
+      expect(observation.arithmeticMeanTick).to.equal(0)
+      expect(observation.harmonicMeanLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives))
     })
 
     it('correct rounding for .5 negative tick', async () => {
@@ -77,8 +77,8 @@ describe('WeightedOracleLibrary', () => {
 
       // Always round to negative infinity
       // In this case, we need to subtract one because integer division rounds to 0
-      expect(observation.timeWeightedAverageTick).to.equal(-1)
-      expect(observation.timeWeightedHarmonicAverageLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives))
+      expect(observation.arithmeticMeanTick).to.equal(-1)
+      expect(observation.harmonicMeanLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives))
     })
 
     it('correct output for multiple pools', async () => {
@@ -98,33 +98,33 @@ describe('WeightedOracleLibrary', () => {
         secondsPerLiqCumulatives: secondsPerLiqCumulatives2
       })
 
-      it('correct output for liquidity overflow', async () => {
-        const period = 1
-
-        const secondsPerLiqCumulatives: [BigNumberish, BigNumberish] = [10, 11]
-        const mockObservable = await observableWith({
-          period,
-          tickCumulatives: [12, 12],
-          secondsPerLiqCumulatives
-        })
-
-        const [observation] = await oracle.consult([mockObservable.address], period)
-
-        expect(observation.timeWeightedAverageTick).to.equal(0)
-
-        // Make sure liquidity doesn't overflow uint128
-        expect(observation.timeWeightedHarmonicAverageLiquidity).to.equal(BigNumber.from(2).pow(128).sub(1))
-      })
-
       const [observation1, observation2] = await oracle.consult([mockObservable1.address, mockObservable2.address], period)
 
-      expect(observation1.timeWeightedAverageTick).to.equal(1)
-      expect(observation1.timeWeightedHarmonicAverageLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives1))
+      expect(observation1.arithmeticMeanTick).to.equal(1)
+      expect(observation1.harmonicMeanLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives1))
 
       // Always round to negative infinity
       // In this case, we need to subtract one because integer division rounds to 0
-      expect(observation2.timeWeightedAverageTick).to.equal(-2)
-      expect(observation2.timeWeightedHarmonicAverageLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives2))
+      expect(observation2.arithmeticMeanTick).to.equal(-2)
+      expect(observation2.harmonicMeanLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives2))
+    })
+
+    it('correct output for liquidity overflow', async () => {
+      const period = 1
+
+      const secondsPerLiqCumulatives: [BigNumberish, BigNumberish] = [10, 11]
+      const mockObservable = await observableWith({
+        period,
+        tickCumulatives: [12, 12],
+        secondsPerLiqCumulatives
+      })
+
+      const [observation] = await oracle.consult([mockObservable.address], period)
+
+      expect(observation.arithmeticMeanTick).to.equal(0)
+
+      // Make sure liquidity doesn't overflow uint128
+      expect(observation.harmonicMeanLiquidity).to.equal(BigNumber.from(2).pow(128).sub(1))
     })
 
     function calculateHarmonicAvgLiq(period: number, secondsPerLiqCumulatives: [BigNumberish, BigNumberish]) {
@@ -157,7 +157,7 @@ describe('WeightedOracleLibrary', () => {
 
     it('single observation returns average tick', async () => {
       const averageTick = 10
-      const observation = observationWith({ averageTick, harmonicAvgLiquidity: 10 })
+      const observation = observationWith({ arithmeticMeanTick: averageTick, harmonicMeanLiquidity: 10 })
 
       const oracleTick = await oracle.getArithmeticMeanTickWeightedByLiquidity([observation])
 
@@ -165,8 +165,8 @@ describe('WeightedOracleLibrary', () => {
     })
 
     it('multiple observations with same weight result in average across tiers', async () => {
-      const observation1 = observationWith({ averageTick: 10, harmonicAvgLiquidity: 10 })
-      const observation2 = observationWith({ averageTick: 20, harmonicAvgLiquidity: 10 })
+      const observation1 = observationWith({ arithmeticMeanTick: 10, harmonicMeanLiquidity: 10 })
+      const observation2 = observationWith({ arithmeticMeanTick: 20, harmonicMeanLiquidity: 10 })
 
       const oracleTick = await oracle.getArithmeticMeanTickWeightedByLiquidity([observation1, observation2])
 
@@ -174,24 +174,33 @@ describe('WeightedOracleLibrary', () => {
     })
 
     it('multiple observations with different weights are weighted correctly', async () => {
-      const observation1 = observationWith({ averageTick: 10, harmonicAvgLiquidity: 10 })
-      const observation2 = observationWith({ averageTick: 20, harmonicAvgLiquidity: 15 })
+      const observation1 = observationWith({ arithmeticMeanTick: 10, harmonicMeanLiquidity: 10 })
+      const observation2 = observationWith({ arithmeticMeanTick: 20, harmonicMeanLiquidity: 15 })
 
       const oracleTick = await oracle.getArithmeticMeanTickWeightedByLiquidity([observation1, observation2])
 
       expect(oracleTick).to.equal(16)
     })
 
+    it('correct rounding for .5 negative tick', async () => {
+      const observation1 = observationWith({ arithmeticMeanTick: -10, harmonicMeanLiquidity: 10 })
+      const observation2 = observationWith({ arithmeticMeanTick: -11, harmonicMeanLiquidity: 10 })
+
+      const oracleTick = await oracle.getArithmeticMeanTickWeightedByLiquidity([observation1, observation2])
+
+      expect(oracleTick).to.equal(-11)
+    })
+
     function observationWith({
-      averageTick,
-      harmonicAvgLiquidity,
+      arithmeticMeanTick,
+      harmonicMeanLiquidity,
     }: {
-      averageTick: BigNumberish
-      harmonicAvgLiquidity: BigNumberish
+      arithmeticMeanTick: BigNumberish
+      harmonicMeanLiquidity: BigNumberish
     }) {
       return {
-        timeWeightedAverageTick: averageTick,
-        timeWeightedHarmonicAverageLiquidity: harmonicAvgLiquidity
+        arithmeticMeanTick,
+        harmonicMeanLiquidity
       }
     }
   })
