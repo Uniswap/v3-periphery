@@ -15,6 +15,7 @@ contract PositionValueTest {
 
     function fees(INonfungiblePositionManager nft, uint256 tokenId)
         external
+        view
         returns (uint256 amount0, uint256 amount1)
     {
         return PositionValue.fees(nft, tokenId);
