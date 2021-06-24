@@ -65,16 +65,13 @@ library PositionValue {
             )
                 .positions(PositionKey.compute(address(nft), tickLower, tickUpper));
 
-        amount0 = uint256(tokensOwed0);
-        amount1 = uint256(tokensOwed1);
-
-        amount0 += FullMath.mulDiv(
+        amount0 = FullMath.mulDiv(
             poolFeeGrowthInside0LastX128 - positionFeeGrowthInside0LastX128,
             liquidity,
             FixedPoint128.Q128
         );
 
-        amount1 += FullMath.mulDiv(
+        amount1 = FullMath.mulDiv(
             poolFeeGrowthInside1LastX128 - positionFeeGrowthInside1LastX128,
             liquidity,
             FixedPoint128.Q128
