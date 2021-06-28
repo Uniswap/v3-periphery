@@ -1,4 +1,4 @@
-import { constants } from 'ethers'
+import { constants, Wallet } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 
 import { Fixture } from 'ethereum-waffle'
@@ -7,8 +7,8 @@ import { expect } from 'chai'
 import { getPermitSignature } from './shared/permit'
 
 describe('SelfPermit', () => {
-  const wallets = waffle.provider.getWallets()
-  const [wallet, other] = wallets
+  let wallet: Wallet
+  let other: Wallet
 
   const fixture: Fixture<{
     token: TestERC20PermitAllowed
@@ -32,6 +32,8 @@ describe('SelfPermit', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    const wallets = await (ethers as any).getSigners()
+    ;[wallet, other] = wallets
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 

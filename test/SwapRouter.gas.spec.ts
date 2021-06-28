@@ -1,5 +1,5 @@
 import { Fixture } from 'ethereum-waffle'
-import { BigNumber, constants, ContractTransaction } from 'ethers'
+import { BigNumber, constants, ContractTransaction, Wallet } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { IUniswapV3Pool, IWETH9, MockTimeSwapRouter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
@@ -13,9 +13,10 @@ import { getMaxTick, getMinTick } from './shared/ticks'
 
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
-describe('SwapRouter gas tests', () => {
-  const wallets = waffle.provider.getWallets()
-  const [wallet, trader] = wallets
+describe('SwapRouter gas tests', function () {
+  this.timeout(40000)
+  let wallet: Wallet
+  let trader: Wallet
 
   const swapRouterFixture: Fixture<{
     weth9: IWETH9
@@ -27,12 +28,10 @@ describe('SwapRouter gas tests', () => {
 
     // approve & fund wallets
     for (const token of tokens) {
-      await Promise.all([
-        token.approve(router.address, constants.MaxUint256),
-        token.approve(nft.address, constants.MaxUint256),
-        token.connect(trader).approve(router.address, constants.MaxUint256),
-        token.transfer(trader.address, expandTo18Decimals(1_000_000)),
-      ])
+      await token.approve(router.address, constants.MaxUint256)
+      await token.approve(nft.address, constants.MaxUint256)
+      await token.connect(trader).approve(router.address, constants.MaxUint256)
+      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
     const liquidity = 1000000
@@ -103,6 +102,9 @@ describe('SwapRouter gas tests', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    const wallets = await (ethers as any).getSigners()
+    ;[wallet, trader] = wallets
+
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 

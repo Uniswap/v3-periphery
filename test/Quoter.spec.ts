@@ -1,5 +1,5 @@
 import { Fixture } from 'ethereum-waffle'
-import { constants } from 'ethers'
+import { constants, Wallet } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { MockTimeNonfungiblePositionManager, Quoter, TestERC20 } from '../typechain'
 import completeFixture from './shared/completeFixture'
@@ -8,11 +8,11 @@ import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
-import { getMaxTick, getMinTick } from './shared/ticks'
+import { createPool } from './shared/quoter'
 
 describe('Quoter', () => {
-  const wallets = waffle.provider.getWallets()
-  const [wallet, trader] = wallets
+  let wallet: Wallet
+  let trader: Wallet
 
   const swapRouterFixture: Fixture<{
     nft: MockTimeNonfungiblePositionManager
@@ -23,12 +23,10 @@ describe('Quoter', () => {
 
     // approve & fund wallets
     for (const token of tokens) {
-      await Promise.all([
-        token.approve(router.address, constants.MaxUint256),
-        token.approve(nft.address, constants.MaxUint256),
-        token.connect(trader).approve(router.address, constants.MaxUint256),
-        token.transfer(trader.address, expandTo18Decimals(1_000_000)),
-      ])
+      await token.approve(router.address, constants.MaxUint256)
+      await token.approve(nft.address, constants.MaxUint256)
+      await token.connect(trader).approve(router.address, constants.MaxUint256)
+      await token.transfer(trader.address, expandTo18Decimals(1_000_000))
     }
 
     const quoterFactory = await ethers.getContractFactory('Quoter')
@@ -48,6 +46,8 @@ describe('Quoter', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    const wallets = await (ethers as any).getSigners()
+    ;[wallet, trader] = wallets
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 
@@ -57,37 +57,9 @@ describe('Quoter', () => {
   })
 
   describe('quotes', () => {
-    async function createPool(tokenAddressA: string, tokenAddressB: string) {
-      if (tokenAddressA.toLowerCase() > tokenAddressB.toLowerCase())
-        [tokenAddressA, tokenAddressB] = [tokenAddressB, tokenAddressA]
-
-      await nft.createAndInitializePoolIfNecessary(
-        tokenAddressA,
-        tokenAddressB,
-        FeeAmount.MEDIUM,
-        encodePriceSqrt(1, 1)
-      )
-
-      const liquidityParams = {
-        token0: tokenAddressA,
-        token1: tokenAddressB,
-        fee: FeeAmount.MEDIUM,
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        recipient: wallet.address,
-        amount0Desired: 1000000,
-        amount1Desired: 1000000,
-        amount0Min: 0,
-        amount1Min: 0,
-        deadline: 1,
-      }
-
-      return nft.mint(liquidityParams)
-    }
-
     beforeEach(async () => {
-      await createPool(tokens[0].address, tokens[1].address)
-      await createPool(tokens[1].address, tokens[2].address)
+      await createPool(nft, wallet, tokens[0].address, tokens[1].address)
+      await createPool(nft, wallet, tokens[1].address, tokens[2].address)
     })
 
     describe('#quoteExactInput', () => {
