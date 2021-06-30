@@ -6,8 +6,8 @@ import '../libraries/TransferHelper.sol';
 import '../interfaces/ISwapRouter.sol';
 
 contract SwapExamples {
-    //// For the scope of these swap examples, 
-    //// we will detail design considerations when using 
+    //// For the scope of these swap examples,
+    //// we will detail design considerations when using
     //// `exactInput`, `exactInputSingle`, `exactOutput`, and  `exactOutputSingle`.
 
     //// We purposefully pass in the swap router instead of inherit the swap router for simplicity.
@@ -22,16 +22,12 @@ contract SwapExamples {
     address constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
-    constructor(
-        ISwapRouter _swapRouter
-        
-    ) {
+    constructor(ISwapRouter _swapRouter) {
         swapRouter = _swapRouter;
     }
 
     //// basic wrapper for calling exactInputSingle swap function
-    function swapInputSingle(uint256 amountIn) external returns(uint256 amountOut) {
-
+    function swapInputSingle(uint256 amountIn) external returns (uint256 amountOut) {
         //// Transfer funds to the contract
         TransferHelper.safeTransfer(DAI, address(this), amountIn);
         //// For this example, we do a single path swap of DAI to ETH
@@ -40,22 +36,23 @@ contract SwapExamples {
 
         //// setting up the parameters necessary to swap
 
-        amountOut = swapRouter.exactInputSingle(ISwapRouter.ExactInputSingleParams({
-            tokenIn: DAI, 
-            tokenOut: WETH9,
-            fee: 3000,
-            recipient: address(this),
-            deadline: block.timestamp + 200,
-            amountIn: amountIn,
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0
-        }));
+        amountOut = swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: DAI,
+                tokenOut: WETH9,
+                fee: 3000,
+                recipient: address(this),
+                deadline: block.timestamp + 200,
+                amountIn: amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
         //// trivially set amountOutMinimum to 0. In production, use an oracle or other data source to choose a safer value for amountOutMinimum
         //// set sqrtPriceLimitX96 to 0, see `exactInputInternal`
     }
 
-    function swapOutputSingle(uint256 amountOut, uint256 amountInMaximum) external returns(uint256 amountIn) {
-
+    function swapOutputSingle(uint256 amountOut, uint256 amountInMaximum) external returns (uint256 amountIn) {
         TransferHelper.safeTransfer(DAI, address(this), amountInMaximum);
 
         //// approve the router to spend the max amount of DAI
@@ -63,26 +60,25 @@ contract SwapExamples {
 
         TransferHelper.safeApprove(DAI, address(swapRouter), amountInMaximum);
 
-        amountIn = swapRouter.exactOutputSingle(ISwapRouter.ExactOutputSingleParams({
-            tokenIn:DAI,
-            tokenOut:WETH9,
-            fee: 3000,
-            recipient: address(this),
-            deadline: block.timestamp + 200,
-            amountOut: amountOut,
-            amountInMaximum: amountInMaximum,
-            sqrtPriceLimitX96: 0
-        }));
+        amountIn = swapRouter.exactOutputSingle(
+            ISwapRouter.ExactOutputSingleParams({
+                tokenIn: DAI,
+                tokenOut: WETH9,
+                fee: 3000,
+                recipient: address(this),
+                deadline: block.timestamp + 200,
+                amountOut: amountOut,
+                amountInMaximum: amountInMaximum,
+                sqrtPriceLimitX96: 0
+            })
+        );
 
         //// naively amountInMaximum can be type(uint256).max but using a data source/oracle is advised to choosing a better amountInMaximum
-        
-        //// flush remaining dai held by contract 
+
+        //// flush remaining dai held by contract
         if (amountIn < amountInMaximum) {
             TransferHelper.safeApprove(DAI, address(swapRouter), 0);
             TransferHelper.safeTransfer(DAI, msg.sender, amountInMaximum - amountIn);
         }
-
-       
-
     }
 }
