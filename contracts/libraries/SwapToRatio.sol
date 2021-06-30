@@ -54,7 +54,7 @@ library SwapToRatio {
 
             // returns the next initialized tick or the last tick within one word of the current tick
             // will renew calculation at least on a per word basis for better rounding
-            (nextInitializedTick,) = pool.nextInitializedTickWithinOneWord(tick, tickSpacing, zeroForOne);
+            (nextInitializedTick, ) = pool.nextInitializedTickWithinOneWord(tick, tickSpacing, zeroForOne);
 
             crossedTickBoundary = zeroForOne
                 ? postSwapSqrtRatioX96 <= TickMath.getSqrtRatioAtTick(nextInitializedTick)

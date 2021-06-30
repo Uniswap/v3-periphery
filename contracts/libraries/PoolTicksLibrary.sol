@@ -5,14 +5,14 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
 
 library PoolTicksLibrary {
-		/// @notice Computes the position in the mapping where the initialized bit for a tick lives
-		/// @param tick The tick for which to compute the position
-		/// @return wordPos The key in the mapping containing the word in which the bit is stored
-		/// @return bitPos The bit position in the word where the flag is stored
-		function position(int24 tick) private pure returns (int16 wordPos, uint8 bitPos) {
-				wordPos = int16(tick >> 8);
-				bitPos = uint8(tick % 256);
-		}
+    /// @notice Computes the position in the mapping where the initialized bit for a tick lives
+    /// @param tick The tick for which to compute the position
+    /// @return wordPos The key in the mapping containing the word in which the bit is stored
+    /// @return bitPos The bit position in the word where the flag is stored
+    function position(int24 tick) private pure returns (int16 wordPos, uint8 bitPos) {
+        wordPos = int16(tick >> 8);
+        bitPos = uint8(tick % 256);
+    }
 
     /// @notice Returns the next initialized tick contained in the same word (or adjacent word) as the tick that is either
     /// to the left (less than or equal to) or right (greater than) of the given tick
@@ -22,7 +22,7 @@ library PoolTicksLibrary {
     /// @param lte Whether to search for the next initialized tick to the left (less than or equal to the starting tick)
     /// @return next The next initialized or uninitialized tick up to 256 ticks away from the current tick
     /// @return initialized Whether the next tick is initialized, as the function only searches within up to 256 ticks
-		///
+    ///
     function nextInitializedTickWithinOneWord(
         IUniswapV3Pool pool,
         int24 tick,
