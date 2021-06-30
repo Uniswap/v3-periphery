@@ -32,15 +32,15 @@ contract SwapExamples {
 
     /// basic wrapper for calling exactInputSingle swap function
     function swapInputSingle(uint256 amountIn) external returns(uint256 amountOut) {
-        
+        /// For this example, we do a single path swap of DAI to ETH
         /// approve the router to spend DAI, will fail if not holding the inputted amount for DAI
         TransferHelper.safeApprove(token0, address(swapRouter), amountIn)
 
         /// setting up the parameters necessary to swap
         ExactInputSingleParams params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: token0, 
-            tokenOut: token1,
-            fee: fee,
+            tokenIn: DAI, 
+            tokenOut: WETH9,
+            fee: 3000,
             recipient: address(this),
             deadline: block.timestamp + 200,
             amountIn: amountIn,
@@ -53,7 +53,5 @@ contract SwapExamples {
         uint256 amountOut = swapRouter.exactInputSingle(abi.encode(params);
 
     }
-
     
-
 }
