@@ -31,6 +31,9 @@ contract SwapExamples {
 
     //// basic wrapper for calling exactInputSingle swap function
     function swapInputSingle(uint256 amountIn) external returns(uint256 amountOut) {
+
+        //// Transfer funds to the contract
+        TransferHelper.safeTransfer(DAI, address(this), amountIn);
         //// For this example, we do a single path swap of DAI to ETH
         //// approve the router to spend DAI, will fail if not holding the inputted amount for DAI
         TransferHelper.safeApprove(DAI, address(swapRouter), amountIn);
@@ -49,8 +52,37 @@ contract SwapExamples {
         }));
         //// trivially set amountOutMinimum to 0. In production, use an oracle or other data source to choose a safer value for amountOutMinimum
         //// set sqrtPriceLimitX96 to 0, see `exactInputInternal`
+    }
+
+    function swapOutputSingle(uint256 amountOut, uint256 amountInMaximum) external returns(uint256 amountIn) {
+
+        TransferHelper.safeTransfer(DAI, address(this), amountInMaximum);
+
+        //// approve the router to spend the max amount of DAI
+        //// In production, you could apprximate the max to spend based on oracles/data sources to acheive a better swap.
+
+        TransferHelper.safeApprove(DAI, address(swapRouter), amountInMaximum);
+
+        amountIn = swapRouter.exactOutputSingle(ISwapRouter.ExactOutputSingleParams({
+            tokenIn:DAI,
+            tokenOut:WETH9,
+            fee: 3000,
+            recipient: address(this),
+            deadline: block.timestamp + 200,
+            amountOut: amountOut,
+            amountInMaximum: amountInMaximum,
+            sqrtPriceLimitX96: 0
+        }));
+
+        //// naively amountInMaximum can be type(uint256).max but using a data source/oracle is advised to choosing a better amountInMaximum
         
+        //// flush remaining dai held by contract 
+        if (amountIn < amountInMaximum) {
+            TransferHelper.safeApprove(DAI, address(swapRouter), 0);
+            TransferHelper.safeTransfer(DAI, msg.sender, amountInMaximum - amountIn);
+        }
+
+       
 
     }
-    
 }
