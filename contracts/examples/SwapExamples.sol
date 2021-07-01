@@ -21,7 +21,7 @@ contract SwapExamples {
     address constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
-    //// For this example, we will set the pool fee to 0.03%.
+    //// For this example, we will set the pool fee to 0.3%.
     uint24 constant poolFee = 3000;
 
     constructor(
@@ -31,7 +31,7 @@ contract SwapExamples {
         swapRouter = _swapRouter;
     }
 
-    /// @notice swapInputSingle swaps DAI for WETH9 using the DAI/WETH9 0.03% pool by calling `exactInputSingle` in the swap router.
+    /// @notice swapInputSingle swaps DAI for WETH9 using the DAI/WETH9 0.3% pool by calling `exactInputSingle` in the swap router.
     /// @param amountIn The exact amount of DAI that will be swapped for WETH9.
     /// @return amountOut The amount of WETH9 received.
     function swapInputSingle(uint256 amountIn) external returns(uint256 amountOut) {
@@ -63,7 +63,7 @@ contract SwapExamples {
     }
 
     /// @notice swapOutputSingle performs an exact output swap. 
-    /// This still swaps DAI for WETH9 using the DAI/WETH9 0.03% pool, but instead of specifying how much DAI to swap, we specify how much WETH9 we want to receive.
+    /// This still swaps DAI for WETH9 using the DAI/WETH9 0.3% pool, but instead of specifying how much DAI to swap, we specify how much WETH9 we want to receive.
     /// @param amountOut The exact amount of WETH9 to receive from the swap.
     /// @param amountInMaximum The amount of DAI we are willing to spend to receive the specified amount of WETH9.
     /// @return amountIn The amount of DAI actually spent in the swap.
@@ -115,7 +115,7 @@ contract SwapExamples {
 
         //// Multiple pool swaps are encoded through bytes called a `path`. A path is a sequence of token addresses and poolFees that define the pools used in the swaps.
         //// The format for pool encoding is (tokenIn, fee, tokenOut/tokenIn, fee, tokenOut) where tokenIn/tokenOut parameter is the shared token across the pools.
-        //// Since we are swapping DAI to USDC and then USDC to WETH9 the path encoding is (DAI, 0.03%, USDC, 0.03%, WETH9).
+        //// Since we are swapping DAI to USDC and then USDC to WETH9 the path encoding is (DAI, 0.3%, USDC, 0.3%, WETH9).
         ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
             path: abi.encodePacked(DAI, poolFee, USDC, poolFee, WETH9),
             recipient: address(this),
