@@ -63,19 +63,4 @@ library WeightedOracleLibrary {
         // Always round to negative infinity
         if (numerator < 0 && (numerator % int256(denominator) != 0)) arithmeticMeanWeightedTick--;
     }
-
-    /// @notice Given a Uniswap V3 pool, returns the timestamp of the oldest observation available
-    /// @param pool Address of Uniswap V3 pool that we want to analyze
-    /// @return oldestBlockTimestamp The timestamp of the oldest observation available on the pool
-    function getOldestObservationTimestampForPool(address pool) internal view returns (uint32 oldestBlockTimestamp) {
-        IUniswapV3Pool uniswapV3Pool = IUniswapV3Pool(pool);
-        (, , uint16 observationIndex, uint16 observationCardinality, , ,) = uniswapV3Pool.slot0();
-        (uint32 blockTimestampNext, , , bool initialized) = uniswapV3Pool.observations(observationIndex + 1 % observationCardinality);
-        if (initialized) {
-            oldestBlockTimestamp = blockTimestampNext;
-        } else {
-            (uint32 blockTimestampZero, , ,) = uniswapV3Pool.observations(0);
-            oldestBlockTimestamp = blockTimestampZero;
-        }
-    }
 }
