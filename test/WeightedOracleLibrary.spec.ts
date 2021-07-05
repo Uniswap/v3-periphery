@@ -204,4 +204,94 @@ describe('WeightedOracleLibrary', () => {
       }
     }
   })
+
+  describe('#getOldestObservationTimestampForPool', () => {
+
+    let mockAvailableObservationsFactory: ContractFactory
+
+    before('create mockAvailableObservationsFactory', async () => {
+      mockAvailableObservationsFactory = await ethers.getContractFactory('MockAvailableObservations')
+    })
+
+    it('uses next observation when initialized', async () => {
+      const timestamp = 1234
+      const mockPool = await poolWith({
+        index: 10,
+        cardinality: 100,
+        observations: [
+          {
+            index: 11,
+            timestamp,
+            initialized: true
+          }
+        ]
+      })
+      const oldestBlockTimestamp = await oracle.getOldestObservationTimestampForPool(mockPool.address)
+
+      expect(oldestBlockTimestamp).to.equal(timestamp)
+    })
+
+    it('fallbacks to zero position when next observation is not initialized', async () => {
+      const timestamp = 1234
+      const mockPool = await poolWith({
+        index: 10,
+        cardinality: 100,
+        observations: [
+          {
+            index: 0,
+            timestamp,
+            initialized: true
+          },
+          {
+            index: 11,
+            timestamp: 0,
+            initialized: false
+          }
+        ]
+      })
+      const oldestBlockTimestamp = await oracle.getOldestObservationTimestampForPool(mockPool.address)
+
+      expect(oldestBlockTimestamp).to.equal(timestamp)
+    })
+
+    it('correct output when cardinality is 1', async () => {
+      const timestamp = 1234
+      const mockPool = await poolWith({
+        index: 0,
+        cardinality: 1,
+        observations: [
+          {
+            index: 0,
+            timestamp,
+            initialized: true
+          },
+        ]
+      })
+      const oldestBlockTimestamp = await oracle.getOldestObservationTimestampForPool(mockPool.address)
+
+      expect(oldestBlockTimestamp).to.equal(timestamp)
+    })
+
+    function poolWith({
+      index,
+      cardinality,
+      observations
+    }: {
+      index: number
+      cardinality: number
+      observations: {
+        index: number
+        timestamp: number
+        initialized: boolean
+      }[]
+    }) {
+      return mockAvailableObservationsFactory.deploy(
+        observations.map(({ index }) => index),
+        observations.map(({ timestamp }) => timestamp),
+        observations.map(({ initialized }) => initialized),
+        index,
+        cardinality,
+      )
+    }
+  })
 })

@@ -14,4 +14,8 @@ contract WeightedOracleTest {
         arithmeticMeanWeightedTick = WeightedOracleLibrary.getArithmeticMeanTickWeightedByLiquidity(observations);
     }
 
+    function getOldestObservationTimestampForPool(address pool) public view returns (uint32 oldestBlockTimestamp) {
+        oldestBlockTimestamp = WeightedOracleLibrary.getOldestObservationTimestampForPool(pool);
+    }
+
 }
