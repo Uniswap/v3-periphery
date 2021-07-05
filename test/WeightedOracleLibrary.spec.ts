@@ -46,7 +46,7 @@ describe('WeightedOracleLibrary', () => {
     })
 
     it('reverts when period is 0', async () => {
-      await expect(oracle.consult([oracle.address], 0)).to.be.revertedWith('BP')
+      await expect(oracle.consult(oracle.address, 0)).to.be.revertedWith('BP')
     })
 
     it('correct output when tick is 0', async () => {
@@ -57,7 +57,7 @@ describe('WeightedOracleLibrary', () => {
         tickCumulatives: [12, 12],
         secondsPerLiqCumulatives
       })
-      const [observation] = await oracle.consult([mockObservable.address], period)
+      const observation = await oracle.consult(mockObservable.address, period)
 
       expect(observation.arithmeticMeanTick).to.equal(0)
       expect(observation.harmonicMeanLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives))
@@ -73,40 +73,12 @@ describe('WeightedOracleLibrary', () => {
         secondsPerLiqCumulatives
       })
 
-      const [observation] = await oracle.consult([mockObservable.address], period)
+      const observation = await oracle.consult(mockObservable.address, period)
 
       // Always round to negative infinity
       // In this case, we need to subtract one because integer division rounds to 0
       expect(observation.arithmeticMeanTick).to.equal(-1)
       expect(observation.harmonicMeanLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives))
-    })
-
-    it('correct output for multiple pools', async () => {
-      const period = 3
-      const secondsPerLiqCumulatives1: [BigNumberish, BigNumberish] = [10, 100]
-      const secondsPerLiqCumulatives2: [BigNumberish, BigNumberish] = [0, 50]
-
-      const mockObservable1 = await observableWith({
-        period,
-        tickCumulatives: [7, 12],
-        secondsPerLiqCumulatives: secondsPerLiqCumulatives1
-      })
-
-      const mockObservable2 = await observableWith({
-        period,
-        tickCumulatives: [-7, -12],
-        secondsPerLiqCumulatives: secondsPerLiqCumulatives2
-      })
-
-      const [observation1, observation2] = await oracle.consult([mockObservable1.address, mockObservable2.address], period)
-
-      expect(observation1.arithmeticMeanTick).to.equal(1)
-      expect(observation1.harmonicMeanLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives1))
-
-      // Always round to negative infinity
-      // In this case, we need to subtract one because integer division rounds to 0
-      expect(observation2.arithmeticMeanTick).to.equal(-2)
-      expect(observation2.harmonicMeanLiquidity).to.equal(calculateHarmonicAvgLiq(period, secondsPerLiqCumulatives2))
     })
 
     it('correct output for liquidity overflow', async () => {
@@ -119,7 +91,7 @@ describe('WeightedOracleLibrary', () => {
         secondsPerLiqCumulatives
       })
 
-      const [observation] = await oracle.consult([mockObservable.address], period)
+      const observation = await oracle.consult(mockObservable.address, period)
 
       expect(observation.arithmeticMeanTick).to.equal(0)
 

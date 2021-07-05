@@ -7,43 +7,41 @@ import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 /// @notice Provides functions to integrate with different tier oracles of the same V3 pair
 library WeightedOracleLibrary {
 
-    struct TimeWeightedObservation {
+    /// @notice The result of observating a pool across a certain period
+    struct PeriodObservation {
         int24 arithmeticMeanTick;
         uint128 harmonicMeanLiquidity;
     }
 
-    /// @notice Fetches time-weighted observations across different Uniswap V3 pools. These pools should almost certainly be for the same underlying assets, and differ only in fee tier
-    /// @param pools Addresses of different Uniswap V3 pools that we want to observe
-    /// @param period Number of seconds in the past to start calculating the time-weighted observations
-    /// @return observations An array of obervations that have been time-weighted from (block.timestamp - period) to block.timestamp
-    function consult(address[] calldata pools, uint32 period) internal view returns (TimeWeightedObservation[] memory observations) {
+    /// @notice Fetches a time-weighted observation for a given Uniswap V3 pool
+    /// @param pool Address of the pool that we want to observe
+    /// @param period Number of seconds in the past to start calculating the time-weighted observation
+    /// @return observation An observation that has been time-weighted from (block.timestamp - period) to block.timestamp
+    function consult(address pool, uint32 period) internal view returns (PeriodObservation memory observation) {
         require(period != 0, 'BP');
 
-        observations = new TimeWeightedObservation[](pools.length);
         uint192 periodX160 = uint192(period) * type(uint160).max;
 
         uint32[] memory secondsAgos = new uint32[](2);
         secondsAgos[0] = period;
         secondsAgos[1] = 0;
 
-        for (uint256 i; i < pools.length; i++) {
-            (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) = IUniswapV3Pool(pools[i]).observe(secondsAgos);
-            int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
-            uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[1] - secondsPerLiquidityCumulativeX128s[0];
+        (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) = IUniswapV3Pool(pool).observe(secondsAgos);
+        int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
+        uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[1] - secondsPerLiquidityCumulativeX128s[0];
 
-            observations[i].arithmeticMeanTick = int24(tickCumulativesDelta / period);
-            // Always round to negative infinity
-            if (tickCumulativesDelta < 0 && (tickCumulativesDelta % period != 0)) observations[i].arithmeticMeanTick--;
+        observation.arithmeticMeanTick = int24(tickCumulativesDelta / period);
+        // Always round to negative infinity
+        if (tickCumulativesDelta < 0 && (tickCumulativesDelta % period != 0)) observation.arithmeticMeanTick--;
 
-            // We are shifting the liquidity delta to ensure that the result doesn't overflow uint128
-            observations[i].harmonicMeanLiquidity = uint128(periodX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32));
-        }
+        // We are shifting the liquidity delta to ensure that the result doesn't overflow uint128
+        observation.harmonicMeanLiquidity = uint128(periodX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32));
     }
 
     /// @notice Given some time-weighted observations, calculates the arithmetic mean tick, weighted by liquidity
     /// @param observations A list of time-weighted observations
     /// @return arithmeticMeanWeightedTick The arithmetic mean tick, weighted by the observations' time-weighted harmonic average liquidity
-    function getArithmeticMeanTickWeightedByLiquidity(TimeWeightedObservation[] memory observations) internal pure returns (int24 arithmeticMeanWeightedTick) {
+    function getArithmeticMeanTickWeightedByLiquidity(PeriodObservation[] memory observations) internal pure returns (int24 arithmeticMeanWeightedTick) {
 
         // Accumulates the sum of all observations' products between each their own average tick and harmonic average liquidity
         // Each product can be stored in a int160, so it would take approximatelly 2**96 observations to overflow this accumulator
