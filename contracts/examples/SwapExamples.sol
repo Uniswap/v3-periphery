@@ -33,8 +33,7 @@ contract SwapExamples {
     /// @return amountOut The amount of WETH9 received.
     function swapInputSingle(uint256 amountIn) external returns (uint256 amountOut) {
         
-        // Approve this contract. Alternatively, can require msg.sender to approve this contract.
-        TransferHelper.safeApprove(DAI, address(this), amountIn);
+        // msg.sender must approve this contract
 
         // Transfer the specified amount of DAI to this contract.
         TransferHelper.safeTransferFrom(DAI, msg.sender, address(this), amountIn);
@@ -67,8 +66,7 @@ contract SwapExamples {
     /// @return amountIn The amount of DAI actually spent in the swap.
     function swapOutputSingle(uint256 amountOut, uint256 amountInMaximum) external returns (uint256 amountIn) {
         
-        // Approve this contract. Alternatively, can require msg.sender to approve this contract.
-        TransferHelper.safeApprove(DAI, address(this), amountInMaximum);
+        // msg.sender must approve this contract
         
         // Transfer the specified amount of DAI to this contract.
         TransferHelper.safeTransferFrom(DAI, msg.sender, address(this), amountInMaximum);
@@ -105,8 +103,7 @@ contract SwapExamples {
     /// @return amountOut The amount of WETH9 received after the swap.
     function swapInputMultiplePools(uint256 amountIn) external returns (uint256 amountOut) {
         
-        // Approve this contract. Alternatively, can require msg.sender to approve this contract.
-        TransferHelper.safeApprove(DAI, address(this), amountIn);
+        // msg.sender must approve this contract
 
         // Transfer `amountIn` of DAI to this contract.
         TransferHelper.safeTransferFrom(DAI, msg.sender, address(this), amountIn);
@@ -137,8 +134,8 @@ contract SwapExamples {
     /// @return amountIn The amountIn of DAI actually spent to receive the desired amountOut.
     function swapOutputMultiplePools(uint256 amountOut, uint256 amountInMaximum) external returns (uint256 amountIn) {
         
-        // Approve this contract. Alternatively, can require msg.sender to approve this contract.
-        TransferHelper.safeApprove(DAI, address(this), amountInMaximum);
+        // msg.sender must approve this contract
+        
         // Transfer the specified `amountInMaximum` to this contract.
         TransferHelper.safeTransferFrom(DAI, msg.sender, address(this), amountInMaximum);
         // Approve the router to spend  `amountInMaximum`.
