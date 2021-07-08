@@ -32,7 +32,6 @@ contract SwapExamples {
     /// @param amountIn The exact amount of DAI that will be swapped for WETH9.
     /// @return amountOut The amount of WETH9 received.
     function swapInputSingle(uint256 amountIn) external returns (uint256 amountOut) {
-        
         // msg.sender must approve this contract
 
         // Transfer the specified amount of DAI to this contract.
@@ -65,9 +64,8 @@ contract SwapExamples {
     /// @param amountInMaximum The amount of DAI we are willing to spend to receive the specified amount of WETH9.
     /// @return amountIn The amount of DAI actually spent in the swap.
     function swapOutputSingle(uint256 amountOut, uint256 amountInMaximum) external returns (uint256 amountIn) {
-        
         // msg.sender must approve this contract
-        
+
         // Transfer the specified amount of DAI to this contract.
         TransferHelper.safeTransferFrom(DAI, msg.sender, address(this), amountInMaximum);
 
@@ -102,7 +100,6 @@ contract SwapExamples {
     /// @param amountIn The amount of DAI to be swapped.
     /// @return amountOut The amount of WETH9 received after the swap.
     function swapInputMultiplePools(uint256 amountIn) external returns (uint256 amountOut) {
-        
         // msg.sender must approve this contract
 
         // Transfer `amountIn` of DAI to this contract.
@@ -133,9 +130,8 @@ contract SwapExamples {
     /// @param amountInMaximum The maximum amount of DAI willing to be swapped for the specified amountOut of WETH9.
     /// @return amountIn The amountIn of DAI actually spent to receive the desired amountOut.
     function swapOutputMultiplePools(uint256 amountOut, uint256 amountInMaximum) external returns (uint256 amountIn) {
-        
         // msg.sender must approve this contract
-        
+
         // Transfer the specified `amountInMaximum` to this contract.
         TransferHelper.safeTransferFrom(DAI, msg.sender, address(this), amountInMaximum);
         // Approve the router to spend  `amountInMaximum`.
