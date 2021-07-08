@@ -59,7 +59,7 @@ contract SwapExamples {
         amountOut = swapRouter.exactInputSingle(params);
     }
 
-    /// @notice swapOutputSingle performs an exact output swap. 
+    /// @notice swapOutputSingle performs an exact output swap.
     /// This still swaps DAI for WETH9 using the DAI/WETH9 0.3% pool, but instead of specifying how much DAI to swap, we specify how much WETH9 we want to receive.
     /// @param amountOut The exact amount of WETH9 to receive from the swap.
     /// @param amountInMaximum The amount of DAI we are willing to spend to receive the specified amount of WETH9.
@@ -114,15 +114,15 @@ contract SwapExamples {
         // Multiple pool swaps are encoded through bytes called a `path`. A path is a sequence of token addresses and poolFees that define the pools used in the swaps.
         // The format for pool encoding is (tokenIn, fee, tokenOut/tokenIn, fee, tokenOut) where tokenIn/tokenOut parameter is the shared token across the pools.
         // Since we are swapping DAI to USDC and then USDC to WETH9 the path encoding is (DAI, 0.3%, USDC, 0.3%, WETH9).
-        ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
-            path: abi.encodePacked(DAI, poolFee, USDC, poolFee, WETH9),
-            recipient: msg.sender,
-            deadline: block.timestamp,
-            amountIn: amountIn,
-            amountOutMinimum: 0
+        ISwapRouter.ExactInputParams memory params =
+            ISwapRouter.ExactInputParams({
+                path: abi.encodePacked(DAI, poolFee, USDC, poolFee, WETH9),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: 0
+            });
 
-        });
-        
         // Executes the swap.
         amountOut = swapRouter.exactInput(params);
     }
@@ -162,6 +162,5 @@ contract SwapExamples {
             TransferHelper.safeApprove(DAI, address(swapRouter), 0);
             TransferHelper.safeTransferFrom(DAI, address(this), msg.sender, amountInMaximum - amountIn);
         }
-
     }
 }
