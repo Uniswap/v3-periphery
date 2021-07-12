@@ -12,7 +12,7 @@ const toFixedPoint96 = (n: number): BigNumber => {
     .div((1e18).toString())
 }
 
-type swapToNextTickArgs = {
+type swapToNextInitializedTickArgs = {
   // pool params
   price: number
   liquidity: BigNumberish
@@ -29,9 +29,9 @@ type swapToNextTickArgs = {
   zeroForOne: boolean
 }
 
-async function swapToNextTick(
+async function swapToNextInitializedTick(
   swapToRatio: SwapToRatioTest,
-  args: swapToNextTickArgs
+  args: swapToNextInitializedTickArgs
 ): Promise<{ doSwap: boolean; amount0Updated: BigNumber; amount1Updated: BigNumber }> {
   const {
     price,
@@ -49,7 +49,7 @@ async function swapToNextTick(
   const sqrtRatioX96Upper = toFixedPoint96(priceUpper)
   const sqrtRatioX96Target = toFixedPoint96(priceTarget)
 
-  const { 0: doSwap, 1: amount0Updated, 2: amount1Updated } = await swapToRatio.swapToNextTick(
+  const { 0: doSwap, 1: amount0Updated, 2: amount1Updated } = await swapToRatio.swapToNextInitializedTick(
     { sqrtRatioX96, liquidity, fee },
     { sqrtRatioX96Lower, sqrtRatioX96Upper, amount0Initial, amount1Initial },
     sqrtRatioX96Target,
@@ -144,7 +144,7 @@ describe.only('SwapToRatio', () => {
     })
   })
 
-  describe.only('#swapToNextTick', () => {
+  describe.only('#swapToNextInitializedTick', () => {
     // position params
     let amount0Initial: BigNumberish
     let amount1Initial: BigNumberish
@@ -180,7 +180,7 @@ describe.only('SwapToRatio', () => {
       it('returns true if priceTarget falls right above the ideal price', async () => {
         priceTarget = 0.84
 
-        const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+        const { doSwap, amount0Updated, amount1Updated } = await swapToNextInitializedTick(swapToRatio, {
           amount0Initial,
           amount1Initial,
           priceLower,
@@ -200,7 +200,7 @@ describe.only('SwapToRatio', () => {
       it('returns true if priceTarget is exactly at ideal price', async () => {
         priceTarget = 0.83597
 
-        const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+        const { doSwap, amount0Updated, amount1Updated } = await swapToNextInitializedTick(swapToRatio, {
           amount0Initial,
           amount1Initial,
           priceLower,
@@ -221,7 +221,7 @@ describe.only('SwapToRatio', () => {
         // TODO: According the quadratic formula, the ideal price is 0.84, 0.73 is the highest next price that will return false. this ok?
         priceTarget = 0.73
 
-        const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+        const { doSwap, amount0Updated, amount1Updated } = await swapToNextInitializedTick(swapToRatio, {
           amount0Initial,
           amount1Initial,
           priceLower,
@@ -242,7 +242,7 @@ describe.only('SwapToRatio', () => {
         it('returns null values', async () => {
           priceTarget = 0.1
 
-          const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+          const { doSwap, amount0Updated, amount1Updated } = await swapToNextInitializedTick(swapToRatio, {
             amount0Initial,
             amount1Initial,
             priceLower,
@@ -278,7 +278,7 @@ describe.only('SwapToRatio', () => {
         // idealPrice = 1.3678
         priceTarget = 1.366
 
-        const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+        const { doSwap, amount0Updated, amount1Updated } = await swapToNextInitializedTick(swapToRatio, {
           amount0Initial,
           amount1Initial,
           priceLower,
@@ -300,7 +300,7 @@ describe.only('SwapToRatio', () => {
         // TODO: ideal price is 1.36786..., but 1.3676 is the highest I can get to return true. this ok?
         priceTarget = 1.3676
 
-        const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+        const { doSwap, amount0Updated, amount1Updated } = await swapToNextInitializedTick(swapToRatio, {
           amount0Initial,
           amount1Initial,
           priceLower,
@@ -321,7 +321,7 @@ describe.only('SwapToRatio', () => {
         // ideal price = 1.3678
         priceTarget = 1.368
 
-        const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+        const { doSwap, amount0Updated, amount1Updated } = await swapToNextInitializedTick(swapToRatio, {
           amount0Initial,
           amount1Initial,
           priceLower,
@@ -342,7 +342,7 @@ describe.only('SwapToRatio', () => {
         it('returns null values', async () => {
           priceTarget = 2.5
 
-          const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+          const { doSwap, amount0Updated, amount1Updated } = await swapToNextInitializedTick(swapToRatio, {
             amount0Initial,
             amount1Initial,
             priceLower,

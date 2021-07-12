@@ -33,7 +33,7 @@ library SwapToRatio {
 
     // TODO: Look into rounding things correctly
     // TODO: know exact price to change liquidity at (liquidity changes right of initialized tick?)
-    function swapToNextTick(
+    function swapToNextInitializedTick(
         PoolParams memory poolParams,
         PositionParams memory positionParams,
         uint160 sqrtRatioX96Target,
@@ -99,6 +99,8 @@ library SwapToRatio {
         }
     }
 
+
+    // TODO: address range order scenarios
     function getPostSwapPrice(IUniswapV3Pool pool, PositionParams memory positionParams)
         internal
         view
@@ -119,12 +121,12 @@ library SwapToRatio {
         int24 nextInitializedTick;
 
         while (crossTickBoundary) {
-            // returns the next initialized tick or the last tick within one word of the current tick
-            // will renew calculation at least on a per word basis for better rounding
+            // returns the next initialized tick or the last tick within one word of the current tick.
+            // We'll renew calculation at least on a per word basis for better rounding
             (nextInitializedTick, ) = pool.nextInitializedTickWithinOneWord(tick, tickSpacing, zeroForOne);
             uint160 sqrtRatioNextX96 = TickMath.getSqrtRatioAtTick(nextInitializedTick);
 
-            (crossTickBoundary, amount0Next, amount1Next) = swapToNextTick(
+            (crossTickBoundary, amount0Next, amount1Next) = swapToNextInitializedTick(
                 poolParams,
                 positionParams,
                 sqrtRatioNextX96,
