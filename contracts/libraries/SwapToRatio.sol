@@ -31,49 +31,69 @@ library SwapToRatio {
         // so that the token ratios are of equal liquidity.
     }
 
-    // TODO: Current solving for token1 only
-    function tradeToNextTick(
+    // TODO: Look into rounding things correctly
+    // TODO: know exact price to change liquidity at (liquidity changes right of initialized tick?)
+    function swapToNextTick(
         PoolParams memory poolParams,
         PositionParams memory positionParams,
         uint160 sqrtRatioX96Target,
         bool zeroForOne
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        returns (
+            bool doSwap,
+            uint256 amount0Updated,
+            uint256 amount1Updated
+        )
+    {
         int256 token0Delta =
-            SqrtPriceMath.getAmount0Delta(poolParams.sqrtRatioX96, sqrtRatioX96Target, int128(poolParams.liquidity));
+            SqrtPriceMath.getAmount0Delta(
+                poolParams.sqrtRatioX96,
+                sqrtRatioX96Target,
+                zeroForOne ? int128(-poolParams.liquidity) : int128(poolParams.liquidity)
+            );
         int256 token1Delta =
-            int256(SqrtPriceMath.getAmount1Delta(poolParams.sqrtRatioX96, sqrtRatioX96Target, int128(poolParams.liquidity)));
-        uint256 amount1InitialLessFee =
-            FullMath.mulDiv(uint256(positionParams.amount1Initial), 1e6 - poolParams.fee, 1e6);
+            SqrtPriceMath.getAmount1Delta(
+                poolParams.sqrtRatioX96,
+                sqrtRatioX96Target,
+                zeroForOne ? int128(poolParams.liquidity) : int128(-poolParams.liquidity)
+            );
 
-        console.logInt(token0Delta);
-        console.log(uint256(token0Delta));
-        console.logInt(token1Delta);
-        console.log(amount1InitialLessFee);
+        uint256 validDeposit0 =
+            SqrtPriceMath.getAmount0Delta(
+                sqrtRatioX96Target,
+                positionParams.sqrtRatioX96Upper,
+                poolParams.liquidity,
+                false
+            );
+        uint256 validDeposit1 =
+            SqrtPriceMath.getAmount1Delta(
+                sqrtRatioX96Target,
+                positionParams.sqrtRatioX96Lower,
+                poolParams.liquidity,
+                false
+            );
 
-        /* uint256 ratioValidDeposit = uint256(-token1Delta) / uint256(token0Delta);
-        uint256 ratioAvailableToDeposit =
-            (positionParams.amount1Initial + uint256(token1Delta) * (positionParams.amount1Initial / amount1InitialLessFee)) /
-                (positionParams.amount0Initial + token0Delta); */
-/*
-        console.log(ratioValidDeposit);
-        console.log(ratioAvailableToDeposit); */
-
-        return false;
-
-        /* return ratioValidDeposit < ratioAvailableToDeposit; */
+        // overflow desired
+        if (zeroForOne) {
+            amount0Updated = positionParams.amount0Initial + uint256(((token0Delta * 1e6) / (1e6 - poolParams.fee)));
+            amount1Updated = positionParams.amount1Initial + uint256(token1Delta);
+            // 1e5 to increase precision for small numbers
+            doSwap = (amount0Updated * 1e5) / amount1Updated >= (validDeposit0 * 1e5) / validDeposit1;
+        } else {
+            amount0Updated = positionParams.amount0Initial + uint256(token0Delta);
+            amount1Updated = positionParams.amount1Initial + uint256(((token1Delta * 1e6) / (1e6 - poolParams.fee)));
+            doSwap = (amount1Updated * 1e5) / amount0Updated >= (validDeposit1 * 1e5) / validDeposit0;
+        }
     }
 
-    // TODO: this function is still in rough shape atm
     function getPostSwapPrice(IUniswapV3Pool pool, PositionParams memory positionParams)
         internal
         view
-        returns (uint160 postSwapSqrtRatioX96)
+        returns (uint160)
     {
-        (uint160 sqrtRatioX96, int24 tick, , , , , ) = pool.slot0();
-        int24 tickSpacing = pool.tickSpacing();
-        uint24 fee = pool.fee();
-
-        PoolParams memory poolParams = PoolParams({sqrtRatioX96: sqrtRatioX96, liquidity: pool.liquidity(), fee: fee});
+        (PoolParams memory poolParams, int24 tickSpacing, int24 tick) = getPoolInputs(pool);
 
         bool zeroForOne =
             SqrtPriceMath.getAmount0Delta(
@@ -82,64 +102,51 @@ library SwapToRatio {
                 poolParams.liquidity,
                 false
             ) < positionParams.amount0Initial;
-
-        return 5;
-    }
-
-    /* // TODO: this function is still in rough shape atm
-    function getPostSwapPrice(IUniswapV3Pool pool, PositionParams memory positionParams)
-        internal
-        view
-        returns (uint160 postSwapSqrtRatioX96)
-    {
-        (uint160 sqrtRatioX96, int24 tick, , , , , ) = pool.slot0();
-        int24 tickSpacing = pool.tickSpacing();
-        uint24 fee = pool.fee();
-
-        PoolParams memory poolParams = PoolParams({sqrtRatioX96: sqrtRatioX96, liquidity: pool.liquidity(), fee: fee});
-
-        bool zeroForOne;
+        bool crossTickBoundary = true;
+        uint256 amount0Next;
+        uint256 amount1Next;
         int24 nextInitializedTick;
-        bool crossedTickBoundary = true; // TODO: awkward naming since this doesn't reeeeally start out as true
 
-        // first
-
-        while (crossedTickBoundary) {
-            postSwapSqrtRatioX96 = calculateConstantLiquidityPostSwapSqrtPrice(poolParams, positionParams);
-            zeroForOne = postSwapSqrtRatioX96 < poolParams.sqrtRatioX96;
-
+        while (crossTickBoundary) {
             // returns the next initialized tick or the last tick within one word of the current tick
             // will renew calculation at least on a per word basis for better rounding
             (nextInitializedTick, ) = pool.nextInitializedTickWithinOneWord(tick, tickSpacing, zeroForOne);
+            uint160 sqrtRatioNextX96 = TickMath.getSqrtRatioAtTick(nextInitializedTick);
 
-            crossedTickBoundary = zeroForOne
-                ? postSwapSqrtRatioX96 <= TickMath.getSqrtRatioAtTick(nextInitializedTick)
-                : postSwapSqrtRatioX96 > TickMath.getSqrtRatioAtTick(nextInitializedTick);
+            (crossTickBoundary, amount0Next, amount1Next) = swapToNextTick(
+                poolParams,
+                positionParams,
+                sqrtRatioNextX96,
+                zeroForOne
+            );
 
-            if (crossedTickBoundary) {
-                // if crossing tick, get token amounts at crossed tick
-                // then run getPostSwapPrice with new amounts + new liquidity + new sqrtRatioX96
-                int256 amount0Delta =
-                    SqrtPriceMath.getAmount0Delta(
-                        postSwapSqrtRatioX96,
-                        TickMath.getSqrtRatioAtTick(nextInitializedTick),
-                        zeroForOne ? int128(-poolParams.liquidity) : int128(poolParams.liquidity)
-                    );
-                int256 amount1Delta =
-                    SqrtPriceMath.getAmount1Delta(
-                        postSwapSqrtRatioX96,
-                        TickMath.getSqrtRatioAtTick(nextInitializedTick),
-                        zeroForOne ? int128(poolParams.liquidity) : int128(-poolParams.liquidity)
-                    );
+            // if crossing an initialized tick, update token amounts and other parameters to values at next tick
+            if (crossTickBoundary) {
                 (, int128 liquidityNet, , , , , , ) = pool.ticks(nextInitializedTick);
 
-                // overflow desired, but open to better ways to do the addition/subtraction
-                positionParams.amount0Initial += uint256(amount0Delta);
-                positionParams.amount1Initial += uint256(amount1Delta);
-                poolParams.sqrtRatioX96 = postSwapSqrtRatioX96;
+                positionParams.amount0Initial = amount0Next;
+                positionParams.amount1Initial = amount1Next;
+                poolParams.sqrtRatioX96 = sqrtRatioNextX96;
+                // overflow desired
                 poolParams.liquidity += uint128(liquidityNet);
                 tick = nextInitializedTick;
             }
         }
-    } */
+        return calculateConstantLiquidityPostSwapSqrtPrice(poolParams, positionParams);
+    }
+
+    function getPoolInputs(IUniswapV3Pool pool)
+        private
+        view
+        returns (
+            PoolParams memory poolParams,
+            int24 tickSpacing,
+            int24 tick
+        )
+    {
+        (uint160 sqrtRatioX96, int24 tick, , , , , ) = pool.slot0();
+        uint24 fee = pool.fee();
+        poolParams = PoolParams({sqrtRatioX96: sqrtRatioX96, liquidity: pool.liquidity(), fee: fee});
+        tickSpacing = pool.tickSpacing();
+    }
 }

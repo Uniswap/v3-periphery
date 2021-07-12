@@ -13,13 +13,20 @@ contract SwapToRatioTest {
         return SwapToRatio.getPostSwapPrice(pool, positionParams);
     }
 
-    function tradeToNextTick(
+    function swapToNextTick(
         SwapToRatio.PoolParams memory poolParams,
         SwapToRatio.PositionParams memory positionParams,
         uint160 sqrtRatioX96Target,
         bool zeroForOne
-    ) external view returns (bool)
+    )
+        external
+        view
+        returns (
+            bool,
+            uint256,
+            uint256
+        )
     {
-      return SwapToRatio.tradeToNextTick(poolParams, positionParams, sqrtRatioX96Target, zeroForOne);
+        return SwapToRatio.swapToNextTick(poolParams, positionParams, sqrtRatioX96Target, zeroForOne);
     }
 }
