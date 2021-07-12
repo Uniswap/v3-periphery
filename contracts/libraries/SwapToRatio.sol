@@ -99,7 +99,6 @@ library SwapToRatio {
         }
     }
 
-
     // TODO: address range order scenarios
     function getPostSwapPrice(IUniswapV3Pool pool, PositionParams memory positionParams)
         internal
@@ -109,12 +108,13 @@ library SwapToRatio {
         (PoolParams memory poolParams, int24 tickSpacing, int24 tick) = getPoolInputs(pool);
 
         bool zeroForOne =
-            SqrtPriceMath.getAmount0Delta(
+            isZeroForOne(
+                positionParams.amount0Initial,
+                positionParams.amount1Initial,
                 poolParams.sqrtRatioX96,
-                positionParams.sqrtRatioX96Upper,
-                poolParams.liquidity,
-                false
-            ) < positionParams.amount0Initial;
+                positionParams.sqrtRatioX96Lower,
+                positionParams.sqrtRatioX96Upper
+            );
         bool crossTickBoundary = true;
         uint256 amount0Next;
         uint256 amount1Next;
@@ -146,6 +146,46 @@ library SwapToRatio {
             }
         }
         return calculateConstantLiquidityPostSwapSqrtPrice(poolParams, positionParams);
+    }
+
+    function isZeroForOne(
+        uint256 amount0,
+        uint256 amount1,
+        uint160 sqrtRatioX96,
+        uint160 sqrtRatioX96Lower,
+        uint160 sqrtRatioX96Upper
+    ) private pure returns (bool) {
+        if (amount0 > amount1) {
+            return
+                amount0 / amount1 >
+                SqrtPriceMath.getAmount0Delta(
+                    sqrtRatioX96,
+                    sqrtRatioX96Upper,
+                    1e6, // arbitrary since it cancels out
+                    false
+                ) /
+                    SqrtPriceMath.getAmount1Delta(
+                        sqrtRatioX96,
+                        sqrtRatioX96Lower,
+                        1e6,
+                        false
+                    );
+        } else {
+            return
+                amount1 / amount0 >
+                SqrtPriceMath.getAmount1Delta(
+                    sqrtRatioX96,
+                    sqrtRatioX96Lower,
+                    1e6,
+                    false
+                ) /
+                    SqrtPriceMath.getAmount0Delta(
+                        sqrtRatioX96,
+                        sqrtRatioX96Upper,
+                        1e6,
+                        false
+                    );
+        }
     }
 
     function getPoolInputs(IUniswapV3Pool pool)

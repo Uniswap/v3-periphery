@@ -6,7 +6,7 @@ import { expect } from 'chai'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import completeFixture from './shared/completeFixture'
 
-const toFixedPoint96 = (n: number): BigNumber => {
+const toSqrtFixedPoint96 = (n: number): BigNumber => {
   return BigNumber.from((Math.sqrt(n) * 1e18).toString())
     .mul(BigNumber.from(2).pow(96))
     .div((1e18).toString())
@@ -44,10 +44,10 @@ async function swapToNextInitializedTick(
     priceTarget,
     zeroForOne,
   } = args
-  const sqrtRatioX96 = toFixedPoint96(price)
-  const sqrtRatioX96Lower = toFixedPoint96(priceLower)
-  const sqrtRatioX96Upper = toFixedPoint96(priceUpper)
-  const sqrtRatioX96Target = toFixedPoint96(priceTarget)
+  const sqrtRatioX96 = toSqrtFixedPoint96(price)
+  const sqrtRatioX96Lower = toSqrtFixedPoint96(priceLower)
+  const sqrtRatioX96Upper = toSqrtFixedPoint96(priceUpper)
+  const sqrtRatioX96Target = toSqrtFixedPoint96(priceTarget)
 
   const { 0: doSwap, 1: amount0Updated, 2: amount1Updated } = await swapToRatio.swapToNextInitializedTick(
     { sqrtRatioX96, liquidity, fee },
@@ -105,8 +105,16 @@ describe.only('SwapToRatio', () => {
   })
 
   describe('#getPostSwapPrice ', () => {
-    describe('when initial deposit has excess of token0', () => {
+    beforeEach('setup pool', async () => {
+      ;({ tokens, swapToRatio, nft, router } = await loadFixture(swapToRatioCompleteFixture))
+
+    })
+
+    describe.only('when initial deposit has excess of token0', () => {
       describe('and swap does not push price beyond the next initialized tick', () => {
+        it('does the thing', async () => {
+
+        })
         // it returns the correct postSqrtPrice for various values
       })
 
