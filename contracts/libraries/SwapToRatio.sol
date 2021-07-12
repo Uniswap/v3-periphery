@@ -87,6 +87,7 @@ library SwapToRatio {
 
         // overflow desired
         if (zeroForOne) {
+            // include fee amount in token delta for exchanged token
             amount0Updated = positionParams.amount0Initial + uint256(((token0Delta * 1e6) / (1e6 - poolParams.fee)));
             amount1Updated = positionParams.amount1Initial + uint256(token1Delta);
             // 1e5 to increase precision for small price differences
