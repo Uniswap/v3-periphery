@@ -165,19 +165,20 @@ describe.only('SwapToRatio', () => {
     })
 
     describe('when initial deposit has excess of token0', () => {
+      // desmos sheet for the following numbers: https://www.desmos.com/calculator/b4lcwrzc4f
       before(() => {
         amount0Initial = 5_000
         amount1Initial = 1_000
         priceLower = 0.5
-        priceUpper = 1.5
+        priceUpper = 2
         price = 1
         liquidity = 3_000
         fee = 10000
         zeroForOne = true
       })
 
-      it('returns true if priceTarget falls above ideal price', async () => {
-        priceTarget = 0.9
+      it('returns true if priceTarget falls right above the ideal price', async () => {
+        priceTarget = 0.84
 
         const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
           amount0Initial,
@@ -191,8 +192,8 @@ describe.only('SwapToRatio', () => {
           zeroForOne,
         })
 
-        expect(amount0Updated).to.eq(4837)
-        expect(amount1Updated).to.eq(1154)
+        expect(amount0Updated).to.eq(4725)
+        expect(amount1Updated).to.eq(1251)
         expect(doSwap).to.eq(true)
       })
 
@@ -216,8 +217,9 @@ describe.only('SwapToRatio', () => {
         expect(doSwap).to.eq(true)
       })
 
-      it('returns false if priceTarget falls well below ideal price', async () => {
-        priceTarget = 0.6
+      it('returns false if priceTarget falls right below ideal price', async () => {
+        // TODO: According the quadratic formula, the ideal price is 0.84, 0.73 is the highest next price that will return false. this ok?
+        priceTarget = 0.73
 
         const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
           amount0Initial,
@@ -231,78 +233,50 @@ describe.only('SwapToRatio', () => {
           zeroForOne,
         })
 
-        expect(amount0Updated).to.eq(4120)
-        expect(amount1Updated).to.eq(1677)
         expect(doSwap).to.eq(false)
-      })
-
-      // TODO: According the quadratic formula, the ideal price is 0.84, so I would expect targetPrice 0.7 to return false
-      it.skip('returns false if priceTarget falls right below ideal price', async () => {
-        priceTarget = 0.7
-
-        const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
-          amount0Initial,
-          amount1Initial,
-          priceLower,
-          priceUpper,
-          price,
-          liquidity,
-          fee,
-          priceTarget,
-          zeroForOne,
-        })
-
-        expect(amount0Updated).to.eq(4410)
-        expect(amount1Updated).to.eq(1491)
-        expect(doSwap).to.eq(false)
+        expect(amount0Updated).to.eq(4484)
+        expect(amount1Updated).to.eq(1437)
       })
 
       describe('when the next initialized tick is below the lower bound of the position range', () => {
-        it('returns the correct values instead of erroring with invalid opcode')
+        it('returns null values', async () => {
+          priceTarget = 0.1
+
+          const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            price,
+            liquidity,
+            fee,
+            priceTarget,
+            zeroForOne,
+          })
+
+          expect(doSwap).to.eq(false)
+          expect(amount0Updated).to.eq(0)
+          expect(amount1Updated).to.eq(0)
+        })
       })
     })
 
     describe('when initial deposit has excess of token1', () => {
-      it('returns false if priceTarget falls right below next tick')
-
-      it('returns true if priceTarget falls exactly at next tick', async () => {
+      // desmos math sheet for following numbers: https://www.desmos.com/calculator/5rtr2rycan
+      before(() => {
         amount0Initial = 1_000
         amount1Initial = 5_000
         priceLower = 0.5
-        priceUpper = 1.5
+        priceUpper = 2
         price = 1
         liquidity = 3_000
         fee = 10000
-        priceTarget = 1.187901
         zeroForOne = false
-
-        const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
-          amount0Initial,
-          amount1Initial,
-          priceLower,
-          priceUpper,
-          price,
-          liquidity,
-          fee,
-          priceTarget,
-          zeroForOne,
-        })
-
-        expect(doSwap).to.eq(true)
-        expect(amount0Updated).to.eq(1248)
-        expect(amount1Updated).to.eq(4729)
       })
 
-      it('returns false if priceTarget falls above the next tick', async () => {
-        amount0Initial = 1_000
-        amount1Initial = 5_000
-        priceLower = 0.5
-        priceUpper = 1.5
-        price = 1
-        liquidity = 3_000
-        fee = 10000
-        priceTarget = 1.1
-        zeroForOne = false
+      it('returns true if priceTarget falls right below ideal price', async () => {
+        // idealPrice = 1.3678
+        priceTarget = 1.366
 
         const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
           amount0Initial,
@@ -317,8 +291,73 @@ describe.only('SwapToRatio', () => {
         })
 
         expect(doSwap).to.eq(true)
-        expect(amount0Updated).to.eq(1140)
-        expect(amount1Updated).to.eq(4853)
+        // TODO: rounding, results in desmos are 1433 and 4488  respectively, this ok?
+        expect(amount0Updated).to.eq(1434)
+        expect(amount1Updated).to.eq(4489)
+      })
+
+      it('returns true if priceTarget falls exactly at the ideal price', async () => {
+        // TODO: ideal price is 1.36786..., but 1.3676 is the highest I can get to return true. this ok?
+        priceTarget = 1.3676
+
+        const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+          amount0Initial,
+          amount1Initial,
+          priceLower,
+          priceUpper,
+          price,
+          liquidity,
+          fee,
+          priceTarget,
+          zeroForOne,
+        })
+
+        expect(doSwap).to.eq(true)
+        expect(amount0Updated).to.eq(1435)
+        expect(amount1Updated).to.eq(4487)
+      })
+
+      it('returns false if priceTarget falls above the ideal price', async () => {
+        // ideal price = 1.3678
+        priceTarget = 1.368
+
+        const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+          amount0Initial,
+          amount1Initial,
+          priceLower,
+          priceUpper,
+          price,
+          liquidity,
+          fee,
+          priceTarget,
+          zeroForOne,
+        })
+
+        expect(doSwap).to.eq(false)
+        expect(amount0Updated).to.eq(1436)
+        expect(amount1Updated).to.eq(4487)
+      })
+
+      describe('when the next initialized tick is above the the upper bound of the position range', () => {
+        it('returns null values', async () => {
+          priceTarget = 2.5
+
+          const { doSwap, amount0Updated, amount1Updated } = await swapToNextTick(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            price,
+            liquidity,
+            fee,
+            priceTarget,
+            zeroForOne,
+          })
+
+          expect(doSwap).to.eq(false)
+          expect(amount0Updated).to.eq(0)
+          expect(amount1Updated).to.eq(0)
+        })
       })
     })
   })

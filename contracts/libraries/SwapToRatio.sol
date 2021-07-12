@@ -47,6 +47,16 @@ library SwapToRatio {
             uint256 amount1Updated
         )
     {
+        if (zeroForOne) {
+          if (sqrtRatioX96Target < positionParams.sqrtRatioX96Lower) {
+            return (false, 0, 0);
+          }
+        } else {
+          if (sqrtRatioX96Target > positionParams.sqrtRatioX96Upper) {
+            return (false, 0, 0);
+          }
+        }
+
         int256 token0Delta =
             SqrtPriceMath.getAmount0Delta(
                 poolParams.sqrtRatioX96,
@@ -79,7 +89,7 @@ library SwapToRatio {
         if (zeroForOne) {
             amount0Updated = positionParams.amount0Initial + uint256(((token0Delta * 1e6) / (1e6 - poolParams.fee)));
             amount1Updated = positionParams.amount1Initial + uint256(token1Delta);
-            // 1e5 to increase precision for small numbers
+            // 1e5 to increase precision for small price differences
             doSwap = (amount0Updated * 1e5) / amount1Updated >= (validDeposit0 * 1e5) / validDeposit1;
         } else {
             amount0Updated = positionParams.amount0Initial + uint256(token0Delta);
