@@ -48,13 +48,13 @@ library SwapToRatio {
         )
     {
         if (zeroForOne) {
-          if (sqrtRatioX96Target < positionParams.sqrtRatioX96Lower) {
-            return (false, 0, 0);
-          }
+            if (sqrtRatioX96Target < positionParams.sqrtRatioX96Lower) {
+                return (false, 0, 0);
+            }
         } else {
-          if (sqrtRatioX96Target > positionParams.sqrtRatioX96Upper) {
-            return (false, 0, 0);
-          }
+            if (sqrtRatioX96Target > positionParams.sqrtRatioX96Upper) {
+                return (false, 0, 0);
+            }
         }
 
         int256 token0Delta =
