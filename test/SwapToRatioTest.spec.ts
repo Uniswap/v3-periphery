@@ -4,8 +4,14 @@ import { Fixture } from 'ethereum-waffle'
 import { SwapToRatioTest, TestERC20, MockTimeNonfungiblePositionManager, SwapRouter } from '../typechain'
 import { expect } from 'chai'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
+import { encodePriceSqrt } from './shared/encodePriceSqrt'
+import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
+import { getMaxTick, getMinTick } from './shared/ticks'
 import completeFixture from './shared/completeFixture'
+import { sortedTokens } from './shared/tokenSort'
 
+// TODO: oops,  maybe just use encodePriceSqrt. But being able to use decimals here
+// instead of fractions is convenient to more easily test against Dan's desmos sheets
 const toSqrtFixedPoint96 = (n: number): BigNumber => {
   return BigNumber.from((Math.sqrt(n) * 1e18).toString())
     .mul(BigNumber.from(2).pow(96))
@@ -96,6 +102,8 @@ describe.only('SwapToRatio', () => {
   let swapToRatio: SwapToRatioTest
   let nft: MockTimeNonfungiblePositionManager
   let router: SwapRouter
+  let token0: {address: string}
+  let token1: {address: string}
 
   const amountDesired = 100
 
@@ -107,10 +115,55 @@ describe.only('SwapToRatio', () => {
   describe('#getPostSwapPrice ', () => {
     beforeEach('setup pool', async () => {
       ;({ tokens, swapToRatio, nft, router } = await loadFixture(swapToRatioCompleteFixture))
+    })
 
+    beforeEach('setup pool', async () => {
+      [token0, token1] = sortedTokens(tokens[0], tokens[1])
+
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await nft.mint({
+        token0: token0.address,
+        token1: token1.address,
+        fee: FeeAmount.MEDIUM,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        amount0Desired: expandTo18Decimals(10_000),
+        amount1Desired: expandTo18Decimals(10_000),
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: wallets[0].address,
+        deadline: 1,
+      })
+
+      await nft.mint({
+        token0: token0.address,
+        token1: token1.address,
+        fee: FeeAmount.MEDIUM,
+        tickLower: TICK_SPACINGS[FeeAmount.MEDIUM] * -1,
+        tickUpper: TICK_SPACINGS[FeeAmount.MEDIUM] * 1,
+        amount0Desired: expandTo18Decimals(1_000),
+        amount1Desired: expandTo18Decimals(1_000),
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: wallets[0].address,
+        deadline: 1,
+      })
     })
 
     describe.only('when initial deposit has excess of token0', () => {
+      it.only('returns the correct postSqrtPrice when it is just below the next initialized tick', async () => {
+        
+      })
+      it('returns the correct postSqrtPrice when it corresponds exactly with the next initialized tick')
+      it('returns the correct postSqrtPrice when it is just above the next initialized tick')
+      it('returns the correct postSqrtPrice when fee cancels out benefit of swapping')
+
       describe('and swap does not push price beyond the next initialized tick', () => {
         it('does the thing', async () => {
 
@@ -125,11 +178,6 @@ describe.only('SwapToRatio', () => {
       describe('and swap pushes the price beyond multiple initialized ticks', () => {
         // it returns the correct postSqrtPrice for various values
       })
-
-      it('returns the correct postSqrtPrice when it is just below the next initialized tick')
-      it('returns the correct postSqrtPrice when it corresponds exactly with the next initialized tick')
-      it('returns the correct postSqrtPrice when it is just above the next initialized tick')
-      it('returns the correct postSqrtPrice when fee cancels out benefit of swapping')
     })
 
     describe('when initial deposit has excess of token1', () => {
