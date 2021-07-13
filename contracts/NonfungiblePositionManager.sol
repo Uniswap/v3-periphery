@@ -370,7 +370,7 @@ contract NonfungiblePositionManager is
         // instead of the actual amount so we can burn the token
         (position.tokensOwed0, position.tokensOwed1) = (tokensOwed0 - amount0Collect, tokensOwed1 - amount1Collect);
 
-        emit Collect(params.tokenId, recipient, amount0Collect, amount1Collect);
+        emit Collect(params.tokenId, recipient, amount0, amount1);
     }
 
     /// @inheritdoc INonfungiblePositionManager
