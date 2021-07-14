@@ -292,7 +292,7 @@ describe.only('SwapToRatio', () => {
       priceUpper = 2
 
       liquidity = 3_000
-      price = 1
+      price = 2
       fee = FeeAmount.HIGH
     })
 
@@ -319,16 +319,40 @@ describe.only('SwapToRatio', () => {
           (3030 * sqrtPrice) / sqrtPriceUpper
       )
 
-      console.log('bX96 / X96',
-      (3030 * (2 ** 96) -
-        liquidity * (2 ** 96) -
-        sqrtPriceLowerX96 * amount0Initial -
-        (liquidity * sqrtPriceLowerX96 * (2 ** 96)) / sqrtPriceX96 +
-        (amount1Initial * (2 ** 96)  * (2 ** 96) / sqrtPriceUpperX96) +
-        (3030 * sqrtPriceX96 * (2 ** 96)) / sqrtPriceUpperX96) / 2 ** 96
+      console.log(
+        'bX96 / X96',
+        (3030 * 2 ** 96 -
+          liquidity * 2 ** 96 -
+          sqrtPriceLowerX96 * amount0Initial -
+          (liquidity * sqrtPriceLowerX96 * 2 ** 96) / sqrtPriceX96 +
+          (amount1Initial * 2 ** 96 * 2 ** 96) / sqrtPriceUpperX96 +
+          (3030 * sqrtPriceX96 * 2 ** 96) / sqrtPriceUpperX96) /
+          2 ** 96
       )
       // c
       console.log('c', liquidity * sqrtPriceLower - amount1Initial - 3030 * sqrtPrice)
+
+      console.log('a', amount0Initial + liquidity / Math.sqrt(price) - 3030 / Math.sqrt(priceUpper))
+
+      console.log(
+        'a sol',
+        (amount0Initial * Math.sqrt(price) * Math.sqrt(priceUpper) +
+          liquidity * Math.sqrt(priceUpper) -
+          3030 * Math.sqrt(price)) /
+          Math.sqrt(priceUpper) /
+          Math.sqrt(price)
+      )
+
+      console.log(
+        'aX96 sol',
+        (((amount0Initial * sqrtPriceX96 * sqrtPriceUpperX96) / 2 ** 96 +
+          liquidity * sqrtPriceUpperX96 -
+          3030 * sqrtPriceX96) /
+          sqrtPriceUpperX96 /
+          sqrtPriceX96) *
+          2 ** 96
+      )
+
       const result = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
         toSqrtFixedPoint96(price),
         liquidity,

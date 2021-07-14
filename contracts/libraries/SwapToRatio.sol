@@ -156,6 +156,7 @@ library SwapToRatio {
             );
     }
 
+    // TODO: Only solves for token1 right now
     function calculateConstantLiquidityPostSwapSqrtPrice(
         uint160 sqrtRatioX96,
         uint128 liquidity,
@@ -167,6 +168,13 @@ library SwapToRatio {
     ) internal view returns (uint160 postSwapSqrtRatioX96) {
         // quadin' it up!
         uint256 liquidityFeeMultiplier = (liquidity * 1e6) / (1e6 - fee);
+
+        int256 a =
+            ((int256((amount0Initial * sqrtRatioX96 * sqrtRatioX96Upper) / FixedPoint96.Q96) +
+                int256(liquidity * sqrtRatioX96Upper) -
+                int256(liquidityFeeMultiplier * sqrtRatioX96)) * int256(FixedPoint96.Q96));
+
+        a = a / sqrtRatioX96Upper / sqrtRatioX96;
 
         int256 b =
             (int256(liquidityFeeMultiplier * FixedPoint96.Q96) -
@@ -182,11 +190,6 @@ library SwapToRatio {
             (int256(liquidity * sqrtRatioX96Lower) -
                 int256(amount1Initial * FixedPoint96.Q96) -
                 int256(liquidityFeeMultiplier * sqrtRatioX96)) / int256(FixedPoint96.Q96);
-
-        console.log('sol');
-        console.logInt(c);
-        console.logInt(b);
-        console.log('sol');
     }
 
     function isZeroForOne(
