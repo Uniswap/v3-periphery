@@ -167,11 +167,26 @@ library SwapToRatio {
     ) internal view returns (uint160 postSwapSqrtRatioX96) {
         // quadin' it up!
         uint256 liquidityFeeMultiplier = (liquidity * 1e6) / (1e6 - fee);
-        int256 c =
-            int256(liquidity.mul(sqrtRatioX96Lower)) -
-                int256(amount1Initial.mul(FixedPoint96.Q96)) -
-                int256(liquidityFeeMultiplier.mul(sqrtRatioX96));
 
+        int256 b =
+            (int256(liquidityFeeMultiplier * FixedPoint96.Q96) -
+                int256(liquidity * FixedPoint96.Q96) -
+                int256(sqrtRatioX96Lower * amount0Initial) -
+                int256((liquidity * sqrtRatioX96Lower * FixedPoint96.Q96) / sqrtRatioX96) +
+                int256(amount1Initial * FixedPoint96.Q96 * FixedPoint96.Q96) /
+                int256(sqrtRatioX96Upper) +
+                int256((liquidityFeeMultiplier * sqrtRatioX96 * FixedPoint96.Q96) / sqrtRatioX96Upper)) /
+                int256(FixedPoint96.Q96);
+
+        int256 c =
+            (int256(liquidity * sqrtRatioX96Lower) -
+                int256(amount1Initial * FixedPoint96.Q96) -
+                int256(liquidityFeeMultiplier * sqrtRatioX96)) / int256(FixedPoint96.Q96);
+
+        console.log('sol');
+        console.logInt(c);
+        console.logInt(b);
+        console.log('sol');
     }
 
     function isZeroForOne(

@@ -27,6 +27,10 @@ const toSqrtFixedPoint96 = (n: number): BigNumber => {
     .div((1e18).toString())
 }
 
+const toSqrtFixedPoint96Debug = (n: number): number => {
+  return Math.sqrt(n) * 2 ** 96
+}
+
 type swapToRatioParams = {
   // pool params
   price: number
@@ -297,8 +301,34 @@ describe.only('SwapToRatio', () => {
     })
 
     it.only('is coming out to the same numbers as desmos 0_o', async () => {
+      let sqrtPrice = Math.sqrt(price)
+      let sqrtPriceLower = Math.sqrt(priceLower)
+      let sqrtPriceUpper = Math.sqrt(priceUpper)
+
+      let sqrtPriceX96 = toSqrtFixedPoint96Debug(price)
+      let sqrtPriceLowerX96 = toSqrtFixedPoint96Debug(priceLower)
+      let sqrtPriceUpperX96 = toSqrtFixedPoint96Debug(priceUpper)
+      // b
+      console.log(
+        'b',
+        3030 -
+          liquidity -
+          sqrtPriceLower * amount0Initial -
+          (liquidity * sqrtPriceLower) / sqrtPrice +
+          amount1Initial / sqrtPriceUpper +
+          (3030 * sqrtPrice) / sqrtPriceUpper
+      )
+
+      console.log('bX96 / X96',
+      (3030 * (2 ** 96) -
+        liquidity * (2 ** 96) -
+        sqrtPriceLowerX96 * amount0Initial -
+        (liquidity * sqrtPriceLowerX96 * (2 ** 96)) / sqrtPriceX96 +
+        (amount1Initial * (2 ** 96)  * (2 ** 96) / sqrtPriceUpperX96) +
+        (3030 * sqrtPriceX96 * (2 ** 96)) / sqrtPriceUpperX96) / 2 ** 96
+      )
       // c
-      console.log(liquidity * Math.sqrt(priceLower) - amount1Initial - (3030 * Math.sqrt(price)))
+      console.log('c', liquidity * sqrtPriceLower - amount1Initial - 3030 * sqrtPrice)
       const result = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
         toSqrtFixedPoint96(price),
         liquidity,
@@ -306,7 +336,7 @@ describe.only('SwapToRatio', () => {
         toSqrtFixedPoint96(priceLower),
         toSqrtFixedPoint96(priceUpper),
         amount0Initial,
-        amount1Initial,
+        amount1Initial
       )
 
       console.log(result.toString())
