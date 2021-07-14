@@ -3,6 +3,7 @@ pragma solidity >=0.6.0;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
+import 'hardhat/console.sol';
 
 library PoolTicksLibrary {
     /// @notice Computes the position in the mapping where the initialized bit for a tick lives

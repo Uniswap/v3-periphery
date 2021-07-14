@@ -29,4 +29,25 @@ contract SwapToRatioTest {
     {
         return SwapToRatio.swapToNextInitializedTick(poolParams, positionParams, sqrtRatioX96Target, zeroForOne);
     }
+
+    function calculateConstantLiquidityPostSwapSqrtPrice(
+        uint160 sqrtRatioX96,
+        uint128 liquidity,
+        uint24 fee,
+        uint160 sqrtRatioX96Lower,
+        uint160 sqrtRatioX96Upper,
+        uint256 amount0Initial,
+        uint256 amount1Initial
+    ) external view returns (uint160) {
+        return
+            SwapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
+                sqrtRatioX96,
+                liquidity,
+                fee,
+                sqrtRatioX96Lower,
+                sqrtRatioX96Upper,
+                amount0Initial,
+                amount1Initial
+            );
+    }
 }

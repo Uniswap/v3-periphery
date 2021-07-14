@@ -4,11 +4,15 @@ pragma solidity >=0.7.0;
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '@uniswap/v3-core/contracts/libraries/SqrtPriceMath.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import '@uniswap/v3-core/contracts/libraries/FixedPoint96.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
 import './PoolTicksLibrary.sol';
 import 'hardhat/console.sol';
 
 library SwapToRatio {
     using PoolTicksLibrary for IUniswapV3Pool;
+    using SafeMath for uint256;
+    using SafeMath for uint128;
 
     struct PoolParams {
         uint160 sqrtRatioX96;
@@ -21,14 +25,6 @@ library SwapToRatio {
         uint160 sqrtRatioX96Upper;
         uint256 amount0Initial;
         uint256 amount1Initial;
-    }
-
-    function calculateConstantLiquidityPostSwapSqrtPrice(
-        PoolParams memory poolParams,
-        PositionParams memory positionParms
-    ) internal pure returns (uint160 postSwapSqrtRatioX96) {
-        // given constant liquidty / current price / bounds / initialAmounts - calculate how much the price should move
-        // so that the token ratios are of equal liquidity.
     }
 
     // TODO: Look into rounding things correctly
@@ -116,14 +112,16 @@ library SwapToRatio {
                 positionParams.sqrtRatioX96Upper
             );
         bool crossTickBoundary = true;
-        uint256 amount0Next;
-        uint256 amount1Next;
-        int24 nextInitializedTick;
 
         while (crossTickBoundary) {
+            uint256 amount0Next;
+            uint256 amount1Next;
+            int24 nextInitializedTick;
+            bool initialized;
+
             // returns the next initialized tick or the last tick within one word of the current tick.
             // We'll renew calculation at least on a per word basis for better rounding
-            (nextInitializedTick, ) = pool.nextInitializedTickWithinOneWord(tick, tickSpacing, zeroForOne);
+            (nextInitializedTick, initialized) = pool.nextInitializedTickWithinOneWord(tick, tickSpacing, zeroForOne);
             uint160 sqrtRatioNextX96 = TickMath.getSqrtRatioAtTick(nextInitializedTick);
 
             (crossTickBoundary, amount0Next, amount1Next) = swapToNextInitializedTick(
@@ -145,7 +143,35 @@ library SwapToRatio {
                 tick = nextInitializedTick;
             }
         }
-        return calculateConstantLiquidityPostSwapSqrtPrice(poolParams, positionParams);
+
+        return
+            calculateConstantLiquidityPostSwapSqrtPrice(
+                poolParams.sqrtRatioX96,
+                poolParams.liquidity,
+                poolParams.fee,
+                positionParams.sqrtRatioX96Lower,
+                positionParams.sqrtRatioX96Upper,
+                positionParams.amount0Initial,
+                positionParams.amount1Initial
+            );
+    }
+
+    function calculateConstantLiquidityPostSwapSqrtPrice(
+        uint160 sqrtRatioX96,
+        uint128 liquidity,
+        uint24 fee,
+        uint160 sqrtRatioX96Lower,
+        uint160 sqrtRatioX96Upper,
+        uint256 amount0Initial,
+        uint256 amount1Initial
+    ) internal view returns (uint160 postSwapSqrtRatioX96) {
+        // quadin' it up!
+        uint256 liquidityFeeMultiplier = (liquidity * 1e6) / (1e6 - fee);
+        int256 c =
+            int256(liquidity.mul(sqrtRatioX96Lower)) -
+                int256(amount1Initial.mul(FixedPoint96.Q96)) -
+                int256(liquidityFeeMultiplier.mul(sqrtRatioX96));
+
     }
 
     function isZeroForOne(
@@ -154,37 +180,22 @@ library SwapToRatio {
         uint160 sqrtRatioX96,
         uint160 sqrtRatioX96Lower,
         uint160 sqrtRatioX96Upper
-    ) private pure returns (bool) {
+    ) private view returns (bool) {
         if (amount0 > amount1) {
             return
                 amount0 / amount1 >
                 SqrtPriceMath.getAmount0Delta(
                     sqrtRatioX96,
                     sqrtRatioX96Upper,
-                    1e6, // arbitrary since it cancels out
+                    1, // arbitrary since it cancels out
                     false
                 ) /
-                    SqrtPriceMath.getAmount1Delta(
-                        sqrtRatioX96,
-                        sqrtRatioX96Lower,
-                        1e6,
-                        false
-                    );
+                    SqrtPriceMath.getAmount1Delta(sqrtRatioX96, sqrtRatioX96Lower, 1, false);
         } else {
             return
-                amount1 / amount0 >
-                SqrtPriceMath.getAmount1Delta(
-                    sqrtRatioX96,
-                    sqrtRatioX96Lower,
-                    1e6,
-                    false
-                ) /
-                    SqrtPriceMath.getAmount0Delta(
-                        sqrtRatioX96,
-                        sqrtRatioX96Upper,
-                        1e6,
-                        false
-                    );
+                amount1 / amount0 <
+                SqrtPriceMath.getAmount1Delta(sqrtRatioX96, sqrtRatioX96Lower, 1, false) /
+                    SqrtPriceMath.getAmount0Delta(sqrtRatioX96, sqrtRatioX96Upper, 1, false);
         }
     }
 
