@@ -166,7 +166,6 @@ library SwapToRatio {
         uint256 amount0Initial,
         uint256 amount1Initial
     ) internal view returns (uint160 postSwapSqrtRatioX96) {
-        // quadin' it up!
         uint256 liquidityFeeMultiplier = (liquidity * 1e6) / (1e6 - fee);
 
         int256 a =
@@ -190,6 +189,9 @@ library SwapToRatio {
             (int256(liquidity * sqrtRatioX96Lower) -
                 int256(amount1Initial * FixedPoint96.Q96) -
                 int256(liquidityFeeMultiplier * sqrtRatioX96)) / int256(FixedPoint96.Q96);
+
+        // quadratic formula
+        return uint160((int256(sqrt(uint256((b * b) - (4 * a *c)))) - (b)) * int256(FixedPoint96.Q96) / (2 * a));
     }
 
     function isZeroForOne(
@@ -230,5 +232,54 @@ library SwapToRatio {
         uint24 fee = pool.fee();
         poolParams = PoolParams({sqrtRatioX96: sqrtRatioX96, liquidity: pool.liquidity(), fee: fee});
         tickSpacing = pool.tickSpacing();
+    }
+
+
+    // borrowed: https://github.com/hifi-finance/prb-math/blob/a3847fb25a86ecc0f1cdee370a27ac0ece1ba46a/contracts/PRBMath.sol#L598
+    function sqrt(uint256 x) internal pure returns (uint256 result) {
+        if (x == 0) {
+            return 0;
+        }
+
+        // Set the initial guess to the closest power of two that is higher than x.
+        uint256 xAux = uint256(x);
+        result = 1;
+        if (xAux >= 0x100000000000000000000000000000000) {
+            xAux >>= 128;
+            result <<= 64;
+        }
+        if (xAux >= 0x10000000000000000) {
+            xAux >>= 64;
+            result <<= 32;
+        }
+        if (xAux >= 0x100000000) {
+            xAux >>= 32;
+            result <<= 16;
+        }
+        if (xAux >= 0x10000) {
+            xAux >>= 16;
+            result <<= 8;
+        }
+        if (xAux >= 0x100) {
+            xAux >>= 8;
+            result <<= 4;
+        }
+        if (xAux >= 0x10) {
+            xAux >>= 4;
+            result <<= 2;
+        }
+        if (xAux >= 0x8) {
+            result <<= 1;
+        }
+
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1;
+        result = (result + x / result) >> 1; // Seven iterations should be enough
+        uint256 roundedDownResult = x / result;
+        return result >= roundedDownResult ? roundedDownResult : result;
     }
 }
