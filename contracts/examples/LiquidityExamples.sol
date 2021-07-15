@@ -11,8 +11,6 @@ import '../interfaces/INonfungiblePositionManager.sol';
 import '../base/LiquidityManagement.sol';
 
 contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
-
-
     address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
@@ -33,7 +31,7 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
     /// @dev deposits[tokenId] => Deposit
     mapping(uint256 => Deposit) public deposits;
 
-    constructor (
+    constructor(
         INonfungiblePositionManager _nonfungiblePositionManager,
         address _factory,
         address _WETH9
@@ -49,10 +47,18 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
         bytes calldata data
     ) external override returns (bytes4) {
         // get position information
-        (, , address token0, address token1, , int24 tickLower, int24 tickUpper ,uint128 liquidity , , , , ) = nonfungiblePositionManager.positions(tokenId);
+        (, , address token0, address token1, , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) =
+            nonfungiblePositionManager.positions(tokenId);
 
         // set the owner and data for position
-        deposits[tokenId] = Deposit({owner: msg.sender, liquidity: liquidity, token0: token0, token1: token1, tickLower: tickLower, tickUpper: tickUpper});
+        deposits[tokenId] = Deposit({
+            owner: msg.sender,
+            liquidity: liquidity,
+            token0: token0,
+            token1: token1,
+            tickLower: tickLower,
+            tickUpper: tickUpper
+        });
 
         return this.onERC721Received.selector;
     }
@@ -142,9 +148,9 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
     /// @param tokenId The id of the erc721 token
     /// @return amount0 The amount received back in token0
     /// @return amount1 The amount returned back in token1
-    function decreaseLiquidityInHalf(uint256 tokenId) external returns (uint256 amount0, uint256 amount1){
+    function decreaseLiquidityInHalf(uint256 tokenId) external returns (uint256 amount0, uint256 amount1) {
         // caller must be the owner of the NFT
-        require(msg.sender ==  deposits[tokenId].owner, "Not the owner");
+        require(msg.sender == deposits[tokenId].owner, 'Not the owner');
         // get liquidity data for tokenId
         uint128 liquidity = deposits[tokenId].liquidity;
         uint128 halfLiquidity = liquidity / 2;
@@ -166,36 +172,39 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
         _sendToOwner(tokenId, amount0, amount1);
     }
 
-
     /// @notice Increases liquidity in the current range
     /// @dev Pool must be initialized already to add liquidity
     /// @param tokenId The id of the erc721 token
     /// @param amount0 The amount to add of token0
     /// @param amount1 The amount to add of token1
-    function increaseLiquidityCurrentRange(uint256 tokenId, uint256 amountAdd0, uint256 amountAdd1) external returns (
+    function increaseLiquidityCurrentRange(
+        uint256 tokenId,
+        uint256 amountAdd0,
+        uint256 amountAdd1
+    )
+        external
+        returns (
             uint128 liquidity,
             uint256 amount0,
             uint256 amount1,
             IUniswapV3Pool pool
-        ) {
-        
-
-        AddLiquidityParams memory params = AddLiquidityParams({
-            token0: deposits[tokenId].token0,
-            token1: deposits[tokenId].token1,
-            fee: poolFee,
-            recipient: address(this),
-            tickLower: deposits[tokenId].tickLower,
-            tickUpper: deposits[tokenId].tickUpper,
-            amount0Desired: amountAdd0,
-            amount1Desired: amountAdd1,
-            amount0Min: 0,
-            amount1Min: 0
-        });
+        )
+    {
+        AddLiquidityParams memory params =
+            AddLiquidityParams({
+                token0: deposits[tokenId].token0,
+                token1: deposits[tokenId].token1,
+                fee: poolFee,
+                recipient: address(this),
+                tickLower: deposits[tokenId].tickLower,
+                tickUpper: deposits[tokenId].tickUpper,
+                amount0Desired: amountAdd0,
+                amount1Desired: amountAdd1,
+                amount0Min: 0,
+                amount1Min: 0
+            });
 
         (liquidity, amount0, amount1, pool) = addLiquidity(params);
-
-        
     }
 
     /// @notice Transfers funds to owner of NFT
@@ -222,7 +231,7 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
     /// @param tokenId The id of the erc721
     function despositNFT(uint256 tokenId) external {
         // must be the owner of the NFT
-        require(msg.sender ==  deposits[tokenId].owner, "Not the owner");
+        require(msg.sender == deposits[tokenId].owner, 'Not the owner');
         // custody the NFT
         nonfungiblePositionManager.safeTransferFrom(msg.sender, address(this), tokenId);
     }
