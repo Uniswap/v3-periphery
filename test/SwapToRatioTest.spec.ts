@@ -264,7 +264,8 @@ describe.only('SwapToRatio', () => {
         )
 
         console.log('solidity', result.toString())
-        console.log( 'js',
+        console.log(
+          'js',
           quadraticFormulaJS({ amount0Initial, amount1Initial, priceLower, priceUpper, liquidity, price, fee })
         )
       })
