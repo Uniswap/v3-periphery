@@ -1,3 +1,4 @@
+import bn from 'bignumber.js'
 import { BigNumber, BigNumberish, constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 import { Fixture } from 'ethereum-waffle'
@@ -18,65 +19,6 @@ import { sortedTokens } from './shared/tokenSort'
 
 // TODO: here for debugging reasons, cleanup and delete
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
-
-// TODO: oops,  maybe just use encodePriceSqrt. But being able to use decimals here
-// instead of fractions is convenient to more easily test against Dan's desmos sheets
-const toSqrtFixedPoint96 = (n: number): BigNumber => {
-  return BigNumber.from((Math.sqrt(n) * 1e18).toString())
-    .mul(BigNumber.from(2).pow(96))
-    .div((1e18).toString())
-}
-
-const toSqrtFixedPoint96Debug = (n: number): number => {
-  return Math.sqrt(n) * 2 ** 96
-}
-
-type swapToRatioParams = {
-  // pool params
-  price: number
-  liquidity: BigNumberish
-  fee: BigNumberish
-
-  // position params
-  priceLower: number
-  priceUpper: number
-  amount0Initial: BigNumberish
-  amount1Initial: BigNumberish
-
-  // other params
-  priceTarget: number
-  zeroForOne: boolean
-}
-
-async function swapToNextInitializedTick(
-  swapToRatio: SwapToRatioTest,
-  args: swapToRatioParams
-): Promise<{ doSwap: boolean; amount0Updated: BigNumber; amount1Updated: BigNumber }> {
-  const {
-    price,
-    liquidity,
-    fee,
-    priceLower,
-    priceUpper,
-    amount0Initial,
-    amount1Initial,
-    priceTarget,
-    zeroForOne,
-  } = args
-  const sqrtRatioX96 = toSqrtFixedPoint96(price)
-  const sqrtRatioX96Lower = toSqrtFixedPoint96(priceLower)
-  const sqrtRatioX96Upper = toSqrtFixedPoint96(priceUpper)
-  const sqrtRatioX96Target = toSqrtFixedPoint96(priceTarget)
-
-  const { 0: doSwap, 1: amount0Updated, 2: amount1Updated } = await swapToRatio.swapToNextInitializedTick(
-    { sqrtRatioX96, liquidity, fee },
-    { sqrtRatioX96Lower, sqrtRatioX96Upper, amount0Initial, amount1Initial },
-    sqrtRatioX96Target,
-    zeroForOne
-  )
-
-  return { doSwap, amount0Updated, amount1Updated }
-}
 
 describe.only('SwapToRatio', () => {
   const [...wallets] = waffle.provider.getWallets()
@@ -252,7 +194,7 @@ describe.only('SwapToRatio', () => {
       })
 
       describe('and swap pushes the price beyond the next initialized tick', () => {
-        it('returns the correct value for 150/1 token ratio', async () => {
+        it.skip('returns the correct value for 150/1 token ratio', async () => {
           amount0Initial = expandTo18Decimals(1_000)
           amount1Initial = expandTo18Decimals(100_000)
           const poolAddress = await factory.getPool(token0.address, token1.address, FeeAmount.LOW)
@@ -275,109 +217,68 @@ describe.only('SwapToRatio', () => {
 
   describe('#calculateConstantLiquidityPostSwapSqrtPrice', () => {
     // pool params
-    let liquidity: number
-    let price: number
+    let liquidity: BigNumberish
+    let price: BigNumberish
     let fee: BigNumberish
 
+    // position params
+    let amount0Initial: BigNumberish
+    let amount1Initial: BigNumberish
+    let priceLower: BigNumberish
+    let priceUpper: BigNumberish
+
+    beforeEach('setup pool', async () => {
+      ;({ tokens, swapToRatio, nft, router, factory } = await loadFixture(swapToRatioCompleteFixture))
+    })
+
+    describe('when there is excess of token1', async () => {
+      before(() => {
+        amount0Initial = 1_000
+        amount1Initial = 5_000
+        priceLower = 0.5
+        priceUpper = 2
+
+        liquidity = 3_000
+        price = 2
+        fee = FeeAmount.HIGH
+      })
+      describe('when the price falls in the middle of the curve', () => {
+        it('returns the correct sqrtPriceX96 for small excess token1', async () => {
+          // console.log(
+          //   quadraticFormulaJS({ amount0Initial, amount1Initial, priceLower, priceUpper, liquidity, price, fee })
+          // )
+        })
+
+        it('returns the correct sqrtPriceX96 with large excess token1 ')
+      })
+
+      it('is coming out to the same numbers as desmos 0_o', async () => {
+        const result = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
+          toSqrtFixedPoint96(parseInt(price.toString())),
+          liquidity,
+          fee,
+          toSqrtFixedPoint96(parseInt(priceLower.toString())),
+          toSqrtFixedPoint96(parseInt(priceUpper.toString())),
+          amount0Initial,
+          amount1Initial
+        )
+
+        // console.log(result.toString())
+      })
+    })
+  })
+
+  describe('#swapToNextInitializedTick', () => {
     // position params
     let amount0Initial: number
     let amount1Initial: number
     let priceLower: number
     let priceUpper: number
 
-    before(() => {
-      amount0Initial = 1_000
-      amount1Initial = 5_000
-      priceLower = 0.5
-      priceUpper = 2
-
-      liquidity = 3_000
-      price = 2
-      fee = FeeAmount.HIGH
-    })
-
-    beforeEach('setup pool', async () => {
-      ;({ tokens, swapToRatio, nft, router, factory } = await loadFixture(swapToRatioCompleteFixture))
-    })
-
-    it.only('is coming out to the same numbers as desmos 0_o', async () => {
-      let sqrtPrice = Math.sqrt(price)
-      let sqrtPriceLower = Math.sqrt(priceLower)
-      let sqrtPriceUpper = Math.sqrt(priceUpper)
-
-      let sqrtPriceX96 = toSqrtFixedPoint96Debug(price)
-      let sqrtPriceLowerX96 = toSqrtFixedPoint96Debug(priceLower)
-      let sqrtPriceUpperX96 = toSqrtFixedPoint96Debug(priceUpper)
-      // b
-      console.log(
-        'b',
-        3030 -
-          liquidity -
-          sqrtPriceLower * amount0Initial -
-          (liquidity * sqrtPriceLower) / sqrtPrice +
-          amount1Initial / sqrtPriceUpper +
-          (3030 * sqrtPrice) / sqrtPriceUpper
-      )
-
-      console.log(
-        'bX96 / X96',
-        (3030 * 2 ** 96 -
-          liquidity * 2 ** 96 -
-          sqrtPriceLowerX96 * amount0Initial -
-          (liquidity * sqrtPriceLowerX96 * 2 ** 96) / sqrtPriceX96 +
-          (amount1Initial * 2 ** 96 * 2 ** 96) / sqrtPriceUpperX96 +
-          (3030 * sqrtPriceX96 * 2 ** 96) / sqrtPriceUpperX96) /
-          2 ** 96
-      )
-      // c
-      console.log('c', liquidity * sqrtPriceLower - amount1Initial - 3030 * sqrtPrice)
-
-      console.log('a', amount0Initial + liquidity / Math.sqrt(price) - 3030 / Math.sqrt(priceUpper))
-
-      console.log(
-        'a sol',
-        (amount0Initial * Math.sqrt(price) * Math.sqrt(priceUpper) +
-          liquidity * Math.sqrt(priceUpper) -
-          3030 * Math.sqrt(price)) /
-          Math.sqrt(priceUpper) /
-          Math.sqrt(price)
-      )
-
-      console.log(
-        'aX96 sol',
-        (((amount0Initial * sqrtPriceX96 * sqrtPriceUpperX96) / 2 ** 96 +
-          liquidity * sqrtPriceUpperX96 -
-          3030 * sqrtPriceX96) /
-          sqrtPriceUpperX96 /
-          sqrtPriceX96) *
-          2 ** 96
-      )
-
-      const result = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
-        toSqrtFixedPoint96(price),
-        liquidity,
-        fee,
-        toSqrtFixedPoint96(priceLower),
-        toSqrtFixedPoint96(priceUpper),
-        amount0Initial,
-        amount1Initial
-      )
-
-      console.log(result.toString())
-    })
-  })
-
-  describe('#swapToNextInitializedTick', () => {
-    // position params
-    let amount0Initial: BigNumberish
-    let amount1Initial: BigNumberish
-    let priceLower: number
-    let priceUpper: number
-
     // pool params
-    let liquidity: BigNumberish
+    let liquidity: number
     let price: number
-    let fee: BigNumberish
+    let fee: number
 
     // other params
     let priceTarget: number
@@ -585,3 +486,106 @@ describe.only('SwapToRatio', () => {
     })
   })
 })
+
+type swapToRatioParams = {
+  // pool params
+  price: BigNumberish
+  liquidity: BigNumberish
+  fee: BigNumberish
+
+  // position params
+  priceLower: BigNumberish
+  priceUpper: BigNumberish
+  amount0Initial: BigNumberish
+  amount1Initial: BigNumberish
+
+  // other params
+  priceTarget: BigNumberish
+  zeroForOne: boolean
+}
+
+async function swapToNextInitializedTick(
+  swapToRatio: SwapToRatioTest,
+  args: swapToRatioParams
+): Promise<{ doSwap: boolean; amount0Updated: BigNumber; amount1Updated: BigNumber }> {
+  const {
+    price,
+    liquidity,
+    fee,
+    priceLower,
+    priceUpper,
+    amount0Initial,
+    amount1Initial,
+    priceTarget,
+    zeroForOne,
+  } = args
+  const sqrtRatioX96 = toSqrtFixedPoint96(price)
+  const sqrtRatioX96Lower = toSqrtFixedPoint96(priceLower)
+  const sqrtRatioX96Upper = toSqrtFixedPoint96(priceUpper)
+  const sqrtRatioX96Target = toSqrtFixedPoint96(priceTarget)
+
+  const { 0: doSwap, 1: amount0Updated, 2: amount1Updated } = await swapToRatio.swapToNextInitializedTick(
+    { sqrtRatioX96, liquidity, fee },
+    { sqrtRatioX96Lower, sqrtRatioX96Upper, amount0Initial, amount1Initial },
+    sqrtRatioX96Target,
+    zeroForOne
+  )
+
+  return { doSwap, amount0Updated, amount1Updated }
+}
+
+type quadraticParams = {
+  // pool params
+  price: BigNumberish
+  liquidity: BigNumberish
+  fee: BigNumberish
+
+  // position params
+  priceLower: BigNumberish
+  priceUpper: BigNumberish
+  amount0Initial: BigNumberish
+  amount1Initial: BigNumberish
+}
+
+// js calculation for quadratic function is exactly precise to desmos.
+function quadraticFormulaJS(params: quadraticParams): number {
+  const sqrtPrice = new bn(params.price.toString()).sqrt()
+  const sqrtPriceLower = new bn(params.priceLower.toString()).sqrt()
+  const sqrtPriceUpper = new bn(params.priceUpper.toString()).sqrt()
+  const liquidity = new bn(params.liquidity.toString())
+  const fee = new bn(params.fee.toString())
+  const amount0Initial = new bn(params.amount0Initial.toString())
+  const amount1Initial = new bn(params.amount1Initial.toString())
+  const feeMultiplier = new bn(1).dividedBy(new bn(1).minus(fee.dividedBy(1e6)))
+  const liquidityMulFeeMultiplier = liquidity.multipliedBy(feeMultiplier)
+
+  const a = amount0Initial
+    .multipliedBy(sqrtPrice)
+    .multipliedBy(sqrtPriceUpper)
+    .plus(liquidity.multipliedBy(sqrtPriceUpper))
+    .minus(liquidityMulFeeMultiplier.multipliedBy(sqrtPrice))
+    .dividedBy(sqrtPriceUpper)
+    .dividedBy(sqrtPrice)
+
+  const b = liquidityMulFeeMultiplier
+    .minus(liquidity)
+    .minus(sqrtPriceLower.multipliedBy(amount0Initial))
+    .minus(liquidity.multipliedBy(sqrtPriceLower).dividedBy(sqrtPrice))
+    .plus(amount1Initial.dividedBy(sqrtPriceUpper))
+    .plus(liquidityMulFeeMultiplier.multipliedBy(sqrtPrice).dividedBy(sqrtPriceUpper))
+
+  const c = liquidity
+    .multipliedBy(sqrtPriceLower)
+    .minus(amount1Initial)
+    .minus(liquidityMulFeeMultiplier.multipliedBy(sqrtPrice))
+
+  const sqrtb4ac = b.multipliedBy(b).minus(new bn(4).multipliedBy(a).multipliedBy(c)).sqrt()
+  return sqrtb4ac.minus(b).dividedBy(2).dividedBy(a).toNumber()
+}
+
+// TODO: oops,  maybe just use encodePriceSqrt. But being able to use decimals here
+// instead of fractions is convenient to more easily test against Dan's desmos sheets
+const toSqrtFixedPoint96 = (n: BigNumberish): BigNumber => {
+  const nBn = new bn(n.toString()).multipliedBy(1e18).sqrt()
+  return BigNumber.from(nBn.toFixed(0).toString()).mul(BigNumber.from(2).pow(96)).div((1e9).toString())
+}

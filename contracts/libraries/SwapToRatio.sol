@@ -191,7 +191,7 @@ library SwapToRatio {
                 int256(liquidityFeeMultiplier * sqrtRatioX96)) / int256(FixedPoint96.Q96);
 
         // quadratic formula
-        return uint160((int256(sqrt(uint256((b * b) - (4 * a *c)))) - (b)) * int256(FixedPoint96.Q96) / (2 * a));
+        return uint160(((int256(sqrt(uint256((b * b) - (4 * a * c)))) - (b)) * int256(FixedPoint96.Q96)) / (2 * a));
     }
 
     function isZeroForOne(
@@ -233,7 +233,6 @@ library SwapToRatio {
         poolParams = PoolParams({sqrtRatioX96: sqrtRatioX96, liquidity: pool.liquidity(), fee: fee});
         tickSpacing = pool.tickSpacing();
     }
-
 
     // borrowed: https://github.com/hifi-finance/prb-math/blob/a3847fb25a86ecc0f1cdee370a27ac0ece1ba46a/contracts/PRBMath.sol#L598
     function sqrt(uint256 x) internal pure returns (uint256 result) {
