@@ -232,7 +232,7 @@ describe.only('SwapToRatio', () => {
     })
 
     describe('when there is excess of token1', async () => {
-      before(() => {
+      beforeEach(() => {
         amount0Initial = 1_000
         amount1Initial = 5_000
         priceLower = 0.5
@@ -242,17 +242,24 @@ describe.only('SwapToRatio', () => {
         price = 1
         fee = FeeAmount.HIGH
       })
-      describe('when the price falls in the middle of the curve', () => {
-        it('returns the correct sqrtPriceX96 for small excess token1', async () => {
-          console.log(
-            quadraticFormulaJS({ amount0Initial, amount1Initial, priceLower, priceUpper, liquidity, price, fee })
-          )
+
+      describe.only('when the price falls in the middle of the curve', () => {
+        it.only('returns the correct sqrtPriceX96 for small excess of token1', async () => {
+          amount1Initial = 3_000
+          liquidity = 300_000
+
+          const resultSol = await quadraticFormulaSolidity(swapToRatio, { amount0Initial, amount1Initial, priceLower, priceUpper, liquidity, price, fee })
+          const resultJS = quadraticFormulaJS({ amount0Initial, amount1Initial, priceLower, priceUpper, liquidity, price, fee })
+          console.log(resultJS.toString())
+          console.log(resultSol.toString())
+          expect(BigNumber.from(resultSol.precision(10).toString())).to.eq(BigNumber.from(resultJS.precision(10).toString()))
         })
 
         it('returns the correct sqrtPriceX96 with large excess token1 ')
       })
 
-      it.only('is coming out to the same numbers as desmos 0_o', async () => {
+
+      it('is coming out to the same numbers as desmos 0_o', async () => {
         const result = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
           toSqrtFixedPoint96(parseFloat(price.toString())),
           liquidity,
@@ -551,8 +558,32 @@ type quadraticParams = {
   amount1Initial: BigNumberish
 }
 
+async function quadraticFormulaSolidity(swapToRatio: SwapToRatioTest, params: quadraticParams): Promise<bn> {
+  const {
+    price,
+    liquidity,
+    fee,
+    priceLower,
+    priceUpper,
+    amount0Initial,
+    amount1Initial,
+  } = params
+
+  const resultSol = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
+    toSqrtFixedPoint96(parseFloat(price.toString())),
+    liquidity,
+    fee,
+    toSqrtFixedPoint96(parseFloat(priceLower.toString())),
+    toSqrtFixedPoint96(parseFloat(priceUpper.toString())),
+    amount0Initial,
+    amount1Initial
+  )
+
+  return new bn(resultSol.toString())
+}
+
 // js calculation for quadratic function is exactly precise to desmos.
-function quadraticFormulaJS(params: quadraticParams): number {
+function quadraticFormulaJS(params: quadraticParams): bn {
   const sqrtPrice = new bn(params.price.toString()).sqrt()
   const sqrtPriceLower = new bn(params.priceLower.toString()).sqrt()
   const sqrtPriceUpper = new bn(params.priceUpper.toString()).sqrt()
@@ -578,17 +609,20 @@ function quadraticFormulaJS(params: quadraticParams): number {
     .plus(amount1Initial.dividedBy(sqrtPriceUpper))
     .plus(liquidityMulFeeMultiplier.multipliedBy(sqrtPrice).dividedBy(sqrtPriceUpper))
 
+  console.log('b JS:', b.toString())
+
   const c = liquidity
     .multipliedBy(sqrtPriceLower)
     .minus(amount1Initial)
     .minus(liquidityMulFeeMultiplier.multipliedBy(sqrtPrice))
 
   const sqrtb4ac = b.multipliedBy(b).minus(new bn(4).multipliedBy(a).multipliedBy(c)).sqrt()
-  return sqrtb4ac.minus(b).dividedBy(2).dividedBy(a).toNumber()
+  const quadratic =  sqrtb4ac.minus(b).dividedBy(2).dividedBy(a)
+  return quadratic.multipliedBy(new bn(2).exponentiatedBy(96))
 }
 
 // TODO: oops,  maybe just use encodePriceSqrt. But being able to use decimals here
-// instead of fractions is convenient to more easily test against Dan's desmos sheets
+// instead of fractions is convenient for now to more easily test against Dan's desmos sheets
 const toSqrtFixedPoint96 = (n: BigNumberish): BigNumber => {
   const nBn = new bn(n.toString()).multipliedBy(1e18).sqrt()
   return BigNumber.from(nBn.toFixed(0).toString()).mul(BigNumber.from(2).pow(96)).div((1e9).toString())
