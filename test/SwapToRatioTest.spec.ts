@@ -239,31 +239,34 @@ describe.only('SwapToRatio', () => {
         priceUpper = 2
 
         liquidity = 3_000
-        price = 2
+        price = 1
         fee = FeeAmount.HIGH
       })
       describe('when the price falls in the middle of the curve', () => {
         it('returns the correct sqrtPriceX96 for small excess token1', async () => {
-          // console.log(
-          //   quadraticFormulaJS({ amount0Initial, amount1Initial, priceLower, priceUpper, liquidity, price, fee })
-          // )
+          console.log(
+            quadraticFormulaJS({ amount0Initial, amount1Initial, priceLower, priceUpper, liquidity, price, fee })
+          )
         })
 
         it('returns the correct sqrtPriceX96 with large excess token1 ')
       })
 
-      it('is coming out to the same numbers as desmos 0_o', async () => {
+      it.only('is coming out to the same numbers as desmos 0_o', async () => {
         const result = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
-          toSqrtFixedPoint96(parseInt(price.toString())),
+          toSqrtFixedPoint96(parseFloat(price.toString())),
           liquidity,
           fee,
-          toSqrtFixedPoint96(parseInt(priceLower.toString())),
-          toSqrtFixedPoint96(parseInt(priceUpper.toString())),
+          toSqrtFixedPoint96(parseFloat(priceLower.toString())),
+          toSqrtFixedPoint96(parseFloat(priceUpper.toString())),
           amount0Initial,
           amount1Initial
         )
 
-        // console.log(result.toString())
+        console.log('solidity', result.toString())
+        console.log( 'js',
+          quadraticFormulaJS({ amount0Initial, amount1Initial, priceLower, priceUpper, liquidity, price, fee })
+        )
       })
     })
   })
