@@ -248,16 +248,31 @@ describe.only('SwapToRatio', () => {
           amount1Initial = 3_000
           liquidity = 300_000
 
-          const resultSol = await quadraticFormulaSolidity(swapToRatio, { amount0Initial, amount1Initial, priceLower, priceUpper, liquidity, price, fee })
-          const resultJS = quadraticFormulaJS({ amount0Initial, amount1Initial, priceLower, priceUpper, liquidity, price, fee })
-          console.log(resultJS.toString())
-          console.log(resultSol.toString())
-          expect(BigNumber.from(resultSol.precision(10).toString())).to.eq(BigNumber.from(resultJS.precision(10).toString()))
+          const resultSol = await quadraticFormulaSolidity(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
+          const resultJS = quadraticFormulaJS({
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
+          expect(BigNumber.from(resultSol.precision(11).toString())).to.eq(
+            BigNumber.from(resultJS.precision(11).toString())
+          )
         })
 
         it('returns the correct sqrtPriceX96 with large excess token1 ')
       })
-
 
       it('is coming out to the same numbers as desmos 0_o', async () => {
         const result = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
@@ -559,15 +574,7 @@ type quadraticParams = {
 }
 
 async function quadraticFormulaSolidity(swapToRatio: SwapToRatioTest, params: quadraticParams): Promise<bn> {
-  const {
-    price,
-    liquidity,
-    fee,
-    priceLower,
-    priceUpper,
-    amount0Initial,
-    amount1Initial,
-  } = params
+  const { price, liquidity, fee, priceLower, priceUpper, amount0Initial, amount1Initial } = params
 
   const resultSol = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
     toSqrtFixedPoint96(parseFloat(price.toString())),
@@ -609,6 +616,7 @@ function quadraticFormulaJS(params: quadraticParams): bn {
     .plus(amount1Initial.dividedBy(sqrtPriceUpper))
     .plus(liquidityMulFeeMultiplier.multipliedBy(sqrtPrice).dividedBy(sqrtPriceUpper))
 
+  console.log('a JS:', a.toString())
   console.log('b JS:', b.toString())
 
   const c = liquidity
@@ -616,8 +624,10 @@ function quadraticFormulaJS(params: quadraticParams): bn {
     .minus(amount1Initial)
     .minus(liquidityMulFeeMultiplier.multipliedBy(sqrtPrice))
 
+  console.log('c JS:', c.toString())
+
   const sqrtb4ac = b.multipliedBy(b).minus(new bn(4).multipliedBy(a).multipliedBy(c)).sqrt()
-  const quadratic =  sqrtb4ac.minus(b).dividedBy(2).dividedBy(a)
+  const quadratic = sqrtb4ac.minus(b).dividedBy(2).dividedBy(a)
   return quadratic.multipliedBy(new bn(2).exponentiatedBy(96))
 }
 
