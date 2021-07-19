@@ -55,7 +55,7 @@ describe('WeightedOracleLibrary', () => {
       const mockObservable = await observableWith({
         period,
         tickCumulatives: [12, 12],
-        secondsPerLiqCumulatives
+        secondsPerLiqCumulatives,
       })
       const observation = await oracle.consult(mockObservable.address, period)
 
@@ -70,7 +70,7 @@ describe('WeightedOracleLibrary', () => {
       const mockObservable = await observableWith({
         period,
         tickCumulatives: [-10, -12],
-        secondsPerLiqCumulatives
+        secondsPerLiqCumulatives,
       })
 
       const observation = await oracle.consult(mockObservable.address, period)
@@ -88,7 +88,7 @@ describe('WeightedOracleLibrary', () => {
       const mockObservable = await observableWith({
         period,
         tickCumulatives: [12, 12],
-        secondsPerLiqCumulatives
+        secondsPerLiqCumulatives,
       })
 
       const observation = await oracle.consult(mockObservable.address, period)
@@ -119,14 +119,12 @@ describe('WeightedOracleLibrary', () => {
       return mockObservableFactory.deploy(
         [period, 0],
         tickCumulatives.map(BigNumber.from),
-        secondsPerLiqCumulatives.map(BigNumber.from),
+        secondsPerLiqCumulatives.map(BigNumber.from)
       )
     }
-
   })
 
   describe('#getArithmeticMeanTickWeightedByLiquidity', () => {
-
     it('single observation returns average tick', async () => {
       const averageTick = 10
       const observation = observationWith({ arithmeticMeanTick: averageTick, harmonicMeanLiquidity: 10 })
@@ -172,7 +170,7 @@ describe('WeightedOracleLibrary', () => {
     }) {
       return {
         arithmeticMeanTick,
-        harmonicMeanLiquidity
+        harmonicMeanLiquidity,
       }
     }
   })
