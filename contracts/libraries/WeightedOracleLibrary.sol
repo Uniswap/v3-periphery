@@ -41,6 +41,10 @@ library WeightedOracleLibrary {
     /// @notice Given some time-weighted observations, calculates the arithmetic mean tick, weighted by liquidity
     /// @param observations A list of time-weighted observations
     /// @return arithmeticMeanWeightedTick The arithmetic mean tick, weighted by the observations' time-weighted harmonic average liquidity
+    /// @dev In most scenarios, each entry of `observations` should share the same `period` and underlying `pool` tokens.
+    /// If `period` differs across observations, the result becomes difficult to interpret and is likely biased/manipulable.
+    /// If the underlying `pool` tokens differ across observations, extreme care must be taken to ensure that both prices and liquidity values are comparable.
+    /// Even if prices are commensurate (e.g. two different USD-stable assets against ETH), liquidity values may not be, as decimals can differ between tokens.
     function getArithmeticMeanTickWeightedByLiquidity(PeriodObservation[] memory observations) internal pure returns (int24 arithmeticMeanWeightedTick) {
 
         // Accumulates the sum of all observations' products between each their own average tick and harmonic average liquidity
