@@ -26,8 +26,6 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
         uint128 liquidity;
         address token0;
         address token1;
-        int24 tickLower;
-        int24 tickUpper;
     }
 
     /// @dev deposits[tokenId] => Deposit
@@ -44,17 +42,24 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
     // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
     function onERC721Received(
         address operator,
-        address from,
+        address ,
         uint256 tokenId,
-        bytes calldata data
+        bytes calldata 
     ) external override returns (bytes4) {
         // get position information
-        (, , address token0, address token1, , int24 tickLower, int24 tickUpper ,uint128 liquidity , , , , ) = nonfungiblePositionManager.positions(tokenId);
 
-        // set the owner and data for position
-        deposits[tokenId] = Deposit({owner: msg.sender, liquidity: liquidity, token0: token0, token1: token1, tickLower: tickLower, tickUpper: tickUpper});
+        _createDeposit(operator, tokenId);
 
         return this.onERC721Received.selector;
+    }
+
+    function _createDeposit(address owner, uint256 tokenId) internal {
+        
+        (, , address token0, address token1, , , ,uint128 liquidity , , , , ) = nonfungiblePositionManager.positions(tokenId);
+
+        // set the owner and data for position
+        // operator is msg.sender
+        deposits[tokenId] = Deposit({owner: owner, liquidity: liquidity, token0: token0, token1: token1});
     }
 
     /// @notice Calls the mint function defined in perphery, mints the same amount of each token. For this example we are providing 1000 DAI and 1000 USDC in liquidity
@@ -91,12 +96,15 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
                 amount1Desired: amount1ToMint,
                 amount0Min: 0,
                 amount1Min: 0,
-                recipient: msg.sender,
+                recipient: address(this),
                 deadline: block.timestamp
             });
 
         // Note that the pool defined by DAI/USDC and fee tier 0.3% must already be created and initialized in order to mint
         (tokenId, liquidity, amount0, amount1) = nonfungiblePositionManager.mint(params);
+
+        // Create a deposit
+        _createDeposit(msg.sender, tokenId);
 
         // Remove allowance and refund in both assets.
         if (amount0 < amount0ToMint) {
@@ -175,25 +183,21 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
     function increaseLiquidityCurrentRange(uint256 tokenId, uint256 amountAdd0, uint256 amountAdd1) external returns (
             uint128 liquidity,
             uint256 amount0,
-            uint256 amount1,
-            IUniswapV3Pool pool
+            uint256 amount1
         ) {
         
+        
 
-        AddLiquidityParams memory params = AddLiquidityParams({
-            token0: deposits[tokenId].token0,
-            token1: deposits[tokenId].token1,
-            fee: poolFee,
-            recipient: address(this),
-            tickLower: deposits[tokenId].tickLower,
-            tickUpper: deposits[tokenId].tickUpper,
+        INonfungiblePositionManager.IncreaseLiquidityParams memory params = INonfungiblePositionManager.IncreaseLiquidityParams({
+            tokenId: tokenId,
             amount0Desired: amountAdd0,
             amount1Desired: amountAdd1,
             amount0Min: 0,
-            amount1Min: 0
+            amount1Min: 0,
+            deadline: block.timestamp
         });
 
-        (liquidity, amount0, amount1, pool) = addLiquidity(params);
+        (liquidity, amount0, amount1) = nonfungiblePositionManager.increaseLiquidity(params);
 
         
     }
@@ -215,16 +219,6 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
         // send collected fees to owner
         TransferHelper.safeTransfer(token0, owner, amount0);
         TransferHelper.safeTransfer(token1, owner, amount1);
-    }
-
-    /// @notice Transfers the NFT to this contract
-    /// @dev The transfer triggers `onERC721Received`
-    /// @param tokenId The id of the erc721
-    function despositNFT(uint256 tokenId) external {
-        // must be the owner of the NFT
-        require(msg.sender ==  deposits[tokenId].owner, "Not the owner");
-        // custody the NFT
-        nonfungiblePositionManager.safeTransferFrom(msg.sender, address(this), tokenId);
     }
 
     /// @notice Transfers the NFT to the owner
