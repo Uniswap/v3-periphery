@@ -40,9 +40,9 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
     // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
     function onERC721Received(
         address operator,
-        address ,
+        address,
         uint256 tokenId,
-        bytes calldata 
+        bytes calldata
     ) external override returns (bytes4) {
         // get position information
 
@@ -52,8 +52,8 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
     }
 
     function _createDeposit(address owner, uint256 tokenId) internal {
-        
-        (, , address token0, address token1, , , ,uint128 liquidity , , , , ) = nonfungiblePositionManager.positions(tokenId);
+        (, , address token0, address token1, , , , uint128 liquidity, , , , ) =
+            nonfungiblePositionManager.positions(tokenId);
 
         // set the owner and data for position
         // operator is msg.sender
@@ -187,22 +187,19 @@ contract LiquidityExamples is IERC721Receiver, LiquidityManagement {
             uint128 liquidity,
             uint256 amount0,
             uint256 amount1
-        ) {
-        
-        
-
-        INonfungiblePositionManager.IncreaseLiquidityParams memory params = INonfungiblePositionManager.IncreaseLiquidityParams({
-            tokenId: tokenId,
-            amount0Desired: amountAdd0,
-            amount1Desired: amountAdd1,
-            amount0Min: 0,
-            amount1Min: 0,
-            deadline: block.timestamp
-        });
+        )
+    {
+        INonfungiblePositionManager.IncreaseLiquidityParams memory params =
+            INonfungiblePositionManager.IncreaseLiquidityParams({
+                tokenId: tokenId,
+                amount0Desired: amountAdd0,
+                amount1Desired: amountAdd1,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            });
 
         (liquidity, amount0, amount1) = nonfungiblePositionManager.increaseLiquidity(params);
-
-        
     }
 
     /// @notice Transfers funds to owner of NFT
