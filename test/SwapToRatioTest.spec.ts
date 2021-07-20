@@ -20,6 +20,11 @@ import { sortedTokens } from './shared/tokenSort'
 // TODO: here for debugging reasons, cleanup and delete
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
+bn.config({ ROUNDING_MODE: bn.ROUND_FLOOR })
+
+const HIGHEST_PRICE = BigNumber.from('337815857904011919502232366785580118734')
+const LOWEST_PRICE = 0.00000000000000000000000000000000000000293954462969821995729408305099800169742336
+
 describe.only('SwapToRatio', () => {
   const [...wallets] = waffle.provider.getWallets()
 
@@ -160,6 +165,7 @@ describe.only('SwapToRatio', () => {
         })
       })
 
+      it('returns the correct postSqrtPrice if postSqrtPrice lies below the position range')
       it('returns the correct postSqrtPrice when it corresponds exactly with the next initialized tick')
       it('returns the correct postSqrtPrice when it is just above the next initialized tick')
       it('returns the correct postSqrtPrice when fee cancels out benefit of swapping')
@@ -188,6 +194,7 @@ describe.only('SwapToRatio', () => {
       it('returns the correct postSqrtPrice when it corresponds exactly with the next initialized tick')
       it('returns the correct postSqrtPrice when it is just above the next initialized tick')
       it('returns the correct postSqrtPrice when fee cancels out benefit of swapping')
+      it('returns the correct postSqrtPrice if postSqrtPrice lies above the position range')
 
       describe('and swap does not push price beyond the next initialized tick', () => {
         // it returns the correct postSqrtPrice for various values
@@ -215,7 +222,7 @@ describe.only('SwapToRatio', () => {
     })
   })
 
-  describe('#calculateConstantLiquidityPostSwapSqrtPrice', () => {
+  describe.only('#calculateConstantLiquidityPostSwapSqrtPrice', () => {
     // pool params
     let liquidity: BigNumberish
     let price: BigNumberish
@@ -232,31 +239,31 @@ describe.only('SwapToRatio', () => {
     })
 
     describe('when there is excess of token1', async () => {
-      beforeEach(() => {
-        amount0Initial = 1_000
-        amount1Initial = 5_000
-        priceLower = 0.5
-        priceUpper = 2
+      describe('when the price falls in the middle of the curve', () => {
+        before(() => {
+          amount0Initial = 1_000
+          priceLower = 0.5
+          priceUpper = 2
 
-        liquidity = 3_000
-        price = 1
-        fee = FeeAmount.HIGH
-      })
-
-      describe.only('when the price falls in the middle of the curve', () => {
-        it.only('returns the correct sqrtPriceX96 for small excess of token1', async () => {
-          amount1Initial = 3_000
           liquidity = 300_000
+          price = 1
+          fee = FeeAmount.HIGH
+        })
 
-          const resultSol = await quadraticFormulaSolidity(swapToRatio, {
-            amount0Initial,
-            amount1Initial,
-            priceLower,
-            priceUpper,
-            liquidity,
-            price,
-            fee,
-          })
+        it('returns the correct sqrtPriceX96 for small excess of token1', async () => {
+          amount1Initial = 1_001
+
+          const resultSol = (
+            await quadraticFormulaSolidity(swapToRatio, {
+              amount0Initial,
+              amount1Initial,
+              priceLower,
+              priceUpper,
+              liquidity,
+              price,
+              fee,
+            })
+          )
           const resultJS = quadraticFormulaJS({
             amount0Initial,
             amount1Initial,
@@ -266,30 +273,91 @@ describe.only('SwapToRatio', () => {
             price,
             fee,
           })
-          expect(BigNumber.from(resultSol.precision(11).toString())).to.eq(
-            BigNumber.from(resultJS.precision(11).toString())
-          )
+
+          expect(resultSol.precision(10).toString()).to.eq(resultJS.precision(10).toString())
         })
 
-        it('returns the correct sqrtPriceX96 with large excess token1 ')
+        it('returns the correct sqrtPriceX96 with a very large excess of token1', async () => {
+          amount1Initial = 10_000_000_000
+
+          const resultSol = (
+            await quadraticFormulaSolidity(swapToRatio, {
+              amount0Initial,
+              amount1Initial,
+              priceLower,
+              priceUpper,
+              liquidity,
+              price,
+              fee,
+            })
+          )
+          const resultJS = quadraticFormulaJS({
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
+
+          expect(resultSol.precision(10).toString()).to.eq(resultJS.precision(10).toString())
+        })
       })
 
-      it('is coming out to the same numbers as desmos 0_o', async () => {
-        const result = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
-          toSqrtFixedPoint96(parseFloat(price.toString())),
-          liquidity,
-          fee,
-          toSqrtFixedPoint96(parseFloat(priceLower.toString())),
-          toSqrtFixedPoint96(parseFloat(priceUpper.toString())),
-          amount0Initial,
-          amount1Initial
-        )
+      describe('when the price falls at the upper end of the curve', () => {
+        before(() => {
+          amount0Initial = expandTo18Decimals(1_000)
+          priceLower = HIGHEST_PRICE.div(4)
+          priceUpper = HIGHEST_PRICE
 
-        console.log('solidity', result.toString())
-        console.log(
-          'js',
-          quadraticFormulaJS({ amount0Initial, amount1Initial, priceLower, priceUpper, liquidity, price, fee })
-        )
+          liquidity = 300_000
+          price = HIGHEST_PRICE.div(2)
+          fee = FeeAmount.HIGH
+        })
+
+        it('returns the correct sqrtPriceX96 for with a very small excess of token1', async () => {
+          amount1Initial = expandTo18Decimals(1_001)
+
+          const resultJS = quadraticFormulaJS({
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
+
+          const resultSol = (
+            await quadraticFormulaSolidity(swapToRatio, {
+              amount0Initial,
+              amount1Initial,
+              priceLower,
+              priceUpper,
+              liquidity,
+              price,
+              fee,
+            })
+          )
+
+          expect(resultSol.precision(10).toString()).to.eq(resultJS.precision(10).toString())
+        })
+
+        it('returns the correct sqrtPriceX96 for with a very large excess of token1')
+      })
+
+      describe('when the price falls at the lower end of the curve', () => {
+        it.skip('returns the correct sqrtPriceX96 for small excess of token1', async () => {
+          console.log('highest', toSqrtFixedPoint96(HIGHEST_PRICE).toString())
+          console.log('lowest', toSqrtFixedPoint96(LOWEST_PRICE).toString())
+
+          console.log((await swapToRatio.tickToSqrtRatioX96(getMinTick(TICK_SPACINGS[FeeAmount.LOW]))).toString())
+          console.log((await swapToRatio.tickToSqrtRatioX96(getMaxTick(TICK_SPACINGS[FeeAmount.LOW]))).toString())
+          // console.log((await swapToRatio.tickToSqrtRatioX96(getMinTick(TICK_SPACINGS[FeeAmount.LOW]))).toString())
+          // console.log(new bn((await swapToRatio.tickToSqrtRatioX96(getMinTick(TICK_SPACINGS[FeeAmount.LOW]))).toString()).dividedBy(2**96).sqrt().toString())
+          // console.log(new bn((await swapToRatio.tickToSqrtRatioX96(getMinTick(TICK_SPACINGS[FeeAmount.LOW]))).toString()).dividedBy(2**96).exponentiatedBy(2).toString())
+        })
       })
     })
   })
@@ -575,7 +643,7 @@ type quadraticParams = {
 
 async function quadraticFormulaSolidity(swapToRatio: SwapToRatioTest, params: quadraticParams): Promise<bn> {
   const { price, liquidity, fee, priceLower, priceUpper, amount0Initial, amount1Initial } = params
-
+  console.log(toSqrtFixedPoint96(parseFloat(priceUpper.toString())).toString())
   const resultSol = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
     toSqrtFixedPoint96(parseFloat(price.toString())),
     liquidity,
@@ -590,6 +658,7 @@ async function quadraticFormulaSolidity(swapToRatio: SwapToRatioTest, params: qu
 }
 
 // js calculation for quadratic function is exactly precise to desmos.
+// https://www.desmos.com/calculator/oiv0rti0ss
 function quadraticFormulaJS(params: quadraticParams): bn {
   const sqrtPrice = new bn(params.price.toString()).sqrt()
   const sqrtPriceLower = new bn(params.priceLower.toString()).sqrt()
@@ -600,6 +669,13 @@ function quadraticFormulaJS(params: quadraticParams): bn {
   const amount1Initial = new bn(params.amount1Initial.toString())
   const feeMultiplier = new bn(1).dividedBy(new bn(1).minus(fee.dividedBy(1e6)))
   const liquidityMulFeeMultiplier = liquidity.multipliedBy(feeMultiplier)
+
+  const Q96 = toSqrtFixedPoint96(1).toString()
+  const sqrtPriceX96 = toSqrtFixedPoint96(params.price.toString()).toString()
+  const sqrtPriceX96Upper = toSqrtFixedPoint96(params.priceUpper.toString()).toString()
+  // liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96
+  console.log('first line a ', amount0Initial.multipliedBy(1e8).multipliedBy(sqrtPriceX96).toString())
+
 
   const a = amount0Initial
     .multipliedBy(sqrtPrice)
@@ -616,15 +692,14 @@ function quadraticFormulaJS(params: quadraticParams): bn {
     .plus(amount1Initial.dividedBy(sqrtPriceUpper))
     .plus(liquidityMulFeeMultiplier.multipliedBy(sqrtPrice).dividedBy(sqrtPriceUpper))
 
-  console.log('a JS:', a.toString())
-  console.log('b JS:', b.toString())
-
   const c = liquidity
     .multipliedBy(sqrtPriceLower)
     .minus(amount1Initial)
     .minus(liquidityMulFeeMultiplier.multipliedBy(sqrtPrice))
 
-  console.log('c JS:', c.toString())
+    console.log('a', a.toString())
+    console.log('b', b.toString())
+    console.log('c', c.toString())
 
   const sqrtb4ac = b.multipliedBy(b).minus(new bn(4).multipliedBy(a).multipliedBy(c)).sqrt()
   const quadratic = sqrtb4ac.minus(b).dividedBy(2).dividedBy(a)
@@ -635,5 +710,5 @@ function quadraticFormulaJS(params: quadraticParams): bn {
 // instead of fractions is convenient for now to more easily test against Dan's desmos sheets
 const toSqrtFixedPoint96 = (n: BigNumberish): BigNumber => {
   const nBn = new bn(n.toString()).multipliedBy(1e18).sqrt()
-  return BigNumber.from(nBn.toFixed(0).toString()).mul(BigNumber.from(2).pow(96)).div((1e9).toString())
+  return BigNumber.from(nBn.multipliedBy(new bn(2).exponentiatedBy(96).dividedBy(1e9)).toFixed(0).toString())
 }

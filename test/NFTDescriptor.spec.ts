@@ -379,9 +379,8 @@ describe('NFTDescriptor', () => {
         maxTick = getMaxTick(tickSpacing)
       })
 
-      it.only('returns MIN on lowest tick', async () => {
+      it('returns MIN on lowest tick', async () => {
         expect(await nftDescriptor.tickToDecimalString(minTick, tickSpacing, 18, 18, false)).to.equal('MIN')
-        console.log(await nftDescriptor.tickToDecimalString(10, tickSpacing, 18, 18, false))
       })
 
       it('returns MAX on the highest tick', async () => {

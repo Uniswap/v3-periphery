@@ -5,7 +5,9 @@ import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '@uniswap/v3-core/contracts/libraries/SqrtPriceMath.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/FixedPoint96.sol';
+import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/math/SignedSafeMath.sol';
 import './PoolTicksLibrary.sol';
 import 'hardhat/console.sol';
 
@@ -13,6 +15,7 @@ library SwapToRatio {
     using PoolTicksLibrary for IUniswapV3Pool;
     using SafeMath for uint256;
     using SafeMath for uint128;
+    using SignedSafeMath for int256;
 
     struct PoolParams {
         uint160 sqrtRatioX96;
@@ -169,11 +172,15 @@ library SwapToRatio {
         uint256 liquidityFeeMultiplier = ((liquidity * 1e6) * 1e8) / (1e6 - fee);
 
         int256 a =
-            ((int256((amount0Initial * sqrtRatioX96 * sqrtRatioX96Upper * 1e8) / FixedPoint96.Q96) +
-                int256(liquidity * sqrtRatioX96Upper * 1e8) -
-                int256(liquidityFeeMultiplier * sqrtRatioX96)) * int256(FixedPoint96.Q96));
-
-        a = a / sqrtRatioX96Upper / sqrtRatioX96;
+          int256(uint256(amount0Initial * 1e8 * sqrtRatioX96) +
+              uint256(liquidity * 1e8 * FixedPoint96.Q96) -
+              uint256(liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96));
+        console.log('first line', amount0Initial * 1e8 * sqrtRatioX96);
+        console.log('second line', liquidity * 1e8 * FixedPoint96.Q96);
+        console.log('third line', liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96);
+        console.log('\n\n a before division');
+        console.logInt(a);
+        a = a / sqrtRatioX96;
 
         int256 b =
             (int256(liquidityFeeMultiplier * FixedPoint96.Q96) -
@@ -190,6 +197,14 @@ library SwapToRatio {
             (int256(liquidity * sqrtRatioX96Lower * 1e8) -
                 int256(amount1Initial * FixedPoint96.Q96 * 1e8) -
                 int256(liquidityFeeMultiplier * sqrtRatioX96)) / int256(FixedPoint96.Q96);
+
+        console.log('a');
+        console.logInt(a);
+        console.log('b');
+        console.logInt(b);
+        console.log('c');
+        console.logInt(c);
+
         // quadratic formula
         return uint160(((int256(sqrt(uint256((b * b) - (4 * a * c)))) - (b)) * int256(FixedPoint96.Q96)) / (2 * a));
     }
