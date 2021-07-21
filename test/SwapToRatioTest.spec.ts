@@ -13,10 +13,11 @@ import { expect } from 'chai'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
 import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
-import { getMaxTick, getMinTick } from './shared/ticks'
+import { getMaxTick, getMinTick, getMaxLiquidityPerTick } from './shared/ticks'
 import completeFixture from './shared/completeFixture'
 import { sortedTokens } from './shared/tokenSort'
 
+const consoleLog = false
 // TODO: here for debugging reasons, cleanup and delete
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
@@ -245,7 +246,7 @@ describe.only('SwapToRatio', () => {
           priceLower = 0.5
           priceUpper = 2
 
-          liquidity = '8456917931490818044'
+          liquidity = '8456917931490818044' // current USDC/ETH liquidity
           price = 1
           fee = FeeAmount.HIGH
         })
@@ -303,6 +304,64 @@ describe.only('SwapToRatio', () => {
 
           expect(resultSol.precision(10).toString()).to.eq(resultJS.precision(10).toString())
         })
+
+        it('returns the correct sqrtPriceX96 with max liquidity per tick', async () => {
+          amount1Initial = 10_000
+          liquidity = '1917569901783203986719870431555990'
+
+          const resultSol = (
+            await quadraticFormulaSolidity(swapToRatio, {
+              amount0Initial,
+              amount1Initial,
+              priceLower,
+              priceUpper,
+              liquidity,
+              price,
+              fee,
+            })
+          )
+
+          const resultJS = quadraticFormulaJS({
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
+
+          expect(resultSol.precision(10).toString()).to.eq(resultJS.precision(10).toString())
+        })
+
+        it('returns the correct sqrtPriceX96 with large token amounts', async () => {
+          amount1Initial = expandTo18Decimals(5_000)
+          amount0Initial = expandTo18Decimals(1_000)
+
+          const resultSol = (
+            await quadraticFormulaSolidity(swapToRatio, {
+              amount0Initial,
+              amount1Initial,
+              priceLower,
+              priceUpper,
+              liquidity,
+              price,
+              fee,
+            })
+          )
+
+          const resultJS = quadraticFormulaJS({
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
+
+          expect(resultSol.precision(10).toString()).to.eq(resultJS.precision(10).toString())
+        })
       })
 
       describe('when the price falls at the upper end of the curve', () => {
@@ -348,15 +407,70 @@ describe.only('SwapToRatio', () => {
       })
 
       describe('when the price falls at the lower end of the curve', () => {
-        it.skip('returns the correct sqrtPriceX96 for small excess of token1', async () => {
-          console.log('highest', toSqrtFixedPoint96(HIGHEST_PRICE).toString())
-          console.log('lowest', toSqrtFixedPoint96(LOWEST_PRICE).toString())
+        beforeEach(() => {
+          amount0Initial = 1_000
+          amount1Initial = 1_001
+          priceLower = LOWEST_PRICE
+          priceUpper = new bn(LOWEST_PRICE).multipliedBy(4).toString()
 
-          console.log((await swapToRatio.tickToSqrtRatioX96(getMinTick(TICK_SPACINGS[FeeAmount.LOW]))).toString())
-          console.log((await swapToRatio.tickToSqrtRatioX96(getMaxTick(TICK_SPACINGS[FeeAmount.LOW]))).toString())
-          // console.log((await swapToRatio.tickToSqrtRatioX96(getMinTick(TICK_SPACINGS[FeeAmount.LOW]))).toString())
-          // console.log(new bn((await swapToRatio.tickToSqrtRatioX96(getMinTick(TICK_SPACINGS[FeeAmount.LOW]))).toString()).dividedBy(2**96).sqrt().toString())
-          // console.log(new bn((await swapToRatio.tickToSqrtRatioX96(getMinTick(TICK_SPACINGS[FeeAmount.LOW]))).toString()).dividedBy(2**96).exponentiatedBy(2).toString())
+          liquidity = '8456917931490818044'
+          price = new bn(LOWEST_PRICE).multipliedBy(2).toString()
+          fee = FeeAmount.HIGH
+        })
+
+        it('returns the correct sqrtPriceX96 for small excess of token1', async () => {
+          const resultJS = quadraticFormulaJS({
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
+
+          const resultSol = (
+            await quadraticFormulaSolidity(swapToRatio, {
+              amount0Initial,
+              amount1Initial,
+              priceLower,
+              priceUpper,
+              liquidity,
+              price,
+              fee,
+            })
+          )
+
+          expect(resultSol.precision(3).toString()).to.eq(resultJS.precision(3).toString())
+        })
+
+        it('returns the correct sqrtPriceX96 with large token amounts', async () => {
+          amount0Initial = expandTo18Decimals(1_000)
+          amount1Initial = expandTo18Decimals(1_001)
+
+          const resultJS = quadraticFormulaJS({
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
+
+          const resultSol = (
+            await quadraticFormulaSolidity(swapToRatio, {
+              amount0Initial,
+              amount1Initial,
+              priceLower,
+              priceUpper,
+              liquidity,
+              price,
+              fee,
+            })
+          )
+
+          expect(resultSol.precision(3).toString()).to.eq(resultJS.precision(3).toString())
         })
       })
     })
@@ -643,7 +757,6 @@ type quadraticParams = {
 
 async function quadraticFormulaSolidity(swapToRatio: SwapToRatioTest, params: quadraticParams): Promise<bn> {
   const { price, liquidity, fee, priceLower, priceUpper, amount0Initial, amount1Initial } = params
-  console.log(toSqrtFixedPoint96(parseFloat(priceUpper.toString())).toString())
   const resultSol = await swapToRatio.calculateConstantLiquidityPostSwapSqrtPrice(
     toSqrtFixedPoint96(parseFloat(price.toString())),
     liquidity,
@@ -670,13 +783,6 @@ function quadraticFormulaJS(params: quadraticParams): bn {
   const feeMultiplier = new bn(1).dividedBy(new bn(1).minus(fee.dividedBy(1e6)))
   const liquidityMulFeeMultiplier = liquidity.multipliedBy(feeMultiplier)
 
-  const Q96 = toSqrtFixedPoint96(1).toString()
-  const sqrtPriceX96 = toSqrtFixedPoint96(params.price.toString()).toString()
-  const sqrtPriceX96Upper = toSqrtFixedPoint96(params.priceUpper.toString()).toString()
-  // liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96
-  console.log('first line a ', amount0Initial.multipliedBy(1e8).multipliedBy(sqrtPriceX96).toString())
-
-
   const a = amount0Initial
     .multipliedBy(sqrtPrice)
     .multipliedBy(sqrtPriceUpper)
@@ -697,9 +803,17 @@ function quadraticFormulaJS(params: quadraticParams): bn {
     .minus(amount1Initial)
     .minus(liquidityMulFeeMultiplier.multipliedBy(sqrtPrice))
 
-    console.log('a', a.toString())
-    console.log('b', b.toString())
-    console.log('c', c.toString())
+    if (consoleLog) {
+      const Q96 = toSqrtFixedPoint96(1).toString()
+      const sqrtPriceX96 = toSqrtFixedPoint96(params.price.toString()).toString()
+      const sqrtPriceX96Upper = toSqrtFixedPoint96(params.priceUpper.toString()).toString()
+      // liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96
+      console.log('first line a ', amount0Initial.multipliedBy(1e8).multipliedBy(sqrtPriceX96).toString())
+
+      console.log('a', a.toString())
+      console.log('b', b.toString())
+      console.log('c', c.toString())
+    }
 
   const sqrtb4ac = b.multipliedBy(b).minus(new bn(4).multipliedBy(a).multipliedBy(c)).sqrt()
   const quadratic = sqrtb4ac.minus(b).dividedBy(2).dividedBy(a)

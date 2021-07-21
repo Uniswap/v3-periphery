@@ -17,6 +17,8 @@ library SwapToRatio {
     using SafeMath for uint128;
     using SignedSafeMath for int256;
 
+    bool constant consoleLog = false;
+
     struct PoolParams {
         uint160 sqrtRatioX96;
         uint128 liquidity;
@@ -169,7 +171,7 @@ library SwapToRatio {
         uint256 amount0Initial,
         uint256 amount1Initial
     ) internal view returns (uint160 postSwapSqrtRatioX96) {
-        uint256 liquidityFeeMultiplier = ((liquidity * 1e6)) / (1e6 - fee);
+        uint256 liquidityFeeMultiplier = ((liquidity * 1e6 )) / (1e6 - fee);
 
         int256 a =
           int256(uint256(amount0Initial * sqrtRatioX96) +
@@ -193,15 +195,17 @@ library SwapToRatio {
                 int256(amount1Initial * FixedPoint96.Q96) -
                 int256(liquidityFeeMultiplier * sqrtRatioX96)) / int256(FixedPoint96.Q96);
 
-        console.log('first line', amount0Initial * sqrtRatioX96);
-        console.log('second line', liquidity * FixedPoint96.Q96);
-        console.log('third line', liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96);
-        console.log('a');
-        console.logInt(a);
-        console.log('b');
-        console.logInt(b);
-        console.log('c');
-        console.logInt(c);
+        if (consoleLog) {
+          console.log('first line', amount0Initial * sqrtRatioX96);
+          console.log('second line', liquidity * FixedPoint96.Q96);
+          console.log('third line', liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96);
+          console.log('a');
+          console.logInt(a);
+          console.log('b');
+          console.logInt(b);
+          console.log('c');
+          console.logInt(c);
+        }
 
         // quadratic formula
         return uint160(((int256(sqrt(uint256((b * b) - (4 * a * c)))) - (b)) * int256(FixedPoint96.Q96)) / (2 * a));
