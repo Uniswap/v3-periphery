@@ -254,17 +254,15 @@ describe.only('SwapToRatio', () => {
         it('returns the correct sqrtPriceX96 for small excess of token1', async () => {
           amount1Initial = 1_001
 
-          const resultSol = (
-            await quadraticFormulaSolidity(swapToRatio, {
-              amount0Initial,
-              amount1Initial,
-              priceLower,
-              priceUpper,
-              liquidity,
-              price,
-              fee,
-            })
-          )
+          const resultSol = await quadraticFormulaSolidity(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
           const resultJS = quadraticFormulaJS({
             amount0Initial,
             amount1Initial,
@@ -281,17 +279,15 @@ describe.only('SwapToRatio', () => {
         it('returns the correct sqrtPriceX96 with a very large excess of token1', async () => {
           amount1Initial = 10_000_000_000
 
-          const resultSol = (
-            await quadraticFormulaSolidity(swapToRatio, {
-              amount0Initial,
-              amount1Initial,
-              priceLower,
-              priceUpper,
-              liquidity,
-              price,
-              fee,
-            })
-          )
+          const resultSol = await quadraticFormulaSolidity(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
           const resultJS = quadraticFormulaJS({
             amount0Initial,
             amount1Initial,
@@ -309,17 +305,15 @@ describe.only('SwapToRatio', () => {
           amount1Initial = 10_000
           liquidity = '1917569901783203986719870431555990'
 
-          const resultSol = (
-            await quadraticFormulaSolidity(swapToRatio, {
-              amount0Initial,
-              amount1Initial,
-              priceLower,
-              priceUpper,
-              liquidity,
-              price,
-              fee,
-            })
-          )
+          const resultSol = await quadraticFormulaSolidity(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
 
           const resultJS = quadraticFormulaJS({
             amount0Initial,
@@ -338,17 +332,15 @@ describe.only('SwapToRatio', () => {
           amount1Initial = expandTo18Decimals(5_000)
           amount0Initial = expandTo18Decimals(1_000)
 
-          const resultSol = (
-            await quadraticFormulaSolidity(swapToRatio, {
-              amount0Initial,
-              amount1Initial,
-              priceLower,
-              priceUpper,
-              liquidity,
-              price,
-              fee,
-            })
-          )
+          const resultSol = await quadraticFormulaSolidity(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
 
           const resultJS = quadraticFormulaJS({
             amount0Initial,
@@ -388,17 +380,15 @@ describe.only('SwapToRatio', () => {
             fee,
           })
 
-          const resultSol = (
-            await quadraticFormulaSolidity(swapToRatio, {
-              amount0Initial,
-              amount1Initial,
-              priceLower,
-              priceUpper,
-              liquidity,
-              price,
-              fee,
-            })
-          )
+          const resultSol = await quadraticFormulaSolidity(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
 
           expect(resultSol.precision(10).toString()).to.eq(resultJS.precision(10).toString())
         })
@@ -417,20 +407,17 @@ describe.only('SwapToRatio', () => {
             fee,
           })
 
-          const resultSol = (
-            await quadraticFormulaSolidity(swapToRatio, {
-              amount0Initial,
-              amount1Initial,
-              priceLower,
-              priceUpper,
-              liquidity,
-              price,
-              fee,
-            })
-          )
+          const resultSol = await quadraticFormulaSolidity(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
 
           expect(resultSol.precision(10).toString()).to.eq(resultJS.precision(10).toString())
-
         })
       })
 
@@ -457,17 +444,15 @@ describe.only('SwapToRatio', () => {
             fee,
           })
 
-          const resultSol = (
-            await quadraticFormulaSolidity(swapToRatio, {
-              amount0Initial,
-              amount1Initial,
-              priceLower,
-              priceUpper,
-              liquidity,
-              price,
-              fee,
-            })
-          )
+          const resultSol = await quadraticFormulaSolidity(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
 
           expect(resultSol.precision(3).toString()).to.eq(resultJS.precision(3).toString())
         })
@@ -486,17 +471,15 @@ describe.only('SwapToRatio', () => {
             fee,
           })
 
-          const resultSol = (
-            await quadraticFormulaSolidity(swapToRatio, {
-              amount0Initial,
-              amount1Initial,
-              priceLower,
-              priceUpper,
-              liquidity,
-              price,
-              fee,
-            })
-          )
+          const resultSol = await quadraticFormulaSolidity(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
 
           expect(resultSol.precision(3).toString()).to.eq(resultJS.precision(3).toString())
         })
@@ -831,17 +814,17 @@ function quadraticFormulaJS(params: quadraticParams): bn {
     .minus(amount1Initial)
     .minus(liquidityMulFeeMultiplier.multipliedBy(sqrtPrice))
 
-    if (consoleLog) {
-      const Q96 = toSqrtFixedPoint96(1).toString()
-      const sqrtPriceX96 = toSqrtFixedPoint96(params.price.toString()).toString()
-      const sqrtPriceX96Upper = toSqrtFixedPoint96(params.priceUpper.toString()).toString()
-      // liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96
-      console.log('first line a ', amount0Initial.multipliedBy(1e8).multipliedBy(sqrtPriceX96).toString())
+  if (consoleLog) {
+    const Q96 = toSqrtFixedPoint96(1).toString()
+    const sqrtPriceX96 = toSqrtFixedPoint96(params.price.toString()).toString()
+    const sqrtPriceX96Upper = toSqrtFixedPoint96(params.priceUpper.toString()).toString()
+    // liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96
+    console.log('first line a ', amount0Initial.multipliedBy(1e8).multipliedBy(sqrtPriceX96).toString())
 
-      console.log('a', a.toString())
-      console.log('b', b.toString())
-      console.log('c', c.toString())
-    }
+    console.log('a', a.toString())
+    console.log('b', b.toString())
+    console.log('c', c.toString())
+  }
 
   const sqrtb4ac = b.multipliedBy(b).minus(new bn(4).multipliedBy(a).multipliedBy(c)).sqrt()
   const quadratic = sqrtb4ac.minus(b).dividedBy(2).dividedBy(a)

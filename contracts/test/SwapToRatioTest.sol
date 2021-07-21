@@ -53,6 +53,6 @@ contract SwapToRatioTest {
     }
 
     function tickToSqrtRatioX96(int24 tick) external pure returns (uint160) {
-      return TickMath.getSqrtRatioAtTick(tick);
+        return TickMath.getSqrtRatioAtTick(tick);
     }
 }
