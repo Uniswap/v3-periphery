@@ -169,35 +169,33 @@ library SwapToRatio {
         uint256 amount0Initial,
         uint256 amount1Initial
     ) internal view returns (uint160 postSwapSqrtRatioX96) {
-        uint256 liquidityFeeMultiplier = ((liquidity * 1e6) * 1e8) / (1e6 - fee);
+        uint256 liquidityFeeMultiplier = ((liquidity * 1e6)) / (1e6 - fee);
 
         int256 a =
-          int256(uint256(amount0Initial * 1e8 * sqrtRatioX96) +
-              uint256(liquidity * 1e8 * FixedPoint96.Q96) -
+          int256(uint256(amount0Initial * sqrtRatioX96) +
+              uint256(liquidity * FixedPoint96.Q96) -
               uint256(liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96));
-        console.log('first line', amount0Initial * 1e8 * sqrtRatioX96);
-        console.log('second line', liquidity * 1e8 * FixedPoint96.Q96);
-        console.log('third line', liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96);
-        console.log('\n\n a before division');
-        console.logInt(a);
         a = a / sqrtRatioX96;
 
         int256 b =
             (int256(liquidityFeeMultiplier * FixedPoint96.Q96) -
-                int256(liquidity * FixedPoint96.Q96 * 1e8) -
-                int256(sqrtRatioX96Lower * amount0Initial * 1e8) -
-                int256((liquidity * sqrtRatioX96Lower * FixedPoint96.Q96 * 1e8) / sqrtRatioX96) +
-                int256(amount1Initial * FixedPoint96.Q96 * FixedPoint96.Q96 * 1e8) /
+                int256(liquidity * FixedPoint96.Q96) -
+                int256(sqrtRatioX96Lower * amount0Initial) -
+                int256((liquidity * sqrtRatioX96Lower * FixedPoint96.Q96) / sqrtRatioX96) +
+                int256(amount1Initial * FixedPoint96.Q96 * FixedPoint96.Q96) /
                 int256(sqrtRatioX96Upper) +
                 int256((liquidityFeeMultiplier * sqrtRatioX96 * FixedPoint96.Q96) / sqrtRatioX96Upper));
 
         b = b / int256(FixedPoint96.Q96);
 
         int256 c =
-            (int256(liquidity * sqrtRatioX96Lower * 1e8) -
-                int256(amount1Initial * FixedPoint96.Q96 * 1e8) -
+            (int256(liquidity * sqrtRatioX96Lower) -
+                int256(amount1Initial * FixedPoint96.Q96) -
                 int256(liquidityFeeMultiplier * sqrtRatioX96)) / int256(FixedPoint96.Q96);
 
+        console.log('first line', amount0Initial * sqrtRatioX96);
+        console.log('second line', liquidity * FixedPoint96.Q96);
+        console.log('third line', liquidityFeeMultiplier * sqrtRatioX96 / sqrtRatioX96Upper * FixedPoint96.Q96);
         console.log('a');
         console.logInt(a);
         console.log('b');

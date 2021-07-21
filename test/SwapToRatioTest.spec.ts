@@ -245,7 +245,7 @@ describe.only('SwapToRatio', () => {
           priceLower = 0.5
           priceUpper = 2
 
-          liquidity = 300_000
+          liquidity = '8456917931490818044'
           price = 1
           fee = FeeAmount.HIGH
         })
