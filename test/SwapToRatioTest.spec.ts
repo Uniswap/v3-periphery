@@ -24,7 +24,7 @@ import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/i
 bn.config({ ROUNDING_MODE: bn.ROUND_FLOOR })
 
 const HIGHEST_PRICE = BigNumber.from('337815857904011919502232366785580118734')
-const LOWEST_PRICE = 0.00000000000000000000000000000000000000293954462969821995729408305099800169742336
+const LOWEST_PRICE = '0.00000000000000000000000000000000000000293954462969821995729408305099800169742336'
 
 describe.only('SwapToRatio', () => {
   const [...wallets] = waffle.provider.getWallets()
@@ -365,8 +365,8 @@ describe.only('SwapToRatio', () => {
       })
 
       describe('when the price falls at the upper end of the curve', () => {
-        before(() => {
-          amount0Initial = expandTo18Decimals(1_000)
+        beforeEach(() => {
+          amount0Initial = 1_000
           priceLower = HIGHEST_PRICE.div(4)
           priceUpper = HIGHEST_PRICE
 
@@ -376,7 +376,7 @@ describe.only('SwapToRatio', () => {
         })
 
         it('returns the correct sqrtPriceX96 for with a very small excess of token1', async () => {
-          amount1Initial = expandTo18Decimals(1_001)
+          amount1Initial = 1_001
 
           const resultJS = quadraticFormulaJS({
             amount0Initial,
@@ -403,7 +403,35 @@ describe.only('SwapToRatio', () => {
           expect(resultSol.precision(10).toString()).to.eq(resultJS.precision(10).toString())
         })
 
-        it('returns the correct sqrtPriceX96 for with a very large excess of token1')
+        it('returns the correct sqrtPriceX96 with large token amounts', async () => {
+          amount0Initial = expandTo18Decimals(1_000)
+          amount1Initial = expandTo18Decimals(1_001)
+
+          const resultJS = quadraticFormulaJS({
+            amount0Initial,
+            amount1Initial,
+            priceLower,
+            priceUpper,
+            liquidity,
+            price,
+            fee,
+          })
+
+          const resultSol = (
+            await quadraticFormulaSolidity(swapToRatio, {
+              amount0Initial,
+              amount1Initial,
+              priceLower,
+              priceUpper,
+              liquidity,
+              price,
+              fee,
+            })
+          )
+
+          expect(resultSol.precision(10).toString()).to.eq(resultJS.precision(10).toString())
+
+        })
       })
 
       describe('when the price falls at the lower end of the curve', () => {
