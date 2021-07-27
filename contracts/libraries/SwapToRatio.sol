@@ -9,6 +9,7 @@ import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/math/SignedSafeMath.sol';
 import './PoolTicksLibrary.sol';
+import './LiquidityAmounts.sol';
 import 'hardhat/console.sol';
 
 library SwapToRatio {
@@ -124,6 +125,8 @@ library SwapToRatio {
             int24 nextInitializedTick;
             bool initialized;
 
+            console.log('\ntick');
+            console.logInt(tick);
             // returns the next initialized tick or the last tick within one word of the current tick.
             // We'll renew calculation at least on a per word basis for better rounding
             (nextInitializedTick, initialized) = pool.nextInitializedTickWithinOneWord(tick, tickSpacing, zeroForOne);
@@ -148,17 +151,31 @@ library SwapToRatio {
                 tick = nextInitializedTick;
             }
         }
+        console.log('sol');
+        console.logInt(tick);
+        console.log('sol\n\n');
+        return TickMath.getSqrtRatioAtTick(tick);
+    }
 
-        return
-            calculateConstantLiquidityPostSwapSqrtPrice(
-                poolParams.sqrtRatioX96,
-                poolParams.liquidity,
-                poolParams.fee,
-                positionParams.sqrtRatioX96Lower,
-                positionParams.sqrtRatioX96Upper,
-                positionParams.amount0Initial,
-                positionParams.amount1Initial
-            );
+    function isZeroForOne(
+        uint256 amount0,
+        uint256 amount1,
+        uint160 sqrtRatioX96,
+        uint160 sqrtRatioX96Lower,
+        uint160 sqrtRatioX96Upper
+    ) internal view returns (bool) {
+        if (amount0 > amount1) {
+            return
+                amount0 / amount1 >
+                // arbitrary liquidity param of 100_000 since it cancels out
+                SqrtPriceMath.getAmount0Delta(sqrtRatioX96, sqrtRatioX96Upper, 100_000, false) /
+                    SqrtPriceMath.getAmount1Delta(sqrtRatioX96, sqrtRatioX96Lower, 100_000, false);
+        } else {
+            return
+                amount1 / amount0 <
+                SqrtPriceMath.getAmount1Delta(sqrtRatioX96, sqrtRatioX96Lower, 100_000, false) /
+                    SqrtPriceMath.getAmount0Delta(sqrtRatioX96, sqrtRatioX96Upper, 100_000, false);
+        }
     }
 
     // TODO: Only solves for token1 right now
@@ -210,31 +227,6 @@ library SwapToRatio {
 
         // quadratic formula
         return uint160(((int256(sqrt(uint256((b * b) - (4 * a * c)))) - (b)) * int256(FixedPoint96.Q96)) / (2 * a));
-    }
-
-    function isZeroForOne(
-        uint256 amount0,
-        uint256 amount1,
-        uint160 sqrtRatioX96,
-        uint160 sqrtRatioX96Lower,
-        uint160 sqrtRatioX96Upper
-    ) private view returns (bool) {
-        if (amount0 > amount1) {
-            return
-                amount0 / amount1 >
-                SqrtPriceMath.getAmount0Delta(
-                    sqrtRatioX96,
-                    sqrtRatioX96Upper,
-                    1, // arbitrary since it cancels out
-                    false
-                ) /
-                    SqrtPriceMath.getAmount1Delta(sqrtRatioX96, sqrtRatioX96Lower, 1, false);
-        } else {
-            return
-                amount1 / amount0 <
-                SqrtPriceMath.getAmount1Delta(sqrtRatioX96, sqrtRatioX96Lower, 1, false) /
-                    SqrtPriceMath.getAmount0Delta(sqrtRatioX96, sqrtRatioX96Upper, 1, false);
-        }
     }
 
     function getPoolInputs(IUniswapV3Pool pool)

@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import '../libraries/SwapToRatio.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+import '@uniswap/v3-core/contracts/libraries/SqrtPriceMath.sol';
 
 contract SwapToRatioTest {
     function getPostSwapPrice(IUniswapV3Pool pool, SwapToRatio.PositionParams memory positionParams)
@@ -54,5 +55,23 @@ contract SwapToRatioTest {
 
     function tickToSqrtRatioX96(int24 tick) external pure returns (uint160) {
         return TickMath.getSqrtRatioAtTick(tick);
+    }
+
+    function getAmount0Delta(
+        uint160 sqrtRatioAX96,
+        uint160 sqrtRatioBX96,
+        uint128 liquidity,
+        bool roundUp
+    ) external pure returns (uint256 amount1) {
+        return SqrtPriceMath.getAmount0Delta(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp);
+    }
+
+    function getAmount1Delta(
+        uint160 sqrtRatioAX96,
+        uint160 sqrtRatioBX96,
+        uint128 liquidity,
+        bool roundUp
+    ) external pure returns (uint256 amount1) {
+        return SqrtPriceMath.getAmount1Delta(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp);
     }
 }
