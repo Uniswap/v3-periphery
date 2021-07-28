@@ -1,5 +1,5 @@
 import { waffle, ethers } from 'hardhat'
-import { constants } from 'ethers'
+import { constants, BigNumberish } from 'ethers'
 import { Fixture } from 'ethereum-waffle'
 import {
   PositionValueTest,
@@ -51,7 +51,7 @@ describe('PositionValue', async () => {
   let nft: MockTimeNonfungiblePositionManager
   let router: SwapRouter
 
-  const amountDesired = 100
+  let amountDesired: BigNumberish = 100
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
   before('create fixture loader', async () => {
@@ -170,8 +170,13 @@ describe('PositionValue', async () => {
     })
   })
 
-  describe('#fees', () => {
-    it.only('return the correct amount of fees', async () => {
+  describe.only('#fees', () => {
+    let tokenId: number
+
+    beforeEach(async () => {
+      amountDesired = expandTo18Decimals(100_000)
+      tokenId = 2
+
       await nft.mint({
         token0: tokens[0].address,
         token1: tokens[1].address,
@@ -185,9 +190,27 @@ describe('PositionValue', async () => {
         amount1Min: 0,
         deadline: 10,
       })
+    })
 
-      const swapAmount = 10000
+    it('return the correct amount of fees when the price is within position range', async () => {
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: TICK_SPACINGS[FeeAmount.MEDIUM] * -1_000,
+        tickUpper: TICK_SPACINGS[FeeAmount.MEDIUM] * 1_000,
+        fee: FeeAmount.MEDIUM,
+        recipient: wallets[0].address,
+        amount0Desired: amountDesired,
+        amount1Desired: amountDesired,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 10,
+      })
+
+      const swapAmount = expandTo18Decimals(1_000)
       await tokens[0].approve(router.address, swapAmount)
+
+      // accmuluate token0 fees
       await router.exactInput({
         recipient: wallets[0].address,
         deadline: 1,
@@ -196,15 +219,32 @@ describe('PositionValue', async () => {
         amountOutMinimum: 0,
       })
 
-      // this works
-      const fees = await nft.callStatic.collect({
-        tokenId: 1,
+      const feesFromCollect = await nft.callStatic.collect({
+        tokenId,
         recipient: wallets[0].address,
         amount0Max: MaxUint128,
         amount1Max: MaxUint128,
       })
-      // console.log(fees.amount0.toString())
-      // console.log(fees.amount1.toString())
+
+      const feeAmounts = await positionValue.fees(nft.address, tokenId)
+      expect(feeAmounts[0]).to.equal(feesFromCollect[0])
+      expect(feeAmounts[1]).to.equal(feesFromCollect[1])
+    })
+
+    it('returns the correct amount of fees when the price is above the position range', async () => {
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: TICK_SPACINGS[FeeAmount.MEDIUM] * -10,
+        tickUpper: TICK_SPACINGS[FeeAmount.MEDIUM] * 10,
+        fee: FeeAmount.MEDIUM,
+        recipient: wallets[0].address,
+        amount0Desired: expandTo18Decimals(10_000),
+        amount1Desired: expandTo18Decimals(10_000),
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 10,
+      })
 
       const pool = new ethers.Contract(
         computePoolAddress(await nft.factory(), [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
@@ -212,13 +252,93 @@ describe('PositionValue', async () => {
         wallets[0]
       )
 
-      // this reverts with "NP"
-      await pool.burn(getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]), getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]), 0, {
-        gasLimit: 12_450_000,
+      await tokens[0].approve(router.address, constants.MaxUint256)
+      await tokens[1].approve(router.address, constants.MaxUint256)
+
+      // accumulate token0 fees
+      await router.exactInput({
+        recipient: wallets[0].address,
+        deadline: 1,
+        path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+        amountIn: expandTo18Decimals(1_000),
+        amountOutMinimum: 0,
       })
-      const fees2 = await positionValue.fees(nft.address, 1)
-      console.log(fees2.amount0.toString())
-      console.log(fees2.amount1.toString())
+
+      // accumulate token1 fees and push price above tickUpper
+      await router.exactInput({
+        recipient: wallets[0].address,
+        deadline: 1,
+        path: encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
+        amountIn: expandTo18Decimals(50_000),
+        amountOutMinimum: 0,
+      })
+
+      const feesFromCollect = await nft.callStatic.collect({
+        tokenId,
+        recipient: wallets[0].address,
+        amount0Max: MaxUint128,
+        amount1Max: MaxUint128,
+      })
+
+      const feeAmounts = await positionValue.fees(nft.address, tokenId)
+      expect(feeAmounts[0]).to.equal(feesFromCollect[0])
+      expect(feeAmounts[1]).to.equal(feesFromCollect[1])
+    })
+
+    it('returns the correct amount of fees when the price is below the position range', async () => {
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: TICK_SPACINGS[FeeAmount.MEDIUM] * -10,
+        tickUpper: TICK_SPACINGS[FeeAmount.MEDIUM] * 10,
+        fee: FeeAmount.MEDIUM,
+        recipient: wallets[0].address,
+        amount0Desired: expandTo18Decimals(10_000),
+        amount1Desired: expandTo18Decimals(10_000),
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 10,
+      })
+
+      const pool = new ethers.Contract(
+        computePoolAddress(await nft.factory(), [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM),
+        IUniswapV3PoolABI,
+        wallets[0]
+      )
+
+      await tokens[0].approve(router.address, constants.MaxUint256)
+      await tokens[1].approve(router.address, constants.MaxUint256)
+
+      // accumulate token1 fees
+      await router.exactInput({
+        recipient: wallets[0].address,
+        deadline: 1,
+        path: encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
+        amountIn: expandTo18Decimals(1_000),
+        amountOutMinimum: 0,
+      })
+
+      // accumulate token0 fees and push price below tickLower
+      await router.exactInput({
+        recipient: wallets[0].address,
+        deadline: 1,
+        path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+        amountIn: expandTo18Decimals(50_000),
+        amountOutMinimum: 0,
+      })
+
+      const feesFromCollect = await nft.callStatic.collect({
+        tokenId,
+        recipient: wallets[0].address,
+        amount0Max: MaxUint128,
+        amount1Max: MaxUint128,
+      })
+
+      console.log(await pool.slot0())
+
+      const feeAmounts = await positionValue.fees(nft.address, tokenId)
+      expect(feeAmounts[0]).to.equal(feesFromCollect[0])
+      expect(feeAmounts[1]).to.equal(feesFromCollect[1])
     })
   })
 })
