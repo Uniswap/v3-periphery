@@ -21,7 +21,7 @@ import { expect } from './shared/expect'
 
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
-describe('PositionValue', async () => {
+describe.only('PositionValue', async () => {
   const [...wallets] = waffle.provider.getWallets()
   const positionValueCompleteFixture: Fixture<{
     positionValue: PositionValueTest
@@ -70,7 +70,61 @@ describe('PositionValue', async () => {
   })
 
   describe('#total', () => {
+    let tokenId: number
 
+    beforeEach(async () => {
+      amountDesired = expandTo18Decimals(100_000)
+
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
+        recipient: wallets[0].address,
+        amount0Desired: amountDesired,
+        amount1Desired: amountDesired,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 10,
+      })
+
+      const swapAmount = expandTo18Decimals(1_000)
+      await tokens[0].approve(router.address, swapAmount)
+      await tokens[1].approve(router.address, swapAmount)
+
+      // accmuluate token0 fees
+      await router.exactInput({
+        recipient: wallets[0].address,
+        deadline: 1,
+        path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+        amountIn: swapAmount,
+        amountOutMinimum: 0,
+      })
+
+      // accmuluate token1 fees
+      await router.exactInput({
+        recipient: wallets[0].address,
+        deadline: 1,
+        path: encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
+        amountIn: swapAmount,
+        amountOutMinimum: 0,
+      })
+    })
+
+
+    it('returns the correct amount', async () => {
+      const principal = await positionValue.principal(nft.address, 1)
+      const fees = await positionValue.fees(nft.address, 1)
+      const total = await positionValue.total(nft.address, 1)
+
+      expect(total[0]).to.equal(principal[0].add(fees[0]))
+      expect(total[1]).to.equal(principal[1].add(fees[1]))
+    })
+
+    it('gas', async () => {
+      await snapshotGasCost(positionValue.totalGas(nft.address, 1))
+    })
   })
 
   describe('#principal', () => {
