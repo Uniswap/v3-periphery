@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PositionValue #fees gas 1`] = `52668`;
+
+exports[`PositionValue #principal gas 1`] = `30011`;

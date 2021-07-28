@@ -15,12 +15,13 @@ import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { encodePath } from './shared/path'
 import { computePoolAddress } from './shared/computePoolAddress'
 import completeFixture from './shared/completeFixture'
+import snapshotGasCost from './shared/snapshotGasCost'
 
 import { expect } from './shared/expect'
 
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
-describe('PositionValue', async () => {
+describe.only('PositionValue', async () => {
   const [...wallets] = waffle.provider.getWallets()
   const positionValueCompleteFixture: Fixture<{
     positionValue: PositionValueTest
@@ -51,7 +52,7 @@ describe('PositionValue', async () => {
   let nft: MockTimeNonfungiblePositionManager
   let router: SwapRouter
 
-  let amountDesired: BigNumberish = 100
+  let amountDesired: BigNumberish = 15
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
   before('create fixture loader', async () => {
@@ -168,9 +169,29 @@ describe('PositionValue', async () => {
       expect(principal.amount0).to.equal(3)
       expect(principal.amount1).to.equal(14)
     })
+
+    it('gas', async () => {
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
+        recipient: wallets[0].address,
+        amount0Desired: amountDesired,
+        amount1Desired: amountDesired,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 10,
+      })
+
+      await snapshotGasCost(
+        positionValue.principalGas(nft.address, 1)
+      )
+    })
   })
 
-  describe.only('#fees', () => {
+  describe('#fees', () => {
     let tokenId: number
 
     beforeEach(async () => {
@@ -334,11 +355,39 @@ describe('PositionValue', async () => {
         amount1Max: MaxUint128,
       })
 
-      console.log(await pool.slot0())
-
       const feeAmounts = await positionValue.fees(nft.address, tokenId)
       expect(feeAmounts[0]).to.equal(feesFromCollect[0])
       expect(feeAmounts[1]).to.equal(feesFromCollect[1])
+    })
+
+    it('gas', async () => {
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: TICK_SPACINGS[FeeAmount.MEDIUM] * -1_000,
+        tickUpper: TICK_SPACINGS[FeeAmount.MEDIUM] * 1_000,
+        fee: FeeAmount.MEDIUM,
+        recipient: wallets[0].address,
+        amount0Desired: amountDesired,
+        amount1Desired: amountDesired,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 10,
+      })
+
+      const swapAmount = expandTo18Decimals(1_000)
+      await tokens[0].approve(router.address, swapAmount)
+
+      // accmuluate token0 fees
+      await router.exactInput({
+        recipient: wallets[0].address,
+        deadline: 1,
+        path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+        amountIn: swapAmount,
+        amountOutMinimum: 0,
+      })
+
+      await snapshotGasCost(positionValue.feesGas(nft.address, tokenId))
     })
   })
 })
