@@ -21,7 +21,7 @@ import { expect } from './shared/expect'
 
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
-describe('PositionValue', async () => {
+describe.only('PositionValue', async () => {
   const [...wallets] = waffle.provider.getWallets()
   const positionValueCompleteFixture: Fixture<{
     positionValue: PositionValueTest
@@ -52,7 +52,7 @@ describe('PositionValue', async () => {
   let nft: MockTimeNonfungiblePositionManager
   let router: SwapRouter
 
-  let amountDesired: BigNumberish = 15
+  let amountDesired: BigNumberish
 
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
   before('create fixture loader', async () => {
@@ -69,7 +69,15 @@ describe('PositionValue', async () => {
     )
   })
 
+  describe('#total', () => {
+
+  })
+
   describe('#principal', () => {
+    beforeEach(() => {
+      amountDesired = expandTo18Decimals(100_000)
+    })
+
     it('returns the correct values when price is in the middle of the range', async () => {
       await nft.mint({
         token0: tokens[0].address,
@@ -86,8 +94,8 @@ describe('PositionValue', async () => {
       })
 
       const principal = await positionValue.principal(nft.address, 1)
-      expect(principal.amount0).to.equal(14)
-      expect(principal.amount1).to.equal(14)
+      expect(principal.amount0).to.equal('99999999999999999999999')
+      expect(principal.amount1).to.equal('99999999999999999999999')
     })
 
     it('returns the correct values when range is below current price', async () => {
@@ -106,8 +114,8 @@ describe('PositionValue', async () => {
       })
 
       const principal = await positionValue.principal(nft.address, 1)
-      expect(principal.amount0).to.equal(0)
-      expect(principal.amount1).to.equal(14)
+      expect(principal.amount0).to.equal('0')
+      expect(principal.amount1).to.equal('99999999999999999999999')
     })
 
     it('returns the correct values when range is below current price', async () => {
@@ -126,8 +134,8 @@ describe('PositionValue', async () => {
       })
 
       const principal = await positionValue.principal(nft.address, 1)
-      expect(principal.amount0).to.equal(14)
-      expect(principal.amount1).to.equal(0)
+      expect(principal.amount0).to.equal('99999999999999999999999')
+      expect(principal.amount1).to.equal('0')
     })
 
     it('returns the correct values when range is skewed above price', async () => {
@@ -146,8 +154,8 @@ describe('PositionValue', async () => {
       })
 
       const principal = await positionValue.principal(nft.address, 1)
-      expect(principal.amount0).to.equal(14)
-      expect(principal.amount1).to.equal(3)
+      expect(principal.amount0).to.equal('99999999999999999999999')
+      expect(principal.amount1).to.equal('25917066770240321655335')
     })
 
     it('returns the correct values when range is skewed below price', async () => {
@@ -166,8 +174,8 @@ describe('PositionValue', async () => {
       })
 
       const principal = await positionValue.principal(nft.address, 1)
-      expect(principal.amount0).to.equal(3)
-      expect(principal.amount1).to.equal(14)
+      expect(principal.amount0).to.equal('25917066770240321655335')
+      expect(principal.amount1).to.equal('99999999999999999999999')
     })
 
     it('gas', async () => {
