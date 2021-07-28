@@ -11,6 +11,17 @@ import './PoolAddress.sol';
 import './PositionKey.sol';
 
 library PositionValue {
+    function total(INonfungiblePositionManager nft, uint256 tokenId)
+        internal
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
+        (amount0, amount1) = principal(nft, tokenId);
+        (uint256 amount0Fees, uint256 amount1Fees) = fees(nft, tokenId);
+        amount0 += amount0Fees;
+        amount1 += amount1Fees;
+    }
+
     function principal(INonfungiblePositionManager nft, uint256 tokenId)
         internal
         view
@@ -53,27 +64,69 @@ library PositionValue {
             uint128 liquidity,
             uint256 positionFeeGrowthInside0LastX128,
             uint256 positionFeeGrowthInside1LastX128,
-            ,
-
+            uint256 tokensOwed0,
+            uint256 tokensOwed1
         ) = nft.positions(tokenId);
 
-        (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) =
-            getFeeGrowthInside(nft, token0, token1, fee, tickLower, tickUpper);
-
-        amount0 = FullMath.mulDiv(
-            poolFeeGrowthInside0LastX128 - positionFeeGrowthInside0LastX128,
-            liquidity,
-            FixedPoint128.Q128
-        );
-
-        amount1 = FullMath.mulDiv(
-            poolFeeGrowthInside1LastX128 - positionFeeGrowthInside1LastX128,
-            liquidity,
-            FixedPoint128.Q128
-        );
+        return
+            _fees(
+                nft,
+                PositionParams({
+                    token0: token0,
+                    token1: token1,
+                    fee: fee,
+                    tickLower: tickLower,
+                    tickUpper: tickUpper,
+                    liquidity: liquidity,
+                    positionFeeGrowthInside0LastX128: positionFeeGrowthInside0LastX128,
+                    positionFeeGrowthInside1LastX128: positionFeeGrowthInside1LastX128,
+                    tokensOwed0: tokensOwed0,
+                    tokensOwed1: tokensOwed1
+                })
+            );
     }
 
-    function getFeeGrowthInside(
+    struct PositionParams {
+        address token0;
+        address token1;
+        uint24 fee;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 liquidity;
+        uint256 positionFeeGrowthInside0LastX128;
+        uint256 positionFeeGrowthInside1LastX128;
+        uint256 tokensOwed0;
+        uint256 tokensOwed1;
+    }
+
+    function _fees(
+        INonfungiblePositionManager nft,
+        PositionParams memory positionParams
+    ) private view returns (uint256 amount0, uint256 amount1) {
+        (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) =
+            _getFeeGrowthInside(
+                nft,
+                positionParams.token0,
+                positionParams.token1,
+                positionParams.fee,
+                positionParams.tickLower,
+                positionParams.tickUpper
+            );
+
+        amount0 = FullMath.mulDiv(
+            poolFeeGrowthInside0LastX128 - positionParams.positionFeeGrowthInside0LastX128,
+            positionParams.liquidity,
+            FixedPoint128.Q128
+        ) + positionParams.tokensOwed0;
+
+        amount1 = FullMath.mulDiv(
+            poolFeeGrowthInside1LastX128 - positionParams.positionFeeGrowthInside1LastX128,
+            positionParams.liquidity,
+            FixedPoint128.Q128
+        ) + positionParams.tokensOwed1;
+    }
+
+    function _getFeeGrowthInside(
         INonfungiblePositionManager nft,
         address token0,
         address token1,
@@ -88,8 +141,8 @@ library PositionValue {
                     PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
                 )
             );
-        (, int24 tickCurrent, , , , , ) = pool.slot0();
 
+        (, int24 tickCurrent, , , , , ) = pool.slot0();
         (, , uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128, , , , ) = pool.ticks(tickLower);
         (, , uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128, , , , ) = pool.ticks(tickUpper);
 

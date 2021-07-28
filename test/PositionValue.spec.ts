@@ -21,7 +21,7 @@ import { expect } from './shared/expect'
 
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
-describe.only('PositionValue', async () => {
+describe('PositionValue', async () => {
   const [...wallets] = waffle.provider.getWallets()
   const positionValueCompleteFixture: Fixture<{
     positionValue: PositionValueTest
@@ -237,12 +237,22 @@ describe.only('PositionValue', async () => {
 
         const swapAmount = expandTo18Decimals(1_000)
         await tokens[0].approve(router.address, swapAmount)
+        await tokens[1].approve(router.address, swapAmount)
 
         // accmuluate token0 fees
         await router.exactInput({
           recipient: wallets[0].address,
           deadline: 1,
           path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+          amountIn: swapAmount,
+          amountOutMinimum: 0,
+        })
+
+        // accmuluate token1 fees
+        await router.exactInput({
+          recipient: wallets[0].address,
+          deadline: 1,
+          path: encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
           amountIn: swapAmount,
           amountOutMinimum: 0,
         })
@@ -256,8 +266,43 @@ describe.only('PositionValue', async () => {
           amount1Max: MaxUint128,
         })
         const feeAmounts = await positionValue.fees(nft.address, tokenId)
+
         expect(feeAmounts[0]).to.equal(feesFromCollect[0])
         expect(feeAmounts[1]).to.equal(feesFromCollect[1])
+      })
+
+      it('returns the correct amount of fees if tokensOwed fields are greater than 0', async () => {
+        await nft.increaseLiquidity({
+          tokenId: tokenId,
+          amount0Desired: 100,
+          amount1Desired: 100,
+          amount0Min: 0,
+          amount1Min: 0,
+          deadline: 1,
+        })
+
+        const swapAmount = expandTo18Decimals(1_000)
+        await tokens[0].approve(router.address, swapAmount)
+
+        // accmuluate more token0 fees after clearing initial amount
+        await router.exactInput({
+          recipient: wallets[0].address,
+          deadline: 1,
+          path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+          amountIn: swapAmount,
+          amountOutMinimum: 0,
+        })
+
+        const feesFromCollect = await nft.callStatic.collect({
+          tokenId,
+          recipient: wallets[0].address,
+          amount0Max: MaxUint128,
+          amount1Max: MaxUint128,
+        })
+        const feeAmounts = await positionValue.fees(nft.address, tokenId)
+        expect(feeAmounts[0]).to.equal(feesFromCollect[0])
+        expect(feeAmounts[1]).to.equal(feesFromCollect[1])
+
       })
 
       it('gas', async () => {
