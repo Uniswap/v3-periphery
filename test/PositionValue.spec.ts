@@ -185,9 +185,7 @@ describe('PositionValue', async () => {
         deadline: 10,
       })
 
-      await snapshotGasCost(
-        positionValue.principalGas(nft.address, 1)
-      )
+      await snapshotGasCost(positionValue.principalGas(nft.address, 1))
     })
   })
 
@@ -259,7 +257,7 @@ describe('PositionValue', async () => {
       })
     })
 
-    describe('when price is below the position range', async  () => {
+    describe('when price is below the position range', async () => {
       beforeEach(async () => {
         await nft.mint({
           token0: tokens[0].address,
