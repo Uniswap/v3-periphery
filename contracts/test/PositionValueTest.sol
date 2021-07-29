@@ -29,7 +29,6 @@ contract PositionValueTest {
         return PositionValue.total(nft, tokenId);
     }
 
-
     function principalGas(INonfungiblePositionManager nft, uint256 tokenId) external view returns (uint256) {
         uint256 gasBefore = gasleft();
         PositionValue.principal(nft, tokenId);

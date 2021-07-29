@@ -16,8 +16,47 @@ library PositionValue {
         view
         returns (uint256 amount0, uint256 amount1)
     {
-        (amount0, amount1) = principal(nft, tokenId);
-        (uint256 amount0Fees, uint256 amount1Fees) = fees(nft, tokenId);
+        (
+            ,
+            ,
+            address token0,
+            address token1,
+            uint24 fee,
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity,
+            uint256 positionFeeGrowthInside0LastX128,
+            uint256 positionFeeGrowthInside1LastX128,
+            uint256 tokensOwed0,
+            uint256 tokensOwed1
+        ) = nft.positions(tokenId);
+
+        (uint160 sqrtRatioX96, , , , , , ) =
+            IUniswapV3Pool(
+                PoolAddress.computeAddress(
+                    nft.factory(),
+                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
+                )
+            )
+                .slot0();
+
+        (amount0, amount1) = _fees(
+            nft,
+            PositionParams(
+                token0,
+                token1,
+                fee,
+                tickLower,
+                tickUpper,
+                liquidity,
+                positionFeeGrowthInside0LastX128,
+                positionFeeGrowthInside1LastX128,
+                tokensOwed0,
+                tokensOwed1
+            )
+        );
+        (uint256 amount0Principal, uint256 amount1Principal) =
+            _principal(PrincipalParams(sqrtRatioX96, tickLower, tickUpper, liquidity));
         amount0 += amount0Fees;
         amount1 += amount1Fees;
     }
@@ -39,12 +78,23 @@ library PositionValue {
             )
                 .slot0();
 
+        return _principal(PrincipalParams(sqrtRatioX96, tickLower, tickUpper, liquidity));
+    }
+
+    struct PrincipalParams {
+        uint160 sqrtRatioX96;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 liquidity;
+    }
+
+    function _principal(PrincipalParams memory params) internal view returns (uint256 amount0, uint256 amount1) {
         return
             LiquidityAmounts.getAmountsForLiquidity(
-                sqrtRatioX96,
-                TickMath.getSqrtRatioAtTick(tickLower),
-                TickMath.getSqrtRatioAtTick(tickUpper),
-                liquidity
+                params.sqrtRatioX96,
+                TickMath.getSqrtRatioAtTick(params.tickLower),
+                TickMath.getSqrtRatioAtTick(params.tickUpper),
+                params.liquidity
             );
     }
 
@@ -99,10 +149,11 @@ library PositionValue {
         uint256 tokensOwed1;
     }
 
-    function _fees(
-        INonfungiblePositionManager nft,
-        PositionParams memory positionParams
-    ) private view returns (uint256 amount0, uint256 amount1) {
+    function _fees(INonfungiblePositionManager nft, PositionParams memory positionParams)
+        private
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
         (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) =
             _getFeeGrowthInside(
                 nft,
@@ -113,17 +164,21 @@ library PositionValue {
                 positionParams.tickUpper
             );
 
-        amount0 = FullMath.mulDiv(
-            poolFeeGrowthInside0LastX128 - positionParams.positionFeeGrowthInside0LastX128,
-            positionParams.liquidity,
-            FixedPoint128.Q128
-        ) + positionParams.tokensOwed0;
+        amount0 =
+            FullMath.mulDiv(
+                poolFeeGrowthInside0LastX128 - positionParams.positionFeeGrowthInside0LastX128,
+                positionParams.liquidity,
+                FixedPoint128.Q128
+            ) +
+            positionParams.tokensOwed0;
 
-        amount1 = FullMath.mulDiv(
-            poolFeeGrowthInside1LastX128 - positionParams.positionFeeGrowthInside1LastX128,
-            positionParams.liquidity,
-            FixedPoint128.Q128
-        ) + positionParams.tokensOwed1;
+        amount1 =
+            FullMath.mulDiv(
+                poolFeeGrowthInside1LastX128 - positionParams.positionFeeGrowthInside1LastX128,
+                positionParams.liquidity,
+                FixedPoint128.Q128
+            ) +
+            positionParams.tokensOwed1;
     }
 
     function _getFeeGrowthInside(
