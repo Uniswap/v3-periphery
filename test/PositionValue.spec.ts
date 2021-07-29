@@ -21,7 +21,7 @@ import { expect } from './shared/expect'
 
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
-describe.only('PositionValue', async () => {
+describe('PositionValue', async () => {
   const [...wallets] = waffle.provider.getWallets()
   const positionValueCompleteFixture: Fixture<{
     positionValue: PositionValueTest
@@ -111,7 +111,6 @@ describe.only('PositionValue', async () => {
         amountOutMinimum: 0,
       })
     })
-
 
     it('returns the correct amount', async () => {
       const principal = await positionValue.principal(nft.address, 1)
@@ -356,7 +355,6 @@ describe.only('PositionValue', async () => {
         const feeAmounts = await positionValue.fees(nft.address, tokenId)
         expect(feeAmounts[0]).to.equal(feesFromCollect[0])
         expect(feeAmounts[1]).to.equal(feesFromCollect[1])
-
       })
 
       it('gas', async () => {

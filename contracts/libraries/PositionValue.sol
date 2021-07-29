@@ -10,8 +10,14 @@ import './LiquidityAmounts.sol';
 import './PoolAddress.sol';
 import './PositionKey.sol';
 
+/// @title Returns information about the token value held in a Uniswap V3 NFT
 library PositionValue {
-    function total(INonfungiblePositionManager nft, uint256 tokenId)
+    /// @notice returns the total token value including the principal and the fees owed
+    /// @param positionManager The Uniswap V3 NonfungiblePositionManager
+    /// @param tokenId The tokenId of the token for which to get the total value
+    /// @returns amount0 The total amount of token0 including principal and fees
+    /// @returns amount1 The total amount of token1 including principal and fees
+    function total(INonfungiblePositionManager positionManager, uint256 tokenId)
         internal
         view
         returns (uint256 amount0, uint256 amount1)
@@ -29,20 +35,20 @@ library PositionValue {
             uint256 positionFeeGrowthInside1LastX128,
             uint256 tokensOwed0,
             uint256 tokensOwed1
-        ) = nft.positions(tokenId);
+        ) = positionManager.positions(tokenId);
 
         (uint160 sqrtRatioX96, , , , , , ) =
             IUniswapV3Pool(
                 PoolAddress.computeAddress(
-                    nft.factory(),
+                    positionManager.factory(),
                     PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
                 )
             )
                 .slot0();
 
         (amount0, amount1) = _fees(
-            nft,
-            PositionParams(
+            positionManager,
+            FeeParams(
                 token0,
                 token1,
                 fee,
@@ -57,28 +63,8 @@ library PositionValue {
         );
         (uint256 amount0Principal, uint256 amount1Principal) =
             _principal(PrincipalParams(sqrtRatioX96, tickLower, tickUpper, liquidity));
-        amount0 += amount0Fees;
-        amount1 += amount1Fees;
-    }
-
-    function principal(INonfungiblePositionManager nft, uint256 tokenId)
-        internal
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
-        (, , address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) =
-            nft.positions(tokenId);
-
-        (uint160 sqrtRatioX96, , , , , , ) =
-            IUniswapV3Pool(
-                PoolAddress.computeAddress(
-                    nft.factory(),
-                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
-                )
-            )
-                .slot0();
-
-        return _principal(PrincipalParams(sqrtRatioX96, tickLower, tickUpper, liquidity));
+        amount0 += amount0Principal;
+        amount1 += amount1Principal;
     }
 
     struct PrincipalParams {
@@ -88,7 +74,33 @@ library PositionValue {
         uint128 liquidity;
     }
 
-    function _principal(PrincipalParams memory params) internal view returns (uint256 amount0, uint256 amount1) {
+    /// @notice Calculates the principal (currently acting as liquidity) owed to the token owner in the event
+    /// that the position is burned
+    /// @param positionManager The Uniswap V3 NonfungiblePositionManager
+    /// @param tokenId The tokenId of the token for which to get the total principal owed
+    /// @returns amount0 The principal amount of token0
+    /// @returns amount1 The principal amount of token1
+    function principal(INonfungiblePositionManager positionManager, uint256 tokenId)
+        internal
+        view
+        returns (uint256 amount0, uint256 amount1)
+    {
+        (, , address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) =
+            positionManager.positions(tokenId);
+
+        (uint160 sqrtRatioX96, , , , , , ) =
+            IUniswapV3Pool(
+                PoolAddress.computeAddress(
+                    positionManager.factory(),
+                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
+                )
+            )
+                .slot0();
+
+        return _principal(PrincipalParams(sqrtRatioX96, tickLower, tickUpper, liquidity));
+    }
+
+    function _principal(PrincipalParams memory params) internal pure returns (uint256 amount0, uint256 amount1) {
         return
             LiquidityAmounts.getAmountsForLiquidity(
                 params.sqrtRatioX96,
@@ -98,7 +110,25 @@ library PositionValue {
             );
     }
 
-    function fees(INonfungiblePositionManager nft, uint256 tokenId)
+    struct FeeParams {
+        address token0;
+        address token1;
+        uint24 fee;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 liquidity;
+        uint256 positionFeeGrowthInside0LastX128;
+        uint256 positionFeeGrowthInside1LastX128;
+        uint256 tokensOwed0;
+        uint256 tokensOwed1;
+    }
+
+    /// @notice Calculates the total fees owed to the token owner
+    /// @param positionManager The Uniswap V3 NonfungiblePositionManager
+    /// @param tokenId The tokenId of the token for which to get the total fees owed
+    /// @returns amount0 The amount of fees owed in token0
+    /// @returns amount1 The amount of fees owed in token1
+    function fees(INonfungiblePositionManager positionManager, uint256 tokenId)
         internal
         view
         returns (uint256 amount0, uint256 amount1)
@@ -116,12 +146,12 @@ library PositionValue {
             uint256 positionFeeGrowthInside1LastX128,
             uint256 tokensOwed0,
             uint256 tokensOwed1
-        ) = nft.positions(tokenId);
+        ) = positionManager.positions(tokenId);
 
         return
             _fees(
-                nft,
-                PositionParams({
+                positionManager,
+                FeeParams({
                     token0: token0,
                     token1: token1,
                     fee: fee,
@@ -136,53 +166,40 @@ library PositionValue {
             );
     }
 
-    struct PositionParams {
-        address token0;
-        address token1;
-        uint24 fee;
-        int24 tickLower;
-        int24 tickUpper;
-        uint128 liquidity;
-        uint256 positionFeeGrowthInside0LastX128;
-        uint256 positionFeeGrowthInside1LastX128;
-        uint256 tokensOwed0;
-        uint256 tokensOwed1;
-    }
-
-    function _fees(INonfungiblePositionManager nft, PositionParams memory positionParams)
+    function _fees(INonfungiblePositionManager positionManager, FeeParams memory feeParams)
         private
         view
         returns (uint256 amount0, uint256 amount1)
     {
         (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) =
             _getFeeGrowthInside(
-                nft,
-                positionParams.token0,
-                positionParams.token1,
-                positionParams.fee,
-                positionParams.tickLower,
-                positionParams.tickUpper
+                positionManager,
+                feeParams.token0,
+                feeParams.token1,
+                feeParams.fee,
+                feeParams.tickLower,
+                feeParams.tickUpper
             );
 
         amount0 =
             FullMath.mulDiv(
-                poolFeeGrowthInside0LastX128 - positionParams.positionFeeGrowthInside0LastX128,
-                positionParams.liquidity,
+                poolFeeGrowthInside0LastX128 - feeParams.positionFeeGrowthInside0LastX128,
+                feeParams.liquidity,
                 FixedPoint128.Q128
             ) +
-            positionParams.tokensOwed0;
+            feeParams.tokensOwed0;
 
         amount1 =
             FullMath.mulDiv(
-                poolFeeGrowthInside1LastX128 - positionParams.positionFeeGrowthInside1LastX128,
-                positionParams.liquidity,
+                poolFeeGrowthInside1LastX128 - feeParams.positionFeeGrowthInside1LastX128,
+                feeParams.liquidity,
                 FixedPoint128.Q128
             ) +
-            positionParams.tokensOwed1;
+            feeParams.tokensOwed1;
     }
 
     function _getFeeGrowthInside(
-        INonfungiblePositionManager nft,
+        INonfungiblePositionManager positionManager,
         address token0,
         address token1,
         uint24 fee,
@@ -192,7 +209,7 @@ library PositionValue {
         IUniswapV3Pool pool =
             IUniswapV3Pool(
                 PoolAddress.computeAddress(
-                    nft.factory(),
+                    positionManager.factory(),
                     PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
                 )
             );
