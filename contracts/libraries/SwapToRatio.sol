@@ -29,6 +29,8 @@ library SwapToRatio {
     ) internal pure returns (uint160 postSwapSqrtRatioX96) {
         // given constant liquidty / current price / bounds / initialAmounts - calculate how much the price should move
         // so that the token ratios are of equal liquidity.
+
+        // will switch from quadratic to binary search :(
     }
 
     // TODO: Look into rounding things correctly
@@ -154,37 +156,18 @@ library SwapToRatio {
         uint160 sqrtRatioX96,
         uint160 sqrtRatioX96Lower,
         uint160 sqrtRatioX96Upper
-    ) private pure returns (bool) {
+    ) internal view returns (bool) {
         if (amount0 > amount1) {
             return
                 amount0 / amount1 >
-                SqrtPriceMath.getAmount0Delta(
-                    sqrtRatioX96,
-                    sqrtRatioX96Upper,
-                    1e6, // arbitrary since it cancels out
-                    false
-                ) /
-                    SqrtPriceMath.getAmount1Delta(
-                        sqrtRatioX96,
-                        sqrtRatioX96Lower,
-                        1e6,
-                        false
-                    );
+                // arbitrary liquidity param of 100_000 since it cancels out
+                SqrtPriceMath.getAmount0Delta(sqrtRatioX96, sqrtRatioX96Upper, 100_000, false) /
+                    SqrtPriceMath.getAmount1Delta(sqrtRatioX96, sqrtRatioX96Lower, 100_000, false);
         } else {
             return
-                amount1 / amount0 >
-                SqrtPriceMath.getAmount1Delta(
-                    sqrtRatioX96,
-                    sqrtRatioX96Lower,
-                    1e6,
-                    false
-                ) /
-                    SqrtPriceMath.getAmount0Delta(
-                        sqrtRatioX96,
-                        sqrtRatioX96Upper,
-                        1e6,
-                        false
-                    );
+                amount1 / amount0 <
+                SqrtPriceMath.getAmount1Delta(sqrtRatioX96, sqrtRatioX96Lower, 100_000, false) /
+                    SqrtPriceMath.getAmount0Delta(sqrtRatioX96, sqrtRatioX96Upper, 100_000, false);
         }
     }
 

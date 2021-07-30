@@ -156,9 +156,9 @@ describe.only('SwapToRatio', () => {
       })
     })
 
-    describe.only('when initial deposit has excess of token0', () => {
-      it.only('returns the correct postSqrtPrice when it is just below the next initialized tick', async () => {
-        
+    describe('when initial deposit has excess of token0', () => {
+      it('returns the correct postSqrtPrice when it is just below the next initialized tick', async () => {
+
       })
       it('returns the correct postSqrtPrice when it corresponds exactly with the next initialized tick')
       it('returns the correct postSqrtPrice when it is just above the next initialized tick')
@@ -200,7 +200,7 @@ describe.only('SwapToRatio', () => {
     })
   })
 
-  describe.only('#swapToNextInitializedTick', () => {
+  describe('#swapToNextInitializedTick', () => {
     // position params
     let amount0Initial: BigNumberish
     let amount1Initial: BigNumberish
