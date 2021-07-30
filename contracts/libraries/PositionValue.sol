@@ -15,8 +15,8 @@ library PositionValue {
     /// @notice returns the total token value including the principal and the fees owed
     /// @param positionManager The Uniswap V3 NonfungiblePositionManager
     /// @param tokenId The tokenId of the token for which to get the total value
-    /// @returns amount0 The total amount of token0 including principal and fees
-    /// @returns amount1 The total amount of token1 including principal and fees
+    /// @return amount0 The total amount of token0 including principal and fees
+    /// @return amount1 The total amount of token1 including principal and fees
     function total(INonfungiblePositionManager positionManager, uint256 tokenId)
         internal
         view
@@ -78,8 +78,8 @@ library PositionValue {
     /// that the position is burned
     /// @param positionManager The Uniswap V3 NonfungiblePositionManager
     /// @param tokenId The tokenId of the token for which to get the total principal owed
-    /// @returns amount0 The principal amount of token0
-    /// @returns amount1 The principal amount of token1
+    /// @return amount0 The principal amount of token0
+    /// @return amount1 The principal amount of token1
     function principal(INonfungiblePositionManager positionManager, uint256 tokenId)
         internal
         view
@@ -126,8 +126,8 @@ library PositionValue {
     /// @notice Calculates the total fees owed to the token owner
     /// @param positionManager The Uniswap V3 NonfungiblePositionManager
     /// @param tokenId The tokenId of the token for which to get the total fees owed
-    /// @returns amount0 The amount of fees owed in token0
-    /// @returns amount1 The amount of fees owed in token1
+    /// @return amount0 The amount of fees owed in token0
+    /// @return amount1 The amount of fees owed in token1
     function fees(INonfungiblePositionManager positionManager, uint256 tokenId)
         internal
         view
