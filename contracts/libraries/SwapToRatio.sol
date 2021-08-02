@@ -109,6 +109,8 @@ library SwapToRatio {
     {
         (PoolParams memory poolParams, int24 tickSpacing, int24 tick) = getPoolInputs(pool);
 
+        console.logInt(tick);
+
         bool zeroForOne =
             isZeroForOne(
                 positionParams.amount0Initial,
@@ -121,12 +123,13 @@ library SwapToRatio {
         uint256 amount0Next;
         uint256 amount1Next;
         int24 nextInitializedTick;
+        uint160 sqrtRatioNextX96;
 
         while (crossTickBoundary) {
             // returns the next initialized tick or the last tick within one word of the current tick.
             // We'll renew calculation at least on a per word basis for better rounding
             (nextInitializedTick, ) = pool.nextInitializedTickWithinOneWord(tick, tickSpacing, zeroForOne);
-            uint160 sqrtRatioNextX96 = TickMath.getSqrtRatioAtTick(nextInitializedTick);
+            sqrtRatioNextX96 = TickMath.getSqrtRatioAtTick(nextInitializedTick);
 
             (crossTickBoundary, amount0Next, amount1Next) = swapToNextInitializedTick(
                 poolParams,
@@ -147,7 +150,9 @@ library SwapToRatio {
                 tick = nextInitializedTick;
             }
         }
-        return calculateConstantLiquidityPostSwapSqrtPrice(poolParams, positionParams);
+        return sqrtRatioNextX96;
+        // TODO: return calculateConstantLiquidityPostSwapSqrtPrice
+        // return calculateConstantLiquidityPostSwapSqrtPrice(poolParams, positionParams);
     }
 
     function isZeroForOne(
