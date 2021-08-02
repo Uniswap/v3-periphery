@@ -29,7 +29,6 @@ library SwapToRatio {
     ) internal pure returns (uint160 postSwapSqrtRatioX96) {
         // given constant liquidty / current price / bounds / initialAmounts - calculate how much the price should move
         // so that the token ratios are of equal liquidity.
-
         // will switch from quadratic to binary search :(
     }
 
@@ -59,17 +58,19 @@ library SwapToRatio {
             }
         }
 
-        int256 token0Delta =
+        uint256 token0Delta =
             SqrtPriceMath.getAmount0Delta(
                 poolParams.sqrtRatioX96,
                 sqrtRatioX96Target,
-                zeroForOne ? int128(-poolParams.liquidity) : int128(poolParams.liquidity)
+                poolParams.liquidity,
+                zeroForOne ? false : true
             );
-        int256 token1Delta =
+        uint256 token1Delta =
             SqrtPriceMath.getAmount1Delta(
                 poolParams.sqrtRatioX96,
                 sqrtRatioX96Target,
-                zeroForOne ? int128(poolParams.liquidity) : int128(-poolParams.liquidity)
+                poolParams.liquidity,
+                zeroForOne ? true : false
             );
 
         uint256 validDeposit0 =
@@ -90,13 +91,13 @@ library SwapToRatio {
         // overflow desired
         if (zeroForOne) {
             // include fee amount in token delta for exchanged token
-            amount0Updated = positionParams.amount0Initial + uint256(((token0Delta * 1e6) / (1e6 - poolParams.fee)));
-            amount1Updated = positionParams.amount1Initial + uint256(token1Delta);
+            amount0Updated = positionParams.amount0Initial - ((token0Delta * 1e6) / (1e6 - poolParams.fee));
+            amount1Updated = positionParams.amount1Initial + token1Delta;
             // 1e5 to increase precision for small price differences
             doSwap = (amount0Updated * 1e5) / amount1Updated >= (validDeposit0 * 1e5) / validDeposit1;
         } else {
-            amount0Updated = positionParams.amount0Initial + uint256(token0Delta);
-            amount1Updated = positionParams.amount1Initial + uint256(((token1Delta * 1e6) / (1e6 - poolParams.fee)));
+            amount0Updated = positionParams.amount0Initial + token0Delta;
+            amount1Updated = positionParams.amount1Initial - ((token1Delta * 1e6) / (1e6 - poolParams.fee));
             doSwap = (amount1Updated * 1e5) / amount0Updated >= (validDeposit1 * 1e5) / validDeposit0;
         }
     }

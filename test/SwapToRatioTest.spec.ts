@@ -161,6 +161,21 @@ describe.only('SwapToRatio', () => {
     let zeroForOne: boolean
 
     describe('when tested with simple numbers', () => {
+      // position params
+      let amount0Initial: BigNumberish
+      let amount1Initial: BigNumberish
+      let priceLower: number
+      let priceUpper: number
+
+      // pool params
+      let liquidity: BigNumberish
+      let price: number
+      let fee: BigNumberish
+
+      // other params
+      let priceTarget: number
+      let zeroForOne: boolean
+
       before('load fixture', async () => {
         swapToRatio = await loadFixture(swapToRatioPartialFixture)
       })
@@ -369,7 +384,23 @@ describe.only('SwapToRatio', () => {
     })
 
     describe('when tested against actual swaps', () => {
+      // position params
+      let amount0Initial: BigNumberish
+      let amount1Initial: BigNumberish
+      let sqrtRatioX96Lower: BigNumberish
+      let sqrtRatioX96Upper: BigNumberish
+
+      // pool params
+      let liquidity: BigNumberish
+      let sqrtRatioX96: BigNumberish
+      let fee: BigNumberish
+
+      // other params
+      let sqrtRatioX96Target: BigNumberish
+      let zeroForOne: boolean
+
       let pool: Contract
+
       beforeEach('load fixture', async () => {
         ;({ tokens, swapToRatio, nft, router } = await loadFixture(swapToRatioCompleteFixture))
         const poolAddress = computePoolAddress(
@@ -383,10 +414,12 @@ describe.only('SwapToRatio', () => {
       beforeEach('setup pool', async () => {
         ;[token0, token1] = sortedTokens(tokens[0], tokens[1])
 
-        const tickLower = getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM])
-        const tickUpper = getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM])
-        // priceLower = await swapToRatio.getSqrtRatioAtTick
-
+        fee = FeeAmount.MEDIUM
+        const tickLower = TICK_SPACINGS[FeeAmount.MEDIUM] * -2
+        const tickUpper = TICK_SPACINGS[FeeAmount.MEDIUM] * 2
+        sqrtRatioX96Lower = await swapToRatio.getSqrtRatioAtTick(tickLower)
+        sqrtRatioX96Upper = await swapToRatio.getSqrtRatioAtTick(tickUpper)
+        sqrtRatioX96Target = await swapToRatio.getSqrtRatioAtTick(TICK_SPACINGS[FeeAmount.MEDIUM] * -1)
 
         await nft.createAndInitializePoolIfNecessary(
           tokens[0].address,
@@ -422,16 +455,74 @@ describe.only('SwapToRatio', () => {
           recipient: wallets[0].address,
           deadline: 1,
         })
+
+        liquidity = await pool.liquidity()
+        sqrtRatioX96 = (await pool.slot0()).sqrtPriceX96
       })
 
       describe('initial deposit has excess of token0', async () => {
         it('returns token amounts which reflect a real post swap amounts', async () => {
-          const slot0 = await pool.slot0()
-          liquidity = await pool.liquidity()
-          fee = FeeAmount.MEDIUM
-          // console.log(slot0)
+          amount0Initial = expandTo18Decimals(30_000)
+          amount1Initial = expandTo18Decimals(1_000)
 
+          const { doSwap, amount0Updated, amount1Updated } = await swapToNextInitializedTick(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            sqrtRatioX96Lower,
+            sqrtRatioX96Upper,
+            sqrtRatioX96,
+            liquidity,
+            fee,
+            sqrtRatioX96Target,
+            zeroForOne: true,
+          })
 
+          const amountToSwap = await swapToRatio.getAmount0Delta(sqrtRatioX96, sqrtRatioX96Target, liquidity, false)
+          await tokens[0].approve(router.address, amountToSwap.abs())
+          const amountOut = await router.callStatic.exactInputSingle({
+            tokenIn: token0.address,
+            tokenOut: token1.address,
+            fee: FeeAmount.MEDIUM,
+            recipient: wallets[0].address,
+            deadline: 1,
+            amountIn: amountToSwap.abs(),
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: expandTo18Decimals(100_000)
+          })
+
+          expect(amountOut.add(amount1Initial)).to.equal(amount1Updated)
+        })
+
+        it('moves the pool price to the targetPrice', async () => {
+          amount0Initial = expandTo18Decimals(30_000)
+          amount1Initial = expandTo18Decimals(1_000)
+
+          const { doSwap, amount0Updated, amount1Updated } = await swapToNextInitializedTick(swapToRatio, {
+            amount0Initial,
+            amount1Initial,
+            sqrtRatioX96Lower,
+            sqrtRatioX96Upper,
+            sqrtRatioX96,
+            liquidity,
+            fee,
+            sqrtRatioX96Target,
+            zeroForOne: true,
+          })
+
+          const amountToSwap = await swapToRatio.getAmount0Delta(sqrtRatioX96, sqrtRatioX96Target, liquidity, false)
+          await tokens[0].approve(router.address, amountToSwap.abs())
+          await router.exactInputSingle({
+            tokenIn: token0.address,
+            tokenOut: token1.address,
+            fee: FeeAmount.MEDIUM,
+            recipient: wallets[0].address,
+            deadline: 1,
+            amountIn: amountToSwap.abs(),
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: expandTo18Decimals(100_000)
+          })
+
+          expect((await pool.slot0()).sqrtPriceX96).to.eq(sqrtRatioX96)
         })
       })
     })
