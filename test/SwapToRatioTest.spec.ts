@@ -488,7 +488,7 @@ describe.only('SwapToRatio', () => {
             deadline: 1,
             amountIn: amountToSwap.abs(),
             amountOutMinimum: 0,
-            sqrtPriceLimitX96: expandTo18Decimals(100_000)
+            sqrtPriceLimitX96: expandTo18Decimals(100_000),
           })
 
           expect(amountOut.add(amount1Initial)).to.equal(amount1Updated)
@@ -520,7 +520,7 @@ describe.only('SwapToRatio', () => {
             deadline: 1,
             amountIn: amountToSwap.abs(),
             amountOutMinimum: 0,
-            sqrtPriceLimitX96: expandTo18Decimals(100_000)
+            sqrtPriceLimitX96: expandTo18Decimals(100_000),
           })
 
           expect((await pool.slot0()).sqrtPriceX96).to.eq(sqrtRatioX96)
@@ -529,12 +529,14 @@ describe.only('SwapToRatio', () => {
         it('gas', async () => {
           amount0Initial = expandTo18Decimals(30_000)
           amount1Initial = expandTo18Decimals(1_000)
-          await snapshotGasCost(swapToRatio.swapToNextInitializedTickGas(
-            { sqrtRatioX96, liquidity, fee },
-            { sqrtRatioX96Lower, sqrtRatioX96Upper, amount0Initial, amount1Initial },
-            sqrtRatioX96Target,
-            zeroForOne
-          ))
+          await snapshotGasCost(
+            swapToRatio.swapToNextInitializedTickGas(
+              { sqrtRatioX96, liquidity, fee },
+              { sqrtRatioX96Lower, sqrtRatioX96Upper, amount0Initial, amount1Initial },
+              sqrtRatioX96Target,
+              zeroForOne
+            )
+          )
         })
       })
     })

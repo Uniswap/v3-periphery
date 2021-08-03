@@ -32,7 +32,6 @@ library SwapToRatio {
         // will switch from quadratic to binary search
     }
 
-
     function swapToNextInitializedTick(
         PoolParams memory poolParams,
         PositionParams memory positionParams,
