@@ -32,6 +32,17 @@ contract SwapToRatioTest {
         return SwapToRatio.swapToNextInitializedTick(poolParams, positionParams, sqrtRatioX96Target, zeroForOne);
     }
 
+    function swapToNextInitializedTickGas(
+        SwapToRatio.PoolParams memory poolParams,
+        SwapToRatio.PositionParams memory positionParams,
+        uint160 sqrtRatioX96Target,
+        bool zeroForOne
+    ) external view returns (uint256) {
+        uint256 gasBefore = gasleft();
+        SwapToRatio.swapToNextInitializedTick(poolParams, positionParams, sqrtRatioX96Target, zeroForOne);
+        return gasBefore - gasleft();
+    }
+
     // extra helper functions for tests
     function getSqrtRatioAtTick(int24 tick) external pure returns (uint160) {
         return TickMath.getSqrtRatioAtTick(tick);
