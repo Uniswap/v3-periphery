@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SwapToRatio #swapToNextInitializedTick when tested against actual swaps initial deposit has excess of token0 gas 1`] = `2738`;

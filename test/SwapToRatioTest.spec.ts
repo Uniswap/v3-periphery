@@ -10,6 +10,7 @@ import { getMaxTick, getMinTick } from './shared/ticks'
 import completeFixture from './shared/completeFixture'
 import { computePoolAddress } from './shared/computePoolAddress'
 import { sortedTokens } from './shared/tokenSort'
+import snapshotGasCost from './shared/snapshotGasCost'
 
 import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
@@ -523,6 +524,17 @@ describe.only('SwapToRatio', () => {
           })
 
           expect((await pool.slot0()).sqrtPriceX96).to.eq(sqrtRatioX96)
+        })
+
+        it('gas', async () => {
+          amount0Initial = expandTo18Decimals(30_000)
+          amount1Initial = expandTo18Decimals(1_000)
+          await snapshotGasCost(swapToRatio.swapToNextInitializedTickGas(
+            { sqrtRatioX96, liquidity, fee },
+            { sqrtRatioX96Lower, sqrtRatioX96Upper, amount0Initial, amount1Initial },
+            sqrtRatioX96Target,
+            zeroForOne
+          ))
         })
       })
     })

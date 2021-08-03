@@ -29,11 +29,10 @@ library SwapToRatio {
     ) internal pure returns (uint160 postSwapSqrtRatioX96) {
         // given constant liquidty / current price / bounds / initialAmounts - calculate how much the price should move
         // so that the token ratios are of equal liquidity.
-        // will switch from quadratic to binary search :(
+        // will switch from quadratic to binary search
     }
 
-    // TODO: Look into rounding things correctly
-    // TODO: know exact price to change liquidity at (liquidity changes right of initialized tick?)
+
     function swapToNextInitializedTick(
         PoolParams memory poolParams,
         PositionParams memory positionParams,
@@ -88,7 +87,6 @@ library SwapToRatio {
                 false
             );
 
-        // overflow desired
         if (zeroForOne) {
             // include fee amount in token delta for exchanged token
             amount0Updated = positionParams.amount0Initial - ((token0Delta * 1e6) / (1e6 - poolParams.fee));
