@@ -43,6 +43,13 @@ contract SwapToRatioTest {
         return gasBefore - gasleft();
     }
 
+    function getPostSwapPriceGas(IUniswapV3Pool pool, SwapToRatio.PositionParams memory positionParams)
+      external view returns (uint256) {
+        uint256 gasBefore = gasleft();
+        SwapToRatio.getPostSwapPrice(pool, positionParams);
+        return gasBefore - gasleft();
+    }
+
     // extra helper functions for tests
     function getSqrtRatioAtTick(int24 tick) external pure returns (uint160) {
         return TickMath.getSqrtRatioAtTick(tick);

@@ -107,8 +107,6 @@ library SwapToRatio {
     {
         (PoolParams memory poolParams, int24 tickSpacing, int24 tick) = getPoolInputs(pool);
 
-        console.logInt(tick);
-
         bool zeroForOne =
             isZeroForOne(
                 positionParams.amount0Initial,

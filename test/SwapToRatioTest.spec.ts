@@ -1,7 +1,7 @@
 import { BigNumber, BigNumberish, Contract, constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 import { Fixture } from 'ethereum-waffle'
-import { SwapToRatioTest, TestERC20, MockTimeNonfungiblePositionManager, SwapRouter } from '../typechain'
+import { SwapToRatioTest, TestERC20, MockTimeNonfungiblePositionManager, SwapRouter, IUniswapV3Factory, } from '../typechain'
 import { expect } from 'chai'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -22,8 +22,9 @@ describe.only('SwapToRatio', () => {
     tokens: [TestERC20, TestERC20, TestERC20]
     nft: MockTimeNonfungiblePositionManager
     router: SwapRouter
+    factory: IUniswapV3Factory
   }> = async (wallets, provider) => {
-    const { nft, router, tokens } = await completeFixture(wallets, provider)
+    const { nft, router, tokens, factory } = await completeFixture(wallets, provider)
     const swapToRatioFactory = await ethers.getContractFactory('SwapToRatioTest')
     const swapToRatio = (await swapToRatioFactory.deploy()) as SwapToRatioTest
 
@@ -38,6 +39,7 @@ describe.only('SwapToRatio', () => {
       tokens,
       nft,
       router,
+      factory,
     }
   }
 
@@ -47,6 +49,7 @@ describe.only('SwapToRatio', () => {
     return swapToRatio
   }
 
+  let factory: IUniswapV3Factory
   let tokens: [TestERC20, TestERC20, TestERC20]
   let swapToRatio: SwapToRatioTest
   let nft: MockTimeNonfungiblePositionManager
@@ -62,8 +65,19 @@ describe.only('SwapToRatio', () => {
   })
 
   describe('#getPostSwapPrice ', () => {
-    beforeEach('load fixture', async () => {
-      ;({ tokens, swapToRatio, nft, router } = await loadFixture(swapToRatioCompleteFixture))
+    // position params
+    let amount0Initial: BigNumberish
+    let amount1Initial: BigNumberish
+    let priceLower: number
+    let priceUpper: number
+
+    // pool params
+    let liquidity: BigNumberish
+    let price: number
+    let fee: BigNumberish
+
+    beforeEach('setup pool', async () => {
+      ;({ tokens, swapToRatio, nft, router, factory } = await loadFixture(swapToRatioCompleteFixture))
     })
 
     beforeEach('setup pool', async () => {
@@ -72,16 +86,16 @@ describe.only('SwapToRatio', () => {
       await nft.createAndInitializePoolIfNecessary(
         tokens[0].address,
         tokens[1].address,
-        FeeAmount.MEDIUM,
+        FeeAmount.LOW,
         encodePriceSqrt(1, 1)
       )
 
       await nft.mint({
         token0: token0.address,
         token1: token1.address,
-        fee: FeeAmount.MEDIUM,
-        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
-        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.LOW,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.LOW]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.LOW]),
         amount0Desired: expandTo18Decimals(10_000),
         amount1Desired: expandTo18Decimals(10_000),
         amount0Min: 0,
@@ -93,9 +107,23 @@ describe.only('SwapToRatio', () => {
       await nft.mint({
         token0: token0.address,
         token1: token1.address,
-        fee: FeeAmount.MEDIUM,
-        tickLower: TICK_SPACINGS[FeeAmount.MEDIUM] * -1,
-        tickUpper: TICK_SPACINGS[FeeAmount.MEDIUM] * 1,
+        fee: FeeAmount.LOW,
+        tickLower: TICK_SPACINGS[FeeAmount.LOW] * -10,
+        tickUpper: TICK_SPACINGS[FeeAmount.LOW] * 10,
+        amount0Desired: expandTo18Decimals(1_000),
+        amount1Desired: expandTo18Decimals(1_000),
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: wallets[0].address,
+        deadline: 1,
+      })
+
+      await nft.mint({
+        token0: token0.address,
+        token1: token1.address,
+        fee: FeeAmount.LOW,
+        tickLower: TICK_SPACINGS[FeeAmount.LOW] * -20,
+        tickUpper: TICK_SPACINGS[FeeAmount.LOW] * 20,
         amount0Desired: expandTo18Decimals(1_000),
         amount1Desired: expandTo18Decimals(1_000),
         amount0Min: 0,
@@ -105,43 +133,72 @@ describe.only('SwapToRatio', () => {
       })
     })
 
-    describe('when initial deposit has excess of token0', () => {
-      it('returns the correct postSqrtPrice when it is just below the next initialized tick', async () => {})
-      it('returns the correct postSqrtPrice when it corresponds exactly with the next initialized tick')
-      it('returns the correct postSqrtPrice when it is just above the next initialized tick')
-      it('returns the correct postSqrtPrice when fee cancels out benefit of swapping')
+    describe('when initial deposit has excess of token1', () => {
+      before(() => {
+        priceLower = 0.05
+        priceUpper = 1.05
+      })
 
       describe('and swap does not push price beyond the next initialized tick', () => {
-        it('does the thing', async () => {})
         // it returns the correct postSqrtPrice for various values
       })
 
-      describe('and swap pushes the price beyond the next initialized tick', () => {
-        // it returns the correct postSqrtPrice for various values
+      describe('and swap pushes the price beyond the next initialized tick only', () => {
+        it('gas', async () => {
+          const poolAddress = await factory.getPool(token0.address, token1.address, FeeAmount.LOW)
+          const pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
+
+          amount0Initial = expandTo18Decimals(1_000)
+          amount1Initial = expandTo18Decimals(150_000)
+          const currentPrice = (await pool.slot0()).sqrtPriceX96
+
+          await snapshotGasCost(swapToRatio.getPostSwapPriceGas(poolAddress, {
+            sqrtRatioX96Lower: toSqrtFixedPoint96(priceLower),
+            sqrtRatioX96Upper: toSqrtFixedPoint96(priceUpper),
+            amount0Initial,
+            amount1Initial,
+          }))
+        })
       })
 
       describe('and swap pushes the price beyond multiple initialized ticks', () => {
-        // it returns the correct postSqrtPrice for various values
+        it('gas', async () => {
+          const poolAddress = await factory.getPool(token0.address, token1.address, FeeAmount.LOW)
+          const pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
+
+          amount0Initial = expandTo18Decimals(1_000)
+          amount1Initial = expandTo18Decimals(200_000)
+          const currentPrice = (await pool.slot0()).sqrtPriceX96
+
+          await snapshotGasCost(swapToRatio.getPostSwapPriceGas(poolAddress, {
+            sqrtRatioX96Lower: toSqrtFixedPoint96(priceLower),
+            sqrtRatioX96Upper: toSqrtFixedPoint96(priceUpper),
+            amount0Initial,
+            amount1Initial,
+          }))
+        })
       })
     })
 
-    describe('when initial deposit has excess of token1', () => {
-      describe('and swap does not push price beyond the next initialized tick', () => {
-        // it returns the correct postSqrtPrice for various values
+    describe('when initial deposit has excess of token0', () => {
+      before(() => {
+        amount0Initial = expandTo18Decimals(700_000)
+        amount1Initial = expandTo18Decimals(1_000)
+        priceLower = 0.05
+        priceUpper = 1.05
       })
 
-      describe('and swap pushes the price beyond the next initialized tick', () => {
-        // it returns the correct postSqrtPrice for various values
+      // TODO: nextInitializedTickWithinOneWord acting weird when excess token0
+      it.skip('returns the correct postSqrtPrice when it is just below the next initialized tick', async () => {
+        const poolAddress = await factory.getPool(token0.address, token1.address, FeeAmount.LOW)
+        const pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
+        await swapToRatio.getPostSwapPrice(poolAddress, {
+          sqrtRatioX96Lower: toSqrtFixedPoint96(priceLower),
+          sqrtRatioX96Upper: toSqrtFixedPoint96(priceUpper),
+          amount0Initial,
+          amount1Initial,
+        })
       })
-
-      describe('and swap pushes the price beyond multiple initialized ticks', () => {
-        // it returns the correct postSqrtPrice for various values
-      })
-
-      it('returns the correct postSqrtPrice when it is just below the next initialized tick')
-      it('returns the correct postSqrtPrice when it corresponds exactly with the next initialized tick')
-      it('returns the correct postSqrtPrice when it is just above the next initialized tick')
-      it('returns the correct postSqrtPrice when fee cancels out benefit of swapping')
     })
   })
 
