@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`SwapToRatio #getPostSwapPrice  when initial deposit has excess of token1 and swap pushes the price beyond multiple initialized ticks gas 1`] = `50782`;
+exports[`SwapToRatio #getPostSwapPrice  when initial deposit has excess of token1 and swap does not push price beyond the next initialized tick gas 1`] = `18491`;
 
-exports[`SwapToRatio #getPostSwapPrice  when initial deposit has excess of token1 and swap pushes the price beyond the next initialized tick only gas 1`] = `33627`;
+exports[`SwapToRatio #getPostSwapPrice  when initial deposit has excess of token1 and swap pushes the price beyond multiple initialized ticks gas 1`] = `53029`;
 
-exports[`SwapToRatio #swapToNextInitializedTick when tested against actual swaps initial deposit has excess of token0 gas 1`] = `2738`;
+exports[`SwapToRatio #getPostSwapPrice  when initial deposit has excess of token1 and swap pushes the price beyond the next initialized tick only gas 1`] = `37176`;

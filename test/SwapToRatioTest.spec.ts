@@ -1,7 +1,13 @@
 import { BigNumber, BigNumberish, Contract, constants } from 'ethers'
 import { waffle, ethers } from 'hardhat'
 import { Fixture } from 'ethereum-waffle'
-import { SwapToRatioTest, TestERC20, MockTimeNonfungiblePositionManager, SwapRouter, IUniswapV3Factory, } from '../typechain'
+import {
+  SwapToRatioTest,
+  TestERC20,
+  MockTimeNonfungiblePositionManager,
+  SwapRouter,
+  IUniswapV3Factory,
+} from '../typechain'
 import { expect } from 'chai'
 import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
@@ -49,6 +55,8 @@ describe.only('SwapToRatio', () => {
     return swapToRatio
   }
 
+  let pool: Contract
+  let poolAddress: string
   let factory: IUniswapV3Factory
   let tokens: [TestERC20, TestERC20, TestERC20]
   let swapToRatio: SwapToRatioTest
@@ -64,7 +72,7 @@ describe.only('SwapToRatio', () => {
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 
-  describe('#getPostSwapPrice ', () => {
+  describe.only('#getPostSwapPrice ', () => {
     // position params
     let amount0Initial: BigNumberish
     let amount1Initial: BigNumberish
@@ -135,63 +143,81 @@ describe.only('SwapToRatio', () => {
 
     describe('when initial deposit has excess of token1', () => {
       before(() => {
-        priceLower = 0.05
-        priceUpper = 1.05
+        priceLower = 0.5
+        priceUpper = 2
       })
 
       describe('and swap does not push price beyond the next initialized tick', () => {
-        // it returns the correct postSqrtPrice for various values
+        it('gas', async () => {
+          poolAddress = await factory.getPool(token0.address, token1.address, FeeAmount.LOW)
+          pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
+
+          amount0Initial = expandTo18Decimals(1_000)
+          amount1Initial = expandTo18Decimals(2_000)
+          const currentPrice = (await pool.slot0()).sqrtPriceX96
+
+          await snapshotGasCost(
+            swapToRatio.getPostSwapPriceGas(poolAddress, {
+              sqrtRatioX96Lower: toSqrtFixedPoint96(priceLower),
+              sqrtRatioX96Upper: toSqrtFixedPoint96(priceUpper),
+              amount0Initial,
+              amount1Initial,
+            })
+          )
+        })
       })
 
       describe('and swap pushes the price beyond the next initialized tick only', () => {
         it('gas', async () => {
-          const poolAddress = await factory.getPool(token0.address, token1.address, FeeAmount.LOW)
-          const pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
+          poolAddress = await factory.getPool(token0.address, token1.address, FeeAmount.LOW)
+          pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
 
           amount0Initial = expandTo18Decimals(1_000)
-          amount1Initial = expandTo18Decimals(150_000)
+          amount1Initial = expandTo18Decimals(7_000)
           const currentPrice = (await pool.slot0()).sqrtPriceX96
 
-          await snapshotGasCost(swapToRatio.getPostSwapPriceGas(poolAddress, {
-            sqrtRatioX96Lower: toSqrtFixedPoint96(priceLower),
-            sqrtRatioX96Upper: toSqrtFixedPoint96(priceUpper),
-            amount0Initial,
-            amount1Initial,
-          }))
+          await snapshotGasCost(
+            swapToRatio.getPostSwapPriceGas(poolAddress, {
+              sqrtRatioX96Lower: toSqrtFixedPoint96(priceLower),
+              sqrtRatioX96Upper: toSqrtFixedPoint96(priceUpper),
+              amount0Initial,
+              amount1Initial,
+            })
+          )
         })
       })
 
       describe('and swap pushes the price beyond multiple initialized ticks', () => {
         it('gas', async () => {
-          const poolAddress = await factory.getPool(token0.address, token1.address, FeeAmount.LOW)
-          const pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
+          poolAddress = await factory.getPool(token0.address, token1.address, FeeAmount.LOW)
+          pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
 
           amount0Initial = expandTo18Decimals(1_000)
-          amount1Initial = expandTo18Decimals(200_000)
+          amount1Initial = expandTo18Decimals(10_000)
           const currentPrice = (await pool.slot0()).sqrtPriceX96
 
-          await snapshotGasCost(swapToRatio.getPostSwapPriceGas(poolAddress, {
-            sqrtRatioX96Lower: toSqrtFixedPoint96(priceLower),
-            sqrtRatioX96Upper: toSqrtFixedPoint96(priceUpper),
-            amount0Initial,
-            amount1Initial,
-          }))
+          await snapshotGasCost(
+            swapToRatio.getPostSwapPriceGas(poolAddress, {
+              sqrtRatioX96Lower: toSqrtFixedPoint96(priceLower),
+              sqrtRatioX96Upper: toSqrtFixedPoint96(priceUpper),
+              amount0Initial,
+              amount1Initial,
+            })
+          )
         })
       })
     })
 
     describe('when initial deposit has excess of token0', () => {
-      before(() => {
-        amount0Initial = expandTo18Decimals(700_000)
+      it('returns the correct postSqrtPrice when it is just below the next initialized tick', async () => {
+        poolAddress = await factory.getPool(token0.address, token1.address, FeeAmount.LOW)
+        pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
+        liquidity = await pool.liquidity()
+        amount0Initial = expandTo18Decimals(10_000)
         amount1Initial = expandTo18Decimals(1_000)
-        priceLower = 0.05
-        priceUpper = 1.05
-      })
+        priceLower = 0.5
+        priceUpper = 2
 
-      // TODO: nextInitializedTickWithinOneWord acting weird when excess token0
-      it.skip('returns the correct postSqrtPrice when it is just below the next initialized tick', async () => {
-        const poolAddress = await factory.getPool(token0.address, token1.address, FeeAmount.LOW)
-        const pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
         await swapToRatio.getPostSwapPrice(poolAddress, {
           sqrtRatioX96Lower: toSqrtFixedPoint96(priceLower),
           sqrtRatioX96Upper: toSqrtFixedPoint96(priceUpper),

@@ -44,7 +44,10 @@ contract SwapToRatioTest {
     }
 
     function getPostSwapPriceGas(IUniswapV3Pool pool, SwapToRatio.PositionParams memory positionParams)
-      external view returns (uint256) {
+        external
+        view
+        returns (uint256)
+    {
         uint256 gasBefore = gasleft();
         SwapToRatio.getPostSwapPrice(pool, positionParams);
         return gasBefore - gasleft();
@@ -62,5 +65,14 @@ contract SwapToRatioTest {
         bool roundUp
     ) external pure returns (uint256) {
         return SqrtPriceMath.getAmount0Delta(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp);
+    }
+
+    function getAmount1Delta(
+        uint160 sqrtRatioAX96,
+        uint160 sqrtRatioBX96,
+        uint128 liquidity,
+        bool roundUp
+    ) external pure returns (uint256) {
+        return SqrtPriceMath.getAmount1Delta(sqrtRatioAX96, sqrtRatioBX96, liquidity, roundUp);
     }
 }

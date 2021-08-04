@@ -87,15 +87,13 @@ library SwapToRatio {
             );
 
         if (zeroForOne) {
-            // include fee amount in token delta for exchanged token
             amount0Updated = positionParams.amount0Initial - ((token0Delta * 1e6) / (1e6 - poolParams.fee));
             amount1Updated = positionParams.amount1Initial + token1Delta;
-            // 1e5 to increase precision for small price differences
-            doSwap = (amount0Updated * 1e5) / amount1Updated >= (validDeposit0 * 1e5) / validDeposit1;
+            doSwap = (amount0Updated) / amount1Updated > (validDeposit0) / validDeposit1;
         } else {
             amount0Updated = positionParams.amount0Initial + token0Delta;
             amount1Updated = positionParams.amount1Initial - ((token1Delta * 1e6) / (1e6 - poolParams.fee));
-            doSwap = (amount1Updated * 1e5) / amount0Updated >= (validDeposit1 * 1e5) / validDeposit0;
+            doSwap = (amount1Updated) / amount0Updated > (validDeposit1) / validDeposit0;
         }
     }
 
@@ -106,7 +104,6 @@ library SwapToRatio {
         returns (uint160)
     {
         (PoolParams memory poolParams, int24 tickSpacing, int24 tick) = getPoolInputs(pool);
-
         bool zeroForOne =
             isZeroForOne(
                 positionParams.amount0Initial,
@@ -125,6 +122,7 @@ library SwapToRatio {
             // returns the next initialized tick or the last tick within one word of the current tick.
             // We'll renew calculation at least on a per word basis for better rounding
             (nextInitializedTick, ) = pool.nextInitializedTickWithinOneWord(tick, tickSpacing, zeroForOne);
+            if (zeroForOne) nextInitializedTick -= 1;
             sqrtRatioNextX96 = TickMath.getSqrtRatioAtTick(nextInitializedTick);
 
             (crossTickBoundary, amount0Next, amount1Next) = swapToNextInitializedTick(
@@ -136,6 +134,8 @@ library SwapToRatio {
 
             // if crossing an initialized tick, update token amounts and other parameters to values at next tick
             if (crossTickBoundary) {
+                console.log('nextTick');
+                console.logInt(nextInitializedTick);
                 (, int128 liquidityNet, , , , , , ) = pool.ticks(nextInitializedTick);
 
                 positionParams.amount0Initial = amount0Next;
@@ -166,7 +166,7 @@ library SwapToRatio {
                     SqrtPriceMath.getAmount1Delta(sqrtRatioX96, sqrtRatioX96Lower, 100_000, false);
         } else {
             return
-                amount1 / amount0 <
+                amount1 / amount0 <=
                 SqrtPriceMath.getAmount1Delta(sqrtRatioX96, sqrtRatioX96Lower, 100_000, false) /
                     SqrtPriceMath.getAmount0Delta(sqrtRatioX96, sqrtRatioX96Upper, 100_000, false);
         }
