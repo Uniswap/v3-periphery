@@ -10,7 +10,7 @@ import './LiquidityAmounts.sol';
 import './PoolAddress.sol';
 import './PositionKey.sol';
 
-/// @title Returns information about the token value held in a Uniswap V3 NFTT
+/// @title Returns information about the token value held in a Uniswap V3 NFT
 library PositionValue {
     /// @notice returns the total token value including the principal and the fees owed
     /// @param positionManager The Uniswap V3 NonfungiblePositionManager
