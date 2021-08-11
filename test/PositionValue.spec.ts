@@ -50,7 +50,6 @@ describe('PositionValue', async () => {
     }
   }
 
-
   let pool: Contract
   let tokens: [TestERC20, TestERC20, TestERC20]
   let positionValue: PositionValueTest
@@ -74,11 +73,7 @@ describe('PositionValue', async () => {
       encodePriceSqrt(1, 1)
     )
 
-    const poolAddress = computePoolAddress(
-      factory.address,
-      [tokens[0].address, tokens[1].address],
-      FeeAmount.MEDIUM
-    )
+    const poolAddress = computePoolAddress(factory.address, [tokens[0].address, tokens[1].address], FeeAmount.MEDIUM)
     pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
   })
 

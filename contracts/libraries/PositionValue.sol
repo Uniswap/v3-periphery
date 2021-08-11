@@ -23,7 +23,8 @@ library PositionValue {
         uint256 tokenId,
         uint160 sqrtRatioX96
     ) internal view returns (uint256 amount0, uint256 amount1) {
-        (PrincipalParams memory principalParams, FeeParams memory feeParams) = _constructParams(positionManager, tokenId, sqrtRatioX96);
+        (PrincipalParams memory principalParams, FeeParams memory feeParams) =
+            _constructParams(positionManager, tokenId, sqrtRatioX96);
 
         (amount0, amount1) = _principal(principalParams);
 
@@ -189,11 +190,11 @@ library PositionValue {
         }
     }
 
-    function _constructParams(INonfungiblePositionManager positionManager, uint256 tokenId, uint160 sqrtRatioX96)
-        private
-        view
-        returns (PrincipalParams memory principalParams, FeeParams memory feeParams)
-    {
+    function _constructParams(
+        INonfungiblePositionManager positionManager,
+        uint256 tokenId,
+        uint160 sqrtRatioX96
+    ) private view returns (PrincipalParams memory principalParams, FeeParams memory feeParams) {
         (
             ,
             ,
