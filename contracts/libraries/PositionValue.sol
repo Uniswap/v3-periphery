@@ -15,56 +15,21 @@ library PositionValue {
     /// @notice returns the total token value including the principal and the fees owed
     /// @param positionManager The Uniswap V3 NonfungiblePositionManager
     /// @param tokenId The tokenId of the token for which to get the total value
+    /// @param sqrtRatioX96 The square root price X96 for which to calculate the principal amounts
     /// @return amount0 The total amount of token0 including principal and fees
     /// @return amount1 The total amount of token1 including principal and fees
-    function total(INonfungiblePositionManager positionManager, uint256 tokenId)
-        internal
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
-        (
-            ,
-            ,
-            address token0,
-            address token1,
-            uint24 fee,
-            int24 tickLower,
-            int24 tickUpper,
-            uint128 liquidity,
-            uint256 positionFeeGrowthInside0LastX128,
-            uint256 positionFeeGrowthInside1LastX128,
-            uint256 tokensOwed0,
-            uint256 tokensOwed1
-        ) = positionManager.positions(tokenId);
+    function total(
+        INonfungiblePositionManager positionManager,
+        uint256 tokenId,
+        uint160 sqrtRatioX96
+    ) internal view returns (uint256 amount0, uint256 amount1) {
+        (PrincipalParams memory principalParams, FeeParams memory feeParams) = _constructParams(positionManager, tokenId, sqrtRatioX96);
 
-        (uint160 sqrtRatioX96, , , , , , ) =
-            IUniswapV3Pool(
-                PoolAddress.computeAddress(
-                    positionManager.factory(),
-                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
-                )
-            )
-                .slot0();
+        (amount0, amount1) = _principal(principalParams);
 
-        (amount0, amount1) = _fees(
-            positionManager,
-            FeeParams(
-                token0,
-                token1,
-                fee,
-                tickLower,
-                tickUpper,
-                liquidity,
-                positionFeeGrowthInside0LastX128,
-                positionFeeGrowthInside1LastX128,
-                tokensOwed0,
-                tokensOwed1
-            )
-        );
-        (uint256 amount0Principal, uint256 amount1Principal) =
-            _principal(PrincipalParams(sqrtRatioX96, tickLower, tickUpper, liquidity));
-        amount0 += amount0Principal;
-        amount1 += amount1Principal;
+        (uint256 amount0Fee, uint256 amount1Fee) = _fees(positionManager, feeParams);
+        amount0 += amount0Fee;
+        amount1 += amount1Fee;
     }
 
     struct PrincipalParams {
@@ -78,24 +43,16 @@ library PositionValue {
     /// that the position is burned
     /// @param positionManager The Uniswap V3 NonfungiblePositionManager
     /// @param tokenId The tokenId of the token for which to get the total principal owed
+    /// @param sqrtRatioX96 The square root price X96 for which to calculate the principal amounts
     /// @return amount0 The principal amount of token0
     /// @return amount1 The principal amount of token1
-    function principal(INonfungiblePositionManager positionManager, uint256 tokenId)
-        internal
-        view
-        returns (uint256 amount0, uint256 amount1)
-    {
+    function principal(
+        INonfungiblePositionManager positionManager,
+        uint256 tokenId,
+        uint160 sqrtRatioX96
+    ) internal view returns (uint256 amount0, uint256 amount1) {
         (, , address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) =
             positionManager.positions(tokenId);
-
-        (uint160 sqrtRatioX96, , , , , , ) =
-            IUniswapV3Pool(
-                PoolAddress.computeAddress(
-                    positionManager.factory(),
-                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
-                )
-            )
-                .slot0();
 
         return _principal(PrincipalParams(sqrtRatioX96, tickLower, tickUpper, liquidity));
     }
@@ -230,5 +187,40 @@ library PositionValue {
             feeGrowthInside0X128 = upperFeeGrowthOutside0X128 - lowerFeeGrowthOutside0X128;
             feeGrowthInside1X128 = upperFeeGrowthOutside1X128 - lowerFeeGrowthOutside1X128;
         }
+    }
+
+    function _constructParams(INonfungiblePositionManager positionManager, uint256 tokenId, uint160 sqrtRatioX96)
+        private
+        view
+        returns (PrincipalParams memory principalParams, FeeParams memory feeParams)
+    {
+        (
+            ,
+            ,
+            address token0,
+            address token1,
+            uint24 fee,
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity,
+            uint256 positionFeeGrowthInside0LastX128,
+            uint256 positionFeeGrowthInside1LastX128,
+            uint256 tokensOwed0,
+            uint256 tokensOwed1
+        ) = positionManager.positions(tokenId);
+
+        principalParams = PrincipalParams(sqrtRatioX96, tickLower, tickUpper, liquidity);
+        feeParams = FeeParams(
+            token0,
+            token1,
+            fee,
+            tickLower,
+            tickUpper,
+            liquidity,
+            positionFeeGrowthInside0LastX128,
+            positionFeeGrowthInside1LastX128,
+            tokensOwed0,
+            tokensOwed1
+        );
     }
 }

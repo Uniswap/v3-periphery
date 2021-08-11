@@ -1,5 +1,5 @@
 import { waffle, ethers } from 'hardhat'
-import { constants, BigNumberish } from 'ethers'
+import { constants, BigNumberish, Contract } from 'ethers'
 import { Fixture } from 'ethereum-waffle'
 import {
   PositionValueTest,
@@ -7,6 +7,7 @@ import {
   MockTimeNonfungiblePositionManager,
   IUniswapV3Pool,
   TestERC20,
+  IUniswapV3Factory,
 } from '../typechain'
 import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { getMaxTick, getMinTick } from './shared/ticks'
@@ -28,8 +29,9 @@ describe('PositionValue', async () => {
     tokens: [TestERC20, TestERC20, TestERC20]
     nft: MockTimeNonfungiblePositionManager
     router: SwapRouter
+    factory: IUniswapV3Factory
   }> = async (wallets, provider) => {
-    const { nft, router, tokens } = await completeFixture(wallets, provider)
+    const { nft, router, tokens, factory } = await completeFixture(wallets, provider)
     const positionValueFactory = await ethers.getContractFactory('PositionValueTest')
     const positionValue = (await positionValueFactory.deploy()) as PositionValueTest
 
@@ -44,13 +46,17 @@ describe('PositionValue', async () => {
       tokens,
       nft,
       router,
+      factory,
     }
   }
 
+
+  let pool: Contract
   let tokens: [TestERC20, TestERC20, TestERC20]
   let positionValue: PositionValueTest
   let nft: MockTimeNonfungiblePositionManager
   let router: SwapRouter
+  let factory: IUniswapV3Factory
 
   let amountDesired: BigNumberish
 
@@ -60,17 +66,25 @@ describe('PositionValue', async () => {
   })
 
   beforeEach(async () => {
-    ;({ positionValue, tokens, nft, router } = await loadFixture(positionValueCompleteFixture))
+    ;({ positionValue, tokens, nft, router, factory } = await loadFixture(positionValueCompleteFixture))
     await nft.createAndInitializePoolIfNecessary(
       tokens[0].address,
       tokens[1].address,
       FeeAmount.MEDIUM,
       encodePriceSqrt(1, 1)
     )
+
+    const poolAddress = computePoolAddress(
+      factory.address,
+      [tokens[0].address, tokens[1].address],
+      FeeAmount.MEDIUM
+    )
+    pool = new ethers.Contract(poolAddress, IUniswapV3PoolABI, wallets[0])
   })
 
   describe('#total', () => {
     let tokenId: number
+    let sqrtRatioX96: BigNumberish
 
     beforeEach(async () => {
       amountDesired = expandTo18Decimals(100_000)
@@ -110,25 +124,30 @@ describe('PositionValue', async () => {
         amountIn: swapAmount,
         amountOutMinimum: 0,
       })
+
+      sqrtRatioX96 = (await pool.slot0()).sqrtPriceX96
     })
 
     it('returns the correct amount', async () => {
-      const principal = await positionValue.principal(nft.address, 1)
+      const principal = await positionValue.principal(nft.address, 1, sqrtRatioX96)
       const fees = await positionValue.fees(nft.address, 1)
-      const total = await positionValue.total(nft.address, 1)
+      const total = await positionValue.total(nft.address, 1, sqrtRatioX96)
 
       expect(total[0]).to.equal(principal[0].add(fees[0]))
       expect(total[1]).to.equal(principal[1].add(fees[1]))
     })
 
     it('gas', async () => {
-      await snapshotGasCost(positionValue.totalGas(nft.address, 1))
+      await snapshotGasCost(positionValue.totalGas(nft.address, 1, sqrtRatioX96))
     })
   })
 
   describe('#principal', () => {
-    beforeEach(() => {
+    let sqrtRatioX96: BigNumberish
+
+    beforeEach(async () => {
       amountDesired = expandTo18Decimals(100_000)
+      sqrtRatioX96 = (await pool.slot0()).sqrtPriceX96
     })
 
     it('returns the correct values when price is in the middle of the range', async () => {
@@ -146,7 +165,7 @@ describe('PositionValue', async () => {
         deadline: 10,
       })
 
-      const principal = await positionValue.principal(nft.address, 1)
+      const principal = await positionValue.principal(nft.address, 1, sqrtRatioX96)
       expect(principal.amount0).to.equal('99999999999999999999999')
       expect(principal.amount1).to.equal('99999999999999999999999')
     })
@@ -166,7 +185,7 @@ describe('PositionValue', async () => {
         deadline: 10,
       })
 
-      const principal = await positionValue.principal(nft.address, 1)
+      const principal = await positionValue.principal(nft.address, 1, sqrtRatioX96)
       expect(principal.amount0).to.equal('0')
       expect(principal.amount1).to.equal('99999999999999999999999')
     })
@@ -186,7 +205,7 @@ describe('PositionValue', async () => {
         deadline: 10,
       })
 
-      const principal = await positionValue.principal(nft.address, 1)
+      const principal = await positionValue.principal(nft.address, 1, sqrtRatioX96)
       expect(principal.amount0).to.equal('99999999999999999999999')
       expect(principal.amount1).to.equal('0')
     })
@@ -206,7 +225,7 @@ describe('PositionValue', async () => {
         deadline: 10,
       })
 
-      const principal = await positionValue.principal(nft.address, 1)
+      const principal = await positionValue.principal(nft.address, 1, sqrtRatioX96)
       expect(principal.amount0).to.equal('99999999999999999999999')
       expect(principal.amount1).to.equal('25917066770240321655335')
     })
@@ -226,7 +245,7 @@ describe('PositionValue', async () => {
         deadline: 10,
       })
 
-      const principal = await positionValue.principal(nft.address, 1)
+      const principal = await positionValue.principal(nft.address, 1, sqrtRatioX96)
       expect(principal.amount0).to.equal('25917066770240321655335')
       expect(principal.amount1).to.equal('99999999999999999999999')
     })
@@ -246,7 +265,7 @@ describe('PositionValue', async () => {
         deadline: 10,
       })
 
-      await snapshotGasCost(positionValue.principalGas(nft.address, 1))
+      await snapshotGasCost(positionValue.principalGas(nft.address, 1, sqrtRatioX96))
     })
   })
 
