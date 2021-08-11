@@ -10,7 +10,7 @@ import './LiquidityAmounts.sol';
 import './PoolAddress.sol';
 import './PositionKey.sol';
 
-/// @title Returns information about the token value held in a Uniswap V3 NFT
+/// @title Returns information about the token value held in a Uniswap V3 NFTT
 library PositionValue {
     /// @notice returns the total token value including the principal and the fees owed
     /// @param positionManager The Uniswap V3 NonfungiblePositionManager
@@ -52,7 +52,7 @@ library PositionValue {
         uint256 tokenId,
         uint160 sqrtRatioX96
     ) internal view returns (uint256 amount0, uint256 amount1) {
-        (, , address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) =
+        (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) =
             positionManager.positions(tokenId);
 
         return _principal(PrincipalParams(sqrtRatioX96, tickLower, tickUpper, liquidity));
