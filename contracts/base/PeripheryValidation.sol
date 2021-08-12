@@ -2,10 +2,17 @@
 pragma solidity =0.7.6;
 
 import './BlockTimestamp.sol';
+import '../interfaces/IPeripheryValidation.sol';
 
-abstract contract PeripheryValidation is BlockTimestamp {
-    modifier checkDeadline(uint256 deadline) {
+/// @title Periphery validation
+contract PeripheryValidation is IPeripheryValidation, BlockTimestamp {
+    /// @inheritdoc IPeripheryValidation
+    function checkDeadline(uint256 deadline) public view override {
         require(_blockTimestamp() <= deadline, 'Transaction too old');
-        _;
+    }
+
+    /// @inheritdoc IPeripheryValidation
+    function checkPreviousBlockHash(bytes32 previousBlockHash) public view override {
+        require(blockhash(block.number - 1) == previousBlockHash, 'Previous block hash incorrect');
     }
 }

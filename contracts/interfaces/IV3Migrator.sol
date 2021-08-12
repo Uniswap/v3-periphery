@@ -21,7 +21,6 @@ interface IV3Migrator is IMulticall, ISelfPermit, IPoolInitializer {
         uint256 amount0Min; // must be discounted by percentageToMigrate
         uint256 amount1Min; // must be discounted by percentageToMigrate
         address recipient;
-        uint256 deadline;
         bool refundAsETH;
     }
 

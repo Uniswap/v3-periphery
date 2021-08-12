@@ -116,7 +116,6 @@ contract SwapRouter is
         external
         payable
         override
-        checkDeadline(params.deadline)
         returns (uint256 amountOut)
     {
         amountOut = exactInputInternal(
@@ -129,13 +128,7 @@ contract SwapRouter is
     }
 
     /// @inheritdoc ISwapRouter
-    function exactInput(ExactInputParams memory params)
-        external
-        payable
-        override
-        checkDeadline(params.deadline)
-        returns (uint256 amountOut)
-    {
+    function exactInput(ExactInputParams memory params) external payable override returns (uint256 amountOut) {
         address payer = msg.sender; // msg.sender pays for the first hop
 
         while (true) {
@@ -204,7 +197,6 @@ contract SwapRouter is
         external
         payable
         override
-        checkDeadline(params.deadline)
         returns (uint256 amountIn)
     {
         // avoid an SLOAD by using the swap return data
@@ -221,13 +213,7 @@ contract SwapRouter is
     }
 
     /// @inheritdoc ISwapRouter
-    function exactOutput(ExactOutputParams calldata params)
-        external
-        payable
-        override
-        checkDeadline(params.deadline)
-        returns (uint256 amountIn)
-    {
+    function exactOutput(ExactOutputParams calldata params) external payable override returns (uint256 amountIn) {
         // it's okay that the payer is fixed to msg.sender here, as they're only paying for the "final" exact output
         // swap, which happens first, and subsequent swaps are paid for within nested callback frames
         exactOutputInternal(

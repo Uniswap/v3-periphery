@@ -129,7 +129,6 @@ contract NonfungiblePositionManager is
         external
         payable
         override
-        checkDeadline(params.deadline)
         returns (
             uint256 tokenId,
             uint128 liquidity,
@@ -199,7 +198,6 @@ contract NonfungiblePositionManager is
         external
         payable
         override
-        checkDeadline(params.deadline)
         returns (
             uint128 liquidity,
             uint256 amount0,
@@ -259,7 +257,6 @@ contract NonfungiblePositionManager is
         payable
         override
         isAuthorizedForToken(params.tokenId)
-        checkDeadline(params.deadline)
         returns (uint256 amount0, uint256 amount1)
     {
         require(params.liquidity > 0);

@@ -63,8 +63,7 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, PoolInitializer, Mu
                     amount1Desired: amount1V2ToMigrate,
                     amount0Min: params.amount0Min,
                     amount1Min: params.amount1Min,
-                    recipient: params.recipient,
-                    deadline: params.deadline
+                    recipient: params.recipient
                 })
             );
 

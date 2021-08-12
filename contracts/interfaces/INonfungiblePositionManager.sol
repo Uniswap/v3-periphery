@@ -87,7 +87,6 @@ interface INonfungiblePositionManager is
         uint256 amount0Min;
         uint256 amount1Min;
         address recipient;
-        uint256 deadline;
     }
 
     /// @notice Creates a new position wrapped in a NFT
@@ -114,7 +113,6 @@ interface INonfungiblePositionManager is
         uint256 amount1Desired;
         uint256 amount0Min;
         uint256 amount1Min;
-        uint256 deadline;
     }
 
     /// @notice Increases the amount of liquidity in a position, with tokens paid by the `msg.sender`
@@ -123,7 +121,6 @@ interface INonfungiblePositionManager is
     /// amount1Desired The desired amount of token1 to be spent,
     /// amount0Min The minimum amount of token0 to spend, which serves as a slippage check,
     /// amount1Min The minimum amount of token1 to spend, which serves as a slippage check,
-    /// deadline The time by which the transaction must be included to effect the change
     /// @return liquidity The new liquidity amount as a result of the increase
     /// @return amount0 The amount of token0 to acheive resulting liquidity
     /// @return amount1 The amount of token1 to acheive resulting liquidity
@@ -141,7 +138,6 @@ interface INonfungiblePositionManager is
         uint128 liquidity;
         uint256 amount0Min;
         uint256 amount1Min;
-        uint256 deadline;
     }
 
     /// @notice Decreases the amount of liquidity in a position and accounts it to the position
@@ -149,7 +145,6 @@ interface INonfungiblePositionManager is
     /// amount The amount by which liquidity will be decreased,
     /// amount0Min The minimum amount of token0 that should be accounted for the burned liquidity,
     /// amount1Min The minimum amount of token1 that should be accounted for the burned liquidity,
-    /// deadline The time by which the transaction must be included to effect the change
     /// @return amount0 The amount of token0 accounted to the position's tokens owed
     /// @return amount1 The amount of token1 accounted to the position's tokens owed
     function decreaseLiquidity(DecreaseLiquidityParams calldata params)
