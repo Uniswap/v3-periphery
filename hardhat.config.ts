@@ -63,6 +63,10 @@ export default {
     kovan: {
       url: `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`,
     },
+    arbitrum: {
+      url: `http://localhost:8547`,
+      gas: 8000000,
+    },
   },
   etherscan: {
     // Your API key for Etherscan

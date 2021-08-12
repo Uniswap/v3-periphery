@@ -1,3 +1,4 @@
+import { Wallet } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { TestMulticall } from '../typechain/TestMulticall'
 import { expect } from './shared/expect'
@@ -5,9 +6,13 @@ import { expect } from './shared/expect'
 import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('Multicall', async () => {
-  const wallets = waffle.provider.getWallets()
+  let wallets: Wallet[]
 
   let multicall: TestMulticall
+
+  before('get wallets', async () => {
+    wallets = await (ethers as any).getSigners()
+  })
 
   beforeEach('create multicall', async () => {
     const multicallTestFactory = await ethers.getContractFactory('TestMulticall')

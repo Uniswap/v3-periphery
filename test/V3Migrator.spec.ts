@@ -1,5 +1,5 @@
 import { Fixture } from 'ethereum-waffle'
-import { constants, Contract } from 'ethers'
+import { constants, Contract, Wallet } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import {
   IUniswapV2Pair,
@@ -21,8 +21,7 @@ import { sortedTokens } from './shared/tokenSort'
 import { getMaxTick, getMinTick } from './shared/ticks'
 
 describe('V3Migrator', () => {
-  const wallets = waffle.provider.getWallets()
-  const wallet = wallets[0]
+  let wallet: Wallet
 
   const migratorFixture: Fixture<{
     factoryV2: Contract
@@ -69,6 +68,9 @@ describe('V3Migrator', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    const wallets = await (ethers as any).getSigners()
+    wallet = wallets[0]
+
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 

@@ -10,14 +10,12 @@ describe('OracleLibrary', () => {
   let tokens: TestERC20[]
   let oracle: OracleTest
 
-  const wallets = waffle.provider.getWallets()
-
   const oracleTestFixture = async () => {
     const tokenFactory = await ethers.getContractFactory('TestERC20')
-    const tokens = (await Promise.all([
-      tokenFactory.deploy(constants.MaxUint256.div(2)), // do not use maxu256 to avoid overflowing
-      tokenFactory.deploy(constants.MaxUint256.div(2)),
-    ])) as [TestERC20, TestERC20]
+    const tokens: [TestERC20, TestERC20] = [
+      (await tokenFactory.deploy(constants.MaxUint256.div(2))) as TestERC20, // do not use maxu256 to avoid overflowing
+      (await tokenFactory.deploy(constants.MaxUint256.div(2))) as TestERC20,
+    ]
 
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
 
@@ -31,7 +29,7 @@ describe('OracleLibrary', () => {
   }
 
   before('create fixture loader', async () => {
-    loadFixture = waffle.createFixtureLoader(wallets)
+    loadFixture = waffle.createFixtureLoader(await (ethers as any).getSigners())
   })
 
   beforeEach('deploy fixture', async () => {

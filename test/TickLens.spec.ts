@@ -1,5 +1,5 @@
 import { Fixture } from 'ethereum-waffle'
-import { BigNumber, BigNumberish, constants, Contract, ContractTransaction } from 'ethers'
+import { BigNumber, BigNumberish, constants, Contract, ContractTransaction, Wallet } from 'ethers'
 import { ethers, waffle } from 'hardhat'
 import { MockTimeNonfungiblePositionManager, TestERC20, TickLensTest } from '../typechain'
 import completeFixture from './shared/completeFixture'
@@ -11,7 +11,7 @@ import { computePoolAddress } from './shared/computePoolAddress'
 import snapshotGasCost from './shared/snapshotGasCost'
 
 describe('TickLens', () => {
-  const wallets = waffle.provider.getWallets()
+  let wallets: Wallet[]
 
   const nftFixture: Fixture<{
     factory: Contract
@@ -40,6 +40,7 @@ describe('TickLens', () => {
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
 
   before('create fixture loader', async () => {
+    wallets = await (ethers as any).getSigners()
     loadFixture = waffle.createFixtureLoader(wallets)
   })
 
@@ -201,11 +202,9 @@ describe('TickLens', () => {
 
     it('fully populated ticks', async () => {
       // fully populate a word
-      await Promise.all(
-        new Array(128)
-          .fill(0)
-          .map((_, i) => mint(i * TICK_SPACINGS[FeeAmount.MEDIUM], (255 - i) * TICK_SPACINGS[FeeAmount.MEDIUM], 100))
-      )
+      for (let i = 0; i < 128; i++) {
+        await mint(i * TICK_SPACINGS[FeeAmount.MEDIUM], (255 - i) * TICK_SPACINGS[FeeAmount.MEDIUM], 100)
+      }
 
       const ticks = await tickLens.getPopulatedTicksInWord(
         poolAddress,
