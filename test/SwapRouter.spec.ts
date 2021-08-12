@@ -119,7 +119,6 @@ describe('SwapRouter', function () {
         amount1Desired: 1000000,
         amount0Min: 0,
         amount1Min: 0,
-        deadline: 1,
       }
 
       return nft.mint(liquidityParams)
@@ -150,7 +149,6 @@ describe('SwapRouter', function () {
         const params = {
           path: encodePath(tokens, new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
           recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-          deadline: 1,
           amountIn,
           amountOutMinimum,
         }
@@ -383,7 +381,6 @@ describe('SwapRouter', function () {
               ? BigNumber.from('4295128740')
               : BigNumber.from('1461446703485210103287273052203988822378723970341'),
           recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-          deadline: 1,
           amountIn,
           amountOutMinimum,
         }
@@ -515,7 +512,6 @@ describe('SwapRouter', function () {
         const params = {
           path: encodePath(tokens.slice().reverse(), new Array(tokens.length - 1).fill(FeeAmount.MEDIUM)),
           recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-          deadline: 1,
           amountOut,
           amountInMaximum,
         }
@@ -735,7 +731,6 @@ describe('SwapRouter', function () {
           tokenOut,
           fee: FeeAmount.MEDIUM,
           recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
-          deadline: 1,
           amountOut,
           amountInMaximum,
           sqrtPriceLimitX96:
@@ -862,7 +857,6 @@ describe('SwapRouter', function () {
         const params = {
           path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
           recipient: router.address,
-          deadline: 1,
           amountIn: 102,
           amountOutMinimum,
         }
@@ -892,7 +886,6 @@ describe('SwapRouter', function () {
         const params = {
           path: encodePath([tokens[0].address, weth9.address], [FeeAmount.MEDIUM]),
           recipient: router.address,
-          deadline: 1,
           amountIn: 102,
           amountOutMinimum,
         }

@@ -136,7 +136,6 @@ describe('V3Migrator', () => {
           amount0Min: 9000,
           amount1Min: 9000,
           recipient: wallet.address,
-          deadline: 1,
           refundAsETH: false,
         })
       ).to.be.reverted
@@ -164,7 +163,7 @@ describe('V3Migrator', () => {
         amount0Min: 9000,
         amount1Min: 9000,
         recipient: wallet.address,
-        deadline: 1,
+
         refundAsETH: false,
       })
 
@@ -201,7 +200,7 @@ describe('V3Migrator', () => {
         amount0Min: 4500,
         amount1Min: 4500,
         recipient: wallet.address,
-        deadline: 1,
+
         refundAsETH: false,
       })
 
@@ -244,7 +243,7 @@ describe('V3Migrator', () => {
         amount0Min: 4500,
         amount1Min: 8999,
         recipient: wallet.address,
-        deadline: 1,
+
         refundAsETH: false,
       })
 
@@ -293,7 +292,6 @@ describe('V3Migrator', () => {
         amount0Min: 8999,
         amount1Min: 4500,
         recipient: wallet.address,
-        deadline: 1,
         refundAsETH: false,
       })
 
@@ -342,7 +340,7 @@ describe('V3Migrator', () => {
           amount0Min: 4500,
           amount1Min: 8999,
           recipient: wallet.address,
-          deadline: 1,
+
           refundAsETH: true,
         })
       )
@@ -391,7 +389,7 @@ describe('V3Migrator', () => {
           amount0Min: 8999,
           amount1Min: 4500,
           recipient: wallet.address,
-          deadline: 1,
+
           refundAsETH: true,
         })
       )
@@ -438,7 +436,6 @@ describe('V3Migrator', () => {
           amount0Min: 9000,
           amount1Min: 9000,
           recipient: wallet.address,
-          deadline: 1,
           refundAsETH: false,
         })
       )
