@@ -579,13 +579,6 @@ describe('NonfungiblePositionManager', () => {
 
     it('emits an event')
 
-    it('fails if past deadline', async () => {
-      await nft.setTime(2)
-      await expect(
-        nft.connect(other).decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0 })
-      ).to.be.revertedWith('Transaction too old')
-    })
-
     it('cannot be called by other addresses', async () => {
       await expect(nft.decreaseLiquidity({ tokenId, liquidity: 50, amount0Min: 0, amount1Min: 0 })).to.be.revertedWith(
         'Not approved'
