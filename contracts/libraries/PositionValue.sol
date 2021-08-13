@@ -115,12 +115,16 @@ library PositionValue {
         view
         returns (uint256 amount0, uint256 amount1)
     {
+
         (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) =
             _getFeeGrowthInside(
                 positionManager,
-                feeParams.token0,
-                feeParams.token1,
-                feeParams.fee,
+                IUniswapV3Pool(
+                    PoolAddress.computeAddress(
+                        positionManager.factory(),
+                        PoolAddress.PoolKey({token0: feeParams.token0, token1: feeParams.token1, fee: feeParams.fee})
+                    )
+                ),
                 feeParams.tickLower,
                 feeParams.tickUpper
             );
@@ -144,20 +148,10 @@ library PositionValue {
 
     function _getFeeGrowthInside(
         INonfungiblePositionManager positionManager,
-        address token0,
-        address token1,
-        uint24 fee,
+        IUniswapV3Pool pool,
         int24 tickLower,
         int24 tickUpper
     ) private view returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) {
-        IUniswapV3Pool pool =
-            IUniswapV3Pool(
-                PoolAddress.computeAddress(
-                    positionManager.factory(),
-                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
-                )
-            );
-
         (, int24 tickCurrent, , , , , ) = pool.slot0();
         (, , uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128, , , , ) = pool.ticks(tickLower);
         (, , uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128, , , , ) = pool.ticks(tickUpper);
