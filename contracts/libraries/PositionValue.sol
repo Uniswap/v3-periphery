@@ -115,7 +115,6 @@ library PositionValue {
         view
         returns (uint256 amount0, uint256 amount1)
     {
-
         (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) =
             _getFeeGrowthInside(
                 positionManager,
