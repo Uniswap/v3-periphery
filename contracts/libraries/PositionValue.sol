@@ -12,7 +12,8 @@ import './PositionKey.sol';
 
 /// @title Returns information about the token value held in a Uniswap V3 NFT
 library PositionValue {
-    /// @notice returns the total token value including the principal and the fees owed
+    /// @notice Returns the total amounts of token0 and token1, i.e. the sum of fees and principal,
+    /// that a given nonfungible position manager token is worth
     /// @param positionManager The Uniswap V3 NonfungiblePositionManager
     /// @param tokenId The tokenId of the token for which to get the total value
     /// @param sqrtRatioX96 The square root price X96 for which to calculate the principal amounts
@@ -23,21 +24,11 @@ library PositionValue {
         uint256 tokenId,
         uint160 sqrtRatioX96
     ) internal view returns (uint256 amount0, uint256 amount1) {
-        (PrincipalParams memory principalParams, FeeParams memory feeParams) =
-            _constructParams(positionManager, tokenId, sqrtRatioX96);
+        (amount0, amount1) = principal(positionManager, tokenId, sqrtRatioX96);
 
-        (amount0, amount1) = _principal(principalParams);
-
-        (uint256 amount0Fee, uint256 amount1Fee) = _fees(positionManager, feeParams);
+        (uint256 amount0Fee, uint256 amount1Fee) = fees(positionManager, tokenId);
         amount0 += amount0Fee;
         amount1 += amount1Fee;
-    }
-
-    struct PrincipalParams {
-        uint160 sqrtRatioX96;
-        int24 tickLower;
-        int24 tickUpper;
-        uint128 liquidity;
     }
 
     /// @notice Calculates the principal (currently acting as liquidity) owed to the token owner in the event
@@ -54,16 +45,12 @@ library PositionValue {
     ) internal view returns (uint256 amount0, uint256 amount1) {
         (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = positionManager.positions(tokenId);
 
-        return _principal(PrincipalParams(sqrtRatioX96, tickLower, tickUpper, liquidity));
-    }
-
-    function _principal(PrincipalParams memory params) internal pure returns (uint256 amount0, uint256 amount1) {
         return
             LiquidityAmounts.getAmountsForLiquidity(
-                params.sqrtRatioX96,
-                TickMath.getSqrtRatioAtTick(params.tickLower),
-                TickMath.getSqrtRatioAtTick(params.tickUpper),
-                params.liquidity
+                sqrtRatioX96,
+                TickMath.getSqrtRatioAtTick(tickLower),
+                TickMath.getSqrtRatioAtTick(tickUpper),
+                liquidity
             );
     }
 
@@ -187,40 +174,5 @@ library PositionValue {
             feeGrowthInside0X128 = upperFeeGrowthOutside0X128 - lowerFeeGrowthOutside0X128;
             feeGrowthInside1X128 = upperFeeGrowthOutside1X128 - lowerFeeGrowthOutside1X128;
         }
-    }
-
-    function _constructParams(
-        INonfungiblePositionManager positionManager,
-        uint256 tokenId,
-        uint160 sqrtRatioX96
-    ) private view returns (PrincipalParams memory principalParams, FeeParams memory feeParams) {
-        (
-            ,
-            ,
-            address token0,
-            address token1,
-            uint24 fee,
-            int24 tickLower,
-            int24 tickUpper,
-            uint128 liquidity,
-            uint256 positionFeeGrowthInside0LastX128,
-            uint256 positionFeeGrowthInside1LastX128,
-            uint256 tokensOwed0,
-            uint256 tokensOwed1
-        ) = positionManager.positions(tokenId);
-
-        principalParams = PrincipalParams(sqrtRatioX96, tickLower, tickUpper, liquidity);
-        feeParams = FeeParams(
-            token0,
-            token1,
-            fee,
-            tickLower,
-            tickUpper,
-            liquidity,
-            positionFeeGrowthInside0LastX128,
-            positionFeeGrowthInside1LastX128,
-            tokensOwed0,
-            tokensOwed1
-        );
     }
 }
