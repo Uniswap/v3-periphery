@@ -24,11 +24,10 @@ library PositionValue {
         uint256 tokenId,
         uint160 sqrtRatioX96
     ) internal view returns (uint256 amount0, uint256 amount1) {
-        (amount0, amount1) = principal(positionManager, tokenId, sqrtRatioX96);
-
+        (uint256 amount0Principal, uint256 amount1Principal) = principal(positionManager, tokenId, sqrtRatioX96);
         (uint256 amount0Fee, uint256 amount1Fee) = fees(positionManager, tokenId);
-        amount0 += amount0Fee;
-        amount1 += amount1Fee;
+        return (amount0Principal + amount0Fee, amount1Principal + amount1Fee);
+
     }
 
     /// @notice Calculates the principal (currently acting as liquidity) owed to the token owner in the event

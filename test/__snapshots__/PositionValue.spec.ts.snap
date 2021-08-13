@@ -8,4 +8,4 @@ exports[`PositionValue #fees when price is within the position range gas 1`] = `
 
 exports[`PositionValue #principal gas 1`] = `23001`;
 
-exports[`PositionValue #total gas 1`] = `59781`;
+exports[`PositionValue #total gas 1`] = `59782`;
