@@ -12,7 +12,7 @@ import './PositionKey.sol';
 
 /// @title Returns information about the token value held in a Uniswap V3 NFT
 library PositionValue {
-    /// @notice Returns the total amounts of token0 and token1, i.e. the sum of fees and principal,
+    /// @notice Returns the total amounts of token0 and token1, i.e. the sum of fees and principal
     /// that a given nonfungible position manager token is worth
     /// @param positionManager The Uniswap V3 NonfungiblePositionManager
     /// @param tokenId The tokenId of the token for which to get the total value
