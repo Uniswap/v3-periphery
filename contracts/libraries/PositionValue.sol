@@ -115,7 +115,6 @@ library PositionValue {
     {
         (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) =
             _getFeeGrowthInside(
-                positionManager,
                 IUniswapV3Pool(
                     PoolAddress.computeAddress(
                         positionManager.factory(),
@@ -144,7 +143,6 @@ library PositionValue {
     }
 
     function _getFeeGrowthInside(
-        INonfungiblePositionManager positionManager,
         IUniswapV3Pool pool,
         int24 tickLower,
         int24 tickUpper
