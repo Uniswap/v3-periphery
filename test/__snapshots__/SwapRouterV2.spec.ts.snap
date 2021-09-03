@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SwapRouterV2 swapExactETHForTokens gas 1`] = `101944`;
+
+exports[`SwapRouterV2 swapExactTokensForTokens gas 1`] = `103788`;
