@@ -89,7 +89,7 @@ contract UniswapV2SwapRouter is PeripheryValidation {
         uint256 deadline
     ) external payable checkDeadline(deadline) returns (uint256[] memory amounts) {
         require(path[0] == WETH, 'UniswapV2Router: INVALID_PATH');
-        amounts = UniswapV2Library.getAmountsOut(v2Factory, msg.value, path);
+        amounts = UniswapV2Library.getAmountsOut(v2Factory, address(this).balance, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
         IWETH9(WETH).deposit{value: amounts[0]}();
         assert(IWETH9(WETH).transfer(UniswapV2Library.pairFor(v2Factory, path[0], path[1]), amounts[0]));
@@ -146,12 +146,13 @@ contract UniswapV2SwapRouter is PeripheryValidation {
     ) external payable checkDeadline(deadline) returns (uint256[] memory amounts) {
         require(path[0] == WETH, 'UniswapV2Router: INVALID_PATH');
         amounts = UniswapV2Library.getAmountsIn(v2Factory, amountOut, path);
-        require(amounts[0] <= msg.value, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
+        require(amounts[0] <= address(this).balance, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
         IWETH9(WETH).deposit{value: amounts[0]}();
         assert(IWETH9(WETH).transfer(UniswapV2Library.pairFor(v2Factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
         // refund dust eth, if any
-        if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
+        if (address(this).balance > amounts[0])
+            TransferHelper.safeTransferETH(msg.sender, address(this).balance - amounts[0]);
     }
 
     // **** SWAP (supporting fee-on-transfer tokens) ****
@@ -206,7 +207,7 @@ contract UniswapV2SwapRouter is PeripheryValidation {
         uint256 deadline
     ) external payable checkDeadline(deadline) {
         require(path[0] == WETH, 'UniswapV2Router: INVALID_PATH');
-        uint256 amountIn = msg.value;
+        uint256 amountIn = address(this).balance;
         IWETH9(WETH).deposit{value: amountIn}();
         assert(IWETH9(WETH).transfer(UniswapV2Library.pairFor(v2Factory, path[0], path[1]), amountIn));
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
