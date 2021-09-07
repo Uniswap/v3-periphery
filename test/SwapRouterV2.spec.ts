@@ -11,9 +11,7 @@ const { MaxUint256, AddressZero } = constants
 // import { ecsign } from 'ethereumjs-util'
 import { v2Fixture } from './shared/v2Fixtures'
 
-const MINIMUM_LIQUIDITY = BigNumber.from(1000)
-
-describe.only('SwapRouterV2', () => {
+describe('SwapRouterV2', () => {
   let wallet: Wallet
   let trader: Wallet
   let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
@@ -528,43 +526,6 @@ describe.only('SwapRouterV2', () => {
 //     )
 //   })
 //
-//   // it('removeLiquidityETHWithPermitSupportingFeeOnTransferTokens', async () => {
-//   //   const DTTAmount = expandTo18Decimals(1).mul(100).div(99)
-//   //   const ETHAmount = expandTo18Decimals(4)
-//   //   await addLiquidity(DTTAmount, ETHAmount)
-//   //
-//   //   const expectedLiquidity = expandTo18Decimals(2)
-//   //
-//   //   const nonce = await pair.nonces(wallet.address)
-//   //   const digest = await getApprovalDigest(
-//   //     pair,
-//   //     { owner: wallet.address, spender: router.address, value: expectedLiquidity.sub(MINIMUM_LIQUIDITY) },
-//   //     nonce,
-//   //     MaxUint256
-//   //   )
-//   //   const { v, r, s } = ecsign(Buffer.from(digest.slice(2), 'hex'), Buffer.from(wallet.privateKey.slice(2), 'hex'))
-//   //
-//   //   const DTTInPair = await DTT.balanceOf(pair.address)
-//   //   const WETHInPair = await WETH.balanceOf(pair.address)
-//   //   const liquidity = await pair.balanceOf(wallet.address)
-//   //   const totalSupply = await pair.totalSupply()
-//   //   const NaiveDTTExpected = DTTInPair.mul(liquidity).div(totalSupply)
-//   //   const WETHExpected = WETHInPair.mul(liquidity).div(totalSupply)
-//   //
-//   //   await pair.approve(router.address, MaxUint256)
-//   //   await router.removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
-//   //     DTT.address,
-//   //     liquidity,
-//   //     NaiveDTTExpected,
-//   //     WETHExpected,
-//   //     wallet.address,
-//   //     MaxUint256,
-//   //     false,
-//   //     v,
-//   //     r,
-//   //     s
-//   //   )
-//   // })
 //
 //   describe('swapExactTokensForTokensSupportingFeeOnTransferTokens', () => {
 //     const DTTAmount = expandTo18Decimals(5).mul(100).div(99)
