@@ -2,6 +2,7 @@
 pragma solidity =0.7.6;
 
 contract MockObservations {
+
     uint32[4] internal blockTimestamps;
     bool[4] internal initializeds;
     uint16 internal slot0ObservationCardinality;
@@ -50,4 +51,5 @@ contract MockObservations {
     {
         return (blockTimestamps[index], 0, 0, initializeds[index]);
     }
+
 }
