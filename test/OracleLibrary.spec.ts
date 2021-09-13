@@ -211,7 +211,7 @@ describe('OracleLibrary', () => {
     })
 
     it('fetches the oldest timestamp from the slot after observationIndex', async () => {
-      const blockTimestamps = [1,2,3,0]
+      const blockTimestamps = [1, 2, 3, 0]
       const initializeds = [true, true, true, false]
       const observationCardinality = 3
       const observationIndex = 1
@@ -230,7 +230,7 @@ describe('OracleLibrary', () => {
     })
 
     it('loops to fetches the oldest timestamp from index 0', async () => {
-      const blockTimestamps = [1,2,3,0]
+      const blockTimestamps = [1, 2, 3, 0]
       const initializeds = [true, true, true, false]
       const observationCardinality = 3
       const observationIndex = 2
@@ -249,7 +249,7 @@ describe('OracleLibrary', () => {
     })
 
     it('fetches from index 0 if the next index is uninitialized', async () => {
-      const blockTimestamps = [1,2,0,0]
+      const blockTimestamps = [1, 2, 0, 0]
       const initializeds = [true, true, false, false]
       const observationCardinality = 4
       const observationIndex = 1
@@ -262,13 +262,11 @@ describe('OracleLibrary', () => {
 
       var result = await oracle.getOldestObservationSecondsAgo(mockObservations.address)
 
-      expect(result['secondsAgo']).to.equal(
-        result['currentTimestamp'] - blockTimestamps[0]
-      )
+      expect(result['secondsAgo']).to.equal(result['currentTimestamp'] - blockTimestamps[0])
     })
 
     it('reverts if the pool is not initialized', async () => {
-      const blockTimestamps = [0,0,0,0]
+      const blockTimestamps = [0, 0, 0, 0]
       const initializeds = [false, false, false, false]
       const observationCardinality = 0
       const observationIndex = 0
@@ -279,8 +277,9 @@ describe('OracleLibrary', () => {
         observationIndex
       )
 
-      await expect(oracle.getOldestObservationSecondsAgo(mockObservations.address))
-        .to.be.revertedWith('Pool not initialized')
+      await expect(oracle.getOldestObservationSecondsAgo(mockObservations.address)).to.be.revertedWith(
+        'Pool not initialized'
+      )
     })
   })
 })
