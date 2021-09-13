@@ -58,6 +58,9 @@ library OracleLibrary {
         }
     }
 
+    /// @notice Given a pool, it returns the number of seconds ago of the oldest stored observation
+    /// @param pool Address of Uniswap V3 pool that we want to observe
+    /// @return The number of seconds ago of the oldest observation stored for the pool
     function getOldestObservationSecondsAgo(address pool) internal view returns (uint32) {
         ( , , uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(pool).slot0();
         require(observationCardinality > 0, 'Pool not initialized');
