@@ -276,7 +276,6 @@ describe('OracleLibrary', () => {
 
     it('reverts if the pool is not initialized', async () => {
       const blockTimestamps = [0, 0, 0, 0]
-
       const initializeds = [false, false, false, false]
       const observationCardinality = 0
       const observationIndex = 0
