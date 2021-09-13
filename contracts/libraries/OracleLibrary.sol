@@ -57,4 +57,19 @@ library OracleLibrary {
                 : FullMath.mulDiv(1 << 128, baseAmount, ratioX128);
         }
     }
+
+    function getOldestObservationSecondsAgo(address pool) internal view returns (uint32) {
+        ( , , uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(pool).slot0();
+        require(observationCardinality > 0, 'Pool not initialized');
+    
+        (uint32 observationTimestamp, , , bool initialized) = IUniswapV3Pool(pool).observations(
+            (observationIndex + 1) % observationCardinality
+        );
+
+        if (!initialized) {
+            (observationTimestamp, , , ) = IUniswapV3Pool(pool).observations(0);
+        }
+
+        return uint32(block.timestamp) - observationTimestamp;
+    }
 }

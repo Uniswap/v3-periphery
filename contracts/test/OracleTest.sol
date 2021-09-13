@@ -34,4 +34,9 @@ contract OracleTest {
         OracleLibrary.getQuoteAtTick(tick, baseAmount, baseToken, quoteToken);
         return gasBefore - gasleft();
     }
+
+    function getOldestObservationSecondsAgo(address pool) public view returns (uint32 secondsAgo, uint32 currentTimestamp) {
+        secondsAgo = OracleLibrary.getOldestObservationSecondsAgo(pool);
+        currentTimestamp = uint32(block.timestamp);
+    }
 }
