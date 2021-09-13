@@ -211,7 +211,7 @@ describe('OracleLibrary', () => {
     })
 
     it('fetches the oldest timestamp from the slot after observationIndex', async () => {
-      const blockTimestamps = [1, 2, 3, 0]
+      const blockTimestamps = [2, 3, 1, 0]
       const initializeds = [true, true, true, false]
       const observationCardinality = 3
       const observationIndex = 1
