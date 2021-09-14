@@ -278,7 +278,7 @@ describe('OracleLibrary', () => {
       )
 
       await expect(oracle.getOldestObservationSecondsAgo(mockObservations.address)).to.be.revertedWith(
-        'Pool not initialized'
+        'NI'
       )
     })
   })
