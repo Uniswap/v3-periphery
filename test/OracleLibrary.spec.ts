@@ -281,7 +281,7 @@ describe('OracleLibrary', () => {
     })
 
     it('fetches the correct timestamp when the timestamps overflow', async () => {
-      const maxUint32 = (2**32)-1
+      const maxUint32 = 2 ** 32 - 1
       const blockTimestamps = [maxUint32, 3, maxUint32 - 2, 0]
       const initializeds = [true, true, true, false]
       const observationCardinality = 3
@@ -298,7 +298,7 @@ describe('OracleLibrary', () => {
       //calculate seconds ago
       var secondsAgo = result['currentTimestamp'] - blockTimestamps[(observationIndex + 1) % observationCardinality]
       if (secondsAgo < 0) {
-        secondsAgo += (2**32)
+        secondsAgo += 2 ** 32
       }
 
       expect(result['secondsAgo']).to.equal(secondsAgo)
