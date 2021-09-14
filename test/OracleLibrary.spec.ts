@@ -277,9 +277,7 @@ describe('OracleLibrary', () => {
         observationIndex
       )
 
-      await expect(oracle.getOldestObservationSecondsAgo(mockObservations.address)).to.be.revertedWith(
-        'NI'
-      )
+      await expect(oracle.getOldestObservationSecondsAgo(mockObservations.address)).to.be.revertedWith('NI')
     })
   })
 })
