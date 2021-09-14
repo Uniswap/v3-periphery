@@ -231,7 +231,7 @@ describe('OracleLibrary', () => {
       }
 
       if (secondsAgo < 0) {
-        secondsAgo += (2**32)
+        secondsAgo += 2 ** 32
       }
 
       expect(result['secondsAgo']).to.equal(secondsAgo)
@@ -247,7 +247,7 @@ describe('OracleLibrary', () => {
       const initializeds = [true, true, true, false]
       const observationCardinality = 3
       const observationIndex = 1
-      
+
       // run test
       await runObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
     })
