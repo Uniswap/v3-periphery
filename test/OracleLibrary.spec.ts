@@ -287,7 +287,6 @@ describe('OracleLibrary', () => {
       )
 
       await expect(oracle.getOldestObservationSecondsAgo(mockObservations.address)).to.be.revertedWith('NI')
-
     })
 
     it('fetches the correct timestamp when the timestamps overflow', async () => {
