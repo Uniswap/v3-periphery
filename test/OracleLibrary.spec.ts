@@ -202,4 +202,103 @@ describe('OracleLibrary', () => {
       )
     })
   })
+
+  describe('#getOldestObservationSecondsAgo', () => {
+    let mockObservationsFactory: ContractFactory
+
+    // helper function to run each test case identically
+    const runObservationsTest = async (
+      blockTimestamps: number[],
+      initializeds: boolean[],
+      observationCardinality: number,
+      observationIndex: number
+    ) => {
+      const mockObservations = await mockObservationsFactory.deploy(
+        blockTimestamps,
+        initializeds,
+        observationCardinality,
+        observationIndex
+      )
+
+      var result = await oracle.getOldestObservationSecondsAgo(mockObservations.address)
+
+      //calculate seconds ago
+      var secondsAgo
+      if (initializeds[(observationIndex + 1) % observationCardinality]) {
+        secondsAgo = result['currentTimestamp'] - blockTimestamps[(observationIndex + 1) % observationCardinality]
+      } else {
+        secondsAgo = result['currentTimestamp'] - blockTimestamps[0]
+      }
+
+      if (secondsAgo < 0) {
+        secondsAgo += 2 ** 32
+      }
+
+      expect(result['secondsAgo']).to.equal(secondsAgo)
+    }
+
+    before('create mockObservationsFactory', async () => {
+      mockObservationsFactory = await ethers.getContractFactory('MockObservations')
+    })
+
+    it('fetches the oldest timestamp from the slot after observationIndex', async () => {
+      // set up test case
+      const blockTimestamps = [2, 3, 1, 0]
+      const initializeds = [true, true, true, false]
+      const observationCardinality = 3
+      const observationIndex = 1
+
+      // run test
+      await runObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
+    })
+
+    it('loops to fetches the oldest timestamp from index 0', async () => {
+      // set up test case
+      const blockTimestamps = [1, 2, 3, 0]
+      const initializeds = [true, true, true, false]
+      const observationCardinality = 3
+      const observationIndex = 2
+
+      // run test
+      await runObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
+    })
+
+    it('fetches from index 0 if the next index is uninitialized', async () => {
+      // set up test case
+      const blockTimestamps = [1, 2, 0, 0]
+      const initializeds = [true, true, false, false]
+      const observationCardinality = 4
+      const observationIndex = 1
+
+      // run test
+      await runObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
+    })
+
+    it('reverts if the pool is not initialized', async () => {
+      const blockTimestamps = [0, 0, 0, 0]
+      const initializeds = [false, false, false, false]
+      const observationCardinality = 0
+      const observationIndex = 0
+      const mockObservations = await mockObservationsFactory.deploy(
+        blockTimestamps,
+        initializeds,
+        observationCardinality,
+        observationIndex
+      )
+
+      await expect(oracle.getOldestObservationSecondsAgo(mockObservations.address)).to.be.revertedWith('NI')
+    })
+
+    it('fetches the correct timestamp when the timestamps overflow', async () => {
+      // set up test case
+      const maxUint32 = 2 ** 32 - 1
+      const blockTimestamps = [maxUint32, 3, maxUint32 - 2, 0]
+      const initializeds = [true, true, true, false]
+      const observationCardinality = 3
+      const observationIndex = 1
+
+      // run test
+      await runObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
+    })
+  })
 })
