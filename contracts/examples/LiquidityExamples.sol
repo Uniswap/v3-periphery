@@ -28,9 +28,7 @@ contract LiquidityExamples is IERC721Receiver {
     /// @dev deposits[tokenId] => Deposit
     mapping(uint256 => Deposit) public deposits;
 
-    constructor(
-        INonfungiblePositionManager _nonfungiblePositionManager
-    ) {
+    constructor(INonfungiblePositionManager _nonfungiblePositionManager) {
         nonfungiblePositionManager = _nonfungiblePositionManager;
     }
 
@@ -57,7 +55,7 @@ contract LiquidityExamples is IERC721Receiver {
         deposits[tokenId] = Deposit({owner: owner, liquidity: liquidity, token0: token0, token1: token1});
     }
 
-    /// @notice Calls the mint function defined in perphery, mints the same amount of each token. 
+    /// @notice Calls the mint function defined in perphery, mints the same amount of each token.
     /// For this example we are providing 1000 DAI and 1000 USDC in liquidity
     /// @return tokenId The id of the newly minted ERC721
     /// @return liquidity The amount of liquidity for the position
@@ -187,25 +185,25 @@ contract LiquidityExamples is IERC721Receiver {
             uint128 liquidity,
             uint256 amount0,
             uint256 amount1
-        ) {
-        
+        )
+    {
         TransferHelper.safeTransferFrom(deposits[tokenId].token0, msg.sender, address(this), amountAdd0);
         TransferHelper.safeTransferFrom(deposits[tokenId].token1, msg.sender, address(this), amountAdd1);
 
         TransferHelper.safeApprove(deposits[tokenId].token0, address(nonfungiblePositionManager), amountAdd0);
         TransferHelper.safeApprove(deposits[tokenId].token1, address(nonfungiblePositionManager), amountAdd1);
 
-        INonfungiblePositionManager.IncreaseLiquidityParams memory params = INonfungiblePositionManager.IncreaseLiquidityParams({
-            tokenId: tokenId,
-            amount0Desired: amountAdd0,
-            amount1Desired: amountAdd1,
-            amount0Min: 0,
-            amount1Min: 0,
-            deadline: block.timestamp
-        });
+        INonfungiblePositionManager.IncreaseLiquidityParams memory params =
+            INonfungiblePositionManager.IncreaseLiquidityParams({
+                tokenId: tokenId,
+                amount0Desired: amountAdd0,
+                amount1Desired: amountAdd1,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            });
 
         (liquidity, amount0, amount1) = nonfungiblePositionManager.increaseLiquidity(params);
-
     }
 
     /// @notice Transfers funds to owner of NFT
