@@ -14,11 +14,11 @@ import '../interfaces/ISwapRouter.sol';
 
 /// @title Flash contract implementation
 /// @notice An example contract using the Uniswap V3 flash function
-contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState, PeripheryPayments {
+contract PairFlash is IUniswapV3FlashCallback, PeripheryPayments {
     using LowGasSafeMath for uint256;
     using LowGasSafeMath for int256;
-
-    ISwapRouter swapRouter;
+    
+    ISwapRouter public immutable swapRouter;
 
     constructor(
         ISwapRouter _swapRouter,
@@ -26,6 +26,16 @@ contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState, Peripher
         address _WETH9
     ) PeripheryImmutableState(_factory, _WETH9) {
         swapRouter = _swapRouter;
+    }
+
+    // fee2 and fee3 are the two other fees associated with the two other pools of token0 and token1
+    struct FlashCallbackData {
+        uint256 amount0;
+        uint256 amount1;
+        address payer;
+        PoolAddress.PoolKey poolKey;
+        uint24 poolFee2;
+        uint24 poolFee3;
     }
 
     /// @param fee0 The fee from calling flash for token0
@@ -117,15 +127,6 @@ contract PairFlash is IUniswapV3FlashCallback, PeripheryImmutableState, Peripher
         uint256 amount1;
         uint24 fee2;
         uint24 fee3;
-    }
-    // fee2 and fee3 are the two other fees associated with the two other pools of token0 and token1
-    struct FlashCallbackData {
-        uint256 amount0;
-        uint256 amount1;
-        address payer;
-        PoolAddress.PoolKey poolKey;
-        uint24 poolFee2;
-        uint24 poolFee3;
     }
 
     /// @param params The parameters necessary for flash and the callback, passed in as FlashParams
