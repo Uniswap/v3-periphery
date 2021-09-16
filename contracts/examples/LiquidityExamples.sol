@@ -140,7 +140,7 @@ contract LiquidityExamples is IERC721Receiver {
 
         (amount0, amount1) = nonfungiblePositionManager.collect(params);
 
-        // send collected feed back to owner
+        // send collected fees back to owner
         _sendToOwner(tokenId, amount0, amount1);
     }
 
@@ -187,7 +187,6 @@ contract LiquidityExamples is IERC721Receiver {
             uint128 liquidity,
             uint256 amount0,
             uint256 amount1
-<<<<<<< HEAD
         ) {
         
         TransferHelper.safeTransferFrom(deposits[tokenId].token0, msg.sender, address(this), amountAdd0);
@@ -207,21 +206,6 @@ contract LiquidityExamples is IERC721Receiver {
 
         (liquidity, amount0, amount1) = nonfungiblePositionManager.increaseLiquidity(params);
 
-=======
-        )
-    {
-        INonfungiblePositionManager.IncreaseLiquidityParams memory params =
-            INonfungiblePositionManager.IncreaseLiquidityParams({
-                tokenId: tokenId,
-                amount0Desired: amountAdd0,
-                amount1Desired: amountAdd1,
-                amount0Min: 0,
-                amount1Min: 0,
-                deadline: block.timestamp
-            });
-
-        (liquidity, amount0, amount1) = nonfungiblePositionManager.increaseLiquidity(params);
->>>>>>> 500f18e847adf00ee69f1fff7ea9566e98aa1476
     }
 
     /// @notice Transfers funds to owner of NFT
