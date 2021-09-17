@@ -39,8 +39,10 @@ library ChainedOracleLibrary {
         secondsAgos[1] = 0;
 
         // derive poolA arithmetic mean tick
+        IUniswapV3Pool poolA = IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee1)));
+
         (int56[] memory poolATickCumulatives, uint160[] memory poolASecondsPerLiquidityCumulativeX128s) =
-            IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee1))).observe(
+            IUniswapV3Pool(poolA).observe(
                 secondsAgos
             );
 
@@ -49,8 +51,12 @@ library ChainedOracleLibrary {
         int24 poolAArithmeticMeanTick = int24(poolATickCumulativesDelta / period);
 
         // derive poolB arithmetic mean tick
+
+        IUniswapV3Pool poolB = IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee1)));
+
+
         (int56[] memory poolBTickCumulatives, uint160[] memory poolBSecondsPerLiquidityCumulativeX128s) =
-            IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenB, tokenC, fee2))).observe(
+            IUniswapV3Pool(poolB).observe(
                 secondsAgos
             );
 
@@ -59,5 +65,12 @@ library ChainedOracleLibrary {
         int24 poolBArithmeticMeanTick = int24(poolBTickCumulativesDelta / period);
 
         // figure out how to chain the tick reading to get token A in terms of token C
+
+        if (poolA.token1.address == poolB.token0.address) {
+            // chain price directly
+        } else {
+            // invert price
+        }
+        
     }
 }
