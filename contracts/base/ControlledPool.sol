@@ -102,7 +102,7 @@ abstract contract ControlledPool is IERC20, IUniswapV3MintCallback, IUniswapV3Sw
         revert();
     }
 
-    /// @dev Always pays, since it's assumed mint is called from this contract and the amount is not unexpected
+    /// @dev By default always pays
     function uniswapV3MintCallback(
         uint256 amount0Owed,
         uint256 amount1Owed,
