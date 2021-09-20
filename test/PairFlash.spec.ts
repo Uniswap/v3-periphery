@@ -71,7 +71,7 @@ describe('PairFlash test', () => {
     return {
       token0,
       token1,
-      flash: flash as PairFlash,
+      flash,
       factory,
       weth9,
       nft,
@@ -94,9 +94,6 @@ describe('PairFlash test', () => {
     await createPool(token0.address, token1.address, FeeAmount.LOW, encodePriceSqrt(5, 10))
     await createPool(token0.address, token1.address, FeeAmount.MEDIUM, encodePriceSqrt(1, 1))
     await createPool(token0.address, token1.address, FeeAmount.HIGH, encodePriceSqrt(20, 10))
-    // set up funds in flash contract
-    await token0.transfer(flash.address, MaxUint128)
-    await token1.transfer(flash.address, MaxUint128)
   })
 
   describe('flash', () => {
@@ -105,8 +102,8 @@ describe('PairFlash test', () => {
       const amount0In = 1000
       const amount1In = 1000
 
-      const fee0 = Math.ceil((amount0In * FeeAmount.MEDIUM) / 1000000) // how can i get this ?
-      const fee1 = Math.ceil((amount1In * FeeAmount.MEDIUM) / 1000000) // how can i get this dynamically?
+      const fee0 = Math.ceil((amount0In * FeeAmount.MEDIUM) / 1000000)
+      const fee1 = Math.ceil((amount1In * FeeAmount.MEDIUM) / 1000000)
 
       const flashParams = {
         token0: token0.address,
