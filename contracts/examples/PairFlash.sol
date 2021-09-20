@@ -91,21 +91,17 @@ contract PairFlash is IUniswapV3FlashCallback, PeripheryPayments {
                 })
             );
 
-        // end up with amountOut0 of token0 from first swap and amountOut1 of token1 from second swap
-        uint256 amount0Owed = LowGasSafeMath.add(decoded.amount0, fee0);
-        uint256 amount1Owed = LowGasSafeMath.add(decoded.amount1, fee1);
-
         // pay the required amounts back to the pair
         if (amount0Min > 0) pay(token0, address(this), msg.sender, amount0Min);
         if (amount1Min > 0) pay(token1, address(this), msg.sender, amount1Min);
 
         // if profitable pay profits to payer
-        if (amountOut0 > amount0Owed) {
-            uint256 profit0 = amountOut0 - amount0Owed;
+        if (amountOut0 > amount0Min) {
+            uint256 profit0 = amountOut0 - amount0Min;
             pay(token0, address(this), decoded.payer, profit0);
         }
-        if (amountOut1 > amount1Owed) {
-            uint256 profit1 = amountOut1 - amount1Owed;
+        if (amountOut1 > amount1Min) {
+            uint256 profit1 = amountOut1 - amount1Min;
             pay(token1, address(this), decoded.payer, profit1);
         }
     }
