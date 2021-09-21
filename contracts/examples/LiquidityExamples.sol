@@ -202,7 +202,11 @@ contract LiquidityExamples is IERC721Receiver {
     /// @param tokenId The id of the erc721
     /// @param amount0 The amount of token0
     /// @param amount1 The amount of token1
-    function _sendToOwner(uint256 tokenId, uint256 amount0, uint256 amount1) private {
+    function _sendToOwner(
+        uint256 tokenId,
+        uint256 amount0,
+        uint256 amount1
+    ) private {
         // get owner of contract
         address owner = deposits[tokenId].owner;
 
