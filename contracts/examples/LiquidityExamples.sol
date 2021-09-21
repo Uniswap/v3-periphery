@@ -2,20 +2,16 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
+import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '../libraries/TransferHelper.sol';
 import '../interfaces/INonfungiblePositionManager.sol';
-import '../base/LiquidityManagement.sol';
 
 contract LiquidityExamples is IERC721Receiver {
+    INonfungiblePositionManager public immutable nonfungiblePositionManager;
     address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-
     uint24 public constant poolFee = 3000;
-
-    INonfungiblePositionManager public immutable nonfungiblePositionManager;
 
     /// @notice Represents the deposit of an NFT
     struct Deposit {
@@ -33,25 +29,22 @@ contract LiquidityExamples is IERC721Receiver {
     }
 
     // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
+    // Note that the operator is recorded as the owner of the deposited NFT
     function onERC721Received(
         address operator,
         address,
         uint256 tokenId,
         bytes calldata
     ) external override returns (bytes4) {
-        // get position information
-
+        require(msg.sender == address(nonfungiblePositionManager), 'not a univ3 nft');
         _createDeposit(operator, tokenId);
-
         return this.onERC721Received.selector;
     }
 
     function _createDeposit(address owner, uint256 tokenId) internal {
         (, , address token0, address token1, , , , uint128 liquidity, , , , ) =
             nonfungiblePositionManager.positions(tokenId);
-
         // set the owner and data for position
-        // operator is msg.sender
         deposits[tokenId] = Deposit({owner: owner, liquidity: liquidity, token0: token0, token1: token1});
     }
 
@@ -125,8 +118,7 @@ contract LiquidityExamples is IERC721Receiver {
     /// @return amount1 The amount of fees collected in token1
     function collectAllFees(uint256 tokenId) external returns (uint256 amount0, uint256 amount1) {
         // Caller must own the ERC721 position, meaning it must be a deposit
-
-        // set amount0Max and amount1Max to uint256.max to collect all fees
+        // set amount0Max and amount1Max to type(uint128).max to collect all fees
         // alternatively can set recipient to msg.sender and avoid another transaction in `sendToOwner`
         INonfungiblePositionManager.CollectParams memory params =
             INonfungiblePositionManager.CollectParams({
@@ -166,7 +158,7 @@ contract LiquidityExamples is IERC721Receiver {
 
         (amount0, amount1) = nonfungiblePositionManager.decreaseLiquidity(params);
 
-        //send liquidity back to owner
+        // send liquidity back to owner
         _sendToOwner(tokenId, amount0, amount1);
     }
 
@@ -210,11 +202,7 @@ contract LiquidityExamples is IERC721Receiver {
     /// @param tokenId The id of the erc721
     /// @param amount0 The amount of token0
     /// @param amount1 The amount of token1
-    function _sendToOwner(
-        uint256 tokenId,
-        uint256 amount0,
-        uint256 amount1
-    ) internal {
+    function _sendToOwner(uint256 tokenId, uint256 amount0, uint256 amount1) private {
         // get owner of contract
         address owner = deposits[tokenId].owner;
 
@@ -230,9 +218,9 @@ contract LiquidityExamples is IERC721Receiver {
     function retrieveNFT(uint256 tokenId) external {
         // must be the owner of the NFT
         require(msg.sender == deposits[tokenId].owner, 'Not the owner');
+        // remove information related to tokenId
+        delete deposits[tokenId];
         // transfer ownership to original owner
         nonfungiblePositionManager.safeTransferFrom(address(this), msg.sender, tokenId);
-        //remove information related to tokenId
-        delete deposits[tokenId];
     }
 }
