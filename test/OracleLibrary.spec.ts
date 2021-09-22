@@ -397,7 +397,7 @@ describe('OracleLibrary', () => {
       tickCumulatives = [0, 8, 0, 0]
       slot0Tick = 4
       lastObservationCurrentTimestamp = true
-      
+
       await deployMockObservationsContract()
 
       await expect(oracle.getBlockStartingTick(mockObservations.address)).to.be.revertedWith('ONI')
