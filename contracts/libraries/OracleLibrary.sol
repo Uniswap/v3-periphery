@@ -84,20 +84,21 @@ library OracleLibrary {
         (, int24 tick, uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(pool).slot0();
         require(observationCardinality > 0, 'PNI');
 
-        // if the latest observation occurred in the past, then no tick-changing trades have happened in this block
-        // so the tick in `slot0` is the same as at the beginning of the current block
-        (uint32 observationTimestamp, int56 tickCumulative, , bool initialized) =
+        // If the latest observation occurred in the past, then no tick-changing trades have happened in this block
+        // therefore the tick in `slot0` is the same as at the beginning of the current block.
+        // We don't need to check if this observation is initialized - it is guaranteed to be.
+        (uint32 observationTimestamp, , , ) =
             IUniswapV3Pool(pool).observations(observationIndex);
-        require(initialized, 'ONI');
         if (observationTimestamp < block.timestamp) {
             return tick;
         }
 
-        // we instead need to fetch the two prior observations and use them to calculate the tick
-        // to do so we require a cardinality of at least 3
+        // We need to fetch the two prior observations and use them to calculate the tick.
         require(observationCardinality > 2, 'NEO');
 
         uint256 prevIndex = (observationIndex + observationCardinality - 1) % observationCardinality;
+        int56 tickCumulative;
+        bool initialized;
         (observationTimestamp, tickCumulative, , initialized) = IUniswapV3Pool(pool).observations(prevIndex);
 
         (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) =
@@ -105,7 +106,6 @@ library OracleLibrary {
 
         require(initialized && prevInitialized, 'ONI');
 
-        // extract the tick from the cumulatives
         return int24((tickCumulative - prevTickCumulative) / (observationTimestamp - prevObservationTimestamp));
     }
 }

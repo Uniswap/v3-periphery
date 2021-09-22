@@ -320,6 +320,76 @@ describe('OracleLibrary', () => {
       mockObservationsFactory = await ethers.getContractFactory('MockObservations')
     })
 
-    it('', async () => {})
+    it('reverts if the pool is not initialized', async () => {
+      const blockTimestamps = [0, 0, 0, 0]
+      const observationCardinality = 0
+      const observationIndex = 0
+      const tickCumulatives = [0, 0, 0, 0]
+      const slot0Tick = 0
+      const lastObservationCurrentTimestamp = false
+
+      const mockObservations = await mockObservationsFactory.deploy(
+        blockTimestamps,
+        tickCumulatives,
+        emptyInitializeds,
+        slot0Tick,
+        observationCardinality,
+        observationIndex,
+        lastObservationCurrentTimestamp
+      )
+
+      await expect(oracle.getBlockStartingTick(mockObservations.address)).to.be.revertedWith('NI')
+    })
+
+    it('returns the tick in slot0 if the latest observation was in a previous block', async () => {
+      const blockTimestamps = [1, 3, 4, 0]
+      const observationCardinality = 3
+      const observationIndex = 2
+      // 0
+      // 8: 0 + (4*(3-1))
+      // 13: 8 + (5*(4-3))
+      const tickCumulatives = [0, 8, 13, 0]
+      const slot0Tick = 5
+      const lastObservationCurrentTimestamp = false
+
+      const mockObservations = await mockObservationsFactory.deploy(
+        blockTimestamps,
+        tickCumulatives,
+        emptyInitializeds,
+        slot0Tick,
+        observationCardinality,
+        observationIndex,
+        lastObservationCurrentTimestamp
+      )
+
+      var blockStartTick = await oracle.getBlockStartingTick(mockObservations.address)
+      expect(blockStartTick).to.equal(slot0Tick)
+    })
+
+    it('reverts if it needs 2 prior observations and doesnt have them', async () => {
+      const blockTimestamps = [1, 3, 0, 0]
+      const observationCardinality = 2
+      const observationIndex = 1
+      // 0
+      // 8: 0 + (4*(3-1))
+      const tickCumulatives = [0, 8, 0, 0]
+      const slot0Tick = 4
+      const lastObservationCurrentTimestamp = true
+
+      const mockObservations = await mockObservationsFactory.deploy(
+        blockTimestamps,
+        tickCumulatives,
+        emptyInitializeds,
+        slot0Tick,
+        observationCardinality,
+        observationIndex,
+        lastObservationCurrentTimestamp
+      )
+
+      await expect(oracle.getBlockStartingTick(mockObservations.address)).to.be.revertedWith('NEO')
+    })
+
+    it('reverts if one of the prior observations needed is not initialized');
+    it('calculates the prior tick from the 2 prior observations');
   })
 })
