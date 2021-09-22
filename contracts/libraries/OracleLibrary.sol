@@ -76,4 +76,30 @@ library OracleLibrary {
 
         return uint32(block.timestamp) - observationTimestamp;
     }
+
+    /// @notice Given a pool, it returns the tick value as of the start of the current block
+    /// @param pool Address of Uniswap V3 pool
+    /// @return The tick that the pool was in at the start of the current block
+    function getBlockStartingTick(address pool) internal view returns (int24) {
+        (, int24 tick, uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(pool).slot0();
+        require(observationCardinality > 0, 'NI');
+
+        // if the latest observation occurred in the past, then no tick-changing trades have happened in this block
+        // so the tick in `slot0` is the same as at the beginning of the current block
+        (uint32 observationTimestamp, int56 tickCumulative, , ) = IUniswapV3Pool(pool).observations(observationIndex);
+        if (observationTimestamp < block.timestamp) {
+            return tick;
+        }
+
+        // we instead need to fetch the two prior observations and use them to calculate the tick
+        uint256 previousIndex = (observationIndex + observationCardinality - 1) % observationCardinality;
+        (observationTimestamp, tickCumulative, , ) = IUniswapV3Pool(pool).observations(previousIndex);
+
+        (uint32 prevObservationTimestamp, int56 prevTickCumulative, , ) = IUniswapV3Pool(pool).observations(
+            (previousIndex + observationCardinality - 1) % observationCardinality
+        );
+
+        // extract the tick from the cumulatives
+        return int24((tickCumulative - prevTickCumulative) / (observationTimestamp - prevObservationTimestamp));
+    }
 }
