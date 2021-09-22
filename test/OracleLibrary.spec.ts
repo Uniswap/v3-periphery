@@ -438,7 +438,7 @@ describe('OracleLibrary', () => {
       )
 
       var startingTick = await oracle.getBlockStartingTick(mockObservations.address)
-      var actualStartingTick = (tickCumulatives[0]-tickCumulatives[2])/(blockTimestamps[0]-blockTimestamps[2])
+      var actualStartingTick = (tickCumulatives[0] - tickCumulatives[2]) / (blockTimestamps[0] - blockTimestamps[2])
       expect(startingTick).to.equal(actualStartingTick)
     })
   })
