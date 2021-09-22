@@ -350,7 +350,7 @@ describe('OracleLibrary', () => {
 
       await deployMockObservationsContract()
 
-      await expect(oracle.getBlockStartingTick(mockObservations.address)).to.be.revertedWith('NI')
+      await expect(oracle.getBlockStartingTick(mockObservations.address)).to.be.revertedWith('NEO')
     })
 
     it('returns the tick in slot0 if the latest observation was in a previous block', async () => {

@@ -82,18 +82,17 @@ library OracleLibrary {
     /// @return The tick that the pool was in at the start of the current block
     function getBlockStartingTick(address pool) internal view returns (int24) {
         (, int24 tick, uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(pool).slot0();
-        require(observationCardinality > 0, 'PNI');
+
+        // 3 observations are needed to reliably calculate the block starting tick
+        require(observationCardinality > 2, 'NEO');
 
         // If the latest observation occurred in the past, then no tick-changing trades have happened in this block
         // therefore the tick in `slot0` is the same as at the beginning of the current block.
         // We don't need to check if this observation is initialized - it is guaranteed to be.
         (uint32 observationTimestamp, , , ) = IUniswapV3Pool(pool).observations(observationIndex);
-        if (observationTimestamp < block.timestamp) {
+        if (observationTimestamp != block.timestamp) {
             return tick;
         }
-
-        // We need to fetch the two prior observations and use them to calculate the tick.
-        require(observationCardinality > 2, 'NEO');
 
         uint256 prevIndex = (observationIndex + observationCardinality - 1) % observationCardinality;
         int56 tickCumulative;
