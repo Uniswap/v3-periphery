@@ -87,8 +87,7 @@ library OracleLibrary {
         // If the latest observation occurred in the past, then no tick-changing trades have happened in this block
         // therefore the tick in `slot0` is the same as at the beginning of the current block.
         // We don't need to check if this observation is initialized - it is guaranteed to be.
-        (uint32 observationTimestamp, , , ) =
-            IUniswapV3Pool(pool).observations(observationIndex);
+        (uint32 observationTimestamp, , , ) = IUniswapV3Pool(pool).observations(observationIndex);
         if (observationTimestamp < block.timestamp) {
             return tick;
         }

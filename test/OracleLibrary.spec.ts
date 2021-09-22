@@ -389,7 +389,7 @@ describe('OracleLibrary', () => {
       await expect(oracle.getBlockStartingTick(mockObservations.address)).to.be.revertedWith('NEO')
     })
 
-    it('reverts if one of the prior observations needed is not initialized');
-    it('calculates the prior tick from the 2 prior observations');
+    it('reverts if one of the prior observations needed is not initialized')
+    it('calculates the prior tick from the 2 prior observations')
   })
 })
