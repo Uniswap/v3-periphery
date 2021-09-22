@@ -324,16 +324,5 @@ describe('OracleLibrary', () => {
       
     })
 
-    it('fetches the correct timestamp when the timestamps overflow', async () => {
-      // set up test case
-      const maxUint32 = (2**32)-1
-      const blockTimestamps = [maxUint32, 3, maxUint32 - 2, 0]
-      const initializeds = [true, true, true, false]
-      const observationCardinality = 3
-      const observationIndex = 1
-
-      // run test
-      await runObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
-    })
   })
 })
