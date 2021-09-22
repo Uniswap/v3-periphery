@@ -86,7 +86,8 @@ library OracleLibrary {
 
         // if the latest observation occurred in the past, then no tick-changing trades have happened in this block
         // so the tick in `slot0` is the same as at the beginning of the current block
-        (uint32 observationTimestamp, int56 tickCumulative, , bool initialized) = IUniswapV3Pool(pool).observations(observationIndex);
+        (uint32 observationTimestamp, int56 tickCumulative, , bool initialized) =
+            IUniswapV3Pool(pool).observations(observationIndex);
         require(initialized, 'ONI');
         if (observationTimestamp < block.timestamp) {
             return tick;
@@ -99,9 +100,8 @@ library OracleLibrary {
         uint256 prevIndex = (observationIndex + observationCardinality - 1) % observationCardinality;
         (observationTimestamp, tickCumulative, , initialized) = IUniswapV3Pool(pool).observations(prevIndex);
 
-        (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) = IUniswapV3Pool(pool).observations(
-            (prevIndex + observationCardinality - 1) % observationCardinality
-        );
+        (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) =
+            IUniswapV3Pool(pool).observations((prevIndex + observationCardinality - 1) % observationCardinality);
 
         require(initialized && prevInitialized, 'ONI');
 

@@ -207,7 +207,7 @@ describe('OracleLibrary', () => {
     let mockObservationsFactory: ContractFactory
 
     // some empty tick values as this function does not use them
-    const emptyTickCumulatives = [0,0,0,0]
+    const emptyTickCumulatives = [0, 0, 0, 0]
     const emptyTick = 0
 
     // helper function to run each test case identically
@@ -314,15 +314,12 @@ describe('OracleLibrary', () => {
 
   describe('#getBlockStartingTick', () => {
     let mockObservationsFactory: ContractFactory
-    const emptyInitializeds = [false,0,0,0]
+    const emptyInitializeds = [false, 0, 0, 0]
 
     before('create mockObservationsFactory', async () => {
       mockObservationsFactory = await ethers.getContractFactory('MockObservations')
     })
 
-    it('', async () => {
-      
-    })
-
+    it('', async () => {})
   })
 })

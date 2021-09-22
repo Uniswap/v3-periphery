@@ -2,7 +2,6 @@
 pragma solidity =0.7.6;
 
 contract MockObservations {
-
     uint32[4] internal blockTimestamps;
     int56[4] internal tickCumulatives;
     bool[4] internal initializeds;
@@ -60,8 +59,9 @@ contract MockObservations {
         )
     {
         uint32 observationTimestamp =
-            ((index == slot0ObservationIndex) && lastObservationCurrentTimestamp) ? uint32(block.timestamp) : blockTimestamps[index];
+            ((index == slot0ObservationIndex) && lastObservationCurrentTimestamp)
+                ? uint32(block.timestamp)
+                : blockTimestamps[index];
         return (observationTimestamp, tickCumulatives[index], 0, initializeds[index]);
     }
-
 }
