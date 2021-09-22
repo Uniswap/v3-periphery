@@ -206,8 +206,12 @@ describe('OracleLibrary', () => {
   describe('#getOldestObservationSecondsAgo', () => {
     let mockObservationsFactory: ContractFactory
 
+    // some empty tick values as this function does not use them
+    const emptyTickCumulatives = [0,0,0,0]
+    const emptyTick = 0
+
     // helper function to run each test case identically
-    const runObservationsTest = async (
+    const runOldestObservationsTest = async (
       blockTimestamps: number[],
       initializeds: boolean[],
       observationCardinality: number,
@@ -215,9 +219,12 @@ describe('OracleLibrary', () => {
     ) => {
       const mockObservations = await mockObservationsFactory.deploy(
         blockTimestamps,
+        emptyTickCumulatives,
         initializeds,
+        emptyTick,
         observationCardinality,
-        observationIndex
+        observationIndex,
+        false
       )
 
       var result = await oracle.getOldestObservationSecondsAgo(mockObservations.address)
@@ -249,7 +256,7 @@ describe('OracleLibrary', () => {
       const observationIndex = 1
 
       // run test
-      await runObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
+      await runOldestObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
     })
 
     it('loops to fetches the oldest timestamp from index 0', async () => {
@@ -260,7 +267,7 @@ describe('OracleLibrary', () => {
       const observationIndex = 2
 
       // run test
-      await runObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
+      await runOldestObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
     })
 
     it('fetches from index 0 if the next index is uninitialized', async () => {
@@ -271,7 +278,7 @@ describe('OracleLibrary', () => {
       const observationIndex = 1
 
       // run test
-      await runObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
+      await runOldestObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
     })
 
     it('reverts if the pool is not initialized', async () => {
@@ -281,9 +288,12 @@ describe('OracleLibrary', () => {
       const observationIndex = 0
       const mockObservations = await mockObservationsFactory.deploy(
         blockTimestamps,
+        emptyTickCumulatives,
         initializeds,
+        emptyTick,
         observationCardinality,
-        observationIndex
+        observationIndex,
+        false
       )
 
       await expect(oracle.getOldestObservationSecondsAgo(mockObservations.address)).to.be.revertedWith('NI')
@@ -298,7 +308,20 @@ describe('OracleLibrary', () => {
       const observationIndex = 1
 
       // run test
-      await runObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
+      await runOldestObservationsTest(blockTimestamps, initializeds, observationCardinality, observationIndex)
+    })
+  })
+
+  describe('#getBlockStartingTick', () => {
+    let mockObservationsFactory: ContractFactory
+    const emptyInitializeds = [false,0,0,0]
+
+    before('create mockObservationsFactory', async () => {
+      mockObservationsFactory = await ethers.getContractFactory('MockObservations')
+    })
+
+    it('', async () => {
+      
     })
 
     it('fetches the correct timestamp when the timestamps overflow', async () => {
