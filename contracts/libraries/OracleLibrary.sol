@@ -94,7 +94,7 @@ library OracleLibrary {
             return tick;
         }
 
-        uint256 prevIndex = (observationIndex + observationCardinality - 1) % observationCardinality;
+        uint256 prevIndex = (uint256(observationIndex) + observationCardinality - 1) % observationCardinality;
         (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) =
             IUniswapV3Pool(pool).observations(prevIndex);
 
