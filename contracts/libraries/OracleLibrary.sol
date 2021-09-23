@@ -90,7 +90,7 @@ library OracleLibrary {
         // therefore the tick in `slot0` is the same as at the beginning of the current block.
         // We don't need to check if this observation is initialized - it is guaranteed to be.
         (uint32 observationTimestamp, int56 tickCumulative, , ) = IUniswapV3Pool(pool).observations(observationIndex);
-        if (observationTimestamp != block.timestamp) {
+        if (observationTimestamp != uint32(block.timestamp)) {
             return tick;
         }
 
