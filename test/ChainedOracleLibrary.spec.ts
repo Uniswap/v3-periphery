@@ -4,6 +4,9 @@ import { BigNumber, BigNumberish, constants, ContractFactory } from 'ethers'
 import { TestERC20, ChainedOracleTest, MockObservable } from '../typechain'
 import poolAtAddress from './shared/poolAtAddress'
 import { getAddress } from '@ethersproject/address'
+import { formatSqrtRatioX96 } from './shared/formatSqrtRatioX96'
+import { format } from 'prettier'
+import { encodePriceSqrt } from './shared/encodePriceSqrt'
 
 describe.only('ChainedOracleLibrary', () => {
     let loadFixture: ReturnType<typeof waffle.createFixtureLoader>
@@ -67,12 +70,23 @@ describe.only('ChainedOracleLibrary', () => {
       it('correct output when tick is 0', async () => {
         const period = 3
         const tickCumulatives1 = [BigNumber.from(0), BigNumber.from(0)]
-        const tickCumulatives2 = [BigNumber.from(2), BigNumber.from(2)]
+        const tickCumulatives2 = [BigNumber.from(0), BigNumber.from(0)]
         const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives1, [0, 0])
         const mockObservable2 = await mockObservableFactory.deploy([period, 0], tickCumulatives2, [0, 0])
         const chainedPrice = await oracle.getPriceChained(period, mockObservable.address, mockObservable2.address)
   
-        expect(chainedPrice).to.equal(BigNumber.from(0))
+        expect(formatSqrtRatioX96(chainedPrice)).to.equal(BigNumber.from(1))
+      })
+
+      it('correct output when tick poolA is 0 and tick pool B is 100_000', async () => {
+        const period = 3
+        const tickCumulatives1 = [BigNumber.from(0), BigNumber.from(0)]
+        const tickCumulatives2 = [BigNumber.from(100000), BigNumber.from(100000)]
+        const mockObservable = await mockObservableFactory.deploy([period, 0], tickCumulatives1, [0, 0])
+        const mockObservable2 = await mockObservableFactory.deploy([period, 0], tickCumulatives2, [0, 0])
+        const chainedPrice = await oracle.getPriceChained(period, mockObservable.address, mockObservable2.address)
+  
+        expect(formatSqrtRatioX96(chainedPrice)).to.equal(formatSqrtRatioX96(22015.5))
       })
   
       

@@ -53,13 +53,16 @@ library ChainedOracleLibrary {
             if (_quotePool.token1.address == _basePool.token0.address) {
             // chain price directly
             // to do - figure out uint overflow potential
+// TickMath.getSqrtRatioAtTick(basePoolArithmeticMeanTick)
+// sqrt(priceA) * sqrt(priceB) ** 2**96
+
              chainedSqrtPriceX96 = (
-                TickMath.getSqrtRatioAtTick(basePoolArithmeticMeanTick) * TickMath.getSqrtRatioAtTick(quotePoolArithmeticMeanTick)
+                (TickMath.getSqrtRatioAtTick(basePoolArithmeticMeanTick) / 2**96) * TickMath.getSqrtRatioAtTick(quotePoolArithmeticMeanTick)
                 );
             } else {
             // invert price  
             chainedSqrtPriceX96 = (
-                TickMath.getSqrtRatioAtTick(basePoolArithmeticMeanTick) / TickMath.getSqrtRatioAtTick(quotePoolArithmeticMeanTick)
+                TickMath.getSqrtRatioAtTick(basePoolArithmeticMeanTick) / TickMath.getSqrtRatioAtTick(quotePoolArithmeticMeanTick) * 2**96
              );
         }
     }
