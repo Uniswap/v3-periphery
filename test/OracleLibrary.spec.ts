@@ -362,7 +362,7 @@ describe('OracleLibrary', () => {
       // 8: 0 + (4*(3-1))
       // 13: 8 + (5*(4-3))
       tickCumulatives = [0, 8, 13, 0]
-      slot0Tick = 5
+      slot0Tick = 6
       lastObservationCurrentTimestamp = false
 
       await deployMockObservationsContract()
@@ -371,14 +371,12 @@ describe('OracleLibrary', () => {
       expect(startingTick).to.equal(slot0Tick)
     })
 
-    it('reverts if it needs 2 prior observations and doesnt have them', async () => {
-      blockTimestamps = [1, 3, 0, 0]
-      observationCardinality = 2
-      observationIndex = 1
-      initializeds = [true, true, false, false]
-      // 0
-      // 8: 0 + (4*(3-1))
-      tickCumulatives = [0, 8, 0, 0]
+    it('reverts if it needs 2 observations and doesnt have them', async () => {
+      blockTimestamps = [1, 0, 0, 0]
+      observationCardinality = 1
+      observationIndex = 0
+      initializeds = [true, false, false, false]
+      tickCumulatives = [8, 0, 0, 0]
       slot0Tick = 4
       lastObservationCurrentTimestamp = true
 
@@ -387,14 +385,12 @@ describe('OracleLibrary', () => {
       await expect(oracle.getBlockStartingTick(mockObservations.address)).to.be.revertedWith('NEO')
     })
 
-    it('reverts if one of the prior observations needed is not initialized', async () => {
-      blockTimestamps = [1, 3, 0, 0]
-      observationCardinality = 3
-      observationIndex = 1
-      initializeds = [true, true, false, false]
-      // 0
-      // 8: 0 + (4*(3-1))
-      tickCumulatives = [0, 8, 0, 0]
+    it('reverts if the prior observation needed is not initialized', async () => {
+      blockTimestamps = [1, 0, 0, 0]
+      observationCardinality = 2
+      observationIndex = 0
+      initializeds = [true, false, false, false]
+      tickCumulatives = [8, 0, 0, 0]
       slot0Tick = 4
       lastObservationCurrentTimestamp = true
 
@@ -403,16 +399,16 @@ describe('OracleLibrary', () => {
       await expect(oracle.getBlockStartingTick(mockObservations.address)).to.be.revertedWith('ONI')
     })
 
-    it('calculates the prior tick from the 2 prior observations', async () => {
-      blockTimestamps = [8, 9, 5, 0]
+    it('calculates the prior tick from the prior observations', async () => {
+      blockTimestamps = [9, 5, 8, 0]
       observationCardinality = 3
-      observationIndex = 1
+      observationIndex = 0
       initializeds = [true, true, true, false]
-      // 95: 80 + (5*3)
       // 99: 95 + (4*1)
       // 80: 72 + (4*2)
-      tickCumulatives = [95, 99, 80, 0]
-      slot0Tick = 4
+      // 95: 80 + (5*3)
+      tickCumulatives = [99, 80, 95, 0]
+      slot0Tick = 3
       lastObservationCurrentTimestamp = true
 
       await deployMockObservationsContract()

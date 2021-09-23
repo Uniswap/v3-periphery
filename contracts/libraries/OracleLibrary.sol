@@ -83,26 +83,22 @@ library OracleLibrary {
     function getBlockStartingTick(address pool) internal view returns (int24) {
         (, int24 tick, uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(pool).slot0();
 
-        // 3 observations are needed to reliably calculate the block starting tick
-        require(observationCardinality > 2, 'NEO');
+        // 2 observations are needed to reliably calculate the block starting tick
+        require(observationCardinality > 1, 'NEO');
 
         // If the latest observation occurred in the past, then no tick-changing trades have happened in this block
         // therefore the tick in `slot0` is the same as at the beginning of the current block.
         // We don't need to check if this observation is initialized - it is guaranteed to be.
-        (uint32 observationTimestamp, , , ) = IUniswapV3Pool(pool).observations(observationIndex);
+        (uint32 observationTimestamp, int56 tickCumulative, , ) = IUniswapV3Pool(pool).observations(observationIndex);
         if (observationTimestamp != block.timestamp) {
             return tick;
         }
 
         uint256 prevIndex = (observationIndex + observationCardinality - 1) % observationCardinality;
-        int56 tickCumulative;
-        bool initialized;
-        (observationTimestamp, tickCumulative, , initialized) = IUniswapV3Pool(pool).observations(prevIndex);
-
         (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) =
-            IUniswapV3Pool(pool).observations((prevIndex + observationCardinality - 1) % observationCardinality);
+            IUniswapV3Pool(pool).observations(prevIndex);
 
-        require(initialized && prevInitialized, 'ONI');
+        require(prevInitialized, 'ONI');
 
         return int24((tickCumulative - prevTickCumulative) / (observationTimestamp - prevObservationTimestamp));
     }
