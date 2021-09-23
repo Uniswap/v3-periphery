@@ -59,7 +59,7 @@ contract MockObservations {
         )
     {
         uint32 observationTimestamp =
-                lastObservationCurrentTimestamp
+            lastObservationCurrentTimestamp
                 ? uint32(block.timestamp) - (blockTimestamps[slot0ObservationIndex] - blockTimestamps[index])
                 : blockTimestamps[index];
         return (observationTimestamp, tickCumulatives[index], 0, initializeds[index]);
