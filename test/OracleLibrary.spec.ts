@@ -329,7 +329,7 @@ describe('OracleLibrary', () => {
     let observationCardinality: number
     let observationIndex: number
     let lastObservationCurrentTimestamp: boolean
-    let liquidity:number
+    let liquidity: number
 
     before('create mockObservationsFactory', async () => {
       mockObservationsFactory = await ethers.getContractFactory('MockObservations')

@@ -28,7 +28,8 @@ contract MockObservations {
         for (uint256 i = 0; i < _blockTimestamps.length; i++) {
             secondsPerLiquidityCumulativeX128 = ((i == 0) || !_initializeds[i])
                 ? 0
-                : secondsPerLiquidityCumulativeX128 + (((_blockTimestamps[i]-_blockTimestamps[i-1])<< 128) / _liquidityValues[i]);
+                : secondsPerLiquidityCumulativeX128 +
+                    (((_blockTimestamps[i] - _blockTimestamps[i - 1]) << 128) / _liquidityValues[i]);
             oracleObservations[i] = Oracle.Observation({
                 blockTimestamp: _blockTimestamps[i],
                 tickCumulative: _tickCumulatives[i],
@@ -72,7 +73,9 @@ contract MockObservations {
     {
         Oracle.Observation memory observation = oracleObservations[index];
         if (lastObservationCurrentTimestamp) {
-            observation.blockTimestamp = uint32(block.timestamp) - (oracleObservations[slot0ObservationIndex].blockTimestamp - observation.blockTimestamp);
+            observation.blockTimestamp =
+                uint32(block.timestamp) -
+                (oracleObservations[slot0ObservationIndex].blockTimestamp - observation.blockTimestamp);
         }
         return (
             observation.blockTimestamp,
