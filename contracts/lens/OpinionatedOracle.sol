@@ -18,11 +18,20 @@ contract OpinionatedOracle {
 
     uint32[4] quotePeriods = [0, 60 seconds, 30 minutes, 1 days];
 
+    /// @param _factory Address of the UniswapV3 Factory used to look up token pools
     constructor(address _factory) {
         factory = IUniswapV3Factory(_factory);
     }
 
-    function quoteWithFeeTiers(
+    /// @notice Returns a quote for a given token amount according to a desired price manipulation resistance
+    /// @notice across a specified list of fee tiers
+    /// @param baseToken Address of the input token for the quote
+    /// @param quoteToken Address of the output token for the quote
+    /// @param baseTokenAmount The amount of token to be converted
+    /// @param resistance The desired resistance against price manipulation: Dangerous, Weak, Medium, Strong
+    /// @param feeTiers An array of fee tiers to gather prices from for the quote
+    /// @return quoteTokenAmount The amount of quoteToken received for baseTokenAmount of baseToken
+    function quote(
         address baseToken,
         address quoteToken,
         uint128 baseTokenAmount,
@@ -70,7 +79,14 @@ contract OpinionatedOracle {
         quoteTokenAmount = OracleLibrary.getQuoteAtTick(meanWeightedTick, baseTokenAmount, baseToken, quoteToken);
     }
 
-    function quote(
+    /// @notice Returns a quote for a given token amount according to a desired price manipulation resistance.
+    /// @notice This function assumes the standard fee tiers of 300, 5000, and 10000 should be used
+    /// @param baseToken Address of the input token for the quote
+    /// @param quoteToken Address of the output token for the quote
+    /// @param baseTokenAmount The amount of token to be converted
+    /// @param resistance The desired resistance against price manipulation: Dangerous, Weak, Medium, Strong
+    /// @return quoteTokenAmount The amount of quoteToken received for baseTokenAmount of baseToken
+    function quoteWithStandardFeeTiers(
         address baseToken,
         address quoteToken,
         uint128 baseTokenAmount,
@@ -81,6 +97,6 @@ contract OpinionatedOracle {
         feeTiers[1] = 5000;
         feeTiers[2] = 10000;
 
-        return quoteWithFeeTiers(baseToken, quoteToken, baseTokenAmount, resistance, feeTiers);
+        return quote(baseToken, quoteToken, baseTokenAmount, resistance, feeTiers);
     }
 }
