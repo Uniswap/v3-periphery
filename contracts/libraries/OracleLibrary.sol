@@ -90,20 +90,27 @@ library OracleLibrary {
         // If the latest observation occurred in the past, then no tick-changing trades have happened in this block
         // therefore the tick in `slot0` is the same as at the beginning of the current block.
         // We don't need to check if this observation is initialized - it is guaranteed to be.
-        (uint32 observationTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128, ) = IUniswapV3Pool(pool).observations(observationIndex);
+        (uint32 observationTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128, ) =
+            IUniswapV3Pool(pool).observations(observationIndex);
         if (observationTimestamp != uint32(block.timestamp)) {
             return (tick, liquidity);
         }
 
         uint256 prevIndex = (uint256(observationIndex) + observationCardinality - 1) % observationCardinality;
-        (uint32 prevObservationTimestamp, int56 prevTickCumulative, uint160 prevSecondsPerLiquidityCumulativeX128, bool prevInitialized) =
-            IUniswapV3Pool(pool).observations(prevIndex);
+        (
+            uint32 prevObservationTimestamp,
+            int56 prevTickCumulative,
+            uint160 prevSecondsPerLiquidityCumulativeX128,
+            bool prevInitialized
+        ) = IUniswapV3Pool(pool).observations(prevIndex);
 
         require(prevInitialized, 'ONI');
 
         uint32 delta = observationTimestamp - prevObservationTimestamp;
         tick = int24((tickCumulative - prevTickCumulative) / delta);
-        liquidity = uint128((uint160(delta) << 128) / (secondsPerLiquidityCumulativeX128 - prevSecondsPerLiquidityCumulativeX128));
+        liquidity = uint128(
+            (uint160(delta) << 128) / (secondsPerLiquidityCumulativeX128 - prevSecondsPerLiquidityCumulativeX128)
+        );
         return (tick, liquidity);
     }
 }

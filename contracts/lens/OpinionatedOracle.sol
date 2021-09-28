@@ -7,7 +7,6 @@ import '../libraries/WeightedOracleLibrary.sol';
 import '../libraries/OracleLibrary.sol';
 
 contract OpinionatedOracle {
-
     IUniswapV3Factory factory;
 
     enum ManipulationResistance {
@@ -39,8 +38,8 @@ contract OpinionatedOracle {
         // If the quote period is more than 0, we can calculate the mean tick over an interval and weight it by
         // each pool's mean liquidity over the same period
         if (quotePeriod > 0) {
-            WeightedOracleLibrary.PeriodObservation[] memory poolObservations
-                = new WeightedOracleLibrary.PeriodObservation[](feeTiers.length);
+            WeightedOracleLibrary.PeriodObservation[] memory poolObservations =
+                new WeightedOracleLibrary.PeriodObservation[](feeTiers.length);
 
             for (uint256 i = 0; i < feeTiers.length; i++) {
                 pool = factory.getPool(baseToken, quoteToken, feeTiers[i]);
@@ -69,7 +68,6 @@ contract OpinionatedOracle {
         }
 
         quoteTokenAmount = OracleLibrary.getQuoteAtTick(meanWeightedTick, baseTokenAmount, baseToken, quoteToken);
-
     }
 
     function quote(
@@ -83,13 +81,6 @@ contract OpinionatedOracle {
         feeTiers[1] = 5000;
         feeTiers[2] = 10000;
 
-        return quoteWithFeeTiers(
-            baseToken,
-            quoteToken,
-            baseTokenAmount,
-            resistance,
-            feeTiers
-        );
+        return quoteWithFeeTiers(baseToken, quoteToken, baseTokenAmount, resistance, feeTiers);
     }
-
 }
