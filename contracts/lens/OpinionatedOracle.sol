@@ -33,16 +33,15 @@ contract OpinionatedOracle {
         require(feeTiers.length > 0, 'FT');
 
         uint32 quotePeriod = quotePeriods[uint256(resistance)];
-
-        WeightedOracleLibrary.PeriodObservation[] memory poolObservations
-            = new WeightedOracleLibrary.PeriodObservation[](feeTiers.length);
         address pool;
-
         int24 meanWeightedTick;
 
         // If the quote period is more than 0, we can calculate the tick over an interval and weight it by
-        // each pool's liquidity. Otherwise this is a 'Dangerous' quote request where we instead fetch a spot price.
+        // each pool's liquidity.
         if (quotePeriod > 0) {
+            WeightedOracleLibrary.PeriodObservation[] memory poolObservations
+                = new WeightedOracleLibrary.PeriodObservation[](feeTiers.length);
+
             for (uint256 i = 0; i < feeTiers.length; i++) {
                 pool = factory.getPool(baseToken, quoteToken, feeTiers[i]);
                 require(pool != address(0), 'NP');
@@ -51,12 +50,28 @@ contract OpinionatedOracle {
 
             meanWeightedTick = WeightedOracleLibrary.getArithmeticMeanTickWeightedByLiquidity(poolObservations);
         } else {
-            // need block starting tick AND liquidity
+            // This is a 'Dangerous' quote request where instead of an average price over an interval,
+            // a spot price is fetched and used.
+            int256 totalWeightedTicks;
+            uint128 totalLiquidity;
+            int24 tick;
+            uint128 liquidity;
+
+            for (uint256 i = 0; i < feeTiers.length; i++) {
+                pool = factory.getPool(baseToken, quoteToken, feeTiers[i]);
+                require(pool != address(0), 'NP');
+                (tick, liquidity) = OracleLibrary.getBlockStartingTickAndLiquidity(pool);
+                totalWeightedTicks += int256(liquidity) * tick;
+                totalLiquidity += liquidity;
+            }
+            meanWeightedTick = int24(totalWeightedTicks / totalLiquidity);
         }
 
         quoteTokenAmount = OracleLibrary.getQuoteAtTick(meanWeightedTick, baseTokenAmount, baseToken, quoteToken);
 
     }
+
+    // function 
 
     // function quote(
     //     address baseToken,
