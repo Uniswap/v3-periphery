@@ -207,8 +207,10 @@ describe('OracleLibrary', () => {
     let mockObservationsFactory: ContractFactory
 
     // some empty tick values as this function does not use them
+    const emptySPL = [0, 0, 0, 0]
     const emptyTickCumulatives = [0, 0, 0, 0]
     const emptyTick = 0
+    const emptyLiquidity = 0
 
     // helper function to run each test case identically
     const runOldestObservationsTest = async (
@@ -220,11 +222,13 @@ describe('OracleLibrary', () => {
       const mockObservations = await mockObservationsFactory.deploy(
         blockTimestamps,
         emptyTickCumulatives,
+        emptySPL,
         initializeds,
         emptyTick,
         observationCardinality,
         observationIndex,
-        false
+        false,
+        emptyLiquidity
       )
 
       var result = await oracle.getOldestObservationSecondsAgo(mockObservations.address)
@@ -289,11 +293,13 @@ describe('OracleLibrary', () => {
       const mockObservations = await mockObservationsFactory.deploy(
         blockTimestamps,
         emptyTickCumulatives,
+        emptySPL,
         initializeds,
         emptyTick,
         observationCardinality,
         observationIndex,
-        false
+        false,
+        emptyLiquidity
       )
 
       await expect(oracle.getOldestObservationSecondsAgo(mockObservations.address)).to.be.revertedWith('NI')
@@ -312,16 +318,18 @@ describe('OracleLibrary', () => {
     })
   })
 
-  describe('#getBlockStartingTick', () => {
+  describe('#getBlockStartingTickAndLiquidity', () => {
     let mockObservationsFactory: ContractFactory
     let mockObservations: Contract
     let blockTimestamps: number[]
+    let tickCumulatives: number[]
+    let liquidityValues: number[]
+    let initializeds: boolean[]
+    let slot0Tick: number
     let observationCardinality: number
     let observationIndex: number
-    let initializeds: boolean[]
-    let tickCumulatives: number[]
-    let slot0Tick: number
     let lastObservationCurrentTimestamp: boolean
+    let liquidity:number
 
     before('create mockObservationsFactory', async () => {
       mockObservationsFactory = await ethers.getContractFactory('MockObservations')
@@ -331,58 +339,67 @@ describe('OracleLibrary', () => {
       mockObservations = await mockObservationsFactory.deploy(
         blockTimestamps,
         tickCumulatives,
+        liquidityValues,
         initializeds,
         slot0Tick,
         observationCardinality,
         observationIndex,
-        lastObservationCurrentTimestamp
+        lastObservationCurrentTimestamp,
+        liquidity
       )
     }
 
     it('reverts if the pool is not initialized', async () => {
       blockTimestamps = [0, 0, 0, 0]
+      tickCumulatives = [0, 0, 0, 0]
+      liquidityValues = [0, 0, 0, 0]
+      initializeds = [false, false, false, false]
+      slot0Tick = 0
       observationCardinality = 0
       observationIndex = 0
-      initializeds = [false, false, false, false]
-      tickCumulatives = [0, 0, 0, 0]
-      slot0Tick = 0
       lastObservationCurrentTimestamp = false
+      liquidity = 0
 
       await deployMockObservationsContract()
 
-      await expect(oracle.getBlockStartingTick(mockObservations.address)).to.be.revertedWith('NEO')
+      await expect(oracle.getBlockStartingTickAndLiquidity(mockObservations.address)).to.be.revertedWith('NEO')
     })
 
-    it('returns the tick in slot0 if the latest observation was in a previous block', async () => {
+    it('returns the tick and liquidity in storage if the latest observation was in a previous block', async () => {
       blockTimestamps = [1, 3, 4, 0]
-      observationCardinality = 3
-      observationIndex = 2
-      initializeds = [true, true, true, false]
       // 0
       // 8: 0 + (4*(3-1))
       // 13: 8 + (5*(4-3))
       tickCumulatives = [0, 8, 13, 0]
+      liquidityValues = [0, 5000, 7000, 0]
+      initializeds = [true, true, true, false]
+      observationCardinality = 3
+      observationIndex = 2
       slot0Tick = 6
       lastObservationCurrentTimestamp = false
+      liquidity = 10000
 
       await deployMockObservationsContract()
 
-      var startingTick = await oracle.getBlockStartingTick(mockObservations.address)
-      expect(startingTick).to.equal(slot0Tick)
+      var result = await oracle.getBlockStartingTickAndLiquidity(mockObservations.address)
+      expect(result[0]).to.equal(slot0Tick)
+      expect(result[1]).to.equal(liquidity)
     })
 
     it('reverts if it needs 2 observations and doesnt have them', async () => {
       blockTimestamps = [1, 0, 0, 0]
+      tickCumulatives = [8, 0, 0, 0]
+      liquidityValues = [0, 0, 0, 0]
+      initializeds = [true, false, false, false]
       observationCardinality = 1
       observationIndex = 0
-      initializeds = [true, false, false, false]
-      tickCumulatives = [8, 0, 0, 0]
       slot0Tick = 4
       lastObservationCurrentTimestamp = true
+      liquidity = 10000
 
       await deployMockObservationsContract()
 
-      await expect(oracle.getBlockStartingTick(mockObservations.address)).to.be.revertedWith('NEO')
+      await expect(oracle.getBlockStartingTickAndLiquidity(mockObservations.address)).to.be.revertedWith('NEO')
     })
 
     it('reverts if the prior observation needed is not initialized', async () => {
@@ -396,7 +413,7 @@ describe('OracleLibrary', () => {
 
       await deployMockObservationsContract()
 
-      await expect(oracle.getBlockStartingTick(mockObservations.address)).to.be.revertedWith('ONI')
+      await expect(oracle.getBlockStartingTickAndLiquidity(mockObservations.address)).to.be.revertedWith('ONI')
     })
 
     it('calculates the prior tick from the prior observations', async () => {
@@ -413,9 +430,9 @@ describe('OracleLibrary', () => {
 
       await deployMockObservationsContract()
 
-      var startingTick = await oracle.getBlockStartingTick(mockObservations.address)
+      var result = await oracle.getBlockStartingTickAndLiquidity(mockObservations.address)
       var actualStartingTick = (tickCumulatives[0] - tickCumulatives[2]) / (blockTimestamps[0] - blockTimestamps[2])
-      expect(startingTick).to.equal(actualStartingTick)
+      expect(result[0]).to.equal(actualStartingTick)
     })
   })
 })
