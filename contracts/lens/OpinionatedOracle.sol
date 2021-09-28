@@ -36,8 +36,8 @@ contract OpinionatedOracle {
         address pool;
         int24 meanWeightedTick;
 
-        // If the quote period is more than 0, we can calculate the tick over an interval and weight it by
-        // each pool's liquidity.
+        // If the quote period is more than 0, we can calculate the mean tick over an interval and weight it by
+        // each pool's mean liquidity over the same period
         if (quotePeriod > 0) {
             WeightedOracleLibrary.PeriodObservation[] memory poolObservations
                 = new WeightedOracleLibrary.PeriodObservation[](feeTiers.length);
@@ -64,6 +64,7 @@ contract OpinionatedOracle {
                 totalWeightedTicks += int256(liquidity) * tick;
                 totalLiquidity += liquidity;
             }
+
             meanWeightedTick = int24(totalWeightedTicks / totalLiquidity);
         }
 
@@ -71,22 +72,24 @@ contract OpinionatedOracle {
 
     }
 
-    // function 
+    function quote(
+        address baseToken,
+        address quoteToken,
+        uint128 baseTokenAmount,
+        ManipulationResistance resistance
+    ) external view returns (uint256 quoteTokenAmount) {
+        uint24[] memory feeTiers = new uint24[](3);
+        feeTiers[0] = 300;
+        feeTiers[1] = 5000;
+        feeTiers[2] = 10000;
 
-    // function quote(
-    //     address baseToken,
-    //     address quoteToken,
-    //     uint128 baseTokenAmount,
-    //     ManipulationResistance resistance
-    // ) external view returns (uint256 quoteTokenAmount) {
-    //     uint24[] memory feeTiers = [500, 3000, 10000];
-    //     return quoteWithFeeTiers(
-    //         baseToken,
-    //         quoteToken,
-    //         baseTokenAmount,
-    //         resistance,
-    //         feeTiers
-    //     );
-    // }
+        return quoteWithFeeTiers(
+            baseToken,
+            quoteToken,
+            baseTokenAmount,
+            resistance,
+            feeTiers
+        );
+    }
 
 }
