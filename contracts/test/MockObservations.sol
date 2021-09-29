@@ -16,7 +16,7 @@ contract MockObservations {
     constructor(
         uint32[4] memory _blockTimestamps,
         int56[4] memory _tickCumulatives,
-        uint128[4] memory _liquidityValues,
+        uint128[4] memory _secondsPerLiquidityCumulativeX128s,
         bool[4] memory _initializeds,
         int24 _tick,
         uint16 _observationCardinality,
@@ -24,16 +24,11 @@ contract MockObservations {
         bool _lastObservationCurrentTimestamp,
         uint128 _liquidity
     ) {
-        uint128 secondsPerLiquidityCumulativeX128;
         for (uint256 i = 0; i < _blockTimestamps.length; i++) {
-            secondsPerLiquidityCumulativeX128 = ((i == 0) || !_initializeds[i])
-                ? 0
-                : secondsPerLiquidityCumulativeX128 +
-                    (((_blockTimestamps[i] - _blockTimestamps[i - 1]) << 128) / _liquidityValues[i]);
             oracleObservations[i] = Oracle.Observation({
                 blockTimestamp: _blockTimestamps[i],
                 tickCumulative: _tickCumulatives[i],
-                secondsPerLiquidityCumulativeX128: secondsPerLiquidityCumulativeX128,
+                secondsPerLiquidityCumulativeX128: _secondsPerLiquidityCumulativeX128s[i],
                 initialized: _initializeds[i]
             });
         }
