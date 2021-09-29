@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { ethers, waffle } from 'hardhat'
 import { BigNumber, BigNumberish, constants, ContractFactory } from 'ethers'
-import { TestERC20, ChainedOracleTest, MockObservable } from '../typechain'
+import { TestERC20, ChainedOracleTest, MockObservableWithTokens } from '../typechain'
 import poolAtAddress from './shared/poolAtAddress'
 import { getAddress } from '@ethersproject/address'
 import { formatSqrtRatioX96 } from './shared/formatSqrtRatioX96'
@@ -23,7 +23,7 @@ describe.only('ChainedOracleLibrary', () => {
     ]
 
     tokens.sort((a, b) => (a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1))
-    // tokens.sort((b, c) => (b.address.toLowerCase() < c.address.toLowerCase() ? -1 : 1))
+    tokens.sort((b, c) => (b.address.toLowerCase() < c.address.toLowerCase() ? -1 : 1))
 
     const chainedOracleLibraryFactory = await ethers.getContractFactory('ChainedOracleLibrary')
     const chainedOracleLibrary = await chainedOracleLibraryFactory.deploy()
@@ -51,41 +51,90 @@ describe.only('ChainedOracleLibrary', () => {
   })
 
   describe('#getPriceChained', () => {
-    let mockObservableFactory: ContractFactory
+    let mockObservableWithTokensFactory: ContractFactory
 
     before('create mockObservableFactory', async () => {
-      mockObservableFactory = await ethers.getContractFactory('MockObservable')
+      mockObservableWithTokensFactory = await ethers.getContractFactory('MockObservableWithTokens')
     })
 
     it('reverts when secondsAgo is 0', async () => {
       const secondsAgo = 0
       const tickCumulatives = [BigNumber.from(-7), BigNumber.from(-12)]
-      const mockObservable = await mockObservableFactory.deploy([secondsAgo, 0], tickCumulatives, [0, 0])
-      expect(oracle.getPriceChained(secondsAgo, mockObservable.address, mockObservable.address)).to.be.revertedWith(
-        'BP'
+      const mockObservableWithTokens0 = await mockObservableWithTokensFactory.deploy(
+        tokens[0].address,
+        tokens[1].address,
+        [secondsAgo, 0],
+        tickCumulatives,
+        [0, 0]
       )
+      const mockObservableWithTokens1 = await mockObservableWithTokensFactory.deploy(
+        tokens[1].address,
+        tokens[2].address,
+        [secondsAgo, 0],
+        tickCumulatives,
+        [0, 0]
+      )
+      expect(
+        oracle.getPriceChained(secondsAgo, mockObservableWithTokens0.address, mockObservableWithTokens1.address)
+      ).to.be.revertedWith('BP')
     })
 
     it('correct output when tick is 0', async () => {
       const secondsAgo = 15
+      const tickCumulatives0 = [BigNumber.from(0), BigNumber.from(0)]
       const tickCumulatives1 = [BigNumber.from(0), BigNumber.from(0)]
-      const tickCumulatives2 = [BigNumber.from(0), BigNumber.from(0)]
-      const mockObservable = await mockObservableFactory.deploy([secondsAgo, 0], tickCumulatives1, [0, 0])
-      const mockObservable2 = await mockObservableFactory.deploy([secondsAgo, 0], tickCumulatives2, [0, 0])
-      const chainedPrice = await oracle.getPriceChained(secondsAgo, mockObservable.address, mockObservable2.address)
+      const mockObservableWithTokens0 = await mockObservableWithTokensFactory.deploy(
+        tokens[0].address,
+        tokens[1].address,
+        [secondsAgo, 0],
+        tickCumulatives0,
+        [0, 0]
+      )
+      const mockObservableWithTokens1 = await mockObservableWithTokensFactory.deploy(
+        tokens[1].address,
+        tokens[2].address,
+        [secondsAgo, 0],
+        tickCumulatives1,
+        [0, 0]
+      )
+      const chainedPrice = await oracle.getPriceChained(
+        secondsAgo,
+        mockObservableWithTokens0.address,
+        mockObservableWithTokens1.address
+      )
+      console.log('formatted sqrt ratio price of this call is', formatSqrtRatioX96(chainedPrice))
 
-      expect(formatSqrtRatioX96(chainedPrice)).to.equal(formatSqrtRatioX96(1))
+      expect(formatSqrtRatioX96(chainedPrice)).to.equal(BigNumber.from('1'))
     })
 
-    it('correct output when tick poolA is 0 and tick pool B is 100_000', async () => {
-      const secondsAgo = 15
-      const tickCumulatives1 = [BigNumber.from(0), BigNumber.from(0)]
-      const tickCumulatives2 = [BigNumber.from(0), BigNumber.from(100000)]
-      const mockObservable = await mockObservableFactory.deploy([secondsAgo, 0], tickCumulatives1, [0, 0])
-      const mockObservable2 = await mockObservableFactory.deploy([secondsAgo, 0], tickCumulatives2, [0, 0])
-      const chainedPrice = await oracle.getPriceChained(secondsAgo, mockObservable.address, mockObservable2.address)
+    it('correct output when tick poolA is 1 and tick pool B price is 4', async () => {
+      // i think i need to alter mockObservable to be a pool, or take a token0 & token1
+      const secondsAgo = 10
+      const tickCumulatives0 = [BigNumber.from(100), BigNumber.from(100)]
+      const tickCumulatives1 = [BigNumber.from(0), BigNumber.from(138636)]
+      const mockObservableWithTokens0 = await mockObservableWithTokensFactory.deploy(
+        tokens[0].address,
+        tokens[1].address,
+        [secondsAgo, 0],
+        tickCumulatives0,
+        [0, 0]
+      )
+      const mockObservableWithTokens1 = await mockObservableWithTokensFactory.deploy(
+        tokens[1].address,
+        tokens[2].address,
+        [secondsAgo, 0],
+        tickCumulatives1,
+        [0, 0]
+      )
+      const chainedPrice = await oracle.getPriceChained(
+        secondsAgo,
+        mockObservableWithTokens0.address,
+        mockObservableWithTokens1.address
+      )
 
-      expect(formatSqrtRatioX96(chainedPrice)).to.equal(formatSqrtRatioX96(22015.5))
+      console.log('formatted sqrt ratio price of this call is', formatSqrtRatioX96(chainedPrice))
+
+      expect(formatSqrtRatioX96(chainedPrice)).to.equal(BigNumber.from(2))
     })
   })
 })

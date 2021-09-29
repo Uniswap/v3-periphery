@@ -5,77 +5,51 @@ import './OracleLibrary.sol';
 import '@uniswap/v3-core/contracts/libraries/FixedPoint96.sol';
 import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
 
-
 /// @title ChainedOracleLibrary
-/// @notice Returns a sqrtPriceX96 representing the price of token A in terms of Token C by chaining the price
-/// through an overlapping intermediary token B. The selected pools must contain one overlapping token.
 library ChainedOracleLibrary {
-
-    /// @notice Returns a sqrtPriceX96 representing the price of token A in terms of Token C by chaining the price
-    /// through an intermediary token B.
-    /// @dev Both pools must contain one overlapping token. As tokens may have different decimal expressions, weighing twaps by liquidity is insecure unless
+    /// @notice Returns a synthetic tick representing the price of the outlier tokens in an array of pools, each containing one overlapping token.
+    /// I.e., returns synthetic tick representing the price of token_A (tA) in terms of token_D given pools of tA/tB - tB/tC - tC/tD.
+    /// @dev Each pool must contain one overlapping token. As tokens may have different decimal expressions, weighing twaps by liquidity is insecure unless
     /// the decimal expression of each token is included in the calculation. Because of this, this library intentionally excludes
     /// liquidity weighing.
-    /// @param secondsAgo The number of seconds ago from which to return a time weighted average tick in both pools
-    /// @param quotePool The first pool
-    /// @param basePool The second pool
-    /// @return chainedSqrtPriceX96 The sqrtPriceX96 representing tokenA in terms of tokenC and vice versa
-    function getPriceChained(
-        uint32 secondsAgo,
-        address quotePool,
-        address basePool
-    ) external view returns (uint160 chainedSqrtPriceX96) {
+    /// @param secondsAgo The number of seconds ago from which to return a time weighted average tick in all pools
+    /// @param pools The pools from which to return a chained price
+    /// @return syntheticTick The sqrtPriceX96 representing tokenA in terms of tokenC
+    function getPriceChained(uint32 secondsAgo, address[] memory pools) external view returns (int24 syntheticTick) {
         require(secondsAgo != 0, 'BP');
 
         uint32[] memory secondsAgos = new uint32[](2);
         secondsAgos[0] = secondsAgo;
         secondsAgos[1] = 0;
 
-        // derive base pool arithmetic mean tick
-        IUniswapV3Pool _basePool = IUniswapV3Pool(basePool);
+        int24[] memory _arithmeticMeanTicks = new int24[](pools.length);
 
-        (int56[] memory basePoolTickCumulatives, ) =
-            IUniswapV3Pool(_basePool).observe(
-                secondsAgos
-            );
+        // populate an array with an arithmetic mean tick of each pool
+        for (uint256 i; i < pools.length; i++) {
+            IUniswapV3Pool _pool = IUniswapV3Pool(pools[i]);
 
-        int56 basePoolTickCumulativesDelta = basePoolTickCumulatives[1] - basePoolTickCumulatives[0];
+            (int56[] memory _poolTickCumulatives, ) = IUniswapV3Pool(_pool).observe(secondsAgos);
 
-        int24 basePoolArithmeticMeanTick = int24(basePoolTickCumulativesDelta / secondsAgo);
+            int56 _poolTickCumulativesDelta = _poolTickCumulatives[1] - _poolTickCumulatives[0];
 
-        // derive quote pool arithmetic mean tick
+            _arithmeticMeanTicks[i] = int24(_poolTickCumulativesDelta / secondsAgo);
+        }
 
-        IUniswapV3Pool _quotePool = IUniswapV3Pool(quotePool);
+        // create a synthetic tick by chaining together the arithmetic mean ticks of the pools
+        for (uint256 i; (i + 1) < pools.length; i++) {
+            IUniswapV3Pool _poolA = IUniswapV3Pool(pools[i]);
+            IUniswapV3Pool _poolB = IUniswapV3Pool(pools[i + 1]);
 
-        (int56[] memory quotePoolTickCumulatives, ) =
-            IUniswapV3Pool(_quotePool).observe(
-                secondsAgos
-            );
+            if (_poolA.token1() == _poolB.token0()) {
+                // Add to synthetic tick
+                // 1.0001**(Tick_a + Tick_b) = Price_a * Price_b
 
-        int56 quotePoolTickCumulativesDelta = quotePoolTickCumulatives[1] - quotePoolTickCumulatives[0];
-
-        int24 quotePoolArithmeticMeanTick = int24(quotePoolTickCumulativesDelta / secondsAgo);
-
-        // chain the tick reading to get quoteToken in terms of baseToken
-
-            if (_quotePool.token1.address == _basePool.token0.address) {
-            // chain price directly
-            // to do - figure out uint overflow potential / correct math 
-            chainedSqrtPriceX96 = 
-                SafeCast.toUint160(
-                    (
-                        FullMath.mulDiv(
-                            TickMath.getSqrtRatioAtTick(basePoolArithmeticMeanTick),
-                            TickMath.getSqrtRatioAtTick(quotePoolArithmeticMeanTick),
-                            FixedPoint96.Q96
-                        )
-                    )   
-                );
+                syntheticTick = syntheticTick + _arithmeticMeanTicks[i];
             } else {
-            // invert price  
-            chainedSqrtPriceX96 = (
-                TickMath.getSqrtRatioAtTick(basePoolArithmeticMeanTick) / TickMath.getSqrtRatioAtTick(quotePoolArithmeticMeanTick) * 2**96
-             );
+                // invert price by subtracting from synthetic tick
+                // 1.0001**(Tick_a - Tick_b) = Price_a / Price_b
+                syntheticTick = syntheticTick - _arithmeticMeanTicks[i];
+            }
         }
     }
 }
