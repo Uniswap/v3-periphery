@@ -1,13 +1,13 @@
 pragma solidity =0.7.6;
 
-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '../libraries/WeightedOracleLibrary.sol';
 import '../libraries/OracleLibrary.sol';
+import '../libraries/PoolAddress.sol';
 
 contract OpinionatedOracle {
-    IUniswapV3Factory factory;
+    address immutable internal factory;
 
     enum ManipulationResistance {
         Dangerous, // Spot price from beginning of the block
@@ -20,27 +20,33 @@ contract OpinionatedOracle {
 
     /// @param _factory Address of the UniswapV3 Factory used to look up token pools
     constructor(address _factory) {
-        factory = IUniswapV3Factory(_factory);
+        factory = _factory;
     }
 
+    function getPool(
+        address tokenA,
+        address tokenB,
+        uint24 fee
+    ) private view returns (address) {
+        return PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee));
+    }
     /// @notice Returns a quote for a given token amount according to a desired price manipulation resistance
     /// @notice across a specified list of fee tiers
     /// @param baseToken Address of the input token for the quote
     /// @param quoteToken Address of the output token for the quote
     /// @param baseTokenAmount The amount of token to be converted
-    /// @param resistance The desired resistance against price manipulation: Dangerous, Weak, Medium, Strong
+    /// @param quotePeriod The time period over which to calculate the price
     /// @param feeTiers An array of fee tiers to gather prices from for the quote
     /// @return quoteTokenAmount The amount of quoteToken received for baseTokenAmount of baseToken
     function quote(
         address baseToken,
         address quoteToken,
         uint128 baseTokenAmount,
-        ManipulationResistance resistance,
+        uint32 quotePeriod,
         uint24[] memory feeTiers
     ) public view returns (uint256 quoteTokenAmount) {
         require(feeTiers.length > 0, 'FT');
 
-        uint32 quotePeriod = quotePeriods[uint256(resistance)];
         address pool;
         int24 meanWeightedTick;
 
@@ -51,7 +57,7 @@ contract OpinionatedOracle {
                 new WeightedOracleLibrary.PeriodObservation[](feeTiers.length);
 
             for (uint256 i = 0; i < feeTiers.length; i++) {
-                pool = factory.getPool(baseToken, quoteToken, feeTiers[i]);
+                pool = getPool(baseToken, quoteToken, feeTiers[i]);
                 require(pool != address(0), 'NP');
                 poolObservations[i] = WeightedOracleLibrary.consult(pool, quotePeriod);
             }
@@ -66,7 +72,7 @@ contract OpinionatedOracle {
             uint128 liquidity;
 
             for (uint256 i = 0; i < feeTiers.length; i++) {
-                pool = factory.getPool(baseToken, quoteToken, feeTiers[i]);
+                pool = getPool(baseToken, quoteToken, feeTiers[i]);
                 require(pool != address(0), 'NP');
                 (tick, liquidity) = OracleLibrary.getBlockStartingTickAndLiquidity(pool);
                 totalWeightedTicks += int256(liquidity) * tick;
@@ -74,6 +80,8 @@ contract OpinionatedOracle {
             }
 
             meanWeightedTick = int24(totalWeightedTicks / totalLiquidity);
+            // Always round to negative infinity
+            if (totalWeightedTicks < 0 && (totalWeightedTicks % totalLiquidity != 0)) meanWeightedTick--;
         }
 
         quoteTokenAmount = OracleLibrary.getQuoteAtTick(meanWeightedTick, baseTokenAmount, baseToken, quoteToken);
@@ -86,7 +94,7 @@ contract OpinionatedOracle {
     /// @param baseTokenAmount The amount of token to be converted
     /// @param resistance The desired resistance against price manipulation: Dangerous, Weak, Medium, Strong
     /// @return quoteTokenAmount The amount of quoteToken received for baseTokenAmount of baseToken
-    function quoteWithStandardFeeTiers(
+    function quoteWithFeeTiersAndManipulationResistance(
         address baseToken,
         address quoteToken,
         uint128 baseTokenAmount,
@@ -97,6 +105,29 @@ contract OpinionatedOracle {
         feeTiers[1] = 5000;
         feeTiers[2] = 10000;
 
-        return quote(baseToken, quoteToken, baseTokenAmount, resistance, feeTiers);
+        return quote(
+            baseToken,
+            quoteToken,
+            baseTokenAmount,
+            quotePeriods[uint256(resistance)],
+            feeTiers
+        );
+    }
+    
+    // @param resistance The desired resistance against price manipulation: Dangerous, Weak, Medium, Strong
+    function quoteWithManipulationResistance(
+        address baseToken,
+        address quoteToken,
+        uint128 baseTokenAmount,
+        ManipulationResistance resistance,
+        uint24[] memory feeTiers
+    ) external view returns (uint256 quoteTokenAmount) {
+        return quote(
+            baseToken,
+            quoteToken,
+            baseTokenAmount,
+            quotePeriods[uint256(resistance)],
+            feeTiers
+        );
     }
 }
