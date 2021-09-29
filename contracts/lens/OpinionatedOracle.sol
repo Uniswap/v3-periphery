@@ -7,7 +7,7 @@ import '../libraries/OracleLibrary.sol';
 import '../libraries/PoolAddress.sol';
 
 contract OpinionatedOracle {
-    address immutable internal factory;
+    address internal immutable factory;
 
     enum ManipulationResistance {
         Dangerous, // Spot price from beginning of the block
@@ -30,6 +30,7 @@ contract OpinionatedOracle {
     ) private view returns (address) {
         return PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee));
     }
+
     /// @notice Returns a quote for a given token amount according to a desired price manipulation resistance
     /// @notice across a specified list of fee tiers
     /// @param baseToken Address of the input token for the quote
@@ -105,15 +106,9 @@ contract OpinionatedOracle {
         feeTiers[1] = 5000;
         feeTiers[2] = 10000;
 
-        return quote(
-            baseToken,
-            quoteToken,
-            baseTokenAmount,
-            quotePeriods[uint256(resistance)],
-            feeTiers
-        );
+        return quote(baseToken, quoteToken, baseTokenAmount, quotePeriods[uint256(resistance)], feeTiers);
     }
-    
+
     // @param resistance The desired resistance against price manipulation: Dangerous, Weak, Medium, Strong
     function quoteWithManipulationResistance(
         address baseToken,
@@ -122,12 +117,6 @@ contract OpinionatedOracle {
         ManipulationResistance resistance,
         uint24[] memory feeTiers
     ) external view returns (uint256 quoteTokenAmount) {
-        return quote(
-            baseToken,
-            quoteToken,
-            baseTokenAmount,
-            quotePeriods[uint256(resistance)],
-            feeTiers
-        );
+        return quote(baseToken, quoteToken, baseTokenAmount, quotePeriods[uint256(resistance)], feeTiers);
     }
 }
