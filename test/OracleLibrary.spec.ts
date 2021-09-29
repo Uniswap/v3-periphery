@@ -127,24 +127,14 @@ describe('OracleLibrary', () => {
   describe('#getQuoteAtTick', () => {
     // sanity check
     it('token0: returns correct value when tick = 0', async () => {
-      const quoteAmount = await oracle.getQuoteAtTick(
-        BN0,
-        expandTo18Decimals(1),
-        tokens[0].address,
-        tokens[1].address
-      )
+      const quoteAmount = await oracle.getQuoteAtTick(BN0, expandTo18Decimals(1), tokens[0].address, tokens[1].address)
 
       expect(quoteAmount).to.equal(expandTo18Decimals(1))
     })
 
     // sanity check
     it('token1: returns correct value when tick = 0', async () => {
-      const quoteAmount = await oracle.getQuoteAtTick(
-        BN0,
-        expandTo18Decimals(1),
-        tokens[1].address,
-        tokens[0].address
-      )
+      const quoteAmount = await oracle.getQuoteAtTick(BN0, expandTo18Decimals(1), tokens[1].address, tokens[0].address)
 
       expect(quoteAmount).to.equal(expandTo18Decimals(1))
     })
@@ -380,7 +370,7 @@ describe('OracleLibrary', () => {
         BN0,
         BigNumber.from('136112946768375385385349842972707284'),
         BigNumber.from('184724713471366594451546215462959885'),
-        BN0
+        BN0,
       ]
       initializeds = [true, true, true, false]
       observationCardinality = 3
@@ -444,7 +434,7 @@ describe('OracleLibrary', () => {
         BigNumber.from('965320616647837491242414421221086683'),
         BigNumber.from('839853488995212437053956034406948254'),
         BigNumber.from('939565063595995342933046073701273770'),
-        BN0
+        BN0,
       ]
       slot0Tick = 3
       lastObservationCurrentTimestamp = true
