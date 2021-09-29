@@ -16,7 +16,7 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
     }
 
     /// @inheritdoc IPeripheryPayments
-    function unwrapWETH9(uint256 amountMinimum, address recipient) external payable override {
+    function unwrapWETH9(uint256 amountMinimum, address recipient) public payable override {
         uint256 balanceWETH9 = IWETH9(WETH9).balanceOf(address(this));
         require(balanceWETH9 >= amountMinimum, 'Insufficient WETH9');
 
@@ -31,7 +31,7 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
         address token,
         uint256 amountMinimum,
         address recipient
-    ) external payable override {
+    ) public payable override {
         uint256 balanceToken = IERC20(token).balanceOf(address(this));
         require(balanceToken >= amountMinimum, 'Insufficient token');
 
