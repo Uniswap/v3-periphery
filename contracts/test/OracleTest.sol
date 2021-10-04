@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.7.6;
+pragma abicoder v2;
 
 import '../libraries/OracleLibrary.sol';
 
 contract OracleTest {
-    function consult(address pool, uint32 period) public view returns (int24 timeWeightedAverageTick) {
-        timeWeightedAverageTick = OracleLibrary.consult(pool, period);
+    function consult(address pool, uint32 secondsAgo)
+        public
+        view
+        returns (OracleLibrary.TimeWeightedPoolData memory observation)
+    {
+        observation = OracleLibrary.consult(pool, secondsAgo);
     }
 
     function getQuoteAtTick(
@@ -46,5 +51,13 @@ contract OracleTest {
 
     function getBlockStartingTick(address pool) public view returns (int24) {
         return OracleLibrary.getBlockStartingTick(pool);
+    }
+
+    function getArithmeticMeanTickWeightedByLiquidity(OracleLibrary.TimeWeightedPoolData[] memory observations)
+        public
+        pure
+        returns (int24 arithmeticMeanWeightedTick)
+    {
+        arithmeticMeanWeightedTick = OracleLibrary.getArithmeticMeanTickWeightedByLiquidity(observations);
     }
 }
