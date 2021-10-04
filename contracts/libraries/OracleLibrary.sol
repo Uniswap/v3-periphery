@@ -20,7 +20,11 @@ library OracleLibrary {
     /// @param pool Address of the pool that we want to observe
     /// @param secondsAgo Number of seconds in the past calculate the time-weighted means from
     /// @return timeWeightedPoolData The mean liquidity and tick, time-weighted from (block.timestamp - secondsAgo) to block.timestamp
-    function consult(address pool, uint32 secondsAgo) internal view returns (TimeWeightedPoolData memory timeWeightedPoolData) {
+    function consult(address pool, uint32 secondsAgo)
+        internal
+        view
+        returns (TimeWeightedPoolData memory timeWeightedPoolData)
+    {
         require(secondsAgo != 0, 'BP');
 
         uint32[] memory secondsAgos = new uint32[](2);
@@ -35,12 +39,15 @@ library OracleLibrary {
 
         timeWeightedPoolData.arithmeticMeanTick = int24(tickCumulativesDelta / secondsAgo);
         // Always round to negative infinity
-        if (tickCumulativesDelta < 0 && (tickCumulativesDelta % secondsAgo != 0)) timeWeightedPoolData.arithmeticMeanTick--;
+        if (tickCumulativesDelta < 0 && (tickCumulativesDelta % secondsAgo != 0))
+            timeWeightedPoolData.arithmeticMeanTick--;
 
         uint192 secondsAgoX160 = uint192(secondsAgo) * type(uint160).max;
 
         // We are shifting the liquidity delta to ensure that the result doesn't overflow uint128
-        timeWeightedPoolData.harmonicMeanLiquidity = uint128(secondsAgoX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32));
+        timeWeightedPoolData.harmonicMeanLiquidity = uint128(
+            secondsAgoX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32)
+        );
     }
 
     /// @notice Given a tick and a token amount, calculates the amount of token received in exchange
@@ -137,7 +144,9 @@ library OracleLibrary {
         uint256 denominator;
 
         for (uint256 i; i < timeWeightedPoolDatas.length; i++) {
-            numerator += int256(timeWeightedPoolDatas[i].harmonicMeanLiquidity) * timeWeightedPoolDatas[i].arithmeticMeanTick;
+            numerator +=
+                int256(timeWeightedPoolDatas[i].harmonicMeanLiquidity) *
+                timeWeightedPoolDatas[i].arithmeticMeanTick;
             denominator += timeWeightedPoolDatas[i].harmonicMeanLiquidity;
         }
 
