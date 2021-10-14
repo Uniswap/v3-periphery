@@ -107,9 +107,10 @@ library OracleLibrary {
 
         uint32 delta = observationTimestamp - prevObservationTimestamp;
         tick = int24((tickCumulative - prevTickCumulative) / delta);
-        uint128 liquidity = uint128(
-            (uint160(delta) << 128) / (secondsPerLiquidityCumulativeX128 - prevSecondsPerLiquidityCumulativeX128)
-        );
+        uint128 liquidity =
+            uint128(
+                (uint160(delta) << 128) / (secondsPerLiquidityCumulativeX128 - prevSecondsPerLiquidityCumulativeX128)
+            );
         return (tick, liquidity);
     }
 }
