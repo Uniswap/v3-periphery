@@ -82,7 +82,6 @@ library OracleLibrary {
     /// @return The tick that the pool was in at the start of the current block
     function getBlockStartingTickAndLiquidity(address pool) internal view returns (int24, uint128) {
         (, int24 tick, uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(pool).slot0();
-        uint128 liquidity = IUniswapV3Pool(pool).liquidity();
 
         // 2 observations are needed to reliably calculate the block starting tick
         require(observationCardinality > 1, 'NEO');
@@ -93,7 +92,7 @@ library OracleLibrary {
         (uint32 observationTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128, ) =
             IUniswapV3Pool(pool).observations(observationIndex);
         if (observationTimestamp != uint32(block.timestamp)) {
-            return (tick, liquidity);
+            return (tick, IUniswapV3Pool(pool).liquidity());
         }
 
         uint256 prevIndex = (uint256(observationIndex) + observationCardinality - 1) % observationCardinality;
@@ -108,7 +107,7 @@ library OracleLibrary {
 
         uint32 delta = observationTimestamp - prevObservationTimestamp;
         tick = int24((tickCumulative - prevTickCumulative) / delta);
-        liquidity = uint128(
+        uint128 liquidity = uint128(
             (uint160(delta) << 128) / (secondsPerLiquidityCumulativeX128 - prevSecondsPerLiquidityCumulativeX128)
         );
         return (tick, liquidity);
