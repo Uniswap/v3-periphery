@@ -178,12 +178,10 @@ library OracleLibrary {
                 ? (tokens[i - 1], tokens[i])
                 : (tokens[i], tokens[i - 1]);
 
-            sortedPairs[i - 2][1] == sortedPairs[i - 1][0]
-                ? // Add to synthetic tick
-                // 1.0001**(Tick_a + Tick_b) = Price_a * Price_b
-                syntheticTick = syntheticTick + arithmeticMeanWeightedTicks[i - 1] // invert price by subtracting from synthetic tick
-                : // 1.0001**(Tick_a - Tick_b) = Price_a / Price_b
-                syntheticTick = syntheticTick - arithmeticMeanWeightedTicks[i - 1];
+            sortedPairs[i - 2][1] == sortedPairs[i - 1][0] // Add to synthetic tick
+                ? // 1.0001**(Tick_a + Tick_b) = Price_a * Price_b
+                syntheticTick = syntheticTick + arithmeticMeanWeightedTicks[i - 1] // invert price by subtracting from synthetic tick // 1.0001**(Tick_a - Tick_b) = Price_a / Price_b
+                : syntheticTick = syntheticTick - arithmeticMeanWeightedTicks[i - 1];
         }
     }
 }
