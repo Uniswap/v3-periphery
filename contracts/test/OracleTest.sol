@@ -55,7 +55,7 @@ contract OracleTest {
 
     function getArithmeticMeanTickWeightedByLiquidity(OracleLibrary.TimeWeightedPoolData[] memory observations)
         public
-        pure
+        view
         returns (int24 arithmeticMeanWeightedTick)
     {
         arithmeticMeanWeightedTick = OracleLibrary.getArithmeticMeanTickWeightedByLiquidity(observations);

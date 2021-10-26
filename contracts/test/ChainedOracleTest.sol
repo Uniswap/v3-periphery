@@ -2,14 +2,14 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import '../libraries/ChainedOracleLibrary.sol';
+import '../libraries/OracleLibrary.sol';
 
 contract ChainedOracleTest {
-    function getPriceChained(
-        uint32 secondsAgo,
-        address quotePool,
-        address basePool
-    ) public view returns (uint160 chainedSqrtPriceX96) {
-        chainedSqrtPriceX96 = ChainedOracleLibrary.getPriceChained(secondsAgo, quotePool, basePool);
+    function getChainedPrice(address[] memory tokens, int24[] memory arithmeticMeanWeightedTicks)
+        public
+        view
+        returns (int24 syntheticTick)
+    {
+        syntheticTick = OracleLibrary.getChainedPrice(tokens, arithmeticMeanWeightedTicks);
     }
 }

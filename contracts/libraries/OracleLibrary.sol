@@ -6,6 +6,7 @@ import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
 import '../libraries/PoolAddress.sol';
+import 'hardhat/console.sol';
 
 /// @title Oracle library
 /// @notice Provides functions to integrate with V3 pool oracle
@@ -132,7 +133,7 @@ library OracleLibrary {
     /// Even if prices are commensurate (e.g. two different USD-stable assets against ETH), liquidity values may not be, as decimals can differ between tokens.
     function getArithmeticMeanTickWeightedByLiquidity(TimeWeightedPoolData[] memory timeWeightedPoolDatas)
         internal
-        pure
+        view
         returns (int24 arithmeticMeanWeightedTick)
     {
         // Accumulates the sum of products between each mean tick and harmonic mean liquidity
@@ -154,5 +155,35 @@ library OracleLibrary {
 
         // Always round to negative infinity
         if (numerator < 0 && (numerator % int256(denominator) != 0)) arithmeticMeanWeightedTick--;
+    }
+
+    function getChainedPrice(address[] memory tokens, int24[] memory arithmeticMeanWeightedTicks)
+        internal
+        view
+        returns (int24 syntheticTick)
+    {
+        require(tokens.length - 1 == arithmeticMeanWeightedTicks.length, 'UEL');
+        //require(tokens.length > 2, 'TFT');
+
+        address[2][] memory sortedPairs = new address[2][](2);
+
+        syntheticTick = arithmeticMeanWeightedTicks[0];
+
+        for (uint256 i = 2; i < tokens.length; i++) {
+            (sortedPairs[0][0], sortedPairs[0][1]) = tokens[i - 2] < tokens[i - 1]
+                ? (tokens[i - 2], tokens[i - 1])
+                : (tokens[i - 1], tokens[i - 2]);
+
+            (sortedPairs[1][0], sortedPairs[1][1]) = tokens[i - 1] < tokens[i]
+                ? (tokens[i - 1], tokens[i])
+                : (tokens[i], tokens[i - 1]);
+
+            //if poolA and poolB have an overlapping token1 and token0, chain tick by adding
+            //if poolA and poolB do not have an overlapping token1 and token0, chain tick by subtracting
+
+            sortedPairs[i - 2][1] == sortedPairs[i - 1][0]
+                ? syntheticTick = syntheticTick + arithmeticMeanWeightedTicks[i - 1]
+                : syntheticTick = syntheticTick - arithmeticMeanWeightedTicks[i - 1];
+        }
     }
 }
