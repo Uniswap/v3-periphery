@@ -35,8 +35,7 @@ library OracleLibrary {
 
         arithmeticMeanTick = int24(tickCumulativesDelta / secondsAgo);
         // Always round to negative infinity
-        if (tickCumulativesDelta < 0 && (tickCumulativesDelta % secondsAgo != 0))
-            arithmeticMeanTick--;
+        if (tickCumulativesDelta < 0 && (tickCumulativesDelta % secondsAgo != 0)) arithmeticMeanTick--;
 
         // We are multiplying here instead of shifting to ensure that harmonicMeanLiquidity doesn't overflow uint128
         uint192 secondsAgoX160 = uint192(secondsAgo) * type(uint160).max;
