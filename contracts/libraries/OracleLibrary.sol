@@ -80,7 +80,7 @@ library OracleLibrary {
     /// @notice Given a pool, it returns the tick value as of the start of the current block
     /// @param pool Address of Uniswap V3 pool
     /// @return The tick that the pool was in at the start of the current block
-    function getBlockStartingTick(address pool) internal view returns (int24) {
+    function getBlockStartingTickAndLiquidity(address pool) internal view returns (int24, uint128) {
         (, int24 tick, uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(pool).slot0();
 
         // 2 observations are needed to reliably calculate the block starting tick
@@ -89,17 +89,29 @@ library OracleLibrary {
         // If the latest observation occurred in the past, then no tick-changing trades have happened in this block
         // therefore the tick in `slot0` is the same as at the beginning of the current block.
         // We don't need to check if this observation is initialized - it is guaranteed to be.
-        (uint32 observationTimestamp, int56 tickCumulative, , ) = IUniswapV3Pool(pool).observations(observationIndex);
+        (uint32 observationTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128, ) =
+            IUniswapV3Pool(pool).observations(observationIndex);
         if (observationTimestamp != uint32(block.timestamp)) {
-            return tick;
+            return (tick, IUniswapV3Pool(pool).liquidity());
         }
 
         uint256 prevIndex = (uint256(observationIndex) + observationCardinality - 1) % observationCardinality;
-        (uint32 prevObservationTimestamp, int56 prevTickCumulative, , bool prevInitialized) =
-            IUniswapV3Pool(pool).observations(prevIndex);
+        (
+            uint32 prevObservationTimestamp,
+            int56 prevTickCumulative,
+            uint160 prevSecondsPerLiquidityCumulativeX128,
+            bool prevInitialized
+        ) = IUniswapV3Pool(pool).observations(prevIndex);
 
         require(prevInitialized, 'ONI');
 
-        return int24((tickCumulative - prevTickCumulative) / (observationTimestamp - prevObservationTimestamp));
+        uint32 delta = observationTimestamp - prevObservationTimestamp;
+        tick = int24((tickCumulative - prevTickCumulative) / delta);
+        uint128 liquidity =
+            uint128(
+                (uint192(delta) * type(uint160).max) /
+                    (uint192(secondsPerLiquidityCumulativeX128 - prevSecondsPerLiquidityCumulativeX128) << 32)
+            );
+        return (tick, liquidity);
     }
 }
