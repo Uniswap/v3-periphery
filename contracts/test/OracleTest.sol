@@ -49,8 +49,8 @@ contract OracleTest {
         currentTimestamp = uint32(block.timestamp);
     }
 
-    function getBlockStartingTick(address pool) public view returns (int24) {
-        return OracleLibrary.getBlockStartingTick(pool);
+    function getBlockStartingTickAndLiquidity(address pool) public view returns (int24, uint128) {
+        return OracleLibrary.getBlockStartingTickAndLiquidity(pool);
     }
 
     function getWeightedArithmeticMeanTick(OracleLibrary.WeightedTickData[] memory observations)

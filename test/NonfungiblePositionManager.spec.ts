@@ -9,6 +9,7 @@ import {
   IWETH9,
   IUniswapV3Factory,
   SwapRouter,
+  NonfungiblePositionManagerPositionsGasTest,
 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { computePoolAddress } from './shared/computePoolAddress'
@@ -1268,6 +1269,38 @@ describe('NonfungiblePositionManager', () => {
           .withArgs(poolAddress, wallet.address, 7503)
           .to.not.emit(tokens[1], 'Transfer')
       })
+    })
+  })
+
+  describe('#positions', async () => {
+    it('gas', async () => {
+      const positionsGasTestFactory = await ethers.getContractFactory('NonfungiblePositionManagerPositionsGasTest')
+      const positionsGasTest = (await positionsGasTestFactory.deploy(
+        nft.address
+      )) as NonfungiblePositionManagerPositionsGasTest
+
+      await nft.createAndInitializePoolIfNecessary(
+        tokens[0].address,
+        tokens[1].address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+
+      await nft.mint({
+        token0: tokens[0].address,
+        token1: tokens[1].address,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        fee: FeeAmount.MEDIUM,
+        recipient: other.address,
+        amount0Desired: 15,
+        amount1Desired: 15,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 10,
+      })
+
+      await snapshotGasCost(positionsGasTest.getGasCostOfPositions(1))
     })
   })
 })
