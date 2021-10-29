@@ -8,9 +8,9 @@ contract OracleTest {
     function consult(address pool, uint32 secondsAgo)
         public
         view
-        returns (OracleLibrary.TimeWeightedPoolData memory observation)
+        returns (int24 arithmeticMeanTick, uint128 harmonicMeanLiquidity)
     {
-        observation = OracleLibrary.consult(pool, secondsAgo);
+        return OracleLibrary.consult(pool, secondsAgo);
     }
 
     function getQuoteAtTick(
@@ -53,11 +53,11 @@ contract OracleTest {
         return OracleLibrary.getBlockStartingTick(pool);
     }
 
-    function getArithmeticMeanTickWeightedByLiquidity(OracleLibrary.TimeWeightedPoolData[] memory observations)
+    function getWeightedArithmeticMeanTick(OracleLibrary.WeightedTickData[] memory observations)
         public
         pure
         returns (int24 arithmeticMeanWeightedTick)
     {
-        arithmeticMeanWeightedTick = OracleLibrary.getArithmeticMeanTickWeightedByLiquidity(observations);
+        return OracleLibrary.getWeightedArithmeticMeanTick(observations);
     }
 }
