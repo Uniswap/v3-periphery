@@ -23,9 +23,25 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
     address private constant WBTC = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
 
     address public immutable WETH9;
+    /// @dev A null-terminated string
+    bytes32 public immutable nativeCurrencyLabelBytes;
 
-    constructor(address _WETH9) {
+    constructor(address _WETH9, bytes32 _nativeCurrencyLabelBytes) {
         WETH9 = _WETH9;
+        nativeCurrencyLabelBytes = _nativeCurrencyLabelBytes;
+    }
+
+    /// @notice Returns the native currency label as a string
+    function nativeCurrencyLabel() public view returns (string memory) {
+        uint256 len = 0;
+        while (len < 32 && nativeCurrencyLabelBytes[len] != 0) {
+            len++;
+        }
+        bytes memory b = new bytes(len);
+        for (uint256 i = 0; i < len; i++) {
+            b[i] = nativeCurrencyLabelBytes[i];
+        }
+        return string(b);
     }
 
     /// @inheritdoc INonfungibleTokenPositionDescriptor
@@ -58,9 +74,11 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                     quoteTokenAddress: quoteTokenAddress,
                     baseTokenAddress: baseTokenAddress,
                     quoteTokenSymbol: quoteTokenAddress == WETH9
-                        ? 'ETH'
+                        ? nativeCurrencyLabel()
                         : SafeERC20Namer.tokenSymbol(quoteTokenAddress),
-                    baseTokenSymbol: baseTokenAddress == WETH9 ? 'ETH' : SafeERC20Namer.tokenSymbol(baseTokenAddress),
+                    baseTokenSymbol: baseTokenAddress == WETH9
+                        ? nativeCurrencyLabel()
+                        : SafeERC20Namer.tokenSymbol(baseTokenAddress),
                     quoteTokenDecimals: IERC20Metadata(quoteTokenAddress).decimals(),
                     baseTokenDecimals: IERC20Metadata(baseTokenAddress).decimals(),
                     flipRatio: _flipRatio,
