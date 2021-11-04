@@ -136,7 +136,7 @@ library OracleLibrary {
     /// @return weightedArithmeticMeanTick The weighted arithmetic mean tick
     /// @dev Each entry of `weightedTickData` should represents ticks from pools with the same underlying pool tokens. If they do not,
     /// extreme care must be taken to ensure that ticks are comparable (including decimal differences).
-    /// @dev Note that the weighted arithmetic mean tick corresponds to the weighted geometric mean tick.
+    /// @dev Note that the weighted arithmetic mean tick corresponds to the weighted geometric mean price.
     function getWeightedArithmeticMeanTick(WeightedTickData[] memory weightedTickData)
         internal
         pure
