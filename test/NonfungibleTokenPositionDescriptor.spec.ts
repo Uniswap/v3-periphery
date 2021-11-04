@@ -204,7 +204,7 @@ describe('NonfungibleTokenPositionDescriptor', () => {
       })
       const nftDescriptor = (await positionDescriptorFactory.deploy(
         weth9.address,
-        // 'ETH' as a bytes32 string
+        // 'FUNNYMONEY' as a bytes32 string
         '0x46554e4e594d4f4e455900000000000000000000000000000000000000000000'
       )) as NonfungibleTokenPositionDescriptor
 
