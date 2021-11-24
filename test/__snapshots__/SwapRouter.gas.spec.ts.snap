@@ -12,6 +12,8 @@ exports[`SwapRouter gas tests #exactInput 2 trades (directly to sender) 1`] = `1
 
 exports[`SwapRouter gas tests #exactInput 2 trades (via router) 1`] = `188802`;
 
+exports[`SwapRouter gas tests #exactInput 3 trades (directly to sender) 1`] = `258723`;
+
 exports[`SwapRouter gas tests #exactInput WETH9 -> 0 1`] = `106071`;
 
 exports[`SwapRouter gas tests #exactInputSingle 0 -> 1 1`] = `107180`;

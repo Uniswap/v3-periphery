@@ -329,7 +329,7 @@ describe('SwapRouter gas tests', function () {
       await snapshotGasCost(router.connect(trader).multicall(data))
     })
 
-    it('2 trades (directly to sender)', async () => {
+    it('3 trades (directly to sender)', async () => {
       await weth9.connect(trader).deposit({ value: 3 })
       await weth9.connect(trader).approve(router.address, constants.MaxUint256)
       const swap0 = {
@@ -341,7 +341,15 @@ describe('SwapRouter gas tests', function () {
       }
 
       const swap1 = {
-        path: encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
+        path: encodePath([tokens[0].address, tokens[1].address], [FeeAmount.MEDIUM]),
+        recipient: trader.address,
+        deadline: 1,
+        amountIn: 3,
+        amountOutMinimum: 1,
+      }
+
+      const swap2 = {
+        path: encodePath([tokens[1].address, tokens[2].address], [FeeAmount.MEDIUM]),
         recipient: trader.address,
         deadline: 1,
         amountIn: 3,
@@ -351,10 +359,38 @@ describe('SwapRouter gas tests', function () {
       const data = [
         router.interface.encodeFunctionData('exactInput', [swap0]),
         router.interface.encodeFunctionData('exactInput', [swap1]),
+        router.interface.encodeFunctionData('exactInput', [swap2]),
       ]
 
       await snapshotGasCost(router.connect(trader).multicall(data))
     })
+  })
+
+  it('3 trades (directly to sender)', async () => {
+    await weth9.connect(trader).deposit({ value: 3 })
+    await weth9.connect(trader).approve(router.address, constants.MaxUint256)
+    const swap0 = {
+      path: encodePath([weth9.address, tokens[0].address], [FeeAmount.MEDIUM]),
+      recipient: trader.address,
+      deadline: 1,
+      amountIn: 3,
+      amountOutMinimum: 1,
+    }
+
+    const swap1 = {
+      path: encodePath([tokens[1].address, tokens[0].address], [FeeAmount.MEDIUM]),
+      recipient: trader.address,
+      deadline: 1,
+      amountIn: 3,
+      amountOutMinimum: 1,
+    }
+
+    const data = [
+      router.interface.encodeFunctionData('exactInput', [swap0]),
+      router.interface.encodeFunctionData('exactInput', [swap1]),
+    ]
+
+    await snapshotGasCost(router.connect(trader).multicall(data))
   })
 
   describe('#exactInputSingle', () => {
