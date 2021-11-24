@@ -1,3 +1,4 @@
+import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import { Fixture } from 'ethereum-waffle'
 import { BigNumber, constants, ContractTransaction, Wallet } from 'ethers'
 import { ethers, waffle } from 'hardhat'
@@ -10,8 +11,6 @@ import { expect } from './shared/expect'
 import { encodePath } from './shared/path'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
-
-import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
 describe('SwapRouter gas tests', function () {
   this.timeout(40000)
@@ -155,10 +154,7 @@ describe('SwapRouter gas tests', function () {
       tokenIn,
       tokenOut,
       fee: FeeAmount.MEDIUM,
-      sqrtPriceLimitX96:
-        sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
-          ? BigNumber.from('4295128740')
-          : BigNumber.from('1461446703485210103287273052203988822378723970341'),
+      sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
       recipient: outputIsWETH9 ? constants.AddressZero : trader.address,
       deadline: 1,
       amountIn,
@@ -192,7 +188,7 @@ describe('SwapRouter gas tests', function () {
     }
 
     const data = [router.interface.encodeFunctionData('exactOutput', [params])]
-    if (inputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [0, trader.address]))
+    if (inputIsWETH9) data.push(router.interface.encodeFunctionData('refundETH'))
     if (outputIsWETH9) data.push(router.interface.encodeFunctionData('unwrapWETH9', [amountOut, trader.address]))
 
     return router.connect(trader).multicall(data, { value })
@@ -218,10 +214,7 @@ describe('SwapRouter gas tests', function () {
       deadline: 1,
       amountOut,
       amountInMaximum,
-      sqrtPriceLimitX96:
-        sqrtPriceLimitX96 ?? tokenIn.toLowerCase() < tokenOut.toLowerCase()
-          ? BigNumber.from('4295128740')
-          : BigNumber.from('1461446703485210103287273052203988822378723970341'),
+      sqrtPriceLimitX96: sqrtPriceLimitX96 ?? 0,
     }
 
     const data = [router.interface.encodeFunctionData('exactOutputSingle', [params])]
