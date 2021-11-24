@@ -1,8 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`NonfungiblePositionManager #burn gas 1`] = `41297`;
+exports[`NonfungiblePositionManager #burn gas 1`] = `66076`;
 
-exports[`NonfungiblePositionManager #collect gas transfers both 1`] = `98570`;
+exports[`NonfungiblePositionManager #collect gas transfers both 1`] = `118970`;
 
 exports[`NonfungiblePositionManager #collect gas transfers token0 only 1`] = `111897`;
 
@@ -10,7 +10,7 @@ exports[`NonfungiblePositionManager #collect gas transfers token1 only 1`] = `11
 
 exports[`NonfungiblePositionManager #createAndInitializePoolIfNecessary gas 1`] = `4612043`;
 
-exports[`NonfungiblePositionManager #decreaseLiquidity gas complete decrease 1`] = `92916`;
+exports[`NonfungiblePositionManager #decreaseLiquidity gas complete decrease 1`] = `148666`;
 
 exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] = `161366`;
 
@@ -32,10 +32,10 @@ exports[`NonfungiblePositionManager #permit owned by verifying contract gas 1`] 
 
 exports[`NonfungiblePositionManager #positions gas 1`] = `19890`;
 
-exports[`NonfungiblePositionManager #transferFrom gas 1`] = `79091`;
+exports[`NonfungiblePositionManager #transferFrom gas 1`] = `109691`;
 
-exports[`NonfungiblePositionManager #transferFrom gas comes from approved 1`] = `67491`;
+exports[`NonfungiblePositionManager #transferFrom gas comes from approved 1`] = `108291`;
 
 exports[`NonfungiblePositionManager bytecode size 1`] = `24450`;
 
-exports[`NonfungiblePositionManager multicall exit gas 1`] = `142949`;
+exports[`NonfungiblePositionManager multicall exit gas 1`] = `228718`;

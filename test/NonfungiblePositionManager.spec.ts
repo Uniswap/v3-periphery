@@ -1,31 +1,29 @@
-import { BigNumberish, constants, Wallet } from 'ethers'
-import { waffle, ethers } from 'hardhat'
-
+import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import { Fixture } from 'ethereum-waffle'
+import { BigNumberish, constants, Wallet } from 'ethers'
+import { ethers, waffle } from 'hardhat'
 import {
-  TestPositionNFTOwner,
-  MockTimeNonfungiblePositionManager,
-  TestERC20,
-  IWETH9,
   IUniswapV3Factory,
-  SwapRouter,
+  IWETH9,
+  MockTimeNonfungiblePositionManager,
   NonfungiblePositionManagerPositionsGasTest,
+  SwapRouter,
+  TestERC20,
+  TestPositionNFTOwner,
 } from '../typechain'
 import completeFixture from './shared/completeFixture'
 import { computePoolAddress } from './shared/computePoolAddress'
 import { FeeAmount, MaxUint128, TICK_SPACINGS } from './shared/constants'
 import { encodePriceSqrt } from './shared/encodePriceSqrt'
+import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { expect } from './shared/expect'
+import { extractJSONFromURI } from './shared/extractJSONFromURI'
 import getPermitNFTSignature from './shared/getPermitNFTSignature'
 import { encodePath } from './shared/path'
 import poolAtAddress from './shared/poolAtAddress'
 import snapshotGasCost from './shared/snapshotGasCost'
 import { getMaxTick, getMinTick } from './shared/ticks'
-import { expandTo18Decimals } from './shared/expandTo18Decimals'
 import { sortedTokens } from './shared/tokenSort'
-import { extractJSONFromURI } from './shared/extractJSONFromURI'
-
-import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
 describe('NonfungiblePositionManager', () => {
   let wallets: Wallet[]
@@ -291,12 +289,12 @@ describe('NonfungiblePositionManager', () => {
       const refundETHData = nft.interface.encodeFunctionData('refundETH')
 
       const balanceBefore = await wallet.getBalance()
-      await nft.multicall([createAndInitializeData, mintData, refundETHData], {
+      const tx = await nft.multicall([createAndInitializeData, mintData, refundETHData], {
         value: expandTo18Decimals(1),
-        gasPrice: 0, // necessary so the balance doesn't change by anything that's not spent
       })
+      const receipt = await tx.wait()
       const balanceAfter = await wallet.getBalance()
-      expect(balanceBefore.sub(balanceAfter)).to.eq(100)
+      expect(balanceBefore).to.eq(balanceAfter.add(receipt.gasUsed.mul(tx.gasPrice)).add(100))
     })
 
     it('emits an event')
