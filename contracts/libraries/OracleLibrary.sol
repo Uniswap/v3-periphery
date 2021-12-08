@@ -158,4 +158,16 @@ library OracleLibrary {
         // Always round to negative infinity
         if (numerator < 0 && (numerator % int256(denominator) != 0)) weightedArithmeticMeanTick--;
     }
+
+    // @notice returns the price 
+    function getChainedPrice(address[] memory tokens)
+        internal 
+        view
+        returns (int256 syntheticTick) 
+    {
+        bool lowerTicksAreWorse;
+        uint256 numTicks = path.length;
+
+        
+    }
 }
