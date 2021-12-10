@@ -19,7 +19,7 @@ library Path {
     /// @dev The minimum length of an encoding that contains 2 or more pools
     uint256 private constant MULTIPLE_POOLS_MIN_LENGTH = POP_OFFSET + NEXT_OFFSET;
 
-    /// @notice Returns true iff the path contains two or more pools
+    /// @notice Returns true if the path contains two or more pools
     /// @param path The encoded swap path
     /// @return True if path contains two or more pools, otherwise false
     function hasMultiplePools(bytes memory path) internal pure returns (bool) {
