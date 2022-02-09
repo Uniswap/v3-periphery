@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.7.6;
+pragma solidity >=0.8.11;
 
-import '@openzeppelin/contracts/utils/Strings.sol';
+// import '@openzeppelin/contracts/utils/Strings.sol';
+import './ozToString.sol';
 import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
 import 'base64-sol/base64.sol';
 
@@ -355,7 +356,7 @@ library NFTSVG {
             tick = tick * -1;
             sign = '-';
         }
-        return string(abi.encodePacked(sign, uint256(tick).toString()));
+        return string(abi.encodePacked(sign, uint256(int256(tick)).toString()));
     }
 
     function rangeLocation(int24 tickLower, int24 tickUpper) internal pure returns (string memory, string memory) {
