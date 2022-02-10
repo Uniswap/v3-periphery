@@ -61,11 +61,7 @@ contract OracleTest {
         return OracleLibrary.getWeightedArithmeticMeanTick(observations);
     }
 
-    function getChainedPrice(address[] memory tokens, int24[] memory ticks) 
-        public 
-        view 
-        returns (int256 syntheticTick) 
-    {
+    function getChainedPrice(address[] memory tokens, int24[] memory ticks) public view returns (int256 syntheticTick) {
         return OracleLibrary.getChainedPrice(tokens, ticks);
     }
 }

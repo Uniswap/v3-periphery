@@ -173,7 +173,7 @@ library OracleLibrary {
         require(tokens.length - 1 == ticks.length, 'DL');
 
         for (uint256 i = 1; i <= ticks.length; i++) {
-            // check the tokens for address sort order, then accumulate the 
+            // check the tokens for address sort order, then accumulate the
             // ticks into the running synthetic ticks, ensuring that intermediate tokens "cancel out"
             tokens[i - 1] > tokens[i] ? syntheticTick += ticks[i - 1] : syntheticTick -= ticks[i - 1];
 
