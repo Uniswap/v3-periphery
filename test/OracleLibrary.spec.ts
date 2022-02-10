@@ -14,8 +14,9 @@ describe('OracleLibrary', () => {
 
   const oracleTestFixture = async () => {
     const tokenFactory = await ethers.getContractFactory('TestERC20')
-    const tokens: [TestERC20, TestERC20] = [
+    const tokens: [TestERC20, TestERC20, TestERC20] = [
       (await tokenFactory.deploy(constants.MaxUint256.div(2))) as TestERC20, // do not use maxu256 to avoid overflowing
+      (await tokenFactory.deploy(constants.MaxUint256.div(2))) as TestERC20,
       (await tokenFactory.deploy(constants.MaxUint256.div(2))) as TestERC20,
     ]
 
@@ -486,6 +487,46 @@ describe('OracleLibrary', () => {
       const oracleTick = await oracle.getWeightedArithmeticMeanTick([observation1, observation2])
 
       expect(oracleTick).to.equal(-11)
+    })
+  })
+  describe('#getChainedPrice', () => {
+    let ticks: number[]
+
+    it('add two positive ticks', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[1].address, tokens[2].address]
+      ticks = [5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(10)
+    })
+    it('add positive ticks, alt token order 1', async () => {
+      const tokenAddresses = [tokens[2].address, tokens[1].address, tokens[0].address]
+      ticks = [5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(10)
+    })
+    it('add positive ticks, alt token order 2', async () => {
+      const tokenAddresses = [tokens[1].address, tokens[2].address, tokens[0].address]
+      ticks = [5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+    it('add one positive and one negative tick', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[1].address, tokens[2].address]
+      ticks = [5, -5]
+
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+    it('add two negative ticks', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[1].address, tokens[2].address]
+      ticks = [-5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(-10)
     })
   })
 })

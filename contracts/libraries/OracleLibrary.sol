@@ -159,15 +159,32 @@ library OracleLibrary {
         if (numerator < 0 && (numerator % int256(denominator) != 0)) weightedArithmeticMeanTick--;
     }
 
-    // @notice returns the price 
-    function getChainedPrice(address[] memory tokens)
-        internal 
-        view
-        returns (int256 syntheticTick) 
+    /// @notice Returns the synthetic tick of the first token in the `tokens` array in terms of the last
+    /// @dev Useful for relative pricing needs when a `path` does not exist, or when ticks must be returned in a customized way.
+    /// fails with "descrepant length" if number of ticks do not match the number of token pairs
+    /// @param tokens The token contract addresses
+    /// @param ticks The ticks represending the price of each token pair in the tokens array
+    /// @return syntheticTick The synthetic tick, represneting the relative price of the outermost tokens in the token array
+    function getChainedPrice(address[] memory tokens, int24[] memory ticks)
+        internal
+        pure
+        returns (int256 syntheticTick)
     {
-        bool lowerTicksAreWorse;
-        uint256 numTicks = path.length;
+        require(tokens.length - 1 == ticks.length, 'DL');
 
-        
+        for (uint256 i = 1; i <= ticks.length; i++) {
+            // check the tokens for address sort order, then accumulate the 
+            // ticks into the running synthetic ticks, ensuring that intermediate tokens "cancel out"
+            tokens[i - 1] > tokens[i] ? syntheticTick += ticks[i - 1] : syntheticTick -= ticks[i - 1];
+
+            if (i == ticks.length) {
+                // check the token sort order of the final pair, ensuring that lower ticks represent a worse price
+                if (tokens[i - 1] > tokens[i]) {
+                    return syntheticTick;
+                } else {
+                    syntheticTick *= -1;
+                }
+            }
+        }
     }
 }
