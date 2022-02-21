@@ -170,5 +170,48 @@ describe('NonfungibleTokenPositionDescriptor', () => {
       expect(metadata.name).to.match(/TEST\/TEST/)
       expect(metadata.description).to.match(/TEST-TEST/)
     })
+
+    it('can render a different label for native currencies', async () => {
+      const [token0, token1] = sortedTokens(weth9, tokens[1])
+      await nft.createAndInitializePoolIfNecessary(
+        token0.address,
+        token1.address,
+        FeeAmount.MEDIUM,
+        encodePriceSqrt(1, 1)
+      )
+      await weth9.approve(nft.address, 100)
+      await tokens[1].approve(nft.address, 100)
+      await nft.mint({
+        token0: token0.address,
+        token1: token1.address,
+        fee: FeeAmount.MEDIUM,
+        tickLower: getMinTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        tickUpper: getMaxTick(TICK_SPACINGS[FeeAmount.MEDIUM]),
+        recipient: wallets[0].address,
+        amount0Desired: 100,
+        amount1Desired: 100,
+        amount0Min: 0,
+        amount1Min: 0,
+        deadline: 1,
+      })
+
+      const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
+      const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
+      const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor', {
+        libraries: {
+          NFTDescriptor: nftDescriptorLibrary.address,
+        },
+      })
+      const nftDescriptor = (await positionDescriptorFactory.deploy(
+        weth9.address,
+        // 'FUNNYMONEY' as a bytes32 string
+        '0x46554e4e594d4f4e455900000000000000000000000000000000000000000000'
+      )) as NonfungibleTokenPositionDescriptor
+
+      const metadata = extractJSONFromURI(await nftDescriptor.tokenURI(nft.address, 1))
+      expect(metadata.name).to.match(/(\sFUNNYMONEY\/TEST|TEST\/FUNNYMONEY)/)
+      expect(metadata.description).to.match(/(TEST-FUNNYMONEY|\sFUNNYMONEY-TEST)/)
+      expect(metadata.description).to.match(/(\nFUNNYMONEY\sAddress)/)
+    })
   })
 })
