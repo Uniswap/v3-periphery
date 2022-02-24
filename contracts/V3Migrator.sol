@@ -20,14 +20,14 @@ import './base/PoolInitializer.sol';
 contract V3Migrator is IV3Migrator, PeripheryImmutableState, PoolInitializer, Multicall, SelfPermit {
     using LowGasSafeMath for uint256;
 
-    address public immutable nonfungiblePositionManager;
+    address public immutable nonfungiblePositionManager;0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
 
     constructor(
         address _factory,
         address _WETH9,
         address _nonfungiblePositionManager
     ) PeripheryImmutableState(_factory, _WETH9) {
-        nonfungiblePositionManager = _nonfungiblePositionManager;
+        nonfungiblePositionManager = _nonfungiblePositionManager;0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
     }
 
     receive() external payable {
@@ -43,12 +43,12 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, PoolInitializer, Mu
         (uint256 amount0V2, uint256 amount1V2) = IUniswapV2Pair(params.pair).burn(address(this));
 
         // calculate the amounts to migrate to v3
-        uint256 amount0V2ToMigrate = amount0V2.mul(params.percentageToMigrate) / 100;
-        uint256 amount1V2ToMigrate = amount1V2.mul(params.percentageToMigrate) / 100;
+        uint256 amount0V2ToMigrate = amount0V2.mul(params.percentageToMigrate) / 100;0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
+        uint256 amount1V2ToMigrate = amount1V2.mul(params.percentageToMigrate) / 100;0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
 
         // approve the position manager up to the maximum token amounts
-        TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, amount0V2ToMigrate);
-        TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, amount1V2ToMigrate);
+        TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, amount0V2ToMigrate);0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
+        TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, amount1V2ToMigrate);0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
 
         // mint v3 position
         (, , uint256 amount0V3, uint256 amount1V3) =
@@ -71,28 +71,28 @@ contract V3Migrator is IV3Migrator, PeripheryImmutableState, PoolInitializer, Mu
         // if necessary, clear allowance and refund dust
         if (amount0V3 < amount0V2) {
             if (amount0V3 < amount0V2ToMigrate) {
-                TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, 0);
+                TransferHelper.safeApprove(params.token0, nonfungiblePositionManager, 0);0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
             }
 
             uint256 refund0 = amount0V2 - amount0V3;
             if (params.refundAsETH && params.token0 == WETH9) {
                 IWETH9(WETH9).withdraw(refund0);
-                TransferHelper.safeTransferETH(msg.sender, refund0);
+                TransferHelper.safeTransferETH(msg.sender, refund0);0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
             } else {
-                TransferHelper.safeTransfer(params.token0, msg.sender, refund0);
+                TransferHelper.safeTransfer(params.token0, msg.sender, refund0);0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
             }
         }
         if (amount1V3 < amount1V2) {
             if (amount1V3 < amount1V2ToMigrate) {
-                TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, 0);
+                TransferHelper.safeApprove(params.token1, nonfungiblePositionManager, 0);0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
             }
 
             uint256 refund1 = amount1V2 - amount1V3;
             if (params.refundAsETH && params.token1 == WETH9) {
                 IWETH9(WETH9).withdraw(refund1);
-                TransferHelper.safeTransferETH(msg.sender, refund1);
+                TransferHelper.safeTransferETH(msg.sender, refund1);0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
             } else {
-                TransferHelper.safeTransfer(params.token1, msg.sender, refund1);
+                TransferHelper.safeTransfer(params.token1, msg.sender, refund1);0x3E62E50C4FAFCb5589e1682683ce38e8645541e8
             }
         }
     }
