@@ -161,7 +161,7 @@ library OracleLibrary {
 
     /// @notice Returns the synthetic tick of the first token in the `tokens` array in terms of the last
     /// @dev Useful for relative pricing needs when a `path` does not exist, or when ticks must be returned in a customized way.
-    /// fails with "descrepant length" if number of ticks do not match the number of token pairs
+    /// fails with "descrepant length" if the number of ticks does not match the number of token pairs
     /// @param tokens The token contract addresses
     /// @param ticks The ticks, representing the price of each token pair in the tokens array
     /// @return syntheticTick The synthetic tick, represneting the relative price of the outermost tokens in the token array
@@ -171,20 +171,10 @@ library OracleLibrary {
         returns (int256 syntheticTick)
     {
         require(tokens.length - 1 == ticks.length, 'DL');
-
         for (uint256 i = 1; i <= ticks.length; i++) {
             // check the tokens for address sort order, then accumulate the
             // ticks into the running synthetic tick, ensuring that intermediate tokens "cancel out"
-            tokens[i - 1] > tokens[i] ? syntheticTick += ticks[i - 1] : syntheticTick -= ticks[i - 1];
-
-            if (i == ticks.length) {
-                // check the token sort order of the final pair, ensuring that lower ticks represent a worse price
-                if (tokens[i - 1] > tokens[i]) {
-                    return syntheticTick;
-                } else {
-                    syntheticTick *= -1;
-                }
-            }
+            tokens[i - 1] < tokens[i] ? syntheticTick += ticks[i - 1] : syntheticTick -= ticks[i - 1];
         }
     }
 }
