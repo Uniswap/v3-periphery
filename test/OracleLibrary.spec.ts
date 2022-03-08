@@ -492,6 +492,12 @@ describe('OracleLibrary', () => {
   describe.only('#getChainedPrice', () => {
     let ticks: number[]
 
+    it('fails with discrepant length', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[2].address]
+      ticks = [5, 5]
+
+      expect(oracle.getChainedPrice(tokenAddresses, ticks)).to.be.revertedWith('DL')
+    })
     it('add two positive ticks, sorted order', async () => {
       const tokenAddresses = [tokens[0].address, tokens[1].address, tokens[2].address]
       ticks = [5, 5]
