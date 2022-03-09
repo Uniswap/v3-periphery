@@ -159,12 +159,12 @@ library OracleLibrary {
         if (numerator < 0 && (numerator % int256(denominator) != 0)) weightedArithmeticMeanTick--;
     }
 
-    /// @notice Returns the synthetic tick of the first token in the `tokens` array in terms of the last
-    /// @dev Useful for relative pricing needs when a `path` does not exist, or when ticks must be returned in a customized way.
-    /// fails with "descrepant length" if the number of ticks does not match the number of token pairs
+    /// @notice Returns the "synthetic" tick which represents the price of the first entry in `tokens` in terms of the last
+    /// @dev Useful for calculating relative prices along routes.
+    /// @dev There should be one tick for each pairwise set of tokens.
     /// @param tokens The token contract addresses
-    /// @param ticks The ticks, representing the price of each token pair in the tokens array
-    /// @return syntheticTick The synthetic tick, represneting the relative price of the outermost tokens in the token array
+    /// @param ticks The ticks, representing the price of each token pair in `tokens`
+    /// @return syntheticTick The synthetic tick, representing the relative price of the outermost tokens in `tokens`
     function getChainedPrice(address[] memory tokens, int24[] memory ticks)
         internal
         pure
