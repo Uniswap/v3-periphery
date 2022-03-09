@@ -161,7 +161,7 @@ library OracleLibrary {
 
     /// @notice Returns the "synthetic" tick which represents the price of the first entry in `tokens` in terms of the last
     /// @dev Useful for calculating relative prices along routes.
-    /// @dev There should be one tick for each pairwise set of tokens.
+    /// @dev There must be one tick for each pairwise set of tokens.
     /// @param tokens The token contract addresses
     /// @param ticks The ticks, representing the price of each token pair in `tokens`
     /// @return syntheticTick The synthetic tick, representing the relative price of the outermost tokens in `tokens`

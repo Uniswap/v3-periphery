@@ -489,7 +489,7 @@ describe('OracleLibrary', () => {
       expect(oracleTick).to.equal(-11)
     })
   })
-  describe.only('#getChainedPrice', () => {
+  describe('#getChainedPrice', () => {
     let ticks: number[]
 
     it('fails with discrepant length', async () => {
