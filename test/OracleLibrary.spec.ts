@@ -14,8 +14,9 @@ describe('OracleLibrary', () => {
 
   const oracleTestFixture = async () => {
     const tokenFactory = await ethers.getContractFactory('TestERC20')
-    const tokens: [TestERC20, TestERC20] = [
+    const tokens: [TestERC20, TestERC20, TestERC20] = [
       (await tokenFactory.deploy(constants.MaxUint256.div(2))) as TestERC20, // do not use maxu256 to avoid overflowing
+      (await tokenFactory.deploy(constants.MaxUint256.div(2))) as TestERC20,
       (await tokenFactory.deploy(constants.MaxUint256.div(2))) as TestERC20,
     ]
 
@@ -486,6 +487,189 @@ describe('OracleLibrary', () => {
       const oracleTick = await oracle.getWeightedArithmeticMeanTick([observation1, observation2])
 
       expect(oracleTick).to.equal(-11)
+    })
+  })
+  describe('#getChainedPrice', () => {
+    let ticks: number[]
+
+    it('fails with discrepant length', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[2].address]
+      ticks = [5, 5]
+
+      expect(oracle.getChainedPrice(tokenAddresses, ticks)).to.be.revertedWith('DL')
+    })
+    it('add two positive ticks, sorted order', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[1].address, tokens[2].address]
+      ticks = [5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(10)
+    })
+    it('add one positive and one negative tick, sorted order', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[1].address, tokens[2].address]
+      ticks = [5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+    it('add one negative and one positive tick, sorted order', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[1].address, tokens[2].address]
+      ticks = [-5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+    it('add two negative ticks, sorted order', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[1].address, tokens[2].address]
+      ticks = [-5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(-10)
+    })
+
+    it('add two positive ticks, token0/token1 + token1/token0', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[2].address, tokens[1].address]
+      ticks = [5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+    it('add one positive tick and one negative tick, token0/token1 + token1/token0', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[2].address, tokens[1].address]
+      ticks = [5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(10)
+    })
+    it('add one negative tick and one positive tick, token0/token1 + token1/token0', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[2].address, tokens[1].address]
+      ticks = [-5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(-10)
+    })
+    it('add two negative ticks, token0/token1 + token1/token0', async () => {
+      const tokenAddresses = [tokens[0].address, tokens[2].address, tokens[1].address]
+      ticks = [-5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+
+    it('add two positive ticks, token1/token0 + token0/token1', async () => {
+      const tokenAddresses = [tokens[1].address, tokens[0].address, tokens[2].address]
+      ticks = [5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+    it('add one positive tick and one negative tick, token1/token0 + token0/token1', async () => {
+      const tokenAddresses = [tokens[1].address, tokens[0].address, tokens[2].address]
+      ticks = [5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(-10)
+    })
+    it('add one negative tick and one positive tick, token1/token0 + token0/token1', async () => {
+      const tokenAddresses = [tokens[1].address, tokens[0].address, tokens[2].address]
+      ticks = [-5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(10)
+    })
+    it('add two negative ticks, token1/token0 + token0/token1', async () => {
+      const tokenAddresses = [tokens[1].address, tokens[0].address, tokens[2].address]
+      ticks = [-5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+
+    it('add two positive ticks, token0/token1 + token1/token0', async () => {
+      const tokenAddresses = [tokens[1].address, tokens[2].address, tokens[0].address]
+      ticks = [5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+    it('add one positive tick and one negative tick, token0/token1 + token1/token0', async () => {
+      const tokenAddresses = [tokens[1].address, tokens[2].address, tokens[0].address]
+      ticks = [5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(10)
+    })
+    it('add one negative tick and one positive tick, token0/token1 + token1/token0', async () => {
+      const tokenAddresses = [tokens[1].address, tokens[2].address, tokens[0].address]
+      ticks = [-5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(-10)
+    })
+    it('add two negative ticks, token0/token1 + token1/token0', async () => {
+      const tokenAddresses = [tokens[1].address, tokens[2].address, tokens[0].address]
+      ticks = [-5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+
+    it('add two positive ticks, token1/token0 + token0/token1', async () => {
+      const tokenAddresses = [tokens[2].address, tokens[0].address, tokens[1].address]
+      ticks = [5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+    it('add one positive tick and one negative tick, token1/token0 + token0/token1', async () => {
+      const tokenAddresses = [tokens[2].address, tokens[0].address, tokens[1].address]
+      ticks = [5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(-10)
+    })
+    it('add one negative tick and one positive tick, token1/token0 + token0/token1', async () => {
+      const tokenAddresses = [tokens[2].address, tokens[0].address, tokens[1].address]
+      ticks = [-5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(10)
+    })
+    it('add two negative ticks, token1/token0 + token0/token1', async () => {
+      const tokenAddresses = [tokens[2].address, tokens[0].address, tokens[1].address]
+      ticks = [-5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+
+    it('add two positive ticks, token1/token0 + token1/token0', async () => {
+      const tokenAddresses = [tokens[2].address, tokens[1].address, tokens[0].address]
+      ticks = [5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(-10)
+    })
+    it('add one positive tick and one negative tick, token1/token0 + token1/token0', async () => {
+      const tokenAddresses = [tokens[2].address, tokens[1].address, tokens[0].address]
+      ticks = [5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+    it('add one negative tick and one positive tick, token1/token0 + token1/token0', async () => {
+      const tokenAddresses = [tokens[2].address, tokens[1].address, tokens[0].address]
+      ticks = [-5, 5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(0)
+    })
+    it('add two negative ticks, token1/token0 + token1/token0', async () => {
+      const tokenAddresses = [tokens[2].address, tokens[1].address, tokens[0].address]
+      ticks = [-5, -5]
+      const oracleTick = await oracle.getChainedPrice(tokenAddresses, ticks)
+
+      expect(oracleTick).to.equal(10)
     })
   })
 })
