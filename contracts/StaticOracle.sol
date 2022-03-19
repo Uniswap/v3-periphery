@@ -41,39 +41,39 @@ contract StaticOracle is IStaticOracle{
     }
 
     /// @inheritdoc IStaticOracle
-    function quote(
+    function quoteAllAvailablePoolsWithResistanceLevel(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
         ManipulationResistance resistance
-    ) external override  view returns (uint256 quoteAmount) {
-        return quote(baseAmount, baseToken, quoteToken, periodForResistanceLevel(resistance));
+    ) external override view returns (uint256 quoteAmount) {
+        return quoteAllAvailablePoolsWithTimePeriod(baseAmount, baseToken, quoteToken, periodForResistanceLevel(resistance));
     }
 
     /// @inheritdoc IStaticOracle
-    function quote(
+    function quoteSpecificFeeTiersWithResistanceLevel(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
         uint24[] memory feeTiers,
         ManipulationResistance resistance
     ) external override view returns (uint256 quoteAmount) {
-        return quote(baseAmount, baseToken, quoteToken, feeTiers, periodForResistanceLevel(resistance));
+        return quoteSpecificFeeTiersWithTimePeriod(baseAmount, baseToken, quoteToken, feeTiers, periodForResistanceLevel(resistance));
     }
 
     /// @inheritdoc IStaticOracle
-    function quote(
+    function quoteSpecificPoolsWithResistanceLevel(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
         address[] memory pools,
         ManipulationResistance resistance
     ) external override view returns (uint256 quoteAmount) {
-       return quote(baseAmount, baseToken, quoteToken, pools, periodForResistanceLevel(resistance));
+       return quoteSpecificPoolsWithTimePeriod(baseAmount, baseToken, quoteToken, pools, periodForResistanceLevel(resistance));
     }
 
     /// @inheritdoc IStaticOracle
-    function quote(
+    function quoteAllAvailablePoolsWithTimePeriod(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
@@ -84,7 +84,7 @@ contract StaticOracle is IStaticOracle{
     }    
 
     /// @inheritdoc IStaticOracle
-    function quote(
+    function quoteSpecificFeeTiersWithTimePeriod(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
@@ -97,7 +97,7 @@ contract StaticOracle is IStaticOracle{
     }
 
     /// @inheritdoc IStaticOracle
-    function quote(
+    function quoteSpecificPoolsWithTimePeriod(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
@@ -108,35 +108,35 @@ contract StaticOracle is IStaticOracle{
     }
 
     /// @inheritdoc IStaticOracle
-    function prepare(address tokenA, address tokenB, ManipulationResistance resistance) external override {
-        prepare(tokenA, tokenB, periodForResistanceLevel(resistance));
+    function prepareAllAvailablePoolsWithResistanceLevel(address tokenA, address tokenB, ManipulationResistance resistance) external override {
+        prepareAllAvailablePoolsWithTimePeriod(tokenA, tokenB, periodForResistanceLevel(resistance));
     }
 
     /// @inheritdoc IStaticOracle
-    function prepare(address tokenA, address tokenB, uint24[] calldata feeTiers, ManipulationResistance resistance) external override {
-        prepare(tokenA, tokenB, feeTiers, periodForResistanceLevel(resistance));
+    function prepareSpecificFeeTiersWithResistanceLevel(address tokenA, address tokenB, uint24[] calldata feeTiers, ManipulationResistance resistance) external override {
+        prepareSpecificFeeTiersWithTimePeriod(tokenA, tokenB, feeTiers, periodForResistanceLevel(resistance));
     }
 
     /// @inheritdoc IStaticOracle
-    function prepare(address[] calldata pools, ManipulationResistance resistance) external override {
-        prepare(pools, periodForResistanceLevel(resistance));
+    function prepareSpecificPoolsWithResistanceLevel(address[] calldata pools, ManipulationResistance resistance) external override {
+        prepareSpecificPoolsWithTimePeriod(pools, periodForResistanceLevel(resistance));
     }    
 
     /// @inheritdoc IStaticOracle
-    function prepare(address tokenA, address tokenB, uint32 period) public override {
+    function prepareAllAvailablePoolsWithTimePeriod(address tokenA, address tokenB, uint32 period) public override {
         (address[] memory pools, uint definedPools) = getPoolsForTiers(tokenA, tokenB, knownFeeTiers);
         internalPrepare(pools, definedPools, period);
     }    
 
     /// @inheritdoc IStaticOracle
-    function prepare(address tokenA, address tokenB, uint24[] memory feeTiers, uint32 period) public override {
+    function prepareSpecificFeeTiersWithTimePeriod(address tokenA, address tokenB, uint24[] memory feeTiers, uint32 period) public override {
         (address[] memory pools, uint definedPools) = getPoolsForTiers(tokenA, tokenB, feeTiers);
         require(pools.length == definedPools, 'Given tier does not have pool');
         internalPrepare(pools, definedPools, period);
     }
 
     /// @inheritdoc IStaticOracle
-    function prepare(address[] memory pools, uint32 period) public override {
+    function prepareSpecificPoolsWithTimePeriod(address[] memory pools, uint32 period) public override {
         internalPrepare(pools, pools.length, period);
     }    
 

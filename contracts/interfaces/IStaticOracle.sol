@@ -39,7 +39,7 @@ interface IStaticOracle {
     /// @param quoteToken Address of an ERC20 token contract used as the quoteAmount denomination
     /// @param resistance The resistance level desired for the quote
     /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
-    function quote(
+    function quoteAllAvailablePoolsWithResistanceLevel(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
@@ -54,11 +54,11 @@ interface IStaticOracle {
     /// @param feeTiers The fee tiers to consider when calculating the quote
     /// @param resistance The resistance level desired for the quote
     /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
-    function quote(
+    function quoteSpecificFeeTiersWithResistanceLevel(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
-        uint24[] memory feeTiers,
+        uint24[] calldata feeTiers,
         ManipulationResistance resistance
     ) external view returns (uint256 quoteAmount);
 
@@ -69,11 +69,11 @@ interface IStaticOracle {
     /// @param pools The pools to consider when calculating the quote
     /// @param resistance The resistance level desired for the quote
     /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
-    function quote(
+    function quoteSpecificPoolsWithResistanceLevel(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
-        address[] memory pools,
+        address[] calldata pools,
         ManipulationResistance resistance
     ) external view returns (uint256 quoteAmount);
 
@@ -83,7 +83,7 @@ interface IStaticOracle {
     /// @param quoteToken Address of an ERC20 token contract used as the quoteAmount denomination
     /// @param period Number of seconds from which to calculate the TWAP
     /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
-    function quote(
+    function quoteAllAvailablePoolsWithTimePeriod(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
@@ -98,11 +98,11 @@ interface IStaticOracle {
     /// @param feeTiers The fee tiers to consider when calculating the quote
     /// @param period Number of seconds from which to calculate the TWAP
     /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
-    function quote(
+    function quoteSpecificFeeTiersWithTimePeriod(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
-        uint24[] memory feeTiers,
+        uint24[] calldata feeTiers,
         uint32 period
     ) external view returns (uint256 quoteAmount);
 
@@ -113,11 +113,11 @@ interface IStaticOracle {
     /// @param pools The pools to consider when calculating the quote
     /// @param period Number of seconds from which to calculate the TWAP
     /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
-    function quote(
+    function quoteSpecificPoolsWithTimePeriod(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
-        address[] memory pools,
+        address[] calldata pools,
         uint32 period
     ) external view returns (uint256 quoteAmount);
 
@@ -125,7 +125,7 @@ interface IStaticOracle {
     /// @param tokenA One of the pair's tokens
     /// @param tokenB The other of the pair's tokens
     /// @param resistance The resistance level that will be guaranteed when quoting
-    function prepare(address tokenA, address tokenB, ManipulationResistance resistance) external;
+    function prepareAllAvailablePoolsWithResistanceLevel(address tokenA, address tokenB, ManipulationResistance resistance) external;
 
     /// @notice Will initialize the pair's pools with the specified fee tiers, so that they can be queried with the given resistance level in the future
     /// @dev Will revert if the pair does not have a pool for a given fee tier
@@ -133,18 +133,18 @@ interface IStaticOracle {
     /// @param tokenB The other of the pair's tokens
     /// @param feeTiers The fee tiers to consider when searching for the pair's pools
     /// @param resistance The resistance level that will be guaranteed when quoting
-    function prepare(address tokenA, address tokenB, uint24[] calldata feeTiers, ManipulationResistance resistance) external;
+    function prepareSpecificFeeTiersWithResistanceLevel(address tokenA, address tokenB, uint24[] calldata feeTiers, ManipulationResistance resistance) external;
 
     /// @notice Will initialize all given pools, so that they can be queried with the given resistance level in the future
     /// @param pools The pools to initialize
     /// @param resistance The resistance level that will be guaranteed when quoting
-    function prepare(address[] calldata pools, ManipulationResistance resistance) external;
+    function prepareSpecificPoolsWithResistanceLevel(address[] calldata pools, ManipulationResistance resistance) external;
     
     /// @notice Will initialize all existing pools for the given pair, so that they can be queried with the given period in the future
     /// @param tokenA One of the pair's tokens
     /// @param tokenB The other of the pair's tokens
     /// @param period The period that will be guaranteed when quoting
-    function prepare(address tokenA, address tokenB, uint32 period) external;
+    function prepareAllAvailablePoolsWithTimePeriod(address tokenA, address tokenB, uint32 period) external;
     
     /// @notice Will initialize the pair's pools with the specified fee tiers, so that they can be queried with the given period in the future
     /// @dev Will revert if the pair does not have a pool for a given fee tier
@@ -152,12 +152,12 @@ interface IStaticOracle {
     /// @param tokenB The other of the pair's tokens
     /// @param feeTiers The fee tiers to consider when searching for the pair's pools
     /// @param period The period that will be guaranteed when quoting
-    function prepare(address tokenA, address tokenB, uint24[] memory feeTiers, uint32 period) external;
+    function prepareSpecificFeeTiersWithTimePeriod(address tokenA, address tokenB, uint24[] calldata feeTiers, uint32 period) external;
 
     /// @notice Will initialize all given pools, so that they can be queried with the given period in the future
     /// @param pools The pools to initialize
     /// @param period The period that will be guaranteed when quoting
-    function prepare(address[] memory pools, uint32 period) external;    
+    function prepareSpecificPoolsWithTimePeriod(address[] calldata pools, uint32 period) external;    
 
     /// @notice Adds support for a new fee tier
     /// @dev Will revert if the given tier is invalid, or already supported
