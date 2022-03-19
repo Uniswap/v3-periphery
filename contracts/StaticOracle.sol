@@ -175,7 +175,9 @@ contract StaticOracle is IStaticOracle{
                 : OracleLibrary.getBlockStartingTickAndLiquidity(pools[i]);
         }
 
-        int24 weightedTick = OracleLibrary.getWeightedArithmeticMeanTick(tickData);
+        int24 weightedTick = tickData.length == 1
+            ? tickData[0].tick
+            : OracleLibrary.getWeightedArithmeticMeanTick(tickData);
         return OracleLibrary.getQuoteAtTick(weightedTick, baseAmount, baseToken, quoteToken);
     }    
 
