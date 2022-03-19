@@ -34,6 +34,7 @@ interface IStaticOracle {
     function supportedFeeTiers() external view returns (uint24[] memory);
 
     /// @notice Returns a quote, based on the given tokens and amount, by querying all of the pair's pools
+    /// @dev Will revert if there are no pools available for the pair and resistance combination
     /// @param baseAmount Amount of token to be converted
     /// @param baseToken Address of an ERC20 token contract used as the baseAmount denomination
     /// @param quoteToken Address of an ERC20 token contract used as the quoteAmount denomination
@@ -78,6 +79,7 @@ interface IStaticOracle {
     ) external view returns (uint256 quoteAmount);
 
     /// @notice Returns a quote, based on the given tokens and amount, by querying all of the pair's pools
+    /// @dev Will revert if there are no pools available for the pair and period combination
     /// @param baseAmount Amount of token to be converted
     /// @param baseToken Address of an ERC20 token contract used as the baseAmount denomination
     /// @param quoteToken Address of an ERC20 token contract used as the quoteAmount denomination
@@ -122,6 +124,7 @@ interface IStaticOracle {
     ) external view returns (uint256 quoteAmount);
 
     /// @notice Will initialize all existing pools for the given pair, so that they can be queried with the given resistance level in the future
+    /// @dev Will revert if there are no pools available for the pair and resistance combination
     /// @param tokenA One of the pair's tokens
     /// @param tokenB The other of the pair's tokens
     /// @param resistance The resistance level that will be guaranteed when quoting
@@ -141,6 +144,7 @@ interface IStaticOracle {
     function prepareSpecificPoolsWithResistanceLevel(address[] calldata pools, ManipulationResistance resistance) external;
     
     /// @notice Will initialize all existing pools for the given pair, so that they can be queried with the given period in the future
+    /// @dev Will revert if there are no pools available for the pair and period combination
     /// @param tokenA One of the pair's tokens
     /// @param tokenB The other of the pair's tokens
     /// @param period The period that will be guaranteed when quoting

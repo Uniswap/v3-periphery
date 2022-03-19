@@ -80,6 +80,7 @@ contract StaticOracle is IStaticOracle{
         uint32 period
     ) public override view returns (uint256 quoteAmount) {
         (address[] memory queryablePools, uint256 definedPools) = getQueryablePoolsForTiers(baseToken, quoteToken, period);
+        require(definedPools > 0, 'No pools available');
         return internalQuote(baseAmount, baseToken, quoteToken, queryablePools, definedPools, period);
     }    
 
@@ -125,6 +126,7 @@ contract StaticOracle is IStaticOracle{
     /// @inheritdoc IStaticOracle
     function prepareAllAvailablePoolsWithTimePeriod(address tokenA, address tokenB, uint32 period) public override {
         (address[] memory pools, uint definedPools) = getPoolsForTiers(tokenA, tokenB, knownFeeTiers);
+        require(definedPools > 0, 'No pools available');
         internalPrepare(pools, definedPools, period);
     }    
 
