@@ -79,7 +79,7 @@ contract StaticOracle is IStaticOracle{
         address quoteToken,
         uint32 period
     ) public override view returns (uint256 quoteAmount) {
-        (address[] memory queryablePools, uint definedPools) = getQueryablePoolsForTiers(baseToken, quoteToken, period);
+        (address[] memory queryablePools, uint256 definedPools) = getQueryablePoolsForTiers(baseToken, quoteToken, period);
         return internalQuote(baseAmount, baseToken, quoteToken, queryablePools, definedPools, period);
     }    
 
@@ -91,7 +91,7 @@ contract StaticOracle is IStaticOracle{
         uint24[] memory feeTiers,
         uint32 period
     ) public override view returns (uint256 quoteAmount) {
-        (address[] memory pools, uint definedPools) = getPoolsForTiers(baseToken, quoteToken, feeTiers);
+        (address[] memory pools, uint256 definedPools) = getPoolsForTiers(baseToken, quoteToken, feeTiers);
         require(pools.length == definedPools, 'Given tier does not have pool');
         return quote(baseAmount, baseToken, quoteToken, pools, period);
     }
@@ -163,7 +163,7 @@ contract StaticOracle is IStaticOracle{
         address[] memory pools,
         uint definedPools,
         uint32 period
-    ) public view returns (uint256 quoteAmount) {
+    ) private view returns (uint256 quoteAmount) {
         require(definedPools > 0, 'No defined pools');
 
         OracleLibrary.WeightedTickData[] memory tickData = new OracleLibrary.WeightedTickData[](definedPools);
