@@ -93,7 +93,7 @@ contract StaticOracle is IStaticOracle{
     ) public override view returns (uint256 quoteAmount) {
         (address[] memory pools, uint256 definedPools) = getPoolsForTiers(baseToken, quoteToken, feeTiers);
         require(pools.length == definedPools, 'Given tier does not have pool');
-        return quote(baseAmount, baseToken, quoteToken, pools, period);
+        return internalQuote(baseAmount, baseToken, quoteToken, pools, definedPools, period);
     }
 
     /// @inheritdoc IStaticOracle
@@ -132,7 +132,7 @@ contract StaticOracle is IStaticOracle{
     function prepare(address tokenA, address tokenB, uint24[] memory feeTiers, uint32 period) public override {
         (address[] memory pools, uint definedPools) = getPoolsForTiers(tokenA, tokenB, feeTiers);
         require(pools.length == definedPools, 'Given tier does not have pool');
-        prepare(pools, period);
+        internalPrepare(pools, definedPools, period);
     }
 
     /// @inheritdoc IStaticOracle
@@ -206,16 +206,10 @@ contract StaticOracle is IStaticOracle{
     function getPoolsForTiers(address tokenA, address tokenB, uint24[] memory feeTiers) private view returns (address[] memory pools, uint definedPools) {        
         pools = new address[](feeTiers.length);
         for (uint i; i < feeTiers.length; i++) {
-            address pool = getPoolForTier(tokenA, tokenB, feeTiers[i]);
+            address pool = PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, feeTiers[i]));
             if (pool != address(0)) {
                 pools[definedPools++] = pool;
             }
         }
     }    
-
-    /// @dev Returns the pool for the given token pair and fee. The pool contract may or may not exist
-    function getPoolForTier(address tokenA, address tokenB, uint24 feeTier) private view returns (address) {
-        return PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, feeTier));
-    }
-
 }
