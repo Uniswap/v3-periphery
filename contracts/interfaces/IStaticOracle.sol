@@ -18,9 +18,9 @@ interface IStaticOracle {
     /// @return The address of the Uniswap V3 factory
     function factory() external view returns (address);
 
-    /// @notice Returns how many observations can be taken per minute in Uniswap V3 oracles
+    /// @notice Returns how many observations are needed per minute in Uniswap V3 oracles, on the deployed chain
     /// @dev This value is assigned during deployment and cannot be changed
-    /// @return The cardinality per minute
+    /// @return Number of observation that are needed per minute
     function cardinalityPerMinute() external view returns (uint8);
 
     /// @notice Returns, in seconds, the assigned period to the given resistance level
