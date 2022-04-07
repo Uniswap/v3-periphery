@@ -14,12 +14,12 @@ abstract contract Multicall is IMulticall {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);
 
             if (!success) {
-                // Next 5 lines from https://ethereum.stackexchange.com/a/83577
-                if (result.length < 68) revert();
+                // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/d4d8d2ed9798cc3383912a23b5e8d5cb602f7d4b/contracts/utils/Address.sol#L201
+                if (result.length == 0) revert();
                 assembly {
-                    result := add(result, 0x04)
+                    let result_size := mload(result)
+                    revert(add(0x20, result), result_size)
                 }
-                revert(abi.decode(result, (string)));
             }
 
             results[i] = result;
