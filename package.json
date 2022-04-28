@@ -33,8 +33,7 @@
     "@uniswap/lib": "^4.0.1-alpha",
     "@uniswap/v2-core": "1.0.1",
     "@uniswap/v3-core": "1.0.0",
-    "base64-sol": "1.0.1",
-    "hardhat-watcher": "^2.1.1"
+    "base64-sol": "1.0.1"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
@@ -49,6 +48,7 @@
     "ethers": "^5.0.8",
     "hardhat": "^2.6.8",
     "hardhat-typechain": "^0.3.5",
+    "hardhat-watcher": "^2.1.1",
     "is-svg": "^4.3.1",
     "mocha": "^6.2.2",
     "mocha-chai-jest-snapshot": "^1.1.0",
