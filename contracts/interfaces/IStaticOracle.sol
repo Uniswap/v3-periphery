@@ -1,114 +1,62 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity =0.7.6;
 
+import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
+
 /// @title Uniswap V3 Static Oracle
 /// @notice Oracle contract for calculating price quoting against Uniswap V3
 interface IStaticOracle {
 
-    /// @notice Levels of manipulation resistance that can be used when asking for quotes
-    enum ManipulationResistance {
-        Dangerous,
-        Weak,
-        Medium,
-        Strong
-    }
-
     /// @notice Returns the address of the Uniswap V3 factory
     /// @dev This value is assigned during deployment and cannot be changed
     /// @return The address of the Uniswap V3 factory
-    function factory() external view returns (address);
+    function factory() external view returns (IUniswapV3Factory);
 
     /// @notice Returns how many observations are needed per minute in Uniswap V3 oracles, on the deployed chain
     /// @dev This value is assigned during deployment and cannot be changed
     /// @return Number of observation that are needed per minute
     function cardinalityPerMinute() external view returns (uint8);
 
-    /// @notice Returns, in seconds, the assigned period to the given resistance level
-    /// @dev These values are assigned during deployment and cannot be changed
-    /// @param resistance The resistance level to ask for
-    /// @return The period assigned to the given resistance level
-    function periodForResistanceLevel(ManipulationResistance resistance) external view returns (uint32);
-
     /// @notice Returns all supported fee tiers
     /// @return The supported fee tiers
     function supportedFeeTiers() external view returns (uint24[] memory);
 
     /// @notice Returns a quote, based on the given tokens and amount, by querying all of the pair's pools
-    /// @dev Will revert if there are no pools available for the pair and resistance combination
-    /// @param baseAmount Amount of token to be converted
-    /// @param baseToken Address of an ERC20 token contract used as the baseAmount denomination
-    /// @param quoteToken Address of an ERC20 token contract used as the quoteAmount denomination
-    /// @param resistance The resistance level desired for the quote
-    /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
-    function quoteAllAvailablePoolsWithResistanceLevel(
-        uint128 baseAmount, 
-        address baseToken,
-        address quoteToken,
-        ManipulationResistance resistance
-    ) external view returns (uint256 quoteAmount);
-
-    /// @notice Returns a quote, based on the given tokens and amount, by querying only the specified fee tiers
-    /// @dev Will revert if the pair does not have a pool for a given fee tier
-    /// @param baseAmount Amount of token to be converted
-    /// @param baseToken Address of an ERC20 token contract used as the baseAmount denomination
-    /// @param quoteToken Address of an ERC20 token contract used as the quoteAmount denomination
-    /// @param feeTiers The fee tiers to consider when calculating the quote
-    /// @param resistance The resistance level desired for the quote
-    /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
-    function quoteSpecificFeeTiersWithResistanceLevel(
-        uint128 baseAmount, 
-        address baseToken,
-        address quoteToken,
-        uint24[] calldata feeTiers,
-        ManipulationResistance resistance
-    ) external view returns (uint256 quoteAmount);
-
-    /// @notice Returns a quote, based on the given tokens and amount, by querying only the specified pools
-    /// @param baseAmount Amount of token to be converted
-    /// @param baseToken Address of an ERC20 token contract used as the baseAmount denomination
-    /// @param quoteToken Address of an ERC20 token contract used as the quoteAmount denomination
-    /// @param pools The pools to consider when calculating the quote
-    /// @param resistance The resistance level desired for the quote
-    /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
-    function quoteSpecificPoolsWithResistanceLevel(
-        uint128 baseAmount, 
-        address baseToken,
-        address quoteToken,
-        address[] calldata pools,
-        ManipulationResistance resistance
-    ) external view returns (uint256 quoteAmount);
-
-    /// @notice Returns a quote, based on the given tokens and amount, by querying all of the pair's pools
-    /// @dev Will revert if there are no pools available for the pair and period combination
+    /// @dev If some pools are not configured correctly for the given period, then they will be ignored
+    /// @dev Will revert if there are no pools available/configured for the pair and period combination
     /// @param baseAmount Amount of token to be converted
     /// @param baseToken Address of an ERC20 token contract used as the baseAmount denomination
     /// @param quoteToken Address of an ERC20 token contract used as the quoteAmount denomination
     /// @param period Number of seconds from which to calculate the TWAP
     /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
+    /// @return queriedPools The pools that were queried to calculate the quote
     function quoteAllAvailablePoolsWithTimePeriod(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
         uint32 period
-    ) external view returns (uint256 quoteAmount);
+    ) external view returns (uint256 quoteAmount, address[] memory queriedPools);
 
     /// @notice Returns a quote, based on the given tokens and amount, by querying only the specified fee tiers
-    /// @dev Will revert if the pair does not have a pool for a given fee tier
+    /// @dev Will revert if the pair does not have a pool for one of the given fee tiers, or if one of the pools
+    /// is not prepared/configured correctly for the given period
     /// @param baseAmount Amount of token to be converted
     /// @param baseToken Address of an ERC20 token contract used as the baseAmount denomination
     /// @param quoteToken Address of an ERC20 token contract used as the quoteAmount denomination
     /// @param feeTiers The fee tiers to consider when calculating the quote
     /// @param period Number of seconds from which to calculate the TWAP
     /// @return quoteAmount Amount of quoteToken received for baseAmount of baseToken
+    /// @return queriedPools The pools that were queried to calculate the quote
     function quoteSpecificFeeTiersWithTimePeriod(
         uint128 baseAmount, 
         address baseToken,
         address quoteToken,
         uint24[] calldata feeTiers,
         uint32 period
-    ) external view returns (uint256 quoteAmount);
+    ) external view returns (uint256 quoteAmount, address[] memory queriedPools);
 
     /// @notice Returns a quote, based on the given tokens and amount, by querying only the specified pools
+    /// @dev Will revert if one of the pools is not prepared/configured correctly for the given period
     /// @param baseAmount Amount of token to be converted
     /// @param baseToken Address of an ERC20 token contract used as the baseAmount denomination
     /// @param quoteToken Address of an ERC20 token contract used as the quoteAmount denomination
@@ -123,32 +71,13 @@ interface IStaticOracle {
         uint32 period
     ) external view returns (uint256 quoteAmount);
 
-    /// @notice Will initialize all existing pools for the given pair, so that they can be queried with the given resistance level in the future
-    /// @dev Will revert if there are no pools available for the pair and resistance combination
-    /// @param tokenA One of the pair's tokens
-    /// @param tokenB The other of the pair's tokens
-    /// @param resistance The resistance level that will be guaranteed when quoting
-    function prepareAllAvailablePoolsWithResistanceLevel(address tokenA, address tokenB, ManipulationResistance resistance) external;
-
-    /// @notice Will initialize the pair's pools with the specified fee tiers, so that they can be queried with the given resistance level in the future
-    /// @dev Will revert if the pair does not have a pool for a given fee tier
-    /// @param tokenA One of the pair's tokens
-    /// @param tokenB The other of the pair's tokens
-    /// @param feeTiers The fee tiers to consider when searching for the pair's pools
-    /// @param resistance The resistance level that will be guaranteed when quoting
-    function prepareSpecificFeeTiersWithResistanceLevel(address tokenA, address tokenB, uint24[] calldata feeTiers, ManipulationResistance resistance) external;
-
-    /// @notice Will initialize all given pools, so that they can be queried with the given resistance level in the future
-    /// @param pools The pools to initialize
-    /// @param resistance The resistance level that will be guaranteed when quoting
-    function prepareSpecificPoolsWithResistanceLevel(address[] calldata pools, ManipulationResistance resistance) external;
-    
     /// @notice Will initialize all existing pools for the given pair, so that they can be queried with the given period in the future
     /// @dev Will revert if there are no pools available for the pair and period combination
     /// @param tokenA One of the pair's tokens
     /// @param tokenB The other of the pair's tokens
     /// @param period The period that will be guaranteed when quoting
-    function prepareAllAvailablePoolsWithTimePeriod(address tokenA, address tokenB, uint32 period) external;
+    /// @return preparedPools The pools that were prepared
+    function prepareAllAvailablePoolsWithTimePeriod(address tokenA, address tokenB, uint32 period) external returns (address[] memory preparedPools);
     
     /// @notice Will initialize the pair's pools with the specified fee tiers, so that they can be queried with the given period in the future
     /// @dev Will revert if the pair does not have a pool for a given fee tier
@@ -156,7 +85,8 @@ interface IStaticOracle {
     /// @param tokenB The other of the pair's tokens
     /// @param feeTiers The fee tiers to consider when searching for the pair's pools
     /// @param period The period that will be guaranteed when quoting
-    function prepareSpecificFeeTiersWithTimePeriod(address tokenA, address tokenB, uint24[] calldata feeTiers, uint32 period) external;
+    /// @return preparedPools The pools that were prepared
+    function prepareSpecificFeeTiersWithTimePeriod(address tokenA, address tokenB, uint24[] calldata feeTiers, uint32 period) external returns (address[] memory preparedPools);
 
     /// @notice Will initialize all given pools, so that they can be queried with the given period in the future
     /// @param pools The pools to initialize
