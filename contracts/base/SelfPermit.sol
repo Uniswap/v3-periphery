@@ -2,7 +2,7 @@
 pragma solidity >=0.5.0;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/drafts/IERC20Permit.sol';
+import '@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol';
 
 import '../interfaces/ISelfPermit.sol';
 import '../interfaces/external/IERC20PermitAllowed.sol';
@@ -21,7 +21,7 @@ abstract contract SelfPermit is ISelfPermit {
         bytes32 r,
         bytes32 s
     ) public payable override {
-        IERC20Permit(token).permit(msg.sender, address(this), value, deadline, v, r, s);
+        ERC20Permit(token).permit(msg.sender, address(this), value, deadline, v, r, s);
     }
 
     /// @inheritdoc ISelfPermit
