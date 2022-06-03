@@ -3,7 +3,6 @@ pragma solidity =0.8.12;
 pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3FlashCallback.sol';
-import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
 
 import '../base/PeripheryPayments.sol';
 import '../base/PeripheryImmutableState.sol';
@@ -15,9 +14,6 @@ import '../interfaces/ISwapRouter.sol';
 /// @title Flash contract implementation
 /// @notice An example contract using the Uniswap V3 flash function
 contract PairFlash is IUniswapV3FlashCallback, PeripheryPayments {
-    using LowGasSafeMath for uint256;
-    using LowGasSafeMath for int256;
-
     ISwapRouter public immutable swapRouter;
 
     constructor(
@@ -56,8 +52,8 @@ contract PairFlash is IUniswapV3FlashCallback, PeripheryPayments {
 
         // profitability parameters - we must receive at least the required payment from the arbitrage swaps
         // exactInputSingle will fail if this amount not met
-        uint256 amount0Min = LowGasSafeMath.add(decoded.amount0, fee0);
-        uint256 amount1Min = LowGasSafeMath.add(decoded.amount1, fee1);
+        uint256 amount0Min = decoded.amount0 + fee0;
+        uint256 amount1Min = decoded.amount1 + fee1;
 
         // call exactInputSingle for swapping token1 for token0 in pool with fee2
         TransferHelper.safeApprove(token1, address(swapRouter), decoded.amount1);
