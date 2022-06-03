@@ -191,9 +191,6 @@ contract NonfungiblePositionManager is
         return INonfungibleTokenPositionDescriptor(_tokenDescriptor).tokenURI(this, tokenId);
     }
 
-    // save bytecode by removing implementation of unused method
-    function baseURI() public pure override returns (string memory) {}
-
     /// @inheritdoc INonfungiblePositionManager
     function increaseLiquidity(IncreaseLiquidityParams calldata params)
         external
