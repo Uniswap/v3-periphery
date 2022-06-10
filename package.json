@@ -5,7 +5,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.4.1",
+  "version": "1.4.1-solc-0.8",
   "homepage": "https://uniswap.org",
   "keywords": [
     "uniswap",
@@ -31,7 +31,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "4.6.0",
     "@uniswap/v2-core": "1.0.1",
-    "@uniswap/v3-core": "git+ssh://git@github.com:Uniswap/v3-core.git#0.8",
+    "@uniswap/v3-core": "Uniswap/v3-core#0.8",
     "base64-sol": "1.1.0",
     "hardhat-watcher": "^2.1.1"
   },
