@@ -20,7 +20,7 @@
     "contracts/base",
     "contracts/interfaces",
     "contracts/libraries",
-    "artifacts/contracts/**/*.json",
+    "artifacts/contracts/se**/*.json",
     "!artifacts/contracts/**/*.dbg.json",
     "!artifacts/contracts/test/**/*",
     "!artifacts/contracts/base/**/*"
@@ -29,10 +29,10 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "4.4.2",
+    "@openzeppelin/contracts": "4.6.0",
     "@uniswap/v2-core": "1.0.1",
     "@uniswap/v3-core": "git+ssh://git@github.com:Uniswap/v3-core.git#0.8",
-    "base64-sol": "1.0.1",
+    "base64-sol": "1.1.0",
     "hardhat-watcher": "^2.1.1"
   },
   "devDependencies": {
