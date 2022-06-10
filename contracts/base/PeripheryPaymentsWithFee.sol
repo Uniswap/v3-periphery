@@ -24,7 +24,7 @@ abstract contract PeripheryPaymentsWithFee is PeripheryPayments, IPeripheryPayme
 
         if (balanceWETH9 > 0) {
             IWETH9(WETH9).withdraw(balanceWETH9);
-            uint256 feeAmount = balanceWETH9 * feeBips / 10_000;
+            uint256 feeAmount = (balanceWETH9 * feeBips) / 10_000;
             if (feeAmount > 0) TransferHelper.safeTransferETH(feeRecipient, feeAmount);
             TransferHelper.safeTransferETH(recipient, balanceWETH9 - feeAmount);
         }
@@ -44,7 +44,7 @@ abstract contract PeripheryPaymentsWithFee is PeripheryPayments, IPeripheryPayme
         require(balanceToken >= amountMinimum, 'Insufficient token');
 
         if (balanceToken > 0) {
-            uint256 feeAmount = balanceToken * feeBips / 10_000;
+            uint256 feeAmount = (balanceToken * feeBips) / 10_000;
             if (feeAmount > 0) TransferHelper.safeTransfer(token, feeRecipient, feeAmount);
             TransferHelper.safeTransfer(token, recipient, balanceToken - feeAmount);
         }
