@@ -355,7 +355,7 @@ library NFTSVG {
             tick = tick * -1;
             sign = '-';
         }
-        return string(abi.encodePacked(sign, uint256(tick).toString()));
+        return string(abi.encodePacked(sign, uint256(uint24(tick)).toString()));
     }
 
     function rangeLocation(int24 tickLower, int24 tickUpper) internal pure returns (string memory, string memory) {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity =0.7.6;
+pragma solidity =0.8.13;
 
-import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
 import '@openzeppelin/contracts/utils/Address.sol';
 
 import '../libraries/ChainId.sol';
@@ -11,7 +11,7 @@ import './BlockTimestamp.sol';
 
 /// @title ERC721 with permit
 /// @notice Nonfungible tokens that support an approve via signature, i.e. permit
-abstract contract ERC721Permit is BlockTimestamp, ERC721, IERC721Permit {
+abstract contract ERC721Permit is BlockTimestamp, ERC721Enumerable, IERC721Permit {
     /// @dev Gets the current nonce for a token ID and then increments it, returning the original value
     function _getAndIncrementNonce(uint256 tokenId) internal virtual returns (uint256);
 

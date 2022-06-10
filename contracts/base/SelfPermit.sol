@@ -2,7 +2,7 @@
 pragma solidity >=0.5.0;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/drafts/IERC20Permit.sol';
+import '@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol';
 
 import '../interfaces/ISelfPermit.sol';
 import '../interfaces/external/IERC20PermitAllowed.sol';
