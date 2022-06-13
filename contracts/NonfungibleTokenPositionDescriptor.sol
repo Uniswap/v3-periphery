@@ -69,28 +69,31 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         (, int24 tick, , , , , ) = pool.slot0();
 
         return "";
-            //NFTDescriptor.constructTokenURI(
-                //NFTDescriptor.ConstructTokenURIParams({
-                    //tokenId: tokenId,
-                    //quoteTokenAddress: quoteTokenAddress,
-                    //baseTokenAddress: baseTokenAddress,
-                    //quoteTokenSymbol: quoteTokenAddress == WETH9
-                        //? nativeCurrencyLabel()
-                        //: SafeERC20Namer.tokenSymbol(quoteTokenAddress),
-                    //baseTokenSymbol: baseTokenAddress == WETH9
-                        //? nativeCurrencyLabel()
-                        //: SafeERC20Namer.tokenSymbol(baseTokenAddress),
-                    //quoteTokenDecimals: IERC20Metadata(quoteTokenAddress).decimals(),
-                    //baseTokenDecimals: IERC20Metadata(baseTokenAddress).decimals(),
-                    //flipRatio: _flipRatio,
-                    //tickLower: tickLower,
-                    //tickUpper: tickUpper,
-                    //tickCurrent: tick,
-                    //tickSpacing: pool.tickSpacing(),
-                    //fee: fee,
-                    //poolAddress: address(pool)
-                //})
-            //);
+        // TODO: uncomment after fixing assembly stackTooDeep issue
+        /**
+            NFTDescriptor.constructTokenURI(
+                NFTDescriptor.ConstructTokenURIParams({
+                    tokenId: tokenId,
+                    quoteTokenAddress: quoteTokenAddress,
+                    baseTokenAddress: baseTokenAddress,
+                    quoteTokenSymbol: quoteTokenAddress == WETH9
+                        ? nativeCurrencyLabel()
+                        : SafeERC20Namer.tokenSymbol(quoteTokenAddress),
+                    baseTokenSymbol: baseTokenAddress == WETH9
+                        ? nativeCurrencyLabel()
+                        : SafeERC20Namer.tokenSymbol(baseTokenAddress),
+                    quoteTokenDecimals: IERC20Metadata(quoteTokenAddress).decimals(),
+                    baseTokenDecimals: IERC20Metadata(baseTokenAddress).decimals(),
+                    flipRatio: _flipRatio,
+                    tickLower: tickLower,
+                    tickUpper: tickUpper,
+                    tickCurrent: tick,
+                    tickSpacing: pool.tickSpacing(),
+                    fee: fee,
+                    poolAddress: address(pool)
+                })
+            );
+        */
     }
 
     function flipRatio(
