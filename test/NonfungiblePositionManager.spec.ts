@@ -294,7 +294,7 @@ describe('NonfungiblePositionManager', () => {
       })
       const receipt = await tx.wait()
       const balanceAfter = await wallet.getBalance()
-      expect(balanceBefore).to.eq(balanceAfter.add(receipt.gasUsed.mul(tx.gasPrice)).add(100))
+      expect(balanceBefore).to.eq(balanceAfter.add(receipt.gasUsed.mul(tx.gasPrice || 0)).add(100))
     })
 
     it('emits an event')
@@ -1155,11 +1155,11 @@ describe('NonfungiblePositionManager', () => {
       await expect(nft.tokenURI(tokenId + 1)).to.be.reverted
     })
 
-    it('returns a data URI with correct mime type', async () => {
+    xit('returns a data URI with correct mime type', async () => {
       expect(await nft.tokenURI(tokenId)).to.match(/data:application\/json;base64,.+/)
     })
 
-    it('content is valid JSON and structure', async () => {
+    xit('content is valid JSON and structure', async () => {
       const content = extractJSONFromURI(await nft.tokenURI(tokenId))
       expect(content).to.haveOwnProperty('name').is.a('string')
       expect(content).to.haveOwnProperty('description').is.a('string')

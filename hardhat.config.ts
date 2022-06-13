@@ -23,9 +23,6 @@ const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
     optimizer: {
       enabled: true,
       runs: 100,
-      details: {
-        yul: false,
-      }
     },
     metadata: {
       bytecodeHash: 'none',

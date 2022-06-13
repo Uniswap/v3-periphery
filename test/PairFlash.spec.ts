@@ -9,7 +9,6 @@ import {
   TestERC20,
   TestERC20Metadata,
   IUniswapV3Factory,
-  NFTDescriptor,
   Quoter,
   SwapRouter,
 } from '../typechain'

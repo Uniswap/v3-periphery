@@ -84,7 +84,9 @@ library OracleLibrary {
             (observationTimestamp, , , ) = IUniswapV3Pool(pool).observations(0);
         }
 
-        secondsAgo = uint32(block.timestamp) - observationTimestamp;
+        unchecked {
+            secondsAgo = uint32(block.timestamp) - observationTimestamp;
+        }
     }
 
     /// @notice Given a pool, it returns the tick value as of the start of the current block

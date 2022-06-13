@@ -31,7 +31,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "4.6.0",
     "@uniswap/v2-core": "1.0.1",
-    "@uniswap/v3-core": "Uniswap/v3-core#0.8",
+    "@uniswap/v3-core": "1.0.2-solc-0.8-simulate",
     "base64-sol": "1.1.0",
     "hardhat-watcher": "^2.1.1"
   },

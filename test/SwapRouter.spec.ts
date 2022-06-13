@@ -108,6 +108,8 @@ describe('SwapRouter', function () {
         encodePriceSqrt(1, 1)
       )
 
+      const pool = await factory.getPool(tokens[0].address, tokens[1].address, FeeAmount.MEDIUM)
+
       const liquidityParams = {
         token0: tokenAddressA,
         token1: tokenAddressB,
