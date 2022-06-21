@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity =0.8.13;
+pragma solidity =0.8.15;
 pragma abicoder v2;
 
 /// @notice A fork of Multicall2 specifically tailored for the Uniswap Interface

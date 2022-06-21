@@ -5,7 +5,7 @@ import 'hardhat-typechain'
 import 'hardhat-watcher'
 
 const LOW_OPTIMIZER_COMPILER_SETTINGS = {
-  version: '0.8.13',
+  version: '0.8.15',
   settings: {
     optimizer: {
       enabled: true,
@@ -18,7 +18,7 @@ const LOW_OPTIMIZER_COMPILER_SETTINGS = {
 }
 
 const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
-  version: '0.8.13',
+  version: '0.8.15',
   settings: {
     optimizer: {
       enabled: true,
@@ -31,7 +31,7 @@ const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
 }
 
 const DEFAULT_COMPILER_SETTINGS = {
-  version: '0.8.13',
+  version: '0.8.15',
   settings: {
     optimizer: {
       enabled: true,
