@@ -24,12 +24,12 @@ library OracleLibrary {
         secondsAgos[0] = secondsAgo;
         secondsAgos[1] = 0;
 
-        (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) =
-            IUniswapV3Pool(pool).observe(secondsAgos);
+        (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) = IUniswapV3Pool(pool)
+            .observe(secondsAgos);
 
         int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
-        uint160 secondsPerLiquidityCumulativesDelta =
-            secondsPerLiquidityCumulativeX128s[1] - secondsPerLiquidityCumulativeX128s[0];
+        uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[1] -
+            secondsPerLiquidityCumulativeX128s[0];
 
         arithmeticMeanTick = int24(tickCumulativesDelta / int56(uint56(secondsAgo)));
         // Always round to negative infinity
@@ -75,8 +75,9 @@ library OracleLibrary {
         (, , uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(pool).slot0();
         require(observationCardinality > 0, 'NI');
 
-        (uint32 observationTimestamp, , , bool initialized) =
-            IUniswapV3Pool(pool).observations((observationIndex + 1) % observationCardinality);
+        (uint32 observationTimestamp, , , bool initialized) = IUniswapV3Pool(pool).observations(
+            (observationIndex + 1) % observationCardinality
+        );
 
         // The next index might not be initialized if the cardinality is in the process of increasing
         // In this case the oldest observation is always in index 0
@@ -101,8 +102,12 @@ library OracleLibrary {
         // If the latest observation occurred in the past, then no tick-changing trades have happened in this block
         // therefore the tick in `slot0` is the same as at the beginning of the current block.
         // We don't need to check if this observation is initialized - it is guaranteed to be.
-        (uint32 observationTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128, ) =
-            IUniswapV3Pool(pool).observations(observationIndex);
+        (
+            uint32 observationTimestamp,
+            int56 tickCumulative,
+            uint160 secondsPerLiquidityCumulativeX128,
+
+        ) = IUniswapV3Pool(pool).observations(observationIndex);
         if (observationTimestamp != uint32(block.timestamp)) {
             return (tick, IUniswapV3Pool(pool).liquidity());
         }
@@ -119,11 +124,10 @@ library OracleLibrary {
 
         uint32 delta = observationTimestamp - prevObservationTimestamp;
         tick = int24((tickCumulative - int56(uint56(prevTickCumulative))) / int56(uint56(delta)));
-        uint128 liquidity =
-            uint128(
-                (uint192(delta) * type(uint160).max) /
-                    (uint192(secondsPerLiquidityCumulativeX128 - prevSecondsPerLiquidityCumulativeX128) << 32)
-            );
+        uint128 liquidity = uint128(
+            (uint192(delta) * type(uint160).max) /
+                (uint192(secondsPerLiquidityCumulativeX128 - prevSecondsPerLiquidityCumulativeX128) << 32)
+        );
         return (tick, liquidity);
     }
 
