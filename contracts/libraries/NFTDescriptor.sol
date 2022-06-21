@@ -37,20 +37,18 @@ library NFTDescriptor {
 
     function constructTokenURI(ConstructTokenURIParams memory params) public pure returns (string memory) {
         string memory name = generateName(params, feeToPercentString(params.fee));
-        string memory descriptionPartOne =
-            generateDescriptionPartOne(
-                escapeQuotes(params.quoteTokenSymbol),
-                escapeQuotes(params.baseTokenSymbol),
-                addressToString(params.poolAddress)
-            );
-        string memory descriptionPartTwo =
-            generateDescriptionPartTwo(
-                params.tokenId.toString(),
-                escapeQuotes(params.baseTokenSymbol),
-                addressToString(params.quoteTokenAddress),
-                addressToString(params.baseTokenAddress),
-                feeToPercentString(params.fee)
-            );
+        string memory descriptionPartOne = generateDescriptionPartOne(
+            escapeQuotes(params.quoteTokenSymbol),
+            escapeQuotes(params.baseTokenSymbol),
+            addressToString(params.poolAddress)
+        );
+        string memory descriptionPartTwo = generateDescriptionPartTwo(
+            params.tokenId.toString(),
+            escapeQuotes(params.baseTokenSymbol),
+            addressToString(params.quoteTokenAddress),
+            addressToString(params.baseTokenAddress),
+            feeToPercentString(params.fee)
+        );
         string memory image = Base64.encode(bytes(generateSVGImage(params)));
 
         return
@@ -380,7 +378,9 @@ library NFTDescriptor {
         if (feeDigits.digits >= 5) {
             // if decimal > 1 (5th digit is the ones place)
             uint256 decimalPlace = feeDigits.digits - feeDigits.numSigfigs >= 4 ? 0 : 1;
-            nZeros = feeDigits.digits - 5 < (feeDigits.numSigfigs - 1) ? 0 : feeDigits.digits - 5 - feeDigits.numSigfigs - 1;
+            nZeros = feeDigits.digits - 5 < (feeDigits.numSigfigs - 1)
+                ? 0
+                : feeDigits.digits - 5 - feeDigits.numSigfigs - 1;
             params.zerosStartIndex = feeDigits.numSigfigs;
             params.zerosEndIndex = uint8(params.zerosStartIndex + nZeros - 1);
             params.sigfigIndex = uint8(params.zerosStartIndex - 1 + decimalPlace);
@@ -406,32 +406,72 @@ library NFTDescriptor {
     }
 
     function generateSVGImage(ConstructTokenURIParams memory params) internal pure returns (string memory svg) {
-        string memory defs = NFTSVG.generateSVGDefs(NFTSVG.SVGDefsParams({
-            color0: tokenToColorHex(uint256(uint160(params.quoteTokenAddress)), 136),
-            color1: tokenToColorHex(uint256(uint160(params.baseTokenAddress)), 136),
-            color2: tokenToColorHex(uint256(uint160(params.quoteTokenAddress)), 0),
-            color3: tokenToColorHex(uint256(uint160(params.baseTokenAddress)), 0),
-            x1: scale(getCircleCoord(uint256(uint160(params.quoteTokenAddress)), 16, params.tokenId), 0, 255, 16, 274),
-            y1: scale(getCircleCoord(uint256(uint160(params.baseTokenAddress)), 16, params.tokenId), 0, 255, 100, 484),
-            x2: scale(getCircleCoord(uint256(uint160(params.quoteTokenAddress)), 32, params.tokenId), 0, 255, 16, 274),
-            y2: scale(getCircleCoord(uint256(uint160(params.baseTokenAddress)), 32, params.tokenId), 0, 255, 100, 484),
-            x3: scale(getCircleCoord(uint256(uint160(params.quoteTokenAddress)), 48, params.tokenId), 0, 255, 16, 274),
-            y3: scale(getCircleCoord(uint256(uint160(params.baseTokenAddress)), 48, params.tokenId), 0, 255, 100, 484)
-        }));
+        string memory defs = NFTSVG.generateSVGDefs(
+            NFTSVG.SVGDefsParams({
+                color0: tokenToColorHex(uint256(uint160(params.quoteTokenAddress)), 136),
+                color1: tokenToColorHex(uint256(uint160(params.baseTokenAddress)), 136),
+                color2: tokenToColorHex(uint256(uint160(params.quoteTokenAddress)), 0),
+                color3: tokenToColorHex(uint256(uint160(params.baseTokenAddress)), 0),
+                x1: scale(
+                    getCircleCoord(uint256(uint160(params.quoteTokenAddress)), 16, params.tokenId),
+                    0,
+                    255,
+                    16,
+                    274
+                ),
+                y1: scale(
+                    getCircleCoord(uint256(uint160(params.baseTokenAddress)), 16, params.tokenId),
+                    0,
+                    255,
+                    100,
+                    484
+                ),
+                x2: scale(
+                    getCircleCoord(uint256(uint160(params.quoteTokenAddress)), 32, params.tokenId),
+                    0,
+                    255,
+                    16,
+                    274
+                ),
+                y2: scale(
+                    getCircleCoord(uint256(uint160(params.baseTokenAddress)), 32, params.tokenId),
+                    0,
+                    255,
+                    100,
+                    484
+                ),
+                x3: scale(
+                    getCircleCoord(uint256(uint160(params.quoteTokenAddress)), 48, params.tokenId),
+                    0,
+                    255,
+                    16,
+                    274
+                ),
+                y3: scale(
+                    getCircleCoord(uint256(uint160(params.baseTokenAddress)), 48, params.tokenId),
+                    0,
+                    255,
+                    100,
+                    484
+                )
+            })
+        );
 
-        string memory body = NFTSVG.generateSVGBody(NFTSVG.SVGBodyParams({
-            quoteToken: addressToString(params.quoteTokenAddress),
-            baseToken: addressToString(params.baseTokenAddress),
-            poolAddress: params.poolAddress,
-            quoteTokenSymbol: params.quoteTokenSymbol,
-            baseTokenSymbol: params.baseTokenSymbol,
-            feeTier: feeToPercentString(params.fee),
-            tickLower: params.tickLower,
-            tickUpper: params.tickUpper,
-            tickSpacing: params.tickSpacing,
-            overRange: overRange(params.tickLower, params.tickUpper, params.tickCurrent),
-            tokenId: params.tokenId
-        }));
+        string memory body = NFTSVG.generateSVGBody(
+            NFTSVG.SVGBodyParams({
+                quoteToken: addressToString(params.quoteTokenAddress),
+                baseToken: addressToString(params.baseTokenAddress),
+                poolAddress: params.poolAddress,
+                quoteTokenSymbol: params.quoteTokenSymbol,
+                baseTokenSymbol: params.baseTokenSymbol,
+                feeTier: feeToPercentString(params.fee),
+                tickLower: params.tickLower,
+                tickUpper: params.tickUpper,
+                tickSpacing: params.tickSpacing,
+                overRange: overRange(params.tickLower, params.tickUpper, params.tickCurrent),
+                tokenId: params.tokenId
+            })
+        );
 
         return NFTSVG.generateSVG(defs, body);
     }
@@ -457,7 +497,7 @@ library NFTDescriptor {
         uint256 outMn,
         uint256 outMx
     ) private pure returns (string memory) {
-        return ((n - inMn) * (outMx - outMn) / (inMx - inMn) + outMn).toString();
+        return (((n - inMn) * (outMx - outMn)) / (inMx - inMn) + outMn).toString();
     }
 
     function tokenToColorHex(uint256 token, uint256 offset) internal pure returns (string memory str) {

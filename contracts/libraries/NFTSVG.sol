@@ -54,35 +54,29 @@ library NFTSVG {
         sig: "0x2df0e99d9cbfec33a705d83f75666d98b22dea7c1af412c584f7d626d83f02875993df740dc87563b9c73378f8462426da572d7989de88079a382ad96c57b68d1b",
         version: "2"
         */
-        return
-            string(
-                abi.encodePacked(
-                    defs,
-                    body,
-                    '</svg>'
-                )
-            );
+        return string(abi.encodePacked(defs, body, '</svg>'));
     }
 
     function generateSVGBody(SVGBodyParams memory params) internal pure returns (string memory body) {
-        return string(
-            abi.encodePacked(
-                generateSVGBorderText(
-                    params.quoteToken,
-                    params.baseToken,
-                    params.quoteTokenSymbol,
-                    params.baseTokenSymbol
-                ),
-                generateSVGCardMantle(params.quoteTokenSymbol, params.baseTokenSymbol, params.feeTier),
-                generageSvgCurve(params.tickLower, params.tickUpper, params.tickSpacing, params.overRange),
-                generateSVGPositionDataAndLocationCurve(
-                    params.tokenId.toString(),
-                    params.tickLower,
-                    params.tickUpper
-                ),
-                generateSVGRareSparkle(params.tokenId, params.poolAddress)
-            )
-        );
+        return
+            string(
+                abi.encodePacked(
+                    generateSVGBorderText(
+                        params.quoteToken,
+                        params.baseToken,
+                        params.quoteTokenSymbol,
+                        params.baseTokenSymbol
+                    ),
+                    generateSVGCardMantle(params.quoteTokenSymbol, params.baseTokenSymbol, params.feeTier),
+                    generageSvgCurve(params.tickLower, params.tickUpper, params.tickSpacing, params.overRange),
+                    generateSVGPositionDataAndLocationCurve(
+                        params.tokenId.toString(),
+                        params.tickLower,
+                        params.tickUpper
+                    ),
+                    generateSVGRareSparkle(params.tokenId, params.poolAddress)
+                )
+            );
     }
 
     function generateSVGDefs(SVGDefsParams memory params) internal pure returns (string memory svg) {

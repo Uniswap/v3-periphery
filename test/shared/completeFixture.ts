@@ -33,7 +33,7 @@ const completeFixture: Fixture<{
   const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor', {
     libraries: {
       NFTDescriptor: nftDescriptorLibrary.address,
-    }
+    },
   })
   const nftDescriptor = (await positionDescriptorFactory.deploy(
     tokens[0].address,
