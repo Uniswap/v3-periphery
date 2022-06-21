@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity >=0.7.6;
+pragma abicoder v2;
 
 import '@openzeppelin/contracts/utils/Strings.sol';
 import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
@@ -19,7 +20,7 @@ library NFTSVG {
     string constant curve7 = 'M1 1C1 89 57.5 145 145 145';
     string constant curve8 = 'M1 1C1 97 49 145 145 145';
 
-    struct SVGParams {
+    struct SVGBodyParams {
         string quoteToken;
         string baseToken;
         address poolAddress;
@@ -31,6 +32,9 @@ library NFTSVG {
         int24 tickSpacing;
         int8 overRange;
         uint256 tokenId;
+    }
+
+    struct SVGDefsParams {
         string color0;
         string color1;
         string color2;
@@ -43,7 +47,7 @@ library NFTSVG {
         string y3;
     }
 
-    function generateSVG(SVGParams memory params) internal pure returns (string memory svg) {
+    function generateSVG(string memory defs, string memory body) internal pure returns (string memory svg) {
         /*
         address: "0xe8ab59d3bcde16a29912de83a90eb39628cfc163",
         msg: "Forged in SVG for Uniswap in 2021 by 0xe8ab59d3bcde16a29912de83a90eb39628cfc163",
@@ -53,27 +57,35 @@ library NFTSVG {
         return
             string(
                 abi.encodePacked(
-                    generateSVGDefs(params),
-                    generateSVGBorderText(
-                        params.quoteToken,
-                        params.baseToken,
-                        params.quoteTokenSymbol,
-                        params.baseTokenSymbol
-                    ),
-                    generateSVGCardMantle(params.quoteTokenSymbol, params.baseTokenSymbol, params.feeTier),
-                    generageSvgCurve(params.tickLower, params.tickUpper, params.tickSpacing, params.overRange),
-                    generateSVGPositionDataAndLocationCurve(
-                        params.tokenId.toString(),
-                        params.tickLower,
-                        params.tickUpper
-                    ),
-                    generateSVGRareSparkle(params.tokenId, params.poolAddress),
+                    defs,
+                    body,
                     '</svg>'
                 )
             );
     }
 
-    function generateSVGDefs(SVGParams memory params) private pure returns (string memory svg) {
+    function generateSVGBody(SVGBodyParams memory params) internal pure returns (string memory body) {
+        return string(
+            abi.encodePacked(
+                generateSVGBorderText(
+                    params.quoteToken,
+                    params.baseToken,
+                    params.quoteTokenSymbol,
+                    params.baseTokenSymbol
+                ),
+                generateSVGCardMantle(params.quoteTokenSymbol, params.baseTokenSymbol, params.feeTier),
+                generageSvgCurve(params.tickLower, params.tickUpper, params.tickSpacing, params.overRange),
+                generateSVGPositionDataAndLocationCurve(
+                    params.tokenId.toString(),
+                    params.tickLower,
+                    params.tickUpper
+                ),
+                generateSVGRareSparkle(params.tokenId, params.poolAddress)
+            )
+        );
+    }
+
+    function generateSVGDefs(SVGDefsParams memory params) internal pure returns (string memory svg) {
         svg = string(
             abi.encodePacked(
                 '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"',

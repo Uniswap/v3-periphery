@@ -10,8 +10,7 @@ import './interfaces/INonfungiblePositionManager.sol';
 import './interfaces/INonfungibleTokenPositionDescriptor.sol';
 import './interfaces/IERC20Metadata.sol';
 import './libraries/PoolAddress.sol';
-// TODO: add NFTDescriptor back after fixing assembly stackTooDeep issue
-//import './libraries/NFTDescriptor.sol';
+import './libraries/NFTDescriptor.sol';
 import './libraries/TokenRatioSortOrder.sol';
 
 /// @title Describes NFT token positions
@@ -67,20 +66,17 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         address baseTokenAddress = !_flipRatio ? token0 : token1;
         (, int24 tick, , , , , ) = pool.slot0();
 
-        return '';
-        // TODO: uncomment after fixing assembly stackTooDeep issue
-        /**
-            NFTDescriptor.constructTokenURI(
-                NFTDescriptor.ConstructTokenURIParams({
-                    tokenId: tokenId,
-                    quoteTokenAddress: quoteTokenAddress,
-                    baseTokenAddress: baseTokenAddress,
-                    quoteTokenSymbol: quoteTokenAddress == WETH9
-                        ? nativeCurrencyLabel()
-                        : SafeERC20Namer.tokenSymbol(quoteTokenAddress),
-                    baseTokenSymbol: baseTokenAddress == WETH9
-                        ? nativeCurrencyLabel()
-                        : SafeERC20Namer.tokenSymbol(baseTokenAddress),
+        return NFTDescriptor.constructTokenURI(
+            NFTDescriptor.ConstructTokenURIParams({
+            tokenId: tokenId,
+            quoteTokenAddress: quoteTokenAddress,
+            baseTokenAddress: baseTokenAddress,
+            quoteTokenSymbol: quoteTokenAddress == WETH9
+                ? nativeCurrencyLabel()
+                : SafeERC20Namer.tokenSymbol(quoteTokenAddress),
+                baseTokenSymbol: baseTokenAddress == WETH9
+                    ? nativeCurrencyLabel()
+                    : SafeERC20Namer.tokenSymbol(baseTokenAddress),
                     quoteTokenDecimals: IERC20Metadata(quoteTokenAddress).decimals(),
                     baseTokenDecimals: IERC20Metadata(baseTokenAddress).decimals(),
                     flipRatio: _flipRatio,
@@ -90,9 +86,8 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                     tickSpacing: pool.tickSpacing(),
                     fee: fee,
                     poolAddress: address(pool)
-                })
-            );
-        */
+            })
+        );
     }
 
     function flipRatio(

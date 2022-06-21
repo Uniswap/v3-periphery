@@ -28,7 +28,13 @@ const completeFixture: Fixture<{
     (await tokenFactory.deploy(constants.MaxUint256.div(2))) as TestERC20,
   ]
 
-  const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor', {})
+  const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
+  const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
+  const positionDescriptorFactory = await ethers.getContractFactory('NonfungibleTokenPositionDescriptor', {
+    libraries: {
+      NFTDescriptor: nftDescriptorLibrary.address,
+    }
+  })
   const nftDescriptor = (await positionDescriptorFactory.deploy(
     tokens[0].address,
     // 'ETH' as a bytes32 string

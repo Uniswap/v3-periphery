@@ -20,9 +20,10 @@ const LOW_OPTIMIZER_COMPILER_SETTINGS = {
 const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
   version: '0.8.15',
   settings: {
+    viaIR: true,
     optimizer: {
       enabled: true,
-      runs: 100,
+      runs: 1_000,
     },
     metadata: {
       bytecodeHash: 'none',
@@ -89,6 +90,7 @@ export default {
       'contracts/test/NFTDescriptorTest.sol': LOWEST_OPTIMIZER_COMPILER_SETTINGS,
       'contracts/NonfungibleTokenPositionDescriptor.sol': LOWEST_OPTIMIZER_COMPILER_SETTINGS,
       'contracts/libraries/NFTDescriptor.sol': LOWEST_OPTIMIZER_COMPILER_SETTINGS,
+      'contracts/libraries/NFTSVG.sol': LOWEST_OPTIMIZER_COMPILER_SETTINGS,
     },
   },
   watcher: {
