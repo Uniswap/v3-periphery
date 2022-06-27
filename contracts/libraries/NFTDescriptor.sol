@@ -212,12 +212,14 @@ library NFTDescriptor {
             buffer[zerosCursor] = bytes1(uint8(48));
         }
         // add sigfigs
-        while (params.sigfigs > 0) {
-            if (params.decimalIndex > 0 && params.sigfigIndex == params.decimalIndex) {
-                buffer[params.sigfigIndex--] = '.';
+        unchecked {
+            while (params.sigfigs > 0) {
+                if (params.decimalIndex > 0 && params.sigfigIndex == params.decimalIndex) {
+                    buffer[params.sigfigIndex--] = '.';
+                }
+                buffer[params.sigfigIndex--] = bytes1(uint8(uint256(48) + (params.sigfigs % 10)));
+                params.sigfigs /= 10;
             }
-            buffer[params.sigfigIndex--] = bytes1(uint8(uint256(48) + (params.sigfigs % 10)));
-            params.sigfigs /= 10;
         }
         return string(buffer);
     }
@@ -339,7 +341,7 @@ library NFTDescriptor {
             // 5 sigfigs surround decimal
             params.bufferLength = 6;
             params.sigfigIndex = 5;
-            params.decimalIndex = uint8(digits - 5 + 1);
+            params.decimalIndex = uint8(digits - 4);
         }
         params.sigfigs = sigfigs;
         params.isLessThanOne = priceBelow1;
@@ -380,17 +382,17 @@ library NFTDescriptor {
             uint256 decimalPlace = feeDigits.digits - feeDigits.numSigfigs >= 4 ? 0 : 1;
             nZeros = feeDigits.digits - 5 < (feeDigits.numSigfigs - 1)
                 ? 0
-                : feeDigits.digits - 5 - feeDigits.numSigfigs - 1;
+                : feeDigits.digits - 5 - (feeDigits.numSigfigs - 1);
             params.zerosStartIndex = feeDigits.numSigfigs;
             params.zerosEndIndex = uint8(params.zerosStartIndex + nZeros - 1);
             params.sigfigIndex = uint8(params.zerosStartIndex - 1 + decimalPlace);
-            params.bufferLength = uint8(nZeros + feeDigits.numSigfigs + 1 + decimalPlace);
+            params.bufferLength = uint8(nZeros + (feeDigits.numSigfigs + 1) + decimalPlace);
         } else {
             // else if decimal < 1
             nZeros = uint256(5) - feeDigits.digits;
             params.zerosStartIndex = 2;
             params.zerosEndIndex = uint8(nZeros + params.zerosStartIndex - 1);
-            params.bufferLength = uint8(nZeros + feeDigits.numSigfigs + 2);
+            params.bufferLength = uint8(nZeros + (feeDigits.numSigfigs + 2));
             params.sigfigIndex = uint8((params.bufferLength) - 2);
             params.isLessThanOne = true;
         }

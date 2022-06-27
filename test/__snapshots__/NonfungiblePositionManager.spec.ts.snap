@@ -8,7 +8,7 @@ exports[`NonfungiblePositionManager #collect gas transfers token0 only 1`] = `10
 
 exports[`NonfungiblePositionManager #collect gas transfers token1 only 1`] = `107649`;
 
-exports[`NonfungiblePositionManager #createAndInitializePoolIfNecessary gas 1`] = `4570004`;
+exports[`NonfungiblePositionManager #createAndInitializePoolIfNecessary gas 1`] = `4570016`;
 
 exports[`NonfungiblePositionManager #decreaseLiquidity gas complete decrease 1`] = `145687`;
 
@@ -16,19 +16,19 @@ exports[`NonfungiblePositionManager #decreaseLiquidity gas partial decrease 1`] 
 
 exports[`NonfungiblePositionManager #increaseLiquidity gas 1`] = `167977`;
 
-exports[`NonfungiblePositionManager #mint gas first mint for pool 1`] = `570203`;
+exports[`NonfungiblePositionManager #mint gas first mint for pool 1`] = `570215`;
 
-exports[`NonfungiblePositionManager #mint gas first mint for pool using eth with non-zero refund 1`] = `585444`;
+exports[`NonfungiblePositionManager #mint gas first mint for pool using eth with non-zero refund 1`] = `585468`;
 
-exports[`NonfungiblePositionManager #mint gas first mint for pool using eth with zero refund 1`] = `578262`;
+exports[`NonfungiblePositionManager #mint gas first mint for pool using eth with zero refund 1`] = `578286`;
 
-exports[`NonfungiblePositionManager #mint gas mint for same pool, different ticks 1`] = `422291`;
+exports[`NonfungiblePositionManager #mint gas mint for same pool, different ticks 1`] = `422303`;
 
-exports[`NonfungiblePositionManager #mint gas mint on same ticks 1`] = `315179`;
+exports[`NonfungiblePositionManager #mint gas mint on same ticks 1`] = `315191`;
 
-exports[`NonfungiblePositionManager #permit owned by eoa gas 1`] = `59685`;
+exports[`NonfungiblePositionManager #permit owned by eoa gas 1`] = `59661`;
 
-exports[`NonfungiblePositionManager #permit owned by verifying contract gas 1`] = `63536`;
+exports[`NonfungiblePositionManager #permit owned by verifying contract gas 1`] = `63512`;
 
 exports[`NonfungiblePositionManager #positions gas 1`] = `20619`;
 

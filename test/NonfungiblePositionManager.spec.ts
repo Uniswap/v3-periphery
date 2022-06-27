@@ -1155,11 +1155,11 @@ describe('NonfungiblePositionManager', () => {
       await expect(nft.tokenURI(tokenId + 1)).to.be.reverted
     })
 
-    xit('returns a data URI with correct mime type', async () => {
+    it('returns a data URI with correct mime type', async () => {
       expect(await nft.tokenURI(tokenId)).to.match(/data:application\/json;base64,.+/)
     })
 
-    xit('content is valid JSON and structure', async () => {
+    it('content is valid JSON and structure', async () => {
       const content = extractJSONFromURI(await nft.tokenURI(tokenId))
       expect(content).to.haveOwnProperty('name').is.a('string')
       expect(content).to.haveOwnProperty('description').is.a('string')
