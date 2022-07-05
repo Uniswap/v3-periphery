@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity =0.7.6;
+pragma solidity =0.8.15;
 pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import '@uniswap/lib/contracts/libraries/SafeERC20Namer.sol';
 
+import './libraries/SafeERC20Namer.sol';
 import './libraries/ChainId.sol';
 import './interfaces/INonfungiblePositionManager.sol';
 import './interfaces/INonfungibleTokenPositionDescriptor.sol';
@@ -51,16 +51,15 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         override
         returns (string memory)
     {
-        (, , address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, , , , , ) =
-            positionManager.positions(tokenId);
+        (, , address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, , , , , ) = positionManager
+            .positions(tokenId);
 
-        IUniswapV3Pool pool =
-            IUniswapV3Pool(
-                PoolAddress.computeAddress(
-                    positionManager.factory(),
-                    PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
-                )
-            );
+        IUniswapV3Pool pool = IUniswapV3Pool(
+            PoolAddress.computeAddress(
+                positionManager.factory(),
+                PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
+            )
+        );
 
         bool _flipRatio = flipRatio(token0, token1, ChainId.get());
         address quoteTokenAddress = !_flipRatio ? token1 : token0;

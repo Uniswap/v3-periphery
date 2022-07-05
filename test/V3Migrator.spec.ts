@@ -41,11 +41,9 @@ describe('V3Migrator', () => {
     await weth9.approve(nft.address, constants.MaxUint256)
 
     // deploy the migrator
-    const migrator = (await (await ethers.getContractFactory('V3Migrator')).deploy(
-      factory.address,
-      weth9.address,
-      nft.address
-    )) as V3Migrator
+    const migrator = (await (
+      await ethers.getContractFactory('V3Migrator')
+    ).deploy(factory.address, weth9.address, nft.address)) as V3Migrator
 
     return {
       factoryV2,

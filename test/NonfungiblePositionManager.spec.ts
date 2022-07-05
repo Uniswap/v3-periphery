@@ -294,7 +294,7 @@ describe('NonfungiblePositionManager', () => {
       })
       const receipt = await tx.wait()
       const balanceAfter = await wallet.getBalance()
-      expect(balanceBefore).to.eq(balanceAfter.add(receipt.gasUsed.mul(tx.gasPrice)).add(100))
+      expect(balanceBefore).to.eq(balanceAfter.add(receipt.gasUsed.mul(tx.gasPrice || 0)).add(100))
     })
 
     it('emits an event')

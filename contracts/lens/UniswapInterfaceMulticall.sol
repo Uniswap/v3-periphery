@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity =0.7.6;
+pragma solidity =0.8.15;
 pragma abicoder v2;
 
 /// @notice A fork of Multicall2 specifically tailored for the Uniswap Interface
@@ -28,8 +28,11 @@ contract UniswapInterfaceMulticall {
         blockNumber = block.number;
         returnData = new Result[](calls.length);
         for (uint256 i = 0; i < calls.length; i++) {
-            (address target, uint256 gasLimit, bytes memory callData) =
-                (calls[i].target, calls[i].gasLimit, calls[i].callData);
+            (address target, uint256 gasLimit, bytes memory callData) = (
+                calls[i].target,
+                calls[i].gasLimit,
+                calls[i].callData
+            );
             uint256 gasLeftBefore = gasleft();
             (bool success, bytes memory ret) = target.call{gas: gasLimit}(callData);
             uint256 gasUsed = gasLeftBefore - gasleft();

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity =0.7.6;
+pragma solidity =0.8.15;
 pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
@@ -44,10 +44,9 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
         (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
         CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee);
 
-        (bool isExactInput, uint256 amountToPay, uint256 amountReceived) =
-            amount0Delta > 0
-                ? (tokenIn < tokenOut, uint256(amount0Delta), uint256(-amount1Delta))
-                : (tokenOut < tokenIn, uint256(amount1Delta), uint256(-amount0Delta));
+        (bool isExactInput, uint256 amountToPay, uint256 amountReceived) = amount0Delta > 0
+            ? (tokenIn < tokenOut, uint256(amount0Delta), uint256(-amount1Delta))
+            : (tokenOut < tokenIn, uint256(amount1Delta), uint256(-amount0Delta));
         if (isExactInput) {
             assembly {
                 let ptr := mload(0x40)

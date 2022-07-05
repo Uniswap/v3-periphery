@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.6.8 <0.8.0;
+pragma solidity >=0.6.8 <0.9.0;
 
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/libraries/FixedPoint128.sol';
@@ -113,17 +113,16 @@ library PositionValue {
         view
         returns (uint256 amount0, uint256 amount1)
     {
-        (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) =
-            _getFeeGrowthInside(
-                IUniswapV3Pool(
-                    PoolAddress.computeAddress(
-                        positionManager.factory(),
-                        PoolAddress.PoolKey({token0: feeParams.token0, token1: feeParams.token1, fee: feeParams.fee})
-                    )
-                ),
-                feeParams.tickLower,
-                feeParams.tickUpper
-            );
+        (uint256 poolFeeGrowthInside0LastX128, uint256 poolFeeGrowthInside1LastX128) = _getFeeGrowthInside(
+            IUniswapV3Pool(
+                PoolAddress.computeAddress(
+                    positionManager.factory(),
+                    PoolAddress.PoolKey({token0: feeParams.token0, token1: feeParams.token1, fee: feeParams.fee})
+                )
+            ),
+            feeParams.tickLower,
+            feeParams.tickUpper
+        );
 
         amount0 =
             FullMath.mulDiv(

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity =0.7.6;
+pragma solidity =0.8.15;
 pragma abicoder v2;
 
 import '../libraries/OracleLibrary.sol';
@@ -61,7 +61,7 @@ contract OracleTest {
         return OracleLibrary.getWeightedArithmeticMeanTick(observations);
     }
 
-    function getChainedPrice(address[] memory tokens, int24[] memory ticks) public view returns (int256 syntheticTick) {
+    function getChainedPrice(address[] memory tokens, int24[] memory ticks) public pure returns (int256 syntheticTick) {
         return OracleLibrary.getChainedPrice(tokens, ticks);
     }
 }
