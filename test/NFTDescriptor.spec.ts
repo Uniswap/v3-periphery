@@ -20,7 +20,10 @@ const HIGHEST_SQRT_RATIO = BigNumber.from(33849).mul(TEN.pow(34))
 describe('NFTDescriptor', () => {
   let wallets: Wallet[]
 
-  const nftDescriptorFixture = async () => {
+  const nftDescriptorFixture: Fixture<{
+    tokens: [TestERC20Metadata, TestERC20Metadata, TestERC20Metadata, TestERC20Metadata]
+    nftDescriptor: NFTDescriptorTest
+  }> = async (wallets, provider) => {
     const nftDescriptorLibraryFactory = await ethers.getContractFactory('NFTDescriptor')
     const nftDescriptorLibrary = await nftDescriptorLibraryFactory.deploy()
 
@@ -53,14 +56,12 @@ describe('NFTDescriptor', () => {
   before('create fixture loader', async () => {
     wallets = await (ethers as any).getSigners()
 
-    // loadFixture = waffle.createFixtureLoader(wallets)
-    ;({ nftDescriptor, tokens } = await nftDescriptorFixture())
+    loadFixture = waffle.createFixtureLoader(wallets)
   })
 
-  // beforeEach('load fixture', async () => {
-  //   // ;({ nftDescriptor, tokens } = await loadFixture(nftDescriptorFixture))
-  //   ;({ nftDescriptor, tokens } = await nftDescriptorFixture())
-  //   })
+  beforeEach('load fixture', async () => {
+    ;({ nftDescriptor, tokens } = await loadFixture(nftDescriptorFixture))
+  })
 
   describe('#constructTokenURI', () => {
     let tokenId: number
