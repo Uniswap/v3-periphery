@@ -1,0 +1,76 @@
+version: v1
+
+labels:
+  - label: kind/feature
+    sync: true
+    matcher:
+      title: "^feat(\\(.+\\))?: .+"
+
+  - label: kind/fix
+    sync: true
+    matcher:
+      title: "^fix(\\(.+\\))?: .+"
+
+  - label: kind/chore
+    sync: true
+    matcher:
+      title: "^chore(\\(.+\\))?: .+"
+
+  - label: kind/refactor
+    sync: true
+    matcher:
+      title: "^refactor(\\(.+\\))?: .+"
+
+  - label: kind/docs
+    sync: true
+    matcher:
+      title: "^docs(\\(.+\\))?: .+"
+
+  - label: kind/dependencies
+    sync: true
+    matcher:
+      title: "^bump(\\(.+\\))?: .+"
+
+  - label: area/workflow
+    sync: true
+    matcher:
+      files: '.github/**'
+
+  - label: area/codex
+    sync: true
+    matcher:
+      files: 'codex/**'
+
+  - label: area/constructs
+    sync: true
+    matcher:
+      files: 'constructs/**'
+
+  - label: area/docs
+    sync: true
+    matcher:
+      files: 'docs/**'
+
+  - label: area/packages
+    sync: true
+    matcher:
+      files: 'packages/**'
+
+  - label: area/services
+    sync: true
+    matcher:
+      files: 'services/**'
+
+checks:
+  - context: 'Semantic Pull Request'
+    description:
+      success: Ready for review & merge.
+      failure: 'Missing semantic title for merge [kind(directory): title]'
+    labels:
+      any:
+        - kind/feature
+        - kind/fix
+        - kind/chore
+        - kind/refactor
+        - kind/docs
+        - kind/dependencies

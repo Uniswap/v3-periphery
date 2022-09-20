@@ -1,0 +1,27 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+categories:
+  - title: 'Features'
+    labels:
+      - 'kind/feature'
+  - title: 'Fixes'
+    labels:
+      - 'kind/fix'
+  - title: 'Chore & Maintenance'
+    labels:
+      - 'kind/refactor'
+      - 'kind/chore'
+      - 'kind/docs'
+  - title: 'Dependencies'
+    labels:
+      - 'kind/dependencies'
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-title-escapes: '\<*_&'
+version-resolver:
+  minor:
+    labels:
+      - 'kind/feature'
+  default: patch
+prerelease: false
+template: |
+  $CHANGES

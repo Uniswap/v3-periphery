@@ -1,0 +1,21 @@
+name: Governance
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  statuses: write
+  checks: write
+
+jobs:
+  main:
+    name: Governance Labeler
+    runs-on: ubuntu-latest
+    steps:
+      - uses: fuxingloh/multi-labeler@fb9bc28b2d65e406ffd208384c5095793c3fd59a # tag=v1.8.0
+        with:
+          config-path: .github/labeler.yml

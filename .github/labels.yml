@@ -1,0 +1,71 @@
+# GitHub generic useful labels
+- color: c4d471
+  name: duplicate
+  description: This issue or pull request already exists
+- color: ffffff
+  name: wontfix
+  description: This will not be worked on
+
+# Needs
+- color: cc40d8
+  name: needs/kind
+  description: Needs kind label
+- color: cc40d8
+  name: needs/priority
+  description: Needs a priority label
+- color: cc40d8
+  name: needs/triage
+  description: Waiting for triage to be accepted
+
+# Kind
+- color: e7e9eb
+  name: kind/bug
+  description: Something isn't working
+- color: e7e9eb
+  name: kind/feature
+  description: New feature request
+- color: e7e9eb
+  name: kind/question
+  description: Generic question
+- color: e7e9eb
+  name: kind/chore
+  description: Non feature change
+- color: e7e9eb
+  name: kind/fix
+  description: Fix a bug
+- color: e7e9eb
+  name: kind/docs
+  description: Non feature documentation change
+- color: e7e9eb
+  name: kind/refactor
+  description: Non feature refactor change
+- color: e7e9eb
+  name: kind/dependencies
+  description: Pull requests that update a dependency file
+
+# Area
+- color: fbca04
+  name: area/workflow
+- color: fbca04
+  name: area/codex
+- color: fbca04
+  name: area/constructs
+- color: fbca04
+  name: area/docs
+- color: fbca04
+  name: area/packages
+- color: fbca04
+  name: area/services
+
+# Priority
+- color: d93f0b
+  name: priority/urgent-now
+  description: Urgent fix, as fast as possible
+- color: d93f0b
+  name: priority/important-soon
+  description: Will be important soon
+
+# Triage
+- color: b1f488
+  name: triage/accepted
+  description: Triage has been accepted
