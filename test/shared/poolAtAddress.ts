@@ -1,4 +1,4 @@
-import { abi as POOL_ABI } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
+import { abi as POOL_ABI } from '@birthdayresearch/uniswap-v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
 import { Contract, Wallet } from 'ethers'
 import { IUniswapV3Pool } from '../../typechain'
 

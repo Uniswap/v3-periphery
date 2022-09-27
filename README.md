@@ -7,6 +7,10 @@ This repository contains the periphery smart contracts for the Uniswap V3 Protoc
 For the lower level core contracts, see the [uniswap-v3-core](https://github.com/Uniswap/uniswap-v3-core)
 repository.
 
+## Usage
+Projects installing this as a dependency need to ensure that they have installed an aliased version of openzepellin.
+The openzeppelin dependency should resolve to `@openzeppelin3.4.2/contracts`. The version should be `3.4.2-solc-0.7`.
+
 ## Bug bounty
 
 This repository is subject to the Uniswap V3 bug bounty program,

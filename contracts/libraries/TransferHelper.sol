@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.6.0;
+pragma solidity =0.7.6;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin3.4.2/contracts/token/ERC20/IERC20.sol';
 
 library TransferHelper {
     /// @notice Transfers tokens from the targeted address to the given destination

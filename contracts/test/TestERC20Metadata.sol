@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity =0.7.6;
 
-import '@openzeppelin/contracts/drafts/ERC20Permit.sol';
+import '@openzeppelin3.4.2/contracts/drafts/ERC20Permit.sol';
 
 contract TestERC20Metadata is ERC20Permit {
     constructor(

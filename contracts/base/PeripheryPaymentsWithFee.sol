@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.7.5;
+pragma solidity =0.7.6;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
+import '@openzeppelin3.4.2/contracts/token/ERC20/IERC20.sol';
+import '@birthdayresearch/uniswap-v3-core/contracts/libraries/LowGasSafeMath.sol';
 
 import './PeripheryPayments.sol';
 import '../interfaces/IPeripheryPaymentsWithFee.sol';

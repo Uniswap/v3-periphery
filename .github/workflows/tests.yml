@@ -10,13 +10,14 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    env:
+      NPM_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v1
         with:
-          node-version: 12.x
-          registry-url: https://registry.npmjs.org
+          node-version: 18.x
 
       - id: yarn-cache
         run: echo "::set-output name=dir::$(yarn cache dir)"

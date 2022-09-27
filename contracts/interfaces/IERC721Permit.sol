@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.7.5;
+pragma solidity =0.7.6;
 
-import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
+import '@openzeppelin3.4.2/contracts/token/ERC721/IERC721.sol';
 
 /// @title ERC721 with permit
 /// @notice Extension to ERC721 that includes a permit function for signature based approvals
