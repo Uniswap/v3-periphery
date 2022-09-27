@@ -1,12 +1,11 @@
 {
-  "name": "@birthdayresearch/v3-periphery",
+  "name": "@birthdayresearch/uniswap-v3-periphery",
   "description": "BirthdayResearch fork of peripheral smart contracts for interacting with Uniswap V3",
   "license": "GPL-2.0-or-later",
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.4.1",
-  "homepage": "https://uniswap.org",
+  "version": "0.0.0",
   "files": [
     "contracts/base",
     "contracts/interfaces",
