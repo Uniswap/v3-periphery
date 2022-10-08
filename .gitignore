@@ -1,5 +1,10 @@
-artifacts/
+.DS_Store
 cache/
 crytic-export/
 node_modules/
 typechain/
+.cache/
+cache/
+*.tgz
+/out
+artifacts/**/*.dbg.json
