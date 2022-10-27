@@ -146,7 +146,7 @@ library NFTSVG {
                 '<linearGradient id="grad-symbol"><stop offset="0.7" stop-color="white" stop-opacity="1" /><stop offset=".95" stop-color="white" stop-opacity="0" /></linearGradient>',
                 '<mask id="fade-symbol" maskContentUnits="userSpaceOnUse"><rect width="290px" height="200px" fill="url(#grad-symbol)" /></mask></defs>',
                 '<g clip-path="url(#corners)">',
-                '<rect fill="',
+                '<rect fill="#',
                 params.color0,
                 '" x="0px" y="0px" width="290px" height="500px" />',
                 '<rect style="filter: url(#f1)" x="0px" y="0px" width="290px" height="500px" />',
