@@ -17,11 +17,12 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
 
     /// @inheritdoc IPeripheryPayments
     function unwrapWETH9(uint256 amountMinimum, address recipient) public payable override {
-        uint256 balanceWETH9 = IWETH9(WETH9).balanceOf(address(this));
+        address WETH9_local = WETH9;
+        uint256 balanceWETH9 = IWETH9(WETH9_local).balanceOf(address(this));
         require(balanceWETH9 >= amountMinimum, 'Insufficient WETH9');
 
         if (balanceWETH9 > 0) {
-            IWETH9(WETH9).withdraw(balanceWETH9);
+            IWETH9(WETH9_local).withdraw(balanceWETH9);
             TransferHelper.safeTransferETH(recipient, balanceWETH9);
         }
     }
@@ -55,10 +56,11 @@ abstract contract PeripheryPayments is IPeripheryPayments, PeripheryImmutableSta
         address recipient,
         uint256 value
     ) internal {
-        if (token == WETH9 && address(this).balance >= value) {
+        address WETH9_local = WETH9;
+        if (token == WETH9_local && address(this).balance >= value) {
             // pay with WETH9
-            IWETH9(WETH9).deposit{value: value}(); // wrap only what is needed to pay
-            IWETH9(WETH9).transfer(recipient, value);
+            IWETH9(WETH9_local).deposit{value: value}(); // wrap only what is needed to pay
+            IWETH9(WETH9_local).transfer(recipient, value);
         } else if (payer == address(this)) {
             // pay with tokens already in the contract (for the exact input multihop case)
             TransferHelper.safeTransfer(token, recipient, value);

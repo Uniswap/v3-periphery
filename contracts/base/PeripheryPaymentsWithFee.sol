@@ -22,11 +22,12 @@ abstract contract PeripheryPaymentsWithFee is PeripheryPayments, IPeripheryPayme
     ) public payable override {
         require(feeBips > 0 && feeBips <= 100);
 
-        uint256 balanceWETH9 = IWETH9(WETH9).balanceOf(address(this));
+        address WETH9_local = WETH9;
+        uint256 balanceWETH9 = IWETH9(WETH9_local).balanceOf(address(this));
         require(balanceWETH9 >= amountMinimum, 'Insufficient WETH9');
 
         if (balanceWETH9 > 0) {
-            IWETH9(WETH9).withdraw(balanceWETH9);
+            IWETH9(WETH9_local).withdraw(balanceWETH9);
             uint256 feeAmount = balanceWETH9.mul(feeBips) / 10_000;
             if (feeAmount > 0) TransferHelper.safeTransferETH(feeRecipient, feeAmount);
             TransferHelper.safeTransferETH(recipient, balanceWETH9 - feeAmount);
