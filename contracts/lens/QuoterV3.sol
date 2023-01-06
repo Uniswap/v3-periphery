@@ -8,7 +8,7 @@ import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
 import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
 
-import '../interfaces/IQuoter.sol';
+import '../interfaces/IQuoterV3.sol';
 import '../base/PeripheryImmutableState.sol';
 import '../libraries/Path.sol';
 import '../libraries/PoolAddress.sol';
@@ -18,7 +18,7 @@ import '../libraries/CallbackValidation.sol';
 /// @notice Allows getting the expected amount out or amount in for a given swap without executing the swap
 /// @dev These functions are not gas efficient and should _not_ be called on chain. Instead, optimistically execute
 /// the swap and check the amounts in the callback.
-contract QuoterV3 is IQuoter, PeripheryImmutableState {
+contract QuoterV3 is IQuoterV3, PeripheryImmutableState {
     using Path for bytes;
     using SafeCast for uint256;
     using Simulate for IUniswapV3Pool;
@@ -33,7 +33,7 @@ contract QuoterV3 is IQuoter, PeripheryImmutableState {
         return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
     }
 
-    /// @inheritdoc IQuoter
+    /// @inheritdoc IQuoterV3
     function quoteExactInputSingle(
         address tokenIn,
         address tokenOut,
@@ -53,7 +53,7 @@ contract QuoterV3 is IQuoter, PeripheryImmutableState {
         return zeroForOne ? uint256(-amount1) : uint256(-amount0);
     }
 
-    /// @inheritdoc IQuoter
+    /// @inheritdoc IQuoterV3
     function quoteExactInput(bytes memory path, uint256 amountIn) external view override returns (uint256 amountOut) {
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
@@ -72,7 +72,7 @@ contract QuoterV3 is IQuoter, PeripheryImmutableState {
         }
     }
 
-    /// @inheritdoc IQuoter
+    /// @inheritdoc IQuoterV3
     function quoteExactOutputSingle(
         address tokenIn,
         address tokenOut,
@@ -92,7 +92,7 @@ contract QuoterV3 is IQuoter, PeripheryImmutableState {
         return zeroForOne ? uint256(amount0) : uint256(amount1);
     }
 
-    /// @inheritdoc IQuoter
+    /// @inheritdoc IQuoterV3
     function quoteExactOutput(bytes memory path, uint256 amountOut) external view override returns (uint256 amountIn) {
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
