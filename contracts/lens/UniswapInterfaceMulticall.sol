@@ -26,8 +26,9 @@ contract UniswapInterfaceMulticall {
 
     function multicall(Call[] memory calls) public returns (uint256 blockNumber, Result[] memory returnData) {
         blockNumber = block.number;
-        returnData = new Result[](calls.length);
-        for (uint256 i = 0; i < calls.length; i++) {
+        uint256 len = calls.length;
+        returnData = new Result[](len);
+        for (uint256 i = 0; i < len; i++) {
             (address target, uint256 gasLimit, bytes memory callData) =
                 (calls[i].target, calls[i].gasLimit, calls[i].callData);
             uint256 gasLeftBefore = gasleft();

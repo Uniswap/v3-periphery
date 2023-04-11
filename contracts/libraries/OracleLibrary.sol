@@ -147,9 +147,10 @@ library OracleLibrary {
 
         // Accumulates the sum of the weights
         uint256 denominator;
+        uint256 len = weightedTickData.length;
 
         // Products fit in 152 bits, so it would take an array of length ~2**104 to overflow this logic
-        for (uint256 i; i < weightedTickData.length; i++) {
+        for (uint256 i; i < len; i++) {
             numerator += weightedTickData[i].tick * int256(weightedTickData[i].weight);
             denominator += weightedTickData[i].weight;
         }
@@ -170,8 +171,9 @@ library OracleLibrary {
         pure
         returns (int256 syntheticTick)
     {
-        require(tokens.length - 1 == ticks.length, 'DL');
-        for (uint256 i = 1; i <= ticks.length; i++) {
+        uint256 len = ticks.length;
+        require(tokens.length - 1 == len, 'DL');
+        for (uint256 i = 1; i <= len; i++) {
             // check the tokens for address sort order, then accumulate the
             // ticks into the running synthetic tick, ensuring that intermediate tokens "cancel out"
             tokens[i - 1] < tokens[i] ? syntheticTick += ticks[i - 1] : syntheticTick -= ticks[i - 1];

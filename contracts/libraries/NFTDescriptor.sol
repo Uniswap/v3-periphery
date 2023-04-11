@@ -85,15 +85,16 @@ library NFTDescriptor {
     function escapeQuotes(string memory symbol) internal pure returns (string memory) {
         bytes memory symbolBytes = bytes(symbol);
         uint8 quotesCount = 0;
-        for (uint8 i = 0; i < symbolBytes.length; i++) {
+        uint256 len = symbolBytes.length;
+        for (uint8 i = 0; i < len; i++) {
             if (symbolBytes[i] == '"') {
                 quotesCount++;
             }
         }
         if (quotesCount > 0) {
-            bytes memory escapedBytes = new bytes(symbolBytes.length + (quotesCount));
+            bytes memory escapedBytes = new bytes(len + (quotesCount));
             uint256 index;
-            for (uint8 i = 0; i < symbolBytes.length; i++) {
+            for (uint8 i = 0; i < len; i++) {
                 if (symbolBytes[i] == '"') {
                     escapedBytes[index++] = '\\';
                 }
