@@ -41,7 +41,7 @@ library NFTDescriptor {
         address poolAddress;
     }
 
-    function constructTokenURI(ConstructTokenURIParams memory params) public pure returns (string memory) {
+    function constructTokenURI(ConstructTokenURIParams calldata params) public pure returns (string memory) {
         string memory name = generateName(params, feeToPercentString(params.fee));
         string memory descriptionPartOne =
             generateDescriptionPartOne(
