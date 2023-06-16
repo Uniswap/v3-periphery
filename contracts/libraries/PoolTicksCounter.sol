@@ -60,6 +60,7 @@ library PoolTicksCounter {
         // Count the number of initialized ticks crossed by iterating through the tick bitmap.
         // Our first mask should include the lower tick and everything to its left.
         uint256 mask = type(uint256).max << bitPosLower;
+        uint256 masked;
         while (wordPosLower <= wordPosHigher) {
             // If we're on the final tick bitmap page, ensure we only count up to our
             // ending tick.
@@ -67,7 +68,7 @@ library PoolTicksCounter {
                 mask = mask & (type(uint256).max >> (255 - bitPosHigher));
             }
 
-            uint256 masked = self.tickBitmap(wordPosLower) & mask;
+            masked = self.tickBitmap(wordPosLower) & mask;
             initializedTicksCrossed += countOneBits(masked);
             wordPosLower++;
             // Reset our mask so we consider all bits on the next iteration.

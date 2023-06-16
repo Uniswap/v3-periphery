@@ -104,10 +104,14 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
 
     /// @inheritdoc IQuoter
     function quoteExactInput(bytes memory path, uint256 amountIn) external override returns (uint256 amountOut) {
+        bool hasMultiplePools;
+        address tokenIn; 
+        address tokenOut; 
+        uint24 fee;
         while (true) {
-            bool hasMultiplePools = path.hasMultiplePools();
+            hasMultiplePools = path.hasMultiplePools();
 
-            (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
+            (tokenIn, tokenOut, fee) = path.decodeFirstPool();
 
             // the outputs of prior swaps become the inputs to subsequent ones
             amountIn = quoteExactInputSingle(tokenIn, tokenOut, fee, amountIn, 0);
@@ -151,10 +155,14 @@ contract Quoter is IQuoter, IUniswapV3SwapCallback, PeripheryImmutableState {
 
     /// @inheritdoc IQuoter
     function quoteExactOutput(bytes memory path, uint256 amountOut) external override returns (uint256 amountIn) {
+        bool hasMultiplePools;
+        address tokenIn; 
+        address tokenOut; 
+        uint24 fee;
         while (true) {
-            bool hasMultiplePools = path.hasMultiplePools();
+            hasMultiplePools = path.hasMultiplePools();
 
-            (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
+            (tokenOut, tokenIn, fee) = path.decodeFirstPool();
 
             // the inputs of prior swaps become the outputs of subsequent ones
             amountOut = quoteExactOutputSingle(tokenIn, tokenOut, fee, amountOut, 0);

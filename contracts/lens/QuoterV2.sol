@@ -164,11 +164,18 @@ contract QuoterV2 is IQuoterV2, IUniswapV3SwapCallback, PeripheryImmutableState 
         initializedTicksCrossedList = new uint32[](path.numPools());
 
         uint256 i = 0;
+        address tokenIn; 
+        address tokenOut; 
+        uint24 fee;
+        uint256 _amountOut; 
+        uint160 _sqrtPriceX96After; 
+        uint32 _initializedTicksCrossed; 
+        uint256 _gasEstimate;
         while (true) {
-            (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
+            (tokenIn, tokenOut, fee) = path.decodeFirstPool();
 
             // the outputs of prior swaps become the inputs to subsequent ones
-            (uint256 _amountOut, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
+            (_amountOut, _sqrtPriceX96After, _initializedTicksCrossed, _gasEstimate) =
                 quoteExactInputSingle(
                     QuoteExactInputSingleParams({
                         tokenIn: tokenIn,
@@ -241,11 +248,18 @@ contract QuoterV2 is IQuoterV2, IUniswapV3SwapCallback, PeripheryImmutableState 
         initializedTicksCrossedList = new uint32[](path.numPools());
 
         uint256 i = 0;
+        address tokenIn; 
+        address tokenOut; 
+        uint24 fee;
+        uint256 _amountIn; 
+        uint160 _sqrtPriceX96After; 
+        uint32 _initializedTicksCrossed; 
+        uint256 _gasEstimate;
         while (true) {
-            (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
+            (tokenOut, tokenIn, fee) = path.decodeFirstPool();
 
             // the inputs of prior swaps become the outputs of subsequent ones
-            (uint256 _amountIn, uint160 _sqrtPriceX96After, uint32 _initializedTicksCrossed, uint256 _gasEstimate) =
+            (_amountIn, _sqrtPriceX96After, _initializedTicksCrossed, _gasEstimate) =
                 quoteExactOutputSingle(
                     QuoteExactOutputSingleParams({
                         tokenIn: tokenIn,
