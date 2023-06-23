@@ -65,7 +65,8 @@ contract QuoterV2 is IQuoterV2, IUniswapV3SwapCallback, PeripheryImmutableState 
             }
         } else {
             // if the cache has been populated, ensure that the full output amount has been received
-            if (amountOutCached != 0) require(amountReceived == amountOutCached);
+            uint256 amountOutCached_local = amountOutCached;
+            if (amountOutCached_local != 0) require(amountReceived == amountOutCached_local);
             assembly {
                 let ptr := mload(0x40)
                 mstore(ptr, amountToPay)
