@@ -239,7 +239,7 @@ contract NonfungiblePositionManager is
                 FixedPoint128.Q128
             )
         );
-        position.tokensOwed1 = position_tmp.tokensOwed0 + uint128(
+        position.tokensOwed1 = position_tmp.tokensOwed1 + uint128(
             FullMath.mulDiv(
                 feeGrowthInside1LastX128 - position_tmp.feeGrowthInside1LastX128,
                 position_tmp.liquidity,
