@@ -20,7 +20,7 @@ abstract contract SelfPermit is ISelfPermit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public payable override {
+    ) public override {
         IERC20Permit(token).permit(msg.sender, address(this), value, deadline, v, r, s);
     }
 
@@ -32,7 +32,7 @@ abstract contract SelfPermit is ISelfPermit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external payable override {
+    ) external override {
         if (IERC20(token).allowance(msg.sender, address(this)) < value) selfPermit(token, value, deadline, v, r, s);
     }
 
@@ -44,7 +44,7 @@ abstract contract SelfPermit is ISelfPermit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public payable override {
+    ) public override {
         IERC20PermitAllowed(token).permit(msg.sender, address(this), nonce, expiry, true, v, r, s);
     }
 
@@ -56,7 +56,7 @@ abstract contract SelfPermit is ISelfPermit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external payable override {
+    ) external override {
         if (IERC20(token).allowance(msg.sender, address(this)) < type(uint256).max)
             selfPermitAllowed(token, nonce, expiry, v, r, s);
     }

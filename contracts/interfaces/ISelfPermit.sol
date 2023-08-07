@@ -19,7 +19,7 @@ interface ISelfPermit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external payable;
+    ) external;
 
     /// @notice Permits this contract to spend a given token from `msg.sender`
     /// @dev The `owner` is always msg.sender and the `spender` is always address(this).
@@ -37,7 +37,7 @@ interface ISelfPermit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external payable;
+    ) external;
 
     /// @notice Permits this contract to spend the sender's tokens for permit signatures that have the `allowed` parameter
     /// @dev The `owner` is always msg.sender and the `spender` is always address(this)
@@ -54,7 +54,7 @@ interface ISelfPermit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external payable;
+    ) external;
 
     /// @notice Permits this contract to spend the sender's tokens for permit signatures that have the `allowed` parameter
     /// @dev The `owner` is always msg.sender and the `spender` is always address(this)
@@ -72,5 +72,5 @@ interface ISelfPermit {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external payable;
+    ) external;
 }
