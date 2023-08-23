@@ -90,7 +90,7 @@ library OracleLibrary {
     /// @notice Given a pool, it returns the tick value as of the start of the current block
     /// @param pool Address of Uniswap V3 pool
     /// @return The tick that the pool was in at the start of the current block
-    function getBlockStartingTickAndLiquidity(address pool) internal view returns (int24, uint128) {
+    function getBlockStartingTickAndLiquidity(address pool) internal view returns (int24, uint128 liquidity) {
         (, int24 tick, uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(pool).slot0();
 
         // 2 observations are needed to reliably calculate the block starting tick
@@ -117,7 +117,7 @@ library OracleLibrary {
 
         uint32 delta = observationTimestamp - prevObservationTimestamp;
         tick = int24((tickCumulative - prevTickCumulative) / delta);
-        uint128 liquidity =
+        liquidity =
             uint128(
                 (uint192(delta) * type(uint160).max) /
                     (uint192(secondsPerLiquidityCumulativeX128 - prevSecondsPerLiquidityCumulativeX128) << 32)

@@ -13,12 +13,10 @@ library BytesLib {
         bytes memory _bytes,
         uint256 _start,
         uint256 _length
-    ) internal pure returns (bytes memory) {
+    ) internal pure returns (bytes memory tempBytes) {
         require(_length + 31 >= _length, 'slice_overflow');
         require(_start + _length >= _start, 'slice_overflow');
         require(_bytes.length >= _start + _length, 'slice_outOfBounds');
-
-        bytes memory tempBytes;
 
         assembly {
             switch iszero(_length)
@@ -75,10 +73,9 @@ library BytesLib {
         return tempBytes;
     }
 
-    function toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address) {
+    function toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address tempAddress) {
         require(_start + 20 >= _start, 'toAddress_overflow');
         require(_bytes.length >= _start + 20, 'toAddress_outOfBounds');
-        address tempAddress;
 
         assembly {
             tempAddress := div(mload(add(add(_bytes, 0x20), _start)), 0x1000000000000000000000000)
@@ -87,10 +84,9 @@ library BytesLib {
         return tempAddress;
     }
 
-    function toUint24(bytes memory _bytes, uint256 _start) internal pure returns (uint24) {
+    function toUint24(bytes memory _bytes, uint256 _start) internal pure returns (uint24 tempUint) {
         require(_start + 3 >= _start, 'toUint24_overflow');
         require(_bytes.length >= _start + 3, 'toUint24_outOfBounds');
-        uint24 tempUint;
 
         assembly {
             tempUint := mload(add(add(_bytes, 0x3), _start))

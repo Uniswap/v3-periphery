@@ -85,8 +85,8 @@ library PoolTicksCounter {
         return initializedTicksCrossed;
     }
 
-    function countOneBits(uint256 x) private pure returns (uint16) {
-        uint16 bits = 0;
+    function countOneBits(uint256 x) private pure returns (uint16 bits) {
+        bits = 0;
         while (x != 0) {
             bits++;
             x &= (x - 1);

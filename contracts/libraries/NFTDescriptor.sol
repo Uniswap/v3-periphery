@@ -250,8 +250,7 @@ library NFTDescriptor {
         }
     }
 
-    function sigfigsRounded(uint256 value, uint8 digits) private pure returns (uint256, bool) {
-        bool extraDigit;
+    function sigfigsRounded(uint256 value, uint8 digits) private pure returns (uint256, bool extraDigit) {
         if (digits > 5) {
             value = value.div((10**(digits - 5)));
         }
