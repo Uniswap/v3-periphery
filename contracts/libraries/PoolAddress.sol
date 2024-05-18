@@ -49,7 +49,7 @@ library PoolAddress {
         );
     }
 
-    /// @notice Deterministically computes the pool address given the factory and PoolKey, for pools deployed with solidity 0.7.6
+    /// @notice Deterministically computes the pool address given the factory and PoolKey for pools deployed with solidity 0.7.6
     /// @param factory The Uniswap V3 factory contract address
     /// @param key The PoolKey
     /// @return pool The contract address of the V3 pool

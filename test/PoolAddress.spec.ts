@@ -76,7 +76,7 @@ describe('PoolAddress', () => {
     })
   })
 
-  describe.only('#computeAddressFor0_7_6', () => {
+  describe('#computeAddressFor0_7_6', () => {
     it('all arguments equal zero', async () => {
       await expect(poolAddress.computeAddressFor0_7_6(constants.AddressZero, constants.AddressZero, constants.AddressZero, 0))
         .to.be.reverted
