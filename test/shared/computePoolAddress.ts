@@ -2,6 +2,7 @@ import { bytecode } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol
 import { utils } from 'ethers'
 
 export const POOL_BYTECODE_HASH = utils.keccak256(bytecode)
+export const POOL_BYTECODE_HASH_0_7_6 = '0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54';
 
 export function computePoolAddress(factoryAddress: string, [tokenA, tokenB]: [string, string], fee: number): string {
   const [token0, token1] = tokenA.toLowerCase() < tokenB.toLowerCase() ? [tokenA, tokenB] : [tokenB, tokenA]
