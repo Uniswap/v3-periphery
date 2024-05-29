@@ -13,6 +13,10 @@ import './libraries/PoolAddress.sol';
 import './libraries/NFTDescriptor.sol';
 import './libraries/TokenRatioSortOrder.sol';
 
+interface INFTDiscriptor {
+    function constructTokenURI(NFTDescriptor.ConstructTokenURIParams memory params) external pure returns (string memory);
+}
+
 /// @title Describes NFT token positions
 /// @notice Produces a string containing the data URI for a JSON metadata string
 contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescriptor {
@@ -26,9 +30,12 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
     /// @dev A null-terminated string
     bytes32 public immutable nativeCurrencyLabelBytes;
 
-    constructor(address _WETH9, bytes32 _nativeCurrencyLabelBytes) {
+    address public immutable nftDescriptor;
+
+    constructor(address _WETH9, bytes32 _nativeCurrencyLabelBytes, address _nftDescriptor) {
         WETH9 = _WETH9;
         nativeCurrencyLabelBytes = _nativeCurrencyLabelBytes;
+        nftDescriptor = _nftDescriptor;
     }
 
     /// @notice Returns the native currency label as a string
@@ -68,7 +75,7 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
         (, int24 tick, , , , , ) = pool.slot0();
 
         return
-            NFTDescriptor.constructTokenURI(
+            INFTDiscriptor(nftDescriptor).constructTokenURI(
                 NFTDescriptor.ConstructTokenURIParams({
                     tokenId: tokenId,
                     quoteTokenAddress: quoteTokenAddress,
