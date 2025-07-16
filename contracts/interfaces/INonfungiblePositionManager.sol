@@ -9,6 +9,7 @@ import './IPoolInitializer.sol';
 import './IERC721Permit.sol';
 import './IPeripheryPayments.sol';
 import './IPeripheryImmutableState.sol';
+import "./IVRC725.sol";
 
 /// @title Non-fungible token for positions
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
@@ -17,9 +18,7 @@ interface INonfungiblePositionManager is
     IPoolInitializer,
     IPeripheryPayments,
     IPeripheryImmutableState,
-    IERC721Metadata,
-    IERC721Enumerable,
-    IERC721Permit
+    IVRC725
 {
     /// @notice Emitted when liquidity is increased for a position NFT
     /// @dev Also emitted when a token is minted
