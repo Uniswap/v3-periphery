@@ -17,10 +17,13 @@ import './libraries/PoolAddress.sol';
 import './libraries/CallbackValidation.sol';
 import './interfaces/external/IWETH9.sol';
 
+import './base/VRC25.sol';
+
 /// @title Uniswap V3 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V3
 contract SwapRouter is
     ISwapRouter,
+    VRC25,
     PeripheryImmutableState,
     PeripheryValidation,
     PeripheryPaymentsWithFee,
@@ -37,7 +40,7 @@ contract SwapRouter is
     /// @dev Transient storage variable used for returning the computed amount in for an exact output swap.
     uint256 private amountInCached = DEFAULT_AMOUNT_IN_CACHED;
 
-    constructor(address _factory, address _WETH9) PeripheryImmutableState(_factory, _WETH9) {}
+    constructor(address _factory, address _WETH9) VRC25("BaryonSwapRouter", "BSR", 0) PeripheryImmutableState(_factory, _WETH9) {}
 
     /// @dev Returns the pool for the given token pair and fee. The pool contract may or may not exist.
     function getPool(
@@ -240,5 +243,14 @@ contract SwapRouter is
         amountIn = amountInCached;
         require(amountIn <= params.amountInMaximum, 'Too much requested');
         amountInCached = DEFAULT_AMOUNT_IN_CACHED;
+    }
+
+    /**
+     * @notice Calculate fee required for action related to this token
+     * @param value Amount of fee
+     */
+    function _estimateFee(uint256 value) internal view override returns (uint256) {
+        value;
+        return minFee();
     }
 }
