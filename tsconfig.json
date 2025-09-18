@@ -6,9 +6,13 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "typeRoots": ["./typechain", "./node_modules/@types"],
-    "types": ["@nomiclabs/hardhat-ethers", "@nomiclabs/hardhat-waffle"]
+    "typeRoots": ["./node_modules/@types"],
+    "types": ["@nomiclabs/hardhat-ethers", "@nomiclabs/hardhat-waffle"],
+    "baseUrl": ".",
+    "paths": {
+      "../typechain": ["./typechain"]
+    }
   },
-  "include": ["./test"],
+  "include": ["./test", "./typechain"],
   "files": ["./hardhat.config.ts"]
 }
