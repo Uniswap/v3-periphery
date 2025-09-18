@@ -21,7 +21,7 @@ describe('PoolTicksCounter', () => {
 
     before(async () => {
       const wallets = await (ethers as any).getSigners()
-      PoolAbi = await artifacts.readArtifact('IUniswapV3Pool')
+      PoolAbi = await artifacts.readArtifact('contracts/interfaces/IUniswapV3Pool.sol:IUniswapV3Pool')
       const poolTicksHelperFactory = await ethers.getContractFactory('PoolTicksCounterTest')
       PoolTicksCounter = (await poolTicksHelperFactory.deploy()) as PoolTicksCounterTest
       pool = await deployMockContract(wallets[0], PoolAbi.abi)

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import '../interfaces/IUniswapV3Pool.sol';
 
 pragma solidity >=0.6.0;
 

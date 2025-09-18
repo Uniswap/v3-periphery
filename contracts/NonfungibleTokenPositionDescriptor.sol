@@ -2,8 +2,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
-import '@uniswap/lib/contracts/libraries/SafeERC20Namer.sol';
+import './interfaces/IUniswapV3Pool.sol';
+// import './libraries/SafeERC20Namer.sol';
 
 import './libraries/ChainId.sol';
 import './interfaces/INonfungiblePositionManager.sol';
@@ -75,10 +75,10 @@ contract NonfungibleTokenPositionDescriptor is INonfungibleTokenPositionDescript
                     baseTokenAddress: baseTokenAddress,
                     quoteTokenSymbol: quoteTokenAddress == WETH9
                         ? nativeCurrencyLabel()
-                        : SafeERC20Namer.tokenSymbol(quoteTokenAddress),
+                        : IERC20Metadata(quoteTokenAddress).symbol(),
                     baseTokenSymbol: baseTokenAddress == WETH9
                         ? nativeCurrencyLabel()
-                        : SafeERC20Namer.tokenSymbol(baseTokenAddress),
+                        : IERC20Metadata(baseTokenAddress).symbol(),
                     quoteTokenDecimals: IERC20Metadata(quoteTokenAddress).decimals(),
                     baseTokenDecimals: IERC20Metadata(baseTokenAddress).decimals(),
                     flipRatio: _flipRatio,
