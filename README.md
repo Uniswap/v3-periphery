@@ -50,3 +50,4 @@ contract MyContract {
 }
 
 ```
+"### Contributor Note\nImproved clarity and added helpful context for beginners." 
