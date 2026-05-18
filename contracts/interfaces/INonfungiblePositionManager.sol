@@ -13,6 +13,8 @@ import './IPeripheryImmutableState.sol';
 /// @title Non-fungible token for positions
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
+/// @dev Fee accounting uses integer math. Position updates can round down by less than 1 wei of fees
+/// owed per token, and the aggregate rounding loss may grow as a position is updated.
 interface INonfungiblePositionManager is
     IPoolInitializer,
     IPeripheryPayments,
